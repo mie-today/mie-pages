@@ -45,25 +45,22 @@
 
 <script>
 (async function(){
-  // get token from sessionStorage
+  // Get token from sessionStorage
   let accessToken = sessionStorage.getItem("googleAccessToken");
   if(!accessToken){ alert("Missing token. Please login first."); return; }
 
-  // initialize Google API client
   gapi.load("client", async ()=>{
     await gapi.client.init({
-      discoveryDocs:[
-        "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-        "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-      ]
+      discoveryDocs:["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+                     "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"]
     });
     gapi.client.setToken({ access_token: accessToken });
 
-    // list user calendars
+    // Fetch all user calendars
     const calendarListResp = await gapi.client.calendar.calendarList.list();
     const calendars = calendarListResp.result.items || [];
 
-    async function fetchEvents(start, end){
+    async function fetchEvents(start,end){
       const events = [];
       for(const cal of calendars){
         const resp = await gapi.client.calendar.events.list({
@@ -94,9 +91,9 @@
       initialView:'dayGridMonth',
       headerToolbar:{ left:'prev,next today', center:'title', right:'' },
       height:'100%',
-      events: async function(info, successCallback, failureCallback){
+      events: async function(info,successCallback,failureCallback){
         try{
-          const events = await fetchEvents(info.start, info.end);
+          const events = await fetchEvents(info.start,info.end);
           successCallback(events);
         }catch(e){ console.error(e); failureCallback(e); }
       },
@@ -108,37 +105,41 @@
     calendar.render();
   });
 
-  // Messaging
-  const messageInput=document.getElementById("message-input");
-  const messageLog=document.getElementById("message-log");
-  const fileInput=document.getElementById("file-input");
-  const imagePreviewContainer=document.getElementById("image-preview-container");
-  const sendButton=document.getElementById("send-button");
-  let imageData=null;
+  // Messaging functionality
+  const messageInput = document.getElementById("message-input");
+  const messageLog = document.getElementById("message-log");
+  const fileInput = document.getElementById("file-input");
+  const imagePreviewContainer = document.getElementById("image-preview-container");
+  const sendButton = document.getElementById("send-button");
+  let imageData = null;
 
   fileInput.addEventListener("change", e=>{
-    const file=e.target.files[0];
+    const file = e.target.files[0];
     if(file && file.type.startsWith("image/")){
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        imageData=ev.target.result;
-        imagePreviewContainer.innerHTML=`<img src="${imageData}" class="h-16 w-16 rounded-lg object-cover">`;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        imageData = ev.target.result;
+        imagePreviewContainer.innerHTML = `<img src="${imageData}" class="h-16 w-16 rounded-lg object-cover">`;
       };
       reader.readAsDataURL(file);
     }
   });
 
   sendButton.addEventListener("click", async ()=>{
-    const msg=messageInput.value.trim();
+    const msg = messageInput.value.trim();
     if(!msg && !imageData){ alert("Type a message or add an image."); return; }
 
-    let email=`To: save@mie.today\r\nSubject: Dashboard Message\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
-    email+=msg;
-    if(imageData) email+=`<br><img src="${imageData}" style="max-width:300px;">`;
+    let email = `To: save@mie.today\r\nSubject: Dashboard Message\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
+    email += msg;
+    if(imageData) email += `<br><img src="${imageData}" style="max-width:300px;">`;
 
     const base64Email = btoa(unescape(encodeURIComponent(email))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     try{
-      await gapi.client.request({ path:"https://gmail.googleapis.com/gmail/v1/users/me/messages/send", method:"POST", body:{ raw: base64Email }});
+      await gapi.client.request({
+        path:"https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        method:"POST",
+        body:{ raw: base64Email }
+      });
       const div = document.createElement("div");
       div.className="bg-blue-50 text-gray-900 p-2 rounded mb-2";
       div.innerHTML = msg + (imageData?`<br><img src="${imageData}" class="h-16 w-16 object-cover rounded-lg">`:'');
