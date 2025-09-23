@@ -5,45 +5,129 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIE Home</title>
 
-<!-- Tailwind CSS -->
+<!-- Tailwind CSS for styling -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <!-- Google OAuth Client ID -->
 <meta name="google-signin-client_id" content="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com">
 
 <style>
-  html, body { margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f3f4f6; height:100%; }
-  body { display:flex; flex-direction:column; align-items:center; justify-content:center; }
-
-  .calendar-container { width: 100%; max-width: 500px; padding: 1rem; box-sizing:border-box; }
-  .calendar { width:100%; border:1px solid #ccc; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1); overflow:hidden; display:flex; flex-direction:column; }
-  .calendar-header { display:flex; justify-content:space-between; align-items:center; background:#f4f4f4; padding:0.5em 1em; font-weight:bold; }
-  .calendar-header button { background:none; border:none; font-size:1.2em; cursor:pointer; flex:0 0 auto; }
-  .calendar-header span { flex:1; text-align:center; font-size:1.1em; }
-  .calendar-days, .calendar-dates { display:grid; grid-template-columns:repeat(7,1fr); }
-  .calendar-days div { font-weight:bold; padding:0.3em; font-size:0.9em; }
-  .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; cursor:pointer; }
-  .calendar-dates div:hover { background:#e6f2ff; }
-
-  /* Google Sign-In container */
-  .signin-container { margin-top:1.5rem; display:flex; justify-content:center; }
-
-  @media (max-width:600px){
-    .calendar-container { max-width:100%; padding:0.5rem; }
-    .calendar-header span { font-size:1em; }
-    .calendar-days div, .calendar-dates div { font-size:0.75em; padding:0.8em 0; }
-    .calendar-header button { font-size:1em; }
+  /* ---------------- Base Styles ---------------- */
+  html, body {
+    margin:0;
+    padding:0;
+    font-family: Arial, sans-serif;
+    background-color:#f3f4f6;
+    height:100%;
   }
-  @media (max-width:400px){
+
+  body {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+  }
+
+  /* ---------------- Calendar Container ---------------- */
+  .calendar-container {
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    width:100%;
+    max-width:500px;
+    height:90vh; /* responsive height to viewport */
+    padding:1rem;
+    box-sizing:border-box;
+  }
+
+  /* ---------------- Calendar Styles ---------------- */
+  .calendar {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    overflow:hidden;
+  }
+
+  .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f4f4f4;
+    padding: 0.5em 1em;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
+  }
+
+  .calendar-header button {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    flex:0 0 auto;
+  }
+
+  .calendar-header span {
+    flex:1;
+    text-align:center;
+    font-size:1.1em;
+  }
+
+  .calendar-days, .calendar-dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .calendar-days div {
+    font-weight:bold;
+    padding:0.3em;
+    font-size:0.9em;
+  }
+
+  .calendar-dates {
+    flex:1; /* grow to fill remaining space */
+    overflow:hidden; /* prevent scroll */
+  }
+
+  .calendar-dates div {
+    padding:1em 0;
+    font-size:0.9em;
+    border-radius:6px;
+  }
+
+  .calendar-dates div:hover {
+    background:#e6f2ff;
+  }
+
+  /* ---------------- Google Sign-In ---------------- */
+  .signin-container {
+    margin-top:1rem;
+    display:flex;
+    justify-content:center;
+    flex-shrink:0; /* keep visible */
+  }
+
+  /* ---------------- Responsive Adjustments ---------------- */
+  @media(max-width:600px){
+    .calendar-container { height:85vh; }
+    .calendar-header span { font-size:1em; }
+    .calendar-days div, .calendar-dates div { font-size:0.75em; }
+  }
+
+  @media(max-width:400px){
+    .calendar-container { height:80vh; }
     .calendar-header span { font-size:0.9em; }
-    .calendar-days div, .calendar-dates div { font-size:0.7em; padding:0.6em 0; }
+    .calendar-days div, .calendar-dates div { font-size:0.7em; }
   }
 </style>
 </head>
-<body>
 
+<body>
 <div class="calendar-container">
-  <!-- Calendar -->
+
+  <!-- ---------------- Calendar Block ---------------- -->
   <div class="calendar">
     <div class="calendar-header">
       <button onclick="changeMonth(-1)">&lt;</button>
@@ -57,25 +141,27 @@
     <div class="calendar-dates" id="calendarDates"></div>
   </div>
 
-  <!-- Google Sign-In -->
+  <!-- ---------------- Google Sign-In ---------------- -->
   <div class="signin-container">
     <div id="my-signin2"></div>
   </div>
+
 </div>
 
 <script>
-const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-let currentMonth=new Date().getMonth();
-let currentYear=new Date().getFullYear();
+/* ---------------- Calendar Logic ---------------- */
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
 
-function renderCalendar(month, year){
+function renderCalendar(month, year) {
   if(year<2025||year>2045) return;
-  document.getElementById("monthYear").textContent=monthNames[month]+" "+year;
-  const dates=document.getElementById("calendarDates");
+  document.getElementById("monthYear").textContent = monthNames[month]+" "+year;
+  const dates = document.getElementById("calendarDates");
   dates.innerHTML="";
-  const firstDay=new Date(year,month,1).getDay();
-  const daysInMonth=new Date(year,month+1,0).getDate();
-  for(let i=0;i<firstDay;i++) dates.appendChild(document.createElement("div"));
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for(let i=0;i<firstDay;i++){ dates.appendChild(document.createElement("div")); }
   for(let i=1;i<=daysInMonth;i++){
     const day=document.createElement("div");
     day.textContent=i;
@@ -87,21 +173,26 @@ function changeMonth(delta){
   currentMonth+=delta;
   if(currentMonth>11){ currentMonth=0; currentYear++; }
   else if(currentMonth<0){ currentMonth=11; currentYear--; }
-  if(currentYear>=2025 && currentYear<=2045) renderCalendar(currentMonth,currentYear);
+  if(currentYear>=2025&&currentYear<=2045) renderCalendar(currentMonth,currentYear);
   else currentYear=Math.min(Math.max(currentYear,2025),2045);
 }
 
 renderCalendar(currentMonth,currentYear);
 
-/* Google Sign-In Logic */
+/* ---------------- Google Sign-In Logic ---------------- */
 function onSuccess(googleUser){
-  const accessToken=googleUser.getAuthResponse().access_token;
+  const accessToken = googleUser.getAuthResponse().access_token;
   sessionStorage.setItem("googleAccessToken", accessToken);
-  console.log('Logged in as: '+googleUser.getBasicProfile().getName());
+  console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
+
   // Redirect to dashboard
-  window.location.href="https://mie.today/dashboard";
+  window.location.href = "https://mie.today/dashboard";
 }
-function onFailure(error){ console.log(error); }
+
+function onFailure(error){
+  console.log(error);
+}
+
 function renderButton(){
   gapi.signin2.render('my-signin2',{
     'scope':'profile email',
@@ -115,8 +206,8 @@ function renderButton(){
 }
 </script>
 
+<!-- Google Sign-In API -->
 <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 
 </body>
 </html>
-
