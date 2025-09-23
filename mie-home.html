@@ -3,32 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIE Home - Google Sign-In</title>
+<title>MIE Home</title>
 
 <!-- Tailwind CSS for styling -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google Sign-In client ID -->
+<!-- Google OAuth Client ID -->
 <meta name="google-signin-client_id" content="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com">
 
 <style>
-  body { font-family: Arial, sans-serif; margin:0; padding:20px; text-align:center; background:#f3f4f6; }
-  .calendar { width:100%; max-width:500px; margin:auto; border:1px solid #ccc; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1); overflow:hidden; }
-  .calendar-header { display:flex; justify-content:space-between; align-items:center; background:#f4f4f4; padding:0.5em 1em; border-bottom:1px solid #ddd; font-weight:bold; }
-  .calendar-header button { background:none; border:none; font-size:1.2em; cursor:pointer; }
-  .calendar-header span { flex:1; text-align:center; font-size:1.1em; }
-  .calendar-days, .calendar-dates { display:grid; grid-template-columns:repeat(7,1fr); }
-  .calendar-days div { font-weight:bold; padding:0.3em; font-size:0.9em; }
-  .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; cursor:pointer; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; background-color:#f3f4f6; }
+  .calendar { width: 100%; max-width: 500px; margin: auto; border: 1px solid #ccc; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
+  .calendar-header { display: flex; justify-content: space-between; align-items: center; background: #f4f4f4; padding: 0.5em 1em; border-bottom: 1px solid #ddd; font-weight: bold; }
+  .calendar-header button { background: none; border: none; font-size: 1.2em; cursor: pointer; flex: 0 0 auto; }
+  .calendar-header span { font-size: 1.1em; flex:1; text-align:center; }
+  .calendar-days, .calendar-dates { display: grid; grid-template-columns: repeat(7,1fr); }
+  .calendar-days div { font-weight: bold; padding: 0.3em; font-size:0.9em; }
+  .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; }
   .calendar-dates div:hover { background:#e6f2ff; }
-  @media (max-width:600px) { .calendar { max-width:100%; border-radius:8px; } .calendar-header span { font-size:1em; } .calendar-days div, .calendar-dates div { font-size:0.75em; } }
-  @media (max-width:400px) { .calendar-header span { font-size:0.9em; } .calendar-days div, .calendar-dates div { font-size:0.7em; } }
-  .signin-container { margin-top:20px; display:flex; justify-content:center; align-items:center; }
+  @media(max-width:600px){ .calendar { max-width:100%; border-radius:8px; } .calendar-header span{font-size:1em;} .calendar-days div,.calendar-dates div{font-size:0.75em;} }
+  @media(max-width:400px){ .calendar-header span{font-size:0.9em;} .calendar-days div,.calendar-dates div{font-size:0.7em;} }
+  .signin-container { margin-top: 20px; display:flex; justify-content:center; align-items:center; }
 </style>
 </head>
 <body>
 
-<!-- Calendar display -->
+<!-- Calendar Block -->
 <div class="calendar">
   <div class="calendar-header">
     <button onclick="changeMonth(-1)">&lt;</button>
@@ -42,74 +42,72 @@
   <div class="calendar-dates" id="calendarDates"></div>
 </div>
 
-<!-- Google Sign-In button -->
+<!-- Google Sign-In Block -->
 <div class="signin-container">
   <div id="my-signin2"></div>
 </div>
 
 <script>
-  /* ---------------- Calendar Logic ---------------- */
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  let currentMonth = new Date().getMonth();
-  let currentYear = new Date().getFullYear();
+/* ---------------- Calendar Logic ---------------- */
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
 
-  function renderCalendar(month, year) {
-    if(year < 2025) year = 2025;
-    if(year > 2045) year = 2045;
-    document.getElementById("monthYear").textContent = monthNames[month] + " " + year;
-
-    const dates = document.getElementById("calendarDates");
-    dates.innerHTML = "";
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month+1,0).getDate();
-
-    // empty slots before first day
-    for(let i=0;i<firstDay;i++){ dates.appendChild(document.createElement("div")); }
-
-    for(let i=1;i<=daysInMonth;i++){
-      const day = document.createElement("div");
-      day.textContent = i;
-      dates.appendChild(day);
-    }
+function renderCalendar(month, year) {
+  if(year<2025||year>2045) return;
+  document.getElementById("monthYear").textContent = monthNames[month]+" "+year;
+  const dates = document.getElementById("calendarDates");
+  dates.innerHTML="";
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  for(let i=0;i<firstDay;i++){ dates.appendChild(document.createElement("div")); }
+  for(let i=1;i<=daysInMonth;i++){
+    const day=document.createElement("div");
+    day.textContent=i;
+    dates.appendChild(day);
   }
+}
 
-  function changeMonth(delta){
-    currentMonth += delta;
-    if(currentMonth>11){ currentMonth=0; currentYear++; }
-    if(currentMonth<0){ currentMonth=11; currentYear--; }
-    renderCalendar(currentMonth, currentYear);
-  }
+function changeMonth(delta){
+  currentMonth+=delta;
+  if(currentMonth>11){ currentMonth=0; currentYear++; }
+  else if(currentMonth<0){ currentMonth=11; currentYear--; }
+  if(currentYear>=2025&&currentYear<=2045) renderCalendar(currentMonth,currentYear);
+  else currentYear=Math.min(Math.max(currentYear,2025),2045);
+}
 
-  renderCalendar(currentMonth, currentYear);
+renderCalendar(currentMonth,currentYear);
 
-  /* ---------------- Google Sign-In Logic ---------------- */
-  function onSuccess(googleUser){
-    console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
-    // store token for dashboard usage
-    const id_token = googleUser.getAuthResponse().id_token;
-    sessionStorage.setItem("googleAccessToken", id_token);
+/* ---------------- Google Sign-In Logic ---------------- */
+function onSuccess(googleUser){
+  // Save access token to sessionStorage for dashboard
+  const accessToken = googleUser.getAuthResponse().access_token;
+  sessionStorage.setItem("googleAccessToken", accessToken);
 
-    // redirect to dashboard
-    window.location.href = "dashboard.html";
-  }
+  console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
+  
+  // Redirect to dashboard
+  window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
+}
 
-  function onFailure(error){ console.error(error); }
+function onFailure(error){
+  console.log(error);
+}
 
-  function renderButton(){
-    gapi.signin2.render('my-signin2',{
-      'scope':'profile email',
-      'width':240,
-      'height':50,
-      'longtitle':true,
-      'theme':'dark',
-      'onsuccess':onSuccess,
-      'onfailure':onFailure
-    });
-  }
+function renderButton(){
+  gapi.signin2.render('my-signin2',{
+    'scope':'profile email',
+    'width':240,
+    'height':50,
+    'longtitle':true,
+    'theme':'dark',
+    'onsuccess':onSuccess,
+    'onfailure':onFailure
+  });
+}
 </script>
 
-<!-- Google Platform Library -->
+<!-- Google Sign-In API -->
 <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 
 </body>
