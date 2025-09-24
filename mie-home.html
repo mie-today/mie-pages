@@ -56,6 +56,7 @@
   }
 
   .signin-container { margin-top: 20px; display:flex; justify-content:center; align-items:center; }
+  .signin-status { margin-top: 10px; font-size: 14px; color: #666; }
 </style>
 </head>
 <body>
@@ -75,6 +76,7 @@
 
 <div class="signin-container">
   <div id="my-signin2"></div>
+  <div id="signin-status" class="signin-status"></div>
 </div>
 
 <script>
@@ -107,20 +109,36 @@ function changeMonth(delta){
 renderCalendar(currentMonth, currentYear);
 
 /* ---------------- Google Sign-In Logic ---------------- */
+function updateStatus(message) {
+  document.getElementById("signin-status").textContent = message;
+}
+
 function onSuccess(googleUser){
   const accessToken = googleUser.getAuthResponse().access_token;
+  const profile = googleUser.getBasicProfile();
+  
+  // Store token in sessionStorage
   sessionStorage.setItem("googleAccessToken", accessToken);
-  console.log('Logged in as: ' + googleUser.getBasicProfile().getName());
-  window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
+  
+  console.log('Logged in as: ' + profile.getName());
+  updateStatus('Login successful! Redirecting to dashboard...');
+  
+  // Small delay to show success message
+  setTimeout(() => {
+    window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
+  }, 1000);
 }
 
 function onFailure(error){
-  console.log(error);
+  console.error('Sign-in failed:', error);
+  updateStatus('Sign-in failed. Please try again.');
 }
 
 function renderButton(){
+  updateStatus('Loading sign-in...');
+  
   gapi.signin2.render('my-signin2',{
-    'scope':'profile email https://www.googleapis.com/auth/calendar',
+    'scope':'profile email https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
     'width':240,
     'height':50,
     'longtitle':true,
@@ -128,6 +146,8 @@ function renderButton(){
     'onsuccess':onSuccess,
     'onfailure':onFailure
   });
+  
+  updateStatus('Ready to sign in');
 }
 </script>
 
@@ -135,5 +155,3 @@ function renderButton(){
 
 </body>
 </html>
-
-
