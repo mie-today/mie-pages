@@ -7,6 +7,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -67,7 +68,10 @@
 
 <script>
 (function(){
+    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
     const HOME_URL = "https://rylhong.github.io/mie-pages/mie-home.html";
+    const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+    
     let accessToken = null;
     let gapiInitialized = false;
 
@@ -86,35 +90,59 @@
         window.location.href = HOME_URL;
     }
 
-    function checkAuthentication() {
-      accessToken = sessionStorage.getItem("googleAccessToken");
-      if (!accessToken) {
-        updateStatus('No authentication found', true);
-        setTimeout(redirectToHome, 2000);
-        return false;
+    function handleTokenResponse(response) {
+      if (response && response.access_token) {
+        accessToken = response.access_token;
+        console.log('Successfully obtained access token:', accessToken);
+        initializeGapiClient();
+      } else {
+        updateStatus('Failed to get access token', true);
+        redirectToHome();
       }
-      console.log('Authentication found in sessionStorage');
-      return true;
     }
 
+    window.onload = function() {
+        const credential = sessionStorage.getItem("googleCredential");
+        if (credential) {
+            updateStatus('Authenticating...');
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: CALENDAR_SCOPE,
+              callback: handleTokenResponse,
+            });
+            tokenClient.requestAccessToken({
+                prompt: 'none' // This prevents the second pop-up if the user is already authenticated
+            });
+        } else {
+            updateStatus('No authentication found', true);
+            setTimeout(redirectToHome, 2000);
+        }
+    };
+    
     async function initializeGapiClient(){
-      try {
-        updateStatus('Initializing Google APIs...');
-        await gapi.client.init({
-          accessToken: accessToken,
-          discoveryDocs: [
-            "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-          ]
-        });
-        gapiInitialized = true;
-        updateStatus('Loading calendar events...');
-        await listUpcomingEvents();
-        document.getElementById("loading-message").classList.add("hidden");
-        document.getElementById("calendar-content").classList.remove("hidden");
-      } catch (error) {
-        console.error('GAPI initialization failed:', error);
-        updateStatus('Failed to connect to Google services', true);
-        setTimeout(redirectToHome, 3000);
+      if (accessToken) {
+        try {
+          updateStatus('Initializing Google APIs...');
+          await gapi.client.init({
+            accessToken: accessToken,
+            discoveryDocs: [
+              "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
+            ]
+          });
+          gapiInitialized = true;
+          updateStatus('Loading calendar events...');
+          await listUpcomingEvents();
+          
+          document.getElementById("loading-message").classList.add("hidden");
+          document.getElementById("calendar-content").classList.remove("hidden");
+        } catch (error) {
+          console.error('GAPI initialization failed:', error);
+          updateStatus('Failed to connect to Google services', true);
+          setTimeout(redirectToHome, 3000);
+        }
+      } else {
+        updateStatus('Access token not available.', true);
+        setTimeout(redirectToHome, 2000);
       }
     }
 
@@ -153,7 +181,7 @@
             console.error('Calendar error:', e);
             if (e.status === 401 || e.status === 403) {
                 updateStatus('Authentication expired. Please log in again.', true);
-                sessionStorage.removeItem("googleAccessToken");
+                sessionStorage.removeItem("googleCredential");
                 setTimeout(redirectToHome, 2000);
             } else {
                 document.getElementById("event-list").innerHTML = "<p class='text-red-500 text-center'>Error loading events. Please try refreshing.</p>";
@@ -163,14 +191,10 @@
     }
 
     document.getElementById("signout_button").onclick = () => {
-        sessionStorage.removeItem("googleAccessToken");
+        sessionStorage.removeItem("googleCredential");
         console.log('User signed out');
         window.location.href = HOME_URL;
     };
-
-    if (checkAuthentication()) {
-        gapi.load("client", initializeGapiClient);
-    }
 })();
 </script>
 </body>
