@@ -8,7 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <meta name="google-signin-client_id" content="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com">
-<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; background-color:#f3f4f6; }
@@ -89,32 +89,49 @@ function changeMonth(delta){
 renderCalendar(currentMonth, currentYear);
 
 /* ---------------- Google Sign-In Logic ---------------- */
-function onSuccess(googleUser) {
-  const accessToken = googleUser.getAuthResponse().access_token;
-  const profile = googleUser.getBasicProfile();
-  
-  sessionStorage.setItem("googleAccessToken", accessToken);
-  
-  console.log('Logged in as: ' + profile.getName());
-  
-  window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
-}
-
-function onFailure(error) {
-  console.error('Sign-in failed:', error);
+function init() {
+    gapi.load('auth2', function() {
+        gapi.auth2.init({
+            client_id: '514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com',
+            scope: 'profile email https://www.googleapis.com/auth/calendar.readonly'
+        }).then(() => {
+            renderButton();
+            // Check if user is already signed in on page load
+            const auth2 = gapi.auth2.getAuthInstance();
+            if (auth2.isSignedIn.get()) {
+                onSuccess(auth2.currentUser.get());
+            }
+        });
+    });
 }
 
 function renderButton() {
-  gapi.signin2.render('my-signin2', {
-    'scope': 'profile email https://www.googleapis.com/auth/calendar.readonly',
-    'width': 240,
-    'height': 50,
-    'longtitle': true,
-    'theme': 'dark',
-    'onsuccess': onSuccess,
-    'onfailure': onFailure
-  });
+    gapi.signin2.render('my-signin2', {
+        'scope': 'profile email https://www.googleapis.com/auth/calendar.readonly',
+        'width': 240,
+        'height': 50,
+        'longtitle': true,
+        'theme': 'dark',
+        'onsuccess': onSuccess,
+        'onfailure': onFailure
+    });
 }
+
+function onSuccess(googleUser) {
+    const accessToken = googleUser.getAuthResponse().access_token;
+    sessionStorage.setItem("googleAccessToken", accessToken);
+    console.log('Logged in and token stored. Redirecting...');
+    window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
+}
+
+function onFailure(error) {
+    console.error('Sign-in failed:', error);
+}
+
+window.onload = function() {
+    // Manually load the gapi client on window load
+    init();
+};
 </script>
 
 </body>
