@@ -19,21 +19,82 @@
     font-family: 'Inter', sans-serif;
     background-color: #f3f4f6;
     color: #1f2937;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
   }
   .dark body {
     background-color: #111827;
     color: #f9fafb;
   }
-  .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
-  .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
-  .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
-  .dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
-  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
-  .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
+
+  .oauth-app-container {
+    width: 100%;
+    max-width: 1400px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+  }
+
+  /* Responsive flex layout */
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+  }
+
+  @media (min-width: 1280px) {
+    .dashboard-layout {
+      flex-direction: row;
+    }
+  }
+
+  #calendar-section,
+  #messaging-section {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 350px;
+  }
+
+  #calendar-container {
+    flex-grow: 1;
+    min-height: 250px;
+  }
+
+  #message-log {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  /* Scrollbar styling */
+  .oauth-app-container #message-log::-webkit-scrollbar,
+  .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-track,
+  .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+  .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
+
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-track,
+  .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+  .dark .oauth-app-container #event-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
+
   .disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+
   /* FullCalendar style overrides for dark mode */
   .dark .fc {
     color: #f9fafb;
@@ -46,16 +107,17 @@
     background-color: #4b5563;
   }
   .dark .fc-daygrid-day.fc-day-today {
-    background-color: rgba(96, 165, 250, 0.2); /* A semi-transparent blue */
+    background-color: rgba(96, 165, 250, 0.2);
   }
 </style>
 </head>
 <body>
 
 <div class="oauth-app-container">
-  <div class="flex flex-col p-4 md:p-8 space-y-4 w-full">
+  <div class="dashboard-layout">
 
-    <div id="calendar-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px]">
+    <!-- Calendar Section -->
+    <div id="calendar-section">
       <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
         <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center">Sign in to view your Google Calendar</h2>
         <div id="g_id_onload"
@@ -65,13 +127,20 @@
              data-callback="handleCredentialResponse"
              data-auto_prompt="false">
         </div>
-        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="dark" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="pill"
+             data-theme="dark"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left"></div>
       </div>
       
       <div id="calendar-content" class="hidden flex flex-col flex-grow">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg md:text-xl lg:text-2xl font-semibold">Your Calendar</h2>
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
+          <button id="signout_button"
+                  class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
             Sign Out
           </button>
         </div>
@@ -79,22 +148,31 @@
       </div>
     </div>
 
-    <div id="messaging-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px] hidden">
+    <!-- Messaging Section -->
+    <div id="messaging-section" class="hidden">
       <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-grow-scroll mb-4 min-h-[100px]">
+      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-grow mb-4 min-h-[100px]">
         <div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
       </div>
       <div class="flex flex-col space-y-4">
-        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-y min-h-[80px]"></textarea>
+        <textarea id="message-input"
+                  placeholder="Type your message..."
+                  class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-y min-h-[80px]"></textarea>
         <div class="flex items-center space-x-2">
-          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-full transition-colors">
+          <label for="file-input"
+                 class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-full transition-colors">
             Add Image
           </label>
           <input id="file-input" type="file" class="hidden" accept="image/*">
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled" disabled>Send</button>
+        <button id="send-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled"
+                disabled>
+          Send
+        </button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -186,10 +264,6 @@
                 try {
                     const calendarListResponse = await gapi.client.calendar.calendarList.list();
                     const calendars = calendarListResponse.result.items;
-                    
-                    // --- DEBUGGING LINE ADDED ---
-                    // This will show us exactly which calendars the API found.
-                    console.log("Found these calendars in your list:", calendars);
 
                     const eventPromises = calendars.map(cal => {
                         return gapi.client.calendar.events.list({
