@@ -182,23 +182,23 @@
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,listWeek'
             },
-            // THIS IS THE MODIFIED SECTION
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
-                    // 1. Get the list of all the user's calendars
                     const calendarListResponse = await gapi.client.calendar.calendarList.list();
                     const calendars = calendarListResponse.result.items;
+                    
+                    // --- DEBUGGING LINE ADDED ---
+                    // This will show us exactly which calendars the API found.
+                    console.log("Found these calendars in your list:", calendars);
 
-                    // 2. Create a list of promises to fetch events for each calendar
                     const eventPromises = calendars.map(cal => {
                         return gapi.client.calendar.events.list({
-                            'calendarId': cal.id, // Use the specific calendar ID
+                            'calendarId': cal.id,
                             'timeMin': fetchInfo.start.toISOString(),
                             'timeMax': fetchInfo.end.toISOString(),
                             'showDeleted': false,
                             'singleEvents': true,
                         }).then(response => {
-                            // Tag each event with its calendar's color
                             return response.result.items.map(event => ({
                                 ...event,
                                 color: cal.backgroundColor 
@@ -206,18 +206,15 @@
                         });
                     });
 
-                    // 3. Wait for all event requests to complete
                     const allEventArrays = await Promise.all(eventPromises);
-
-                    // 4. Flatten the array of arrays and format for FullCalendar
                     const allEvents = allEventArrays.flat().map(event => ({
                         title: event.summary,
                         start: event.start.dateTime || event.start.date,
                         end: event.end.dateTime || event.end.date,
                         url: event.htmlLink,
                         allDay: !event.start.dateTime,
-                        backgroundColor: event.color, // Apply the calendar's color
-                        borderColor: event.color // Use same color for border
+                        backgroundColor: event.color,
+                        borderColor: event.color
                     }));
                     
                     successCallback(allEvents);
