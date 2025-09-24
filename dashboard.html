@@ -85,87 +85,111 @@
           <input id="file-input" type="file" class="hidden" accept="image/*">
           <div id="image-preview-container" class="flex items-center space-x-2"></div>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900" disabled>Send</button>
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled" disabled>Send</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-(function(){
+(function() {
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
     const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send';
-    
-    let accessToken = null;
-    let userProfile = null; // Store user profile info for email "From" field
+
+    let tokenClient;
 
     // --- DOM Elements ---
     const authArea = document.getElementById('auth-area');
     const calendarContent = document.getElementById('calendar-content');
     const messagingSection = document.getElementById('messaging-section');
+    const signoutButton = document.getElementById('signout_button');
     const sendButton = document.getElementById('send-button');
     const messageLog = document.getElementById('message-log');
     const messageInput = document.getElementById('message-input');
+    const eventList = document.getElementById("event-list");
     
-    // Add a listener to the send button
+    // --- Event Listeners ---
+    signoutButton.addEventListener('click', handleSignOut);
     sendButton.addEventListener('click', sendEmail);
+    messageInput.addEventListener('input', () => {
+        const hasText = messageInput.value.trim() !== '';
+        sendButton.disabled = !hasText;
+        sendButton.classList.toggle('disabled', !hasText);
+    });
 
-    // --- Sign-in Callback from Google ---
+    // --- Initialization ---
+    // 1. Initialize the GAPI client with required API discovery documents
+    function initializeGapiClient() {
+        gapi.client.init({
+            discoveryDocs: [
+                "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+                "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+            ],
+        }).then(() => {
+            console.log("GAPI client initialized for Calendar and Gmail APIs.");
+        }).catch(err => {
+            console.error("Error initializing GAPI client:", err);
+            logMessage("Error: Could not initialize Google APIs. Please refresh the page.", "error");
+        });
+    }
+    // Load the GAPI client script, then call the initialization function
+    gapi.load('client', initializeGapiClient);
+
+    // 2. This function is called by the HTML data-callback attribute after user signs in.
+    // Its job is to request the access token for the APIs.
     window.handleCredentialResponse = (response) => {
-        console.log("ID token received, now requesting access token...");
-        const tokenClient = google.accounts.oauth2.initTokenClient({
+        console.log("ID token received. Requesting API access token...");
+        tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: API_SCOPES,
-            callback: (tokenResponse) => {
+            callback: (tokenResponse) => { // This callback receives the access token
                 if (tokenResponse && tokenResponse.access_token) {
-                    accessToken = tokenResponse.access_token;
-                    
-                    // --- New: Load Gmail API and get user profile ---
-                    gapi.client.load('gmail', 'v1', () => {
-                      gapi.client.gmail.users.getProfile({ 'userId': 'me' }).then(profileResponse => {
-                        userProfile = profileResponse.result;
-                        console.log('User profile loaded:', userProfile);
-                        console.log('Access token obtained. Initializing GAPI...');
-                        gapi.client.init({
-                            accessToken: accessToken,
-                            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
-                        }).then(() => {
-                            updateUIForSignIn();
-                            listUpcomingEvents();
-                        });
-                      });
-                    });
+                    // Store the token with the GAPI client for use in all subsequent API calls
+                    gapi.client.setToken(tokenResponse);
+                    handleAuthSuccess();
                 } else {
-                    console.error('Failed to get access token.');
-                    updateUIForSignOut();
+                    console.error('Failed to get access token.', tokenResponse);
+                    logMessage("Authorization failed. Please try again.", "error");
                 }
             },
         });
+        // This prompts the user for authorization (the "approve scope" part)
         tokenClient.requestAccessToken();
     };
 
-    // --- GAPI Initialization ---
-    function initializeGapi(){
-      gapi.load('client', () => {
-        console.log('gapi client loaded.');
-      });
+    // --- Core Application Logic ---
+    function handleAuthSuccess() {
+        console.log("Authorization successful.");
+        updateUIForSignIn();
+        listUpcomingEvents();
     }
 
-    // --- Calendar API Call ---
+    function handleSignOut() {
+        const token = gapi.client.getToken();
+        if (token) {
+            google.accounts.oauth2.revoke(token.access_token, () => {
+                console.log('Access token revoked.');
+                gapi.client.setToken(null); // Clear the token from the GAPI client
+                updateUIForSignOut();
+            });
+        }
+        updateUIForSignOut(); // Update UI immediately regardless
+    }
+
     async function listUpcomingEvents() {
+        logMessage("Fetching calendar events...", "info");
         try {
             const response = await gapi.client.calendar.events.list({
-                calendarId: "primary",
-                timeMin: (new Date()).toISOString(),
-                showDeleted: false,
-                singleEvents: true,
-                maxResults: 10,
-                orderBy: "startTime"
+                'calendarId': 'primary',
+                'timeMin': (new Date()).toISOString(),
+                'showDeleted': false,
+                'singleEvents': true,
+                'maxResults': 10,
+                'orderBy': 'startTime',
             });
             
             const events = response.result.items;
-            const eventList = document.getElementById("event-list");
-            eventList.innerHTML = "";
+            eventList.innerHTML = ""; // Clear previous events
             
             if (!events || events.length === 0) {
                 eventList.innerHTML = "<p class='text-gray-500 dark:text-gray-400 text-center'>No upcoming events found.</p>";
@@ -177,110 +201,99 @@
                 const div = document.createElement("div");
                 div.className = "bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm";
                 div.innerHTML = `<h3 class="font-semibold text-lg">${ev.summary || 'No Title'}</h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">${new Date(start).toLocaleString()}</p>`;
+                                 <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">${new Date(start).toLocaleString()}</p>`;
                 eventList.appendChild(div);
             });
-        } catch (e) {
-            console.error('Calendar error:', e);
-            updateUIForSignOut();
+        } catch (err) {
+            console.error('Calendar API error:', err);
+            logMessage(`Error fetching calendar events: ${err.result?.error?.message || 'Unknown error'}. You may need to sign out and sign back in.`, "error");
+            handleSignOut();
         }
     }
-    
-    // --- New: Email Sending Function ---
+
     async function sendEmail() {
-      if (!accessToken || !userProfile) {
-        logMessage("Error: Not signed in or profile not loaded.", "error");
-        return;
-      }
-      
-      const messageText = messageInput.value;
-      if (!messageText.trim()) {
-        logMessage("Message cannot be empty.", "error");
-        return;
-      }
-      
-      // We will send to a fixed email for this demo
-      const recipient = userProfile.emailAddress;
-      const subject = "Message from My Dashboard";
-      const messageBody = `To: ${recipient}\nSubject: ${subject}\n\n${messageText}`;
-      
-      const base64EncodedEmail = base64url(messageBody);
-      
-      logMessage("Sending email...", "info");
-      sendButton.disabled = true;
-
-      try {
-        const response = await gapi.client.gmail.users.messages.send({
-          'userId': 'me',
-          'resource': {
-            'raw': base64EncodedEmail
-          }
-        });
+        let userProfile;
+        try {
+            // Get user's email address to use as the sender and recipient
+            const profileResponse = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
+            userProfile = profileResponse.result;
+        } catch (err) {
+            logMessage("Error: Could not retrieve your email address.", "error");
+            return;
+        }
         
-        console.log("Email sent successfully:", response.result);
-        logMessage("Email sent successfully!", "success");
-        messageInput.value = ""; // Clear the input field
-      } catch (e) {
-        console.error("Failed to send email:", e);
-        logMessage(`Failed to send email. Error: ${e.result.error.message}`, "error");
-      } finally {
-        sendButton.disabled = false;
-      }
-    }
-    
-    // --- New: Base64 Encoding Utility ---
-    function base64url(str) {
-      return btoa(str)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+        const messageText = messageInput.value;
+        if (!messageText.trim()) return;
+
+        // The Gmail API requires a valid RFC 2822 formatted email in base64url format.
+        const emailLines = [
+            `To: ${userProfile.emailAddress}`,
+            `From: ${userProfile.emailAddress}`,
+            `Subject: Message from My Dashboard`,
+            'Content-Type: text/plain; charset=utf-8',
+            '',
+            messageText
+        ];
+        const email = emailLines.join('\r\n');
+        const base64EncodedEmail = btoa(unescape(encodeURIComponent(email))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        
+        logMessage("Sending email...", "info");
+        sendButton.disabled = true;
+        sendButton.classList.add('disabled');
+
+        try {
+            await gapi.client.gmail.users.messages.send({
+                'userId': 'me',
+                'resource': { 'raw': base64EncodedEmail }
+            });
+            logMessage("Email sent successfully!", "success");
+            messageInput.value = ""; // Clear the input field
+        } catch (err) {
+            console.error("Failed to send email:", err);
+            logMessage(`Failed to send email: ${err.result?.error?.message || 'Unknown error'}.`, "error");
+            // Re-enable the button on failure
+            sendButton.disabled = false;
+            sendButton.classList.remove('disabled');
+        }
     }
 
-    // --- New: Message Log Utility ---
-    function logMessage(text, type) {
-      const p = document.createElement('p');
-      p.textContent = text;
-      p.className = 'text-sm mb-1';
-      if (type === 'success') {
-        p.classList.add('text-green-500');
-      } else if (type === 'error') {
-        p.classList.add('text-red-500');
-      } else {
-        p.classList.add('text-gray-900', 'dark:text-gray-200');
-      }
-      messageLog.appendChild(p);
-      messageLog.scrollTop = messageLog.scrollHeight;
-    }
-
-    // --- UI State Management ---
+    // --- UI and Utilities ---
     function updateUIForSignIn() {
         authArea.classList.add('hidden');
         calendarContent.classList.remove('hidden');
         messagingSection.classList.remove('hidden');
-        sendButton.disabled = false;
-        sendButton.classList.remove('disabled');
     }
 
     function updateUIForSignOut() {
         authArea.classList.remove('hidden');
         calendarContent.classList.add('hidden');
         messagingSection.classList.add('hidden');
-        sendButton.disabled = true;
-        sendButton.classList.add('disabled');
-        userProfile = null;
+        messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`;
+        eventList.innerHTML = "";
+        messageInput.value = "";
     }
     
-    // --- Sign Out Logic ---
-    document.getElementById("signout_button").onclick = () => {
-        google.accounts.id.revoke(accessToken, done => {
-          console.log('revoked: ' + done);
-          updateUIForSignOut();
-        });
-    };
-
-    // Ensure initial UI state is correct
+    function logMessage(text, type = 'info') {
+        if (messageLog.children.length === 1 && messageLog.firstChild.textContent.startsWith('Your sent messages')) {
+            messageLog.innerHTML = '';
+        }
+        const p = document.createElement('p');
+        p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+        p.className = 'text-sm mb-1';
+        
+        const colors = {
+            success: 'text-green-500',
+            error: 'text-red-500',
+            info: 'text-gray-900 dark:text-gray-200'
+        };
+        p.classList.add(colors[type]);
+        
+        messageLog.appendChild(p);
+        messageLog.scrollTop = messageLog.scrollHeight;
+    }
+    
+    // Set initial UI state on page load
     updateUIForSignOut();
-    initializeGapi();
 })();
 </script>
 </body>
