@@ -9,97 +9,72 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-gray-100">
-  <div class="oauth-app-container h-screen">
-    <div class="dashboard-layout">
-      <!-- Calendar -->
-      <section id="calendar-section">
-        <!-- Before login -->
-        <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-          <h2 class="text-lg font-semibold text-center">Sign in to view your Google Calendar</h2>
-          <div id="g_id_onload"
-            data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
-            data-context="signin"
-            data-ux_mode="popup"
-            data-callback="handleCredentialResponse"
-            data-auto_prompt="false"></div>
-          <div class="g_id_signin"
-            data-type="standard"
-            data-shape="pill"
-            data-theme="dark"
-            data-text="signin_with"
-            data-size="large"
-            data-logo_alignment="left"></div>
+  <div class="oauth-app-container h-screen flex flex-col md:flex-row gap-4 p-4">
+
+    <!-- Calendar Section -->
+    <section id="calendar-section" class="flex-1 flex flex-col bg-white rounded-xl shadow-lg p-4 overflow-hidden min-h-[400px]">
+      <!-- Auth Area -->
+      <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
+        <h2 class="text-lg font-semibold text-center">Sign in to view your Google Calendar</h2>
+        <div id="g_id_onload"
+          data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
+          data-context="signin"
+          data-ux_mode="popup"
+          data-callback="handleCredentialResponse"
+          data-auto_prompt="false"></div>
+        <div class="g_id_signin"
+          data-type="standard"
+          data-shape="pill"
+          data-theme="dark"
+          data-text="signin_with"
+          data-size="large"
+          data-logo_alignment="left"></div>
+      </div>
+
+      <!-- Calendar Content -->
+      <div id="calendar-content" class="hidden flex flex-col flex-grow">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold">Your Calendar</h2>
+          <button id="signout_button"
+            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full">
+            Sign Out
+          </button>
         </div>
+        <div id="calendar-container" class="flex-grow overflow-y-auto border rounded p-2"></div>
+      </div>
+    </section>
 
-        <!-- After login -->
-        <div id="calendar-content" class="hidden flex flex-col flex-grow h-full">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold">Your Calendar</h2>
-            <button id="signout_button"
-              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full">
-              Sign Out
-            </button>
-          </div>
-          <div id="calendar-container" class="flex-grow overflow-y-auto"></div>
-        </div>
-      </section>
+    <!-- Messaging Section -->
+    <section id="messaging-section" class="flex-1 flex flex-col bg-white rounded-xl shadow-lg p-4 overflow-hidden min-h-[400px] hidden">
+      <h2 class="text-lg font-semibold mb-4">Send a Message</h2>
+      <div id="message-log" class="flex-grow overflow-y-auto p-3 mb-4 bg-gray-50 rounded">
+        <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
+      </div>
 
-      <!-- Messaging -->
-      <section id="messaging-section" class="hidden">
-        <h2 class="text-lg font-semibold mb-4">Send a Message</h2>
-        <div id="message-log" class="bg-gray-50 p-3 rounded mb-4 flex-grow overflow-y-auto">
-          <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
-        </div>
+      <textarea id="message-input" placeholder="Type your message..."
+        class="rounded border px-3 py-2 min-h-[80px] flex-shrink-0 w-full mb-2"></textarea>
 
-        <textarea id="message-input" placeholder="Type your message..."
-          class="rounded border px-3 py-2 min-h-[80px] flex-shrink-0"></textarea>
+      <div class="flex items-center gap-2 mb-2">
+        <label for="file-input"
+          class="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-full font-bold">Add Image</label>
+        <input id="file-input" type="file" accept="image/*" class="hidden" />
+      </div>
 
-        <div class="flex items-center gap-2 mt-2 flex-shrink-0">
-          <label for="file-input"
-            class="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-full font-bold">Add Image</label>
-          <input id="file-input" type="file" accept="image/*" class="hidden" />
-        </div>
+      <!-- Image Preview -->
+      <div id="image-preview" class="flex gap-2 mb-2 flex-wrap"></div>
 
-        <button id="send-button"
-          class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full mt-4 disabled"
-          disabled>Send</button>
-      </section>
-    </div>
+      <button id="send-button"
+        class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full mt-2 disabled"
+        disabled>Send</button>
+    </section>
+
   </div>
-
-  <style>
-    .dashboard-layout {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      height: 100%;
-    }
-    @media(min-width:1280px){
-      .dashboard-layout {
-        flex-direction: row;
-      }
-    }
-    section {
-      flex: 1 1 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 0; /* critical to allow children scroll */
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-      padding: 1.25rem;
-      overflow: hidden;
-    }
-    #calendar-container, #message-log {
-      min-height: 0;
-    }
-  </style>
 
   <script>
     let accessToken = null;
     let userEmail = null;
+    let attachedImages = [];
 
-    // Called when Google Identity Services returns credential
     async function handleCredentialResponse(response) {
       try {
         const client = google.accounts.oauth2.initTokenClient({
@@ -109,9 +84,10 @@
             accessToken = tokenResponse.access_token;
             sessionStorage.setItem("googleAccessToken", accessToken);
 
-            // Load user profile to fetch email
             await gapi.client.init({});
             gapi.client.setToken({ access_token: accessToken });
+
+            // Fetch user email
             const profileResp = await gapi.client.request({ path: "https://www.googleapis.com/oauth2/v2/userinfo" });
             userEmail = profileResp.result.email;
 
@@ -120,7 +96,7 @@
             document.getElementById("messaging-section").classList.remove("hidden");
 
             loadCalendar();
-            enableMessaging();
+            setupMessaging();
           }
         });
         client.requestAccessToken();
@@ -137,6 +113,8 @@
       document.getElementById("calendar-content").classList.add("hidden");
       document.getElementById("messaging-section").classList.add("hidden");
       document.getElementById("auth-area").classList.remove("hidden");
+      attachedImages = [];
+      document.getElementById("image-preview").innerHTML = "";
     }
     document.getElementById("signout_button").onclick = signOut;
 
@@ -171,42 +149,84 @@
       }
     }
 
-    function enableMessaging() {
+    function setupMessaging() {
       const sendButton = document.getElementById("send-button");
       const messageInput = document.getElementById("message-input");
       const fileInput = document.getElementById("file-input");
       const log = document.getElementById("message-log");
+      const previewContainer = document.getElementById("image-preview");
+
+      fileInput.addEventListener("change", e => {
+        const files = Array.from(e.target.files);
+        attachedImages = [];
+        previewContainer.innerHTML = "";
+        files.forEach(file => {
+          if (!file.type.startsWith("image/")) return;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            attachedImages.push(ev.target.result);
+            const img = document.createElement("img");
+            img.src = ev.target.result;
+            img.className = "h-16 w-16 rounded border";
+            previewContainer.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      messageInput.addEventListener("input", () => {
+        sendButton.disabled = !messageInput.value.trim() && !attachedImages.length;
+        sendButton.classList.toggle("disabled", sendButton.disabled);
+      });
 
       sendButton.disabled = false;
       sendButton.classList.remove("disabled");
 
       sendButton.onclick = async () => {
         const msgText = messageInput.value.trim();
-        if (!msgText) return;
-
         const subject = `Message received from ${userEmail || "unknown sender"}`;
-        const raw = [
-          `From: ${userEmail}`,
-          "To: save@mie.today",
-          `Subject: ${subject}`,
-          "Content-Type: text/plain; charset=utf-8",
-          "",
-          msgText
-        ].join("\n");
+
+        // Construct MIME email with attachments
+        let boundary = "foo_bar_baz";
+        let body = "";
+        body += `From: ${userEmail}\r\n`;
+        body += `To: save@mie.today\r\n`;
+        body += `Subject: ${subject}\r\n`;
+        body += `MIME-Version: 1.0\r\n`;
+        body += `Content-Type: multipart/mixed; boundary=${boundary}\r\n\r\n`;
+
+        body += `--${boundary}\r\nContent-Type: text/plain; charset="UTF-8"\r\n\r\n`;
+        body += msgText + "\r\n\r\n";
+
+        attachedImages.forEach((imgData, idx) => {
+          let base64Content = imgData.split(",")[1];
+          body += `--${boundary}\r\n`;
+          body += `Content-Type: image/png; name="attachment${idx+1}.png"\r\n`;
+          body += `Content-Transfer-Encoding: base64\r\n`;
+          body += `Content-Disposition: attachment; filename="attachment${idx+1}.png"\r\n\r\n`;
+          body += base64Content + "\r\n\r\n";
+        });
+
+        body += `--${boundary}--`;
+
+        const base64Encoded = btoa(unescape(encodeURIComponent(body))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
         try {
-          const b64 = btoa(unescape(encodeURIComponent(raw))).replace(/\+/g, "-").replace(/\//g, "_");
           await gapi.client.gmail.users.messages.send({
             userId: "me",
-            resource: { raw: b64 }
+            resource: { raw: base64Encoded }
           });
 
           const entry = document.createElement("div");
           entry.className = "p-2 bg-green-100 rounded mb-2 text-sm";
           entry.textContent = `Sent: ${msgText}`;
           log.appendChild(entry);
+
+          // Reset
           messageInput.value = "";
           fileInput.value = "";
+          previewContainer.innerHTML = "";
+          attachedImages = [];
         } catch (err) {
           console.error("Message send error", err);
           const entry = document.createElement("div");
