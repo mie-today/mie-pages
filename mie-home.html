@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIE Home</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 
+<meta name="google-signin-client_id" content="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com">
 <script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; background-color:#f3f4f6; }
+
   .calendar {
     width: 100%; max-width: 500px; height: 70vh; margin: auto; border: 1px solid #ccc; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column;
   }
@@ -23,6 +26,7 @@
   .calendar-dates { flex: 1; overflow-y: auto; }
   .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; }
   .calendar-dates div:hover { background:#e6f2ff; }
+
   @media(max-width:600px){
     .calendar { max-width:100%; border-radius:8px; height: 60vh; }
     .calendar-header span{font-size:1em;}
@@ -57,7 +61,7 @@
 
 <script>
 /* ---------------- Calendar Logic ---------------- */
-const monthNames = ["January","February","March","March","April","May","June","July","August","September","October","November","December"];
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
@@ -89,12 +93,10 @@ function onSuccess(googleUser) {
   const accessToken = googleUser.getAuthResponse().access_token;
   const profile = googleUser.getBasicProfile();
   
-  // Store the access token in sessionStorage
   sessionStorage.setItem("googleAccessToken", accessToken);
   
   console.log('Logged in as: ' + profile.getName());
   
-  // Redirect to dashboard immediately
   window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
 }
 
