@@ -14,13 +14,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
-.oauth-app-container { font-family: 'Inter', sans-serif; }
-.oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
-.oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
-.oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
-.dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
-.dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#6b7280; }
-.oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
+    color: #1f2937;
+  }
+  .dark body {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+  .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
+  .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
+  .disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 </style>
 </head>
 <body>
@@ -29,10 +41,22 @@
   <div class="flex flex-col p-4 md:p-8 space-y-4 w-full">
 
     <div id="calendar-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px]">
-      <div id="loading-message" class="flex flex-col items-center justify-center space-y-4 h-full">
-        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center">Loading Google Calendar</h2>
-        <div id="status-message" class="text-center text-sm text-gray-600 mb-4">
-          Connecting to your calendar...
+      <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
+        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center">Sign in to view your Google Calendar</h2>
+        <div id="g_id_onload"
+             data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="onSuccess"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="pill"
+             data-theme="dark"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
         </div>
       </div>
       <div id="calendar-content" class="hidden flex flex-col flex-grow">
@@ -46,7 +70,7 @@
       </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px]">
+    <div id="messaging-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px] hidden">
       <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-4">Send a Message</h2>
       <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-grow-scroll mb-4 min-h-[100px]">
         <div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
@@ -60,7 +84,7 @@
           <input id="file-input" type="file" class="hidden" accept="image/*">
           <div id="image-preview-container" class="flex items-center space-x-2"></div>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors">Send</button>
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900" disabled>Send</button>
       </div>
     </div>
   </div>
@@ -69,60 +93,40 @@
 <script>
 (function(){
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    const HOME_URL = "https://rylhong.github.io/mie-pages/mie-home.html";
     const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
     
     let accessToken = null;
     let gapiInitialized = false;
 
-    function updateStatus(message, isError = false) {
-        const statusEl = document.getElementById('status-message');
-        if (statusEl) {
-            statusEl.textContent = message;
-            statusEl.className = `text-center text-sm mb-4 ${isError ? 'text-red-600' : 'text-gray-600'}`;
-        }
-        console.log('Dashboard Status:', message);
-    }
+    // --- DOM Elements ---
+    const authArea = document.getElementById('auth-area');
+    const calendarContent = document.getElementById('calendar-content');
+    const messagingSection = document.getElementById('messaging-section');
+    const sendButton = document.getElementById('send-button');
 
-    function redirectToHome() {
-        console.log('Redirecting to home');
-        alert('Please log in first.');
-        window.location.href = HOME_URL;
-    }
-
-    function handleTokenResponse(response) {
-      if (response && response.access_token) {
-        accessToken = response.access_token;
-        console.log('Successfully obtained access token:', accessToken);
-        initializeGapiClient();
-      } else {
-        updateStatus('Failed to get access token', true);
-        redirectToHome();
-      }
-    }
-
-    window.onload = function() {
-        const credential = sessionStorage.getItem("googleCredential");
-        if (credential) {
-            updateStatus('Authenticating...');
-            const tokenClient = google.accounts.oauth2.initTokenClient({
-              client_id: CLIENT_ID,
-              scope: CALENDAR_SCOPE,
-              callback: handleTokenResponse,
-            });
-            tokenClient.requestAccessToken({
-                prompt: 'none' // This prevents the second pop-up if the user is already authenticated
-            });
-        } else {
-            updateStatus('No authentication found', true);
-            setTimeout(redirectToHome, 2000);
-        }
+    // --- Sign-in Callback for GIS ---
+    window.onSuccess = (response) => {
+        console.log('Google Sign-in successful!');
+        const tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: CALENDAR_SCOPE,
+            callback: (tokenResponse) => {
+                if (tokenResponse && tokenResponse.access_token) {
+                    accessToken = tokenResponse.access_token;
+                    initializeGapiClient();
+                } else {
+                    console.error('Failed to get access token');
+                    updateUIForSignOut();
+                }
+            },
+        });
+        tokenClient.requestAccessToken();
     };
-    
+
+    // --- GAPI Initialization ---
     async function initializeGapiClient(){
       if (accessToken) {
         try {
-          updateStatus('Initializing Google APIs...');
           await gapi.client.init({
             accessToken: accessToken,
             discoveryDocs: [
@@ -130,22 +134,18 @@
             ]
           });
           gapiInitialized = true;
-          updateStatus('Loading calendar events...');
-          await listUpcomingEvents();
-          
-          document.getElementById("loading-message").classList.add("hidden");
-          document.getElementById("calendar-content").classList.remove("hidden");
+          updateUIForSignIn();
+          listUpcomingEvents();
         } catch (error) {
           console.error('GAPI initialization failed:', error);
-          updateStatus('Failed to connect to Google services', true);
-          setTimeout(redirectToHome, 3000);
+          updateUIForSignOut();
         }
       } else {
-        updateStatus('Access token not available.', true);
-        setTimeout(redirectToHome, 2000);
+        updateUIForSignOut();
       }
     }
 
+    // --- Calendar API Call ---
     async function listUpcomingEvents() {
         try {
             const response = await gapi.client.calendar.events.list({
@@ -163,7 +163,6 @@
             
             if (!events || events.length === 0) {
                 eventList.innerHTML = "<p class='text-gray-500 dark:text-gray-400 text-center'>No upcoming events found.</p>";
-                updateStatus('Calendar connected - no events found');
                 return;
             }
             
@@ -175,26 +174,46 @@
                     <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">${new Date(start).toLocaleString()}</p>`;
                 eventList.appendChild(div);
             });
-            
-            updateStatus('Calendar loaded successfully');
         } catch (e) {
             console.error('Calendar error:', e);
-            if (e.status === 401 || e.status === 403) {
-                updateStatus('Authentication expired. Please log in again.', true);
-                sessionStorage.removeItem("googleCredential");
-                setTimeout(redirectToHome, 2000);
-            } else {
-                document.getElementById("event-list").innerHTML = "<p class='text-red-500 text-center'>Error loading events. Please try refreshing.</p>";
-                updateStatus('Error loading calendar events', true);
-            }
+            updateUIForSignOut();
         }
     }
 
+    // --- UI State Management ---
+    function updateUIForSignIn() {
+        authArea.classList.add('hidden');
+        calendarContent.classList.remove('hidden');
+        messagingSection.classList.remove('hidden');
+        sendButton.disabled = false;
+        sendButton.classList.remove('disabled');
+    }
+
+    function updateUIForSignOut() {
+        authArea.classList.remove('hidden');
+        calendarContent.classList.add('hidden');
+        messagingSection.classList.add('hidden');
+        sendButton.disabled = true;
+        sendButton.classList.add('disabled');
+    }
+
+    // --- Sign Out Logic ---
     document.getElementById("signout_button").onclick = () => {
-        sessionStorage.removeItem("googleCredential");
-        console.log('User signed out');
-        window.location.href = HOME_URL;
+        google.accounts.id.disableAutoSelect(); // Disables auto-login on next visit
+        const auth2 = gapi.auth2.getAuthInstance();
+        if (auth2) {
+            auth2.signOut().then(() => {
+                console.log('User signed out.');
+                accessToken = null;
+                updateUIForSignOut();
+            }).catch(e => {
+                console.error('Sign-out error:', e);
+            });
+        }
     };
+    
+    // Initial UI state
+    updateUIForSignOut();
 })();
 </script>
 </body>
