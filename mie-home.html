@@ -7,7 +7,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
-<meta name="google-signin-client_id" content="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; background-color:#f3f4f6; }
@@ -75,12 +75,26 @@
 </div>
 
 <div class="signin-container">
-  <div id="my-signin2"></div>
+  <div id="g_id_onload"
+       data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="onSuccess"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin"
+       data-type="standard"
+       data-shape="pill"
+       data-theme="dark"
+       data-text="signin_with"
+       data-size="large"
+       data-logo_alignment="left">
+  </div>
 </div>
 
 <script>
 /* ---------------- Calendar Logic ---------------- */
-const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const monthNames = ["January","February","March","March","April","May","June","July","August","September","October","November","December"];
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
@@ -108,37 +122,41 @@ function changeMonth(delta){
 renderCalendar(currentMonth, currentYear);
 
 /* ---------------- Google Sign-In Logic ---------------- */
-function onSuccess(googleUser){
-  const accessToken = googleUser.getAuthResponse().access_token;
-  const profile = googleUser.getBasicProfile();
+// New onSuccess function to handle the credential response
+function onSuccess(response) {
+  // Decode the JWT credential
+  const credential = response.credential;
+  const decodedToken = parseJwt(credential);
   
-  // Store token in sessionStorage
-  sessionStorage.setItem("googleAccessToken", accessToken);
+  // The decoded token contains user information
+  const userEmail = decodedToken.email;
+  const userName = decodedToken.name;
   
-  console.log('Logged in as: ' + profile.getName());
+  console.log('Logged in as: ' + userName);
+  console.log('User Email: ' + userEmail);
+
+  // Since you only need to redirect, the decoded token is not strictly necessary,
+  // but it's good practice to understand what you've received.
   
   // Redirect to dashboard immediately
   window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
 }
 
-function onFailure(error){
+function onFailure(error) {
   console.error('Sign-in failed:', error);
 }
 
-function renderButton(){
-  gapi.signin2.render('my-signin2',{
-    'scope':'profile email https://www.googleapis.com/auth/calendar.readonly',
-    'width':240,
-    'height':50,
-    'longtitle':true,
-    'theme':'dark',
-    'onsuccess':onSuccess,
-    'onfailure':onFailure
-  });
+// Helper function to decode the JWT
+function parseJwt(token) {
+  const base64Url = token.split('.')[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+  return JSON.parse(jsonPayload);
 }
-</script>
 
-<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
+</script>
 
 </body>
 </html>
