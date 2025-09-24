@@ -15,12 +15,12 @@
   .calendar {
     width: 100%;
     max-width: 500px;
-    height: 70vh; /* reactive height based on viewport */
+    height: 70vh;
     margin: auto;
     border: 1px solid #ccc;
     border-radius: 12px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    overflow-y: auto; /* allow vertical scroll only if content exceeds */
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
   }
@@ -40,11 +40,10 @@
 
   .calendar-days, .calendar-dates { display: grid; grid-template-columns: repeat(7,1fr); }
   .calendar-days div { font-weight: bold; padding: 0.3em; font-size:0.9em; }
-  .calendar-dates { flex: 1; overflow-y: auto; } /* make dates section grow & scrollable if needed */
+  .calendar-dates { flex: 1; overflow-y: auto; }
   .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; }
   .calendar-dates div:hover { background:#e6f2ff; }
 
-  /* Responsive adjustments */
   @media(max-width:600px){
     .calendar { max-width:100%; border-radius:8px; height: 60vh; }
     .calendar-header span{font-size:1em;}
@@ -122,27 +121,18 @@ function changeMonth(delta){
 renderCalendar(currentMonth, currentYear);
 
 /* ---------------- Google Sign-In Logic ---------------- */
-// New onSuccess function to handle the credential response
-function onSuccess(response) {
-  // Decode the JWT credential
-  const credential = response.credential;
-  const decodedToken = parseJwt(credential);
-  
-  // The decoded token contains user information
-  const userEmail = decodedToken.email;
-  const userName = decodedToken.name;
-  
-  console.log('Logged in as: ' + userName);
-  console.log('User Email: ' + userEmail);
+function onSuccess(response){
+  // Store the JWT credential
+  sessionStorage.setItem("googleCredential", response.credential);
 
-  // Since you only need to redirect, the decoded token is not strictly necessary,
-  // but it's good practice to understand what you've received.
+  const decodedToken = parseJwt(response.credential);
+  console.log('Logged in as: ' + decodedToken.name);
   
   // Redirect to dashboard immediately
   window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
 }
 
-function onFailure(error) {
+function onFailure(error){
   console.error('Sign-in failed:', error);
 }
 
@@ -155,7 +145,6 @@ function parseJwt(token) {
   }).join(''));
   return JSON.parse(jsonPayload);
 }
-
 </script>
 
 </body>
