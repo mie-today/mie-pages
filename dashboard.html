@@ -96,12 +96,18 @@
     const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send';
     
     let accessToken = null;
+    let userProfile = null; // Store user profile info for email "From" field
 
     // --- DOM Elements ---
     const authArea = document.getElementById('auth-area');
     const calendarContent = document.getElementById('calendar-content');
     const messagingSection = document.getElementById('messaging-section');
     const sendButton = document.getElementById('send-button');
+    const messageLog = document.getElementById('message-log');
+    const messageInput = document.getElementById('message-input');
+    
+    // Add a listener to the send button
+    sendButton.addEventListener('click', sendEmail);
 
     // --- Sign-in Callback from Google ---
     window.handleCredentialResponse = (response) => {
@@ -112,13 +118,21 @@
             callback: (tokenResponse) => {
                 if (tokenResponse && tokenResponse.access_token) {
                     accessToken = tokenResponse.access_token;
-                    console.log('Access token obtained. Initializing GAPI...');
-                    gapi.client.init({
-                        accessToken: accessToken,
-                        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
-                    }).then(() => {
-                        updateUIForSignIn();
-                        listUpcomingEvents();
+                    
+                    // --- New: Load Gmail API and get user profile ---
+                    gapi.client.load('gmail', 'v1', () => {
+                      gapi.client.gmail.users.getProfile({ 'userId': 'me' }).then(profileResponse => {
+                        userProfile = profileResponse.result;
+                        console.log('User profile loaded:', userProfile);
+                        console.log('Access token obtained. Initializing GAPI...');
+                        gapi.client.init({
+                            accessToken: accessToken,
+                            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
+                        }).then(() => {
+                            updateUIForSignIn();
+                            listUpcomingEvents();
+                        });
+                      });
                     });
                 } else {
                     console.error('Failed to get access token.');
@@ -129,10 +143,9 @@
         tokenClient.requestAccessToken();
     };
 
-    // --- GAPI Initialization & UI Update ---
+    // --- GAPI Initialization ---
     function initializeGapi(){
       gapi.load('client', () => {
-        // gapi client is loaded, but not yet initialized with an access token
         console.log('gapi client loaded.');
       });
     }
@@ -171,6 +184,72 @@
             updateUIForSignOut();
         }
     }
+    
+    // --- New: Email Sending Function ---
+    async function sendEmail() {
+      if (!accessToken || !userProfile) {
+        logMessage("Error: Not signed in or profile not loaded.", "error");
+        return;
+      }
+      
+      const messageText = messageInput.value;
+      if (!messageText.trim()) {
+        logMessage("Message cannot be empty.", "error");
+        return;
+      }
+      
+      // We will send to a fixed email for this demo
+      const recipient = userProfile.emailAddress;
+      const subject = "Message from My Dashboard";
+      const messageBody = `To: ${recipient}\nSubject: ${subject}\n\n${messageText}`;
+      
+      const base64EncodedEmail = base64url(messageBody);
+      
+      logMessage("Sending email...", "info");
+      sendButton.disabled = true;
+
+      try {
+        const response = await gapi.client.gmail.users.messages.send({
+          'userId': 'me',
+          'resource': {
+            'raw': base64EncodedEmail
+          }
+        });
+        
+        console.log("Email sent successfully:", response.result);
+        logMessage("Email sent successfully!", "success");
+        messageInput.value = ""; // Clear the input field
+      } catch (e) {
+        console.error("Failed to send email:", e);
+        logMessage(`Failed to send email. Error: ${e.result.error.message}`, "error");
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+    
+    // --- New: Base64 Encoding Utility ---
+    function base64url(str) {
+      return btoa(str)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    // --- New: Message Log Utility ---
+    function logMessage(text, type) {
+      const p = document.createElement('p');
+      p.textContent = text;
+      p.className = 'text-sm mb-1';
+      if (type === 'success') {
+        p.classList.add('text-green-500');
+      } else if (type === 'error') {
+        p.classList.add('text-red-500');
+      } else {
+        p.classList.add('text-gray-900', 'dark:text-gray-200');
+      }
+      messageLog.appendChild(p);
+      messageLog.scrollTop = messageLog.scrollHeight;
+    }
 
     // --- UI State Management ---
     function updateUIForSignIn() {
@@ -187,6 +266,7 @@
         messagingSection.classList.add('hidden');
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
+        userProfile = null;
     }
     
     // --- Sign Out Logic ---
