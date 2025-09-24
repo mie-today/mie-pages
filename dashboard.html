@@ -47,7 +47,7 @@
              data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
              data-context="signin"
              data-ux_mode="popup"
-             data-callback="onSuccess"
+             data-callback="handleCredentialResponse"
              data-auto_prompt="false">
         </div>
         <div class="g_id_signin"
@@ -93,10 +93,9 @@
 <script>
 (function(){
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+    const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send';
     
     let accessToken = null;
-    let gapiInitialized = false;
 
     // --- DOM Elements ---
     const authArea = document.getElementById('auth-area');
@@ -104,18 +103,25 @@
     const messagingSection = document.getElementById('messaging-section');
     const sendButton = document.getElementById('send-button');
 
-    // --- Sign-in Callback for GIS ---
-    window.onSuccess = (response) => {
-        console.log('Google Sign-in successful!');
+    // --- Sign-in Callback from Google ---
+    window.handleCredentialResponse = (response) => {
+        console.log("ID token received, now requesting access token...");
         const tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
-            scope: CALENDAR_SCOPE,
+            scope: API_SCOPES,
             callback: (tokenResponse) => {
                 if (tokenResponse && tokenResponse.access_token) {
                     accessToken = tokenResponse.access_token;
-                    initializeGapiClient();
+                    console.log('Access token obtained. Initializing GAPI...');
+                    gapi.client.init({
+                        accessToken: accessToken,
+                        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"]
+                    }).then(() => {
+                        updateUIForSignIn();
+                        listUpcomingEvents();
+                    });
                 } else {
-                    console.error('Failed to get access token');
+                    console.error('Failed to get access token.');
                     updateUIForSignOut();
                 }
             },
@@ -123,26 +129,12 @@
         tokenClient.requestAccessToken();
     };
 
-    // --- GAPI Initialization ---
-    async function initializeGapiClient(){
-      if (accessToken) {
-        try {
-          await gapi.client.init({
-            accessToken: accessToken,
-            discoveryDocs: [
-              "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-            ]
-          });
-          gapiInitialized = true;
-          updateUIForSignIn();
-          listUpcomingEvents();
-        } catch (error) {
-          console.error('GAPI initialization failed:', error);
-          updateUIForSignOut();
-        }
-      } else {
-        updateUIForSignOut();
-      }
+    // --- GAPI Initialization & UI Update ---
+    function initializeGapi(){
+      gapi.load('client', () => {
+        // gapi client is loaded, but not yet initialized with an access token
+        console.log('gapi client loaded.');
+      });
     }
 
     // --- Calendar API Call ---
@@ -196,24 +188,18 @@
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
     }
-
+    
     // --- Sign Out Logic ---
     document.getElementById("signout_button").onclick = () => {
-        google.accounts.id.disableAutoSelect(); // Disables auto-login on next visit
-        const auth2 = gapi.auth2.getAuthInstance();
-        if (auth2) {
-            auth2.signOut().then(() => {
-                console.log('User signed out.');
-                accessToken = null;
-                updateUIForSignOut();
-            }).catch(e => {
-                console.error('Sign-out error:', e);
-            });
-        }
+        google.accounts.id.revoke(accessToken, done => {
+          console.log('revoked: ' + done);
+          updateUIForSignOut();
+        });
     };
-    
-    // Initial UI state
+
+    // Ensure initial UI state is correct
     updateUIForSignOut();
+    initializeGapi();
 })();
 </script>
 </body>
