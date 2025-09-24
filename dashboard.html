@@ -1,127 +1,209 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIE Dashboard</title>
+<!-- Add this CSS to your dashboard.html <head> section -->
+<style>
+.oauth-app-container { font-family: 'Inter', sans-serif; }
+.oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
+.oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
+.oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
+.dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
+.dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#6b7280; }
+.oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
+</style>
 
-<!-- Tailwind CSS -->
+<!-- Add Tailwind if not already included -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- FullCalendar -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+<!-- Add Inter font if not already included -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-</head>
-<body class="bg-gray-50">
+<!-- App Container (replace your existing calendar/messaging sections) -->
+<div class="oauth-app-container">
+  <div class="flex flex-col p-4 md:p-8 space-y-4 w-full">
 
-<div class="flex flex-col p-4 md:p-8 space-y-6 w-full h-screen">
+    <!-- Calendar Section -->
+    <div id="calendar-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px]">
+      <div id="loading-message" class="flex flex-col items-center justify-center space-y-4 h-full">
+        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center">Loading Google Calendar</h2>
+        <div id="status-message" class="text-center text-sm text-gray-600 mb-4">
+          Connecting to your calendar...
+        </div>
+      </div>
 
-  <!-- Calendar Section -->
-  <section id="calendar-section" class="bg-white rounded-xl shadow-lg p-6 flex flex-col w-full flex-1">
-    <h2 class="text-xl font-semibold mb-4">Upcoming Events</h2>
-    <div id="calendar" class="flex-1"></div>
-  </section>
-
-  <!-- Messaging Section -->
-  <section class="bg-white rounded-xl shadow-lg p-6 flex flex-col w-full flex-1">
-    <h2 class="text-xl font-semibold mb-4">Send a Message</h2>
-    <div id="message-log" class="bg-gray-50 p-4 rounded-lg flex-1 mb-4 overflow-auto">
-      <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
+      <div id="calendar-content" class="hidden flex flex-col flex-grow">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg md:text-xl lg:text-2xl font-semibold">Upcoming Events</h2>
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
+            Sign Out
+          </button>
+        </div>
+        <div id="event-list" class="space-y-4 pr-2 flex-grow-scroll"></div>
+      </div>
     </div>
-    <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 resize-y min-h-[80px] mb-2 w-full"></textarea>
-    <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full inline-block mb-2">
-      Add Image
-    </label>
-    <input id="file-input" type="file" class="hidden" accept="image/*">
-    <div id="image-preview-container" class="flex items-center space-x-2 mb-2"></div>
-    <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow w-full">Send</button>
-  </section>
 
+    <!-- Messaging Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col w-full flex-grow min-h-[400px]">
+      <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-4">Send a Message</h2>
+      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-grow-scroll mb-4 min-h-[100px]">
+        <div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
+      </div>
+      <div class="flex flex-col space-y-4">
+        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-y min-h-[80px]"></textarea>
+        <div class="flex items-center space-x-2">
+          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-full transition-colors">
+            Add Image
+          </label>
+          <input id="file-input" type="file" class="hidden" accept="image/*">
+          <div id="image-preview-container" class="flex items-center space-x-2"></div>
+        </div>
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors">Send</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<!-- Google API -->
+<!-- JavaScript - Add before closing </body> tag -->
 <script src="https://apis.google.com/js/api.js"></script>
 
 <script>
-(async function(){
-  // get token from sessionStorage
-  let accessToken = sessionStorage.getItem("googleAccessToken");
-  if(!accessToken){ alert("Missing token. Please login first."); return; }
+(function(){
+  const API_KEY = "AIzaSyAb7Np2XZc2mgJ9qZwTsZl-wuusrsDAeMQ";
+  const HOME_URL = "https://www.mie.today/mie-home"; // Change this to your actual mie-home URL
 
-  // initialize Google API client
-  gapi.load("client", async ()=>{
-    await gapi.client.init({
-      discoveryDocs:[
-        "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-        "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-      ]
-    });
-    gapi.client.setToken({ access_token: accessToken });
+  let accessToken = null;
+  let gapiInitialized = false;
 
-    // list user calendars
-    const calendarListResp = await gapi.client.calendar.calendarList.list();
-    const calendars = calendarListResp.result.items || [];
-
-    async function fetchEvents(start, end){
-      const events = [];
-      for(const cal of calendars){
-        const resp = await gapi.client.calendar.events.list({
-          calendarId: cal.id,
-          timeMin: start.toISOString(),
-          timeMax: end.toISOString(),
-          showDeleted:false,
-          singleEvents:true,
-          orderBy:"startTime"
-        });
-        resp.result.items.forEach(ev=>{
-          events.push({
-            title: ev.summary || "(No Title)",
-            start: ev.start.dateTime || ev.start.date,
-            end: ev.end.dateTime || ev.end.date,
-            url: ev.htmlLink,
-            backgroundColor: cal.backgroundColor || '#3788d8',
-            borderColor: cal.backgroundColor || '#3788d8'
-          });
-        });
-      }
-      return events;
+  // Status messages
+  function updateStatus(message, isError = false) {
+    const statusEl = document.getElementById('status-message');
+    if (statusEl) {
+      statusEl.textContent = message;
+      statusEl.className = `text-center text-sm mb-4 ${isError ? 'text-red-600' : 'text-gray-600'}`;
     }
+    console.log('Dashboard Status:', message);
+  }
 
-    // FullCalendar init
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView:'dayGridMonth',
-      headerToolbar:{ left:'prev,next today', center:'title', right:'' },
-      height:'100%',
-      events: async function(info, successCallback, failureCallback){
-        try{
-          const events = await fetchEvents(info.start, info.end);
-          successCallback(events);
-        }catch(e){ console.error(e); failureCallback(e); }
-      },
-      eventClick: function(info){
-        info.jsEvent.preventDefault();
-        window.open(info.event.url,'_blank');
+  // Redirect to home if not authenticated
+  function redirectToHome() {
+    console.log('No valid authentication found, redirecting to home');
+    alert('Please log in first');
+    window.location.href = HOME_URL;
+  }
+
+  // Check for valid authentication
+  function checkAuthentication() {
+    // Check sessionStorage (from your mie-home.html)
+    accessToken = sessionStorage.getItem("googleAccessToken");
+    
+    if (!accessToken) {
+      updateStatus('No authentication found', true);
+      setTimeout(redirectToHome, 2000);
+      return false;
+    }
+    
+    console.log('Authentication found in sessionStorage');
+    return true;
+  }
+
+  async function initializeGapiClient(){
+    try {
+      updateStatus('Initializing Google APIs...');
+      
+      await gapi.client.init({ 
+        apiKey: API_KEY, 
+        discoveryDocs: [
+          "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+          "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+        ] 
+      });
+      
+      gapi.client.setToken({ access_token: accessToken });
+      gapiInitialized = true;
+      
+      updateStatus('Loading calendar events...');
+      await listUpcomingEvents();
+      
+      // Show calendar content and hide loading
+      document.getElementById("loading-message").classList.add("hidden");
+      document.getElementById("calendar-content").classList.remove("hidden");
+      
+    } catch (error) {
+      console.error('GAPI initialization failed:', error);
+      updateStatus('Failed to connect to Google services', true);
+      setTimeout(redirectToHome, 3000);
+    }
+  }
+
+  async function listUpcomingEvents(){
+    try{
+      const response = await gapi.client.calendar.events.list({
+        calendarId:"primary",
+        timeMin: (new Date()).toISOString(),
+        showDeleted:false,
+        singleEvents:true,
+        maxResults:10,
+        orderBy:"startTime"
+      });
+      
+      const events = response.result.items;
+      const eventList = document.getElementById("event-list");
+      eventList.innerHTML="";
+      
+      if(!events || events.length===0){ 
+        eventList.innerHTML="<p class='text-gray-500 dark:text-gray-400 text-center'>No upcoming events found.</p>"; 
+        updateStatus('Calendar connected - no events found');
+        return; 
       }
-    });
-    calendar.render();
-  });
+      
+      events.forEach(ev=>{
+        const start = ev.start.dateTime || ev.start.date;
+        const div = document.createElement("div");
+        div.className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm";
+        div.innerHTML=`<h3 class="font-semibold text-lg">${ev.summary || 'No Title'}</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">${new Date(start).toLocaleString()}</p>`;
+        eventList.appendChild(div);
+      });
+      
+      updateStatus('Calendar loaded successfully');
+      
+    }catch(e){ 
+      console.error('Calendar error:', e); 
+      
+      // Check if it's an auth error
+      if (e.status === 401 || e.status === 403) {
+        updateStatus('Authentication expired. Please log in again.', true);
+        sessionStorage.removeItem("googleAccessToken");
+        setTimeout(redirectToHome, 2000);
+      } else {
+        document.getElementById("event-list").innerHTML="<p class='text-red-500 text-center'>Error loading events. Please try refreshing.</p>";
+        updateStatus('Error loading calendar events', true);
+      }
+    }
+  }
 
-  // Messaging
-  const messageInput=document.getElementById("message-input");
-  const messageLog=document.getElementById("message-log");
-  const fileInput=document.getElementById("file-input");
-  const imagePreviewContainer=document.getElementById("image-preview-container");
-  const sendButton=document.getElementById("send-button");
-  let imageData=null;
+  // Sign out handler
+  document.getElementById("signout_button").onclick = () => {
+    sessionStorage.removeItem("googleAccessToken");
+    console.log('User signed out');
+    window.location.href = HOME_URL;
+  };
+
+  // Messaging functionality
+  const messageInput = document.getElementById("message-input");
+  const messageLog = document.getElementById("message-log");
+  const fileInput = document.getElementById("file-input");
+  const imagePreviewContainer = document.getElementById("image-preview-container");
+  const sendButton = document.getElementById("send-button");
+
+  let imageData = null;
 
   fileInput.addEventListener("change", e=>{
-    const file=e.target.files[0];
+    const file = e.target.files[0];
     if(file && file.type.startsWith("image/")){
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        imageData=ev.target.result;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        imageData = ev.target.result;
         imagePreviewContainer.innerHTML=`<img src="${imageData}" class="h-16 w-16 rounded-lg object-cover">`;
       };
       reader.readAsDataURL(file);
@@ -129,26 +211,58 @@
   });
 
   sendButton.addEventListener("click", async ()=>{
-    const msg=messageInput.value.trim();
-    if(!msg && !imageData){ alert("Type a message or add an image."); return; }
+    if(!accessToken || !gapiInitialized){ 
+      alert("Please wait for the system to finish loading.");
+      return; 
+    }
+    
+    const messageText = messageInput.value.trim();
+    if(!messageText && !imageData){ 
+      alert("Type message or add image."); 
+      return; 
+    }
 
-    let email=`To: save@mie.today\r\nSubject: Dashboard Message\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
-    email+=msg;
-    if(imageData) email+=`<br><img src="${imageData}" style="max-width:300px;">`;
-
-    const base64Email = btoa(unescape(encodeURIComponent(email))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     try{
-      await gapi.client.request({ path:"https://gmail.googleapis.com/gmail/v1/users/me/messages/send", method:"POST", body:{ raw: base64Email }});
+      let email = `To: save@mie.today\r\nSubject: Dashboard Message\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n`;
+      email += messageText;
+      if(imageData) email += `<br><img src="${imageData}" style="max-width:300px;">`;
+
+      const base64EncodedEmail = btoa(unescape(encodeURIComponent(email))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+
+      await gapi.client.request({ 
+        path:"https://gmail.googleapis.com/gmail/v1/users/me/messages/send", 
+        method:"POST", 
+        body:{ raw: base64EncodedEmail } 
+      });
+      
       const div = document.createElement("div");
-      div.className="bg-blue-50 text-gray-900 p-2 rounded mb-2";
-      div.innerHTML = msg + (imageData?`<br><img src="${imageData}" class="h-16 w-16 object-cover rounded-lg">`:'');
+      div.className="bg-blue-50 dark:bg-blue-900 text-gray-900 dark:text-white p-2 rounded mb-2";
+      div.innerHTML = messageText + (imageData?`<br><img src="${imageData}" class="h-16 w-16 object-cover rounded-lg">`:'');
       messageLog.appendChild(div);
-      messageInput.value=""; imageData=null; imagePreviewContainer.innerHTML="";
-    }catch(err){ console.error(err); alert("Failed to send: "+err.message); }
+      
+      messageInput.value=""; 
+      imageData=null; 
+      imagePreviewContainer.innerHTML=""; 
+      fileInput.value="";
+      messageLog.scrollTop = messageLog.scrollHeight;
+      
+    }catch(err){ 
+      console.error('Send error:', err); 
+      
+      if (err.status === 401 || err.status === 403) {
+        alert("Authentication expired. Please log in again.");
+        sessionStorage.removeItem("googleAccessToken");
+        window.location.href = HOME_URL;
+      } else {
+        alert("Failed to send: "+(err.result?.error?.message || err.message)); 
+      }
+    }
   });
+
+  // Initialize the dashboard
+  if (checkAuthentication()) {
+    gapi.load("client", initializeGapiClient);
+  }
 
 })();
 </script>
-
-</body>
-</html>
