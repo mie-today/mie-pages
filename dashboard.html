@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,6 +34,20 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+  /* FullCalendar style overrides for dark mode */
+  .dark .fc {
+    color: #f9fafb;
+  }
+  .dark .fc .fc-button-primary {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+  .dark .fc .fc-button-primary:hover {
+    background-color: #4b5563;
+  }
+  .dark .fc-daygrid-day.fc-day-today {
+    background-color: rgba(96, 165, 250, 0.2); /* A semi-transparent blue */
+  }
 </style>
 </head>
 <body>
@@ -48,26 +63,19 @@
              data-context="signin"
              data-ux_mode="popup"
              data-callback="handleCredentialResponse"
-             data-auto_prompt="false"
-             data-auto_select="false">
+             data-auto_prompt="false">
         </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-shape="pill"
-             data-theme="dark"
-             data-text="signin_with"
-             data-size="large"
-             data-logo_alignment="left">
-        </div>
+        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="dark" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
       </div>
+      
       <div id="calendar-content" class="hidden flex flex-col flex-grow">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg md:text-xl lg:text-2xl font-semibold">Upcoming Events</h2>
+          <h2 class="text-lg md:text-xl lg:text-2xl font-semibold">Your Calendar</h2>
           <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
             Sign Out
           </button>
         </div>
-        <div id="event-list" class="space-y-4 pr-2 flex-grow-scroll"></div>
+        <div id="calendar-container" class="flex-grow"></div>
       </div>
     </div>
 
@@ -83,7 +91,6 @@
             Add Image
           </label>
           <input id="file-input" type="file" class="hidden" accept="image/*">
-          <div id="image-preview-container" class="flex items-center space-x-2"></div>
         </div>
         <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled" disabled>Send</button>
       </div>
@@ -97,16 +104,17 @@
     const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send';
 
     let tokenClient;
+    let calendar; // Variable to hold the FullCalendar instance
 
     // --- DOM Elements ---
     const authArea = document.getElementById('auth-area');
     const calendarContent = document.getElementById('calendar-content');
+    const calendarContainer = document.getElementById('calendar-container');
     const messagingSection = document.getElementById('messaging-section');
     const signoutButton = document.getElementById('signout_button');
     const sendButton = document.getElementById('send-button');
     const messageLog = document.getElementById('message-log');
     const messageInput = document.getElementById('message-input');
-    const eventList = document.getElementById("event-list");
     
     // --- Event Listeners ---
     signoutButton.addEventListener('click', handleSignOut);
@@ -118,50 +126,37 @@
     });
 
     // --- Initialization ---
-    // 1. Initialize the GAPI client with required API discovery documents
     function initializeGapiClient() {
         gapi.client.init({
             discoveryDocs: [
                 "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
                 "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
             ],
-        }).then(() => {
-            console.log("GAPI client initialized for Calendar and Gmail APIs.");
-        }).catch(err => {
-            console.error("Error initializing GAPI client:", err);
-            logMessage("Error: Could not initialize Google APIs. Please refresh the page.", "error");
-        });
+        }).then(() => console.log("GAPI client initialized."))
+          .catch(err => console.error("Error initializing GAPI client:", err));
     }
-    // Load the GAPI client script, then call the initialization function
     gapi.load('client', initializeGapiClient);
 
-    // 2. This function is called by the HTML data-callback attribute after user signs in.
-    // Its job is to request the access token for the APIs.
     window.handleCredentialResponse = (response) => {
-        console.log("ID token received. Requesting API access token...");
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
             scope: API_SCOPES,
-            callback: (tokenResponse) => { // This callback receives the access token
+            callback: (tokenResponse) => {
                 if (tokenResponse && tokenResponse.access_token) {
-                    // Store the token with the GAPI client for use in all subsequent API calls
                     gapi.client.setToken(tokenResponse);
                     handleAuthSuccess();
                 } else {
                     console.error('Failed to get access token.', tokenResponse);
-                    logMessage("Authorization failed. Please try again.", "error");
                 }
             },
         });
-        // This prompts the user for authorization (the "approve scope" part)
         tokenClient.requestAccessToken();
     };
 
     // --- Core Application Logic ---
     function handleAuthSuccess() {
-        console.log("Authorization successful.");
         updateUIForSignIn();
-        listUpcomingEvents();
+        displayMonthlyCalendar(); // Call the new function to show the calendar
     }
 
     function handleSignOut() {
@@ -169,52 +164,66 @@
         if (token) {
             google.accounts.oauth2.revoke(token.access_token, () => {
                 console.log('Access token revoked.');
-                gapi.client.setToken(null); // Clear the token from the GAPI client
+                gapi.client.setToken(null);
                 updateUIForSignOut();
             });
         }
-        updateUIForSignOut(); // Update UI immediately regardless
+        updateUIForSignOut();
     }
 
-    async function listUpcomingEvents() {
-        logMessage("Fetching calendar events...", "info");
-        try {
-            const response = await gapi.client.calendar.events.list({
-                'calendarId': 'primary',
-                'timeMin': (new Date()).toISOString(),
-                'showDeleted': false,
-                'singleEvents': true,
-                'maxResults': 10,
-                'orderBy': 'startTime',
-            });
-            
-            const events = response.result.items;
-            eventList.innerHTML = ""; // Clear previous events
-            
-            if (!events || events.length === 0) {
-                eventList.innerHTML = "<p class='text-gray-500 dark:text-gray-400 text-center'>No upcoming events found.</p>";
-                return;
-            }
-            
-            events.forEach(ev => {
-                const start = ev.start.dateTime || ev.start.date;
-                const div = document.createElement("div");
-                div.className = "bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm";
-                div.innerHTML = `<h3 class="font-semibold text-lg">${ev.summary || 'No Title'}</h3>
-                                 <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">${new Date(start).toLocaleString()}</p>`;
-                eventList.appendChild(div);
-            });
-        } catch (err) {
-            console.error('Calendar API error:', err);
-            logMessage(`Error fetching calendar events: ${err.result?.error?.message || 'Unknown error'}. You may need to sign out and sign back in.`, "error");
-            handleSignOut();
+    // NEW: Function to display the FullCalendar monthly view
+    function displayMonthlyCalendar() {
+        if (calendar) { // If a calendar instance already exists, destroy it first
+            calendar.destroy();
         }
-    }
+        calendar = new FullCalendar.Calendar(calendarContainer, {
+            initialView: 'dayGridMonth', // The default view is monthly
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek' // Allows switching views
+            },
+            // This function fetches events from the Google Calendar API
+            events: async (fetchInfo, successCallback, failureCallback) => {
+                try {
+                    const response = await gapi.client.calendar.events.list({
+                        'calendarId': 'primary',
+                        'timeMin': fetchInfo.start.toISOString(),
+                        'timeMax': fetchInfo.end.toISOString(),
+                        'showDeleted': false,
+                        'singleEvents': true,
+                        'orderBy': 'startTime',
+                    });
 
+                    // Map Google Calendar events to the format FullCalendar needs
+                    const events = response.result.items.map(event => ({
+                        title: event.summary,
+                        start: event.start.dateTime || event.start.date,
+                        end: event.end.dateTime || event.end.date,
+                        url: event.htmlLink, // Makes the event clickable, opening it in Google Calendar
+                        allDay: !event.start.dateTime // Flag for all-day events
+                    }));
+                    
+                    successCallback(events);
+                } catch (err) {
+                    console.error('Error fetching calendar events:', err);
+                    failureCallback(err);
+                }
+            },
+            eventClick: function(info) {
+                info.jsEvent.preventDefault(); // Prevent the browser from following the link
+                if (info.event.url) {
+                    window.open(info.event.url, "_blank"); // Open the event in a new tab
+                }
+            }
+        });
+
+        calendar.render();
+    }
+    
     async function sendEmail() {
         let userProfile;
         try {
-            // Get user's email address to use as the sender and recipient
             const profileResponse = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
             userProfile = profileResponse.result;
         } catch (err) {
@@ -225,15 +234,7 @@
         const messageText = messageInput.value;
         if (!messageText.trim()) return;
 
-        // The Gmail API requires a valid RFC 2822 formatted email in base64url format.
-        const emailLines = [
-            `To: ${userProfile.emailAddress}`,
-            `From: ${userProfile.emailAddress}`,
-            `Subject: Message from My Dashboard`,
-            'Content-Type: text/plain; charset=utf-8',
-            '',
-            messageText
-        ];
+        const emailLines = [`To: ${userProfile.emailAddress}`, `From: ${userProfile.emailAddress}`, `Subject: Message from My Dashboard`, 'Content-Type: text/plain; charset=utf-8', '', messageText];
         const email = emailLines.join('\r\n');
         const base64EncodedEmail = btoa(unescape(encodeURIComponent(email))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         
@@ -242,16 +243,12 @@
         sendButton.classList.add('disabled');
 
         try {
-            await gapi.client.gmail.users.messages.send({
-                'userId': 'me',
-                'resource': { 'raw': base64EncodedEmail }
-            });
+            await gapi.client.gmail.users.messages.send({ 'userId': 'me', 'resource': { 'raw': base64EncodedEmail } });
             logMessage("Email sent successfully!", "success");
-            messageInput.value = ""; // Clear the input field
+            messageInput.value = "";
         } catch (err) {
             console.error("Failed to send email:", err);
             logMessage(`Failed to send email: ${err.result?.error?.message || 'Unknown error'}.`, "error");
-            // Re-enable the button on failure
             sendButton.disabled = false;
             sendButton.classList.remove('disabled');
         }
@@ -268,8 +265,8 @@
         authArea.classList.remove('hidden');
         calendarContent.classList.add('hidden');
         messagingSection.classList.add('hidden');
+        calendarContainer.innerHTML = ''; // Clear the calendar view
         messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`;
-        eventList.innerHTML = "";
         messageInput.value = "";
     }
     
@@ -279,20 +276,12 @@
         }
         const p = document.createElement('p');
         p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-        p.className = 'text-sm mb-1';
-        
-        const colors = {
-            success: 'text-green-500',
-            error: 'text-red-500',
-            info: 'text-gray-900 dark:text-gray-200'
-        };
-        p.classList.add(colors[type]);
-        
+        const colors = { success: 'text-green-500', error: 'text-red-500', info: 'text-gray-900 dark:text-gray-200' };
+        p.className = `text-sm mb-1 ${colors[type]}`;
         messageLog.appendChild(p);
         messageLog.scrollTop = messageLog.scrollHeight;
     }
     
-    // Set initial UI state on page load
     updateUIForSignOut();
 })();
 </script>
