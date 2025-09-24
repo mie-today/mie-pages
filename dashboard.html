@@ -32,116 +32,66 @@
         </div>
 
         <!-- After login -->
-        <div id="calendar-content" class="hidden flex flex-col h-full">
-          <div class="flex justify-between items-center mb-4 flex-shrink-0">
+        <div id="calendar-content" class="hidden flex flex-col flex-grow h-full">
+          <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold">Your Calendar</h2>
             <button id="signout_button"
               class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full">
               Sign Out
             </button>
           </div>
-          <div id="calendar-container" class="flex-grow overflow-y-auto bg-gray-50 rounded-lg p-4 min-h-0"></div>
+          <div id="calendar-container" class="flex-grow overflow-y-auto"></div>
         </div>
       </section>
 
       <!-- Messaging -->
       <section id="messaging-section" class="hidden">
-        <div class="flex flex-col h-full">
-          <h2 class="text-lg font-semibold mb-4 flex-shrink-0">Send a Message</h2>
-          <div id="message-log" class="bg-gray-50 p-3 rounded mb-4 flex-grow overflow-y-auto min-h-0">
-            <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
-          </div>
-
-          <div class="flex-shrink-0">
-            <textarea id="message-input" placeholder="Type your message..."
-              class="w-full rounded border px-3 py-2 min-h-[80px] mb-2"></textarea>
-
-            <div class="flex items-center gap-2 mb-2">
-              <label for="file-input"
-                class="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-full font-bold text-sm">Add Image</label>
-              <input id="file-input" type="file" accept="image/*" class="hidden" />
-              <div id="image-preview" class="text-xs text-gray-500"></div>
-            </div>
-
-            <button id="send-button"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full disabled:bg-gray-400"
-              disabled>Send</button>
-          </div>
+        <h2 class="text-lg font-semibold mb-4">Send a Message</h2>
+        <div id="message-log" class="bg-gray-50 p-3 rounded mb-4 flex-grow overflow-y-auto">
+          <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
         </div>
+
+        <textarea id="message-input" placeholder="Type your message..."
+          class="rounded border px-3 py-2 min-h-[80px] flex-shrink-0"></textarea>
+
+        <div class="flex items-center gap-2 mt-2 flex-shrink-0">
+          <label for="file-input"
+            class="cursor-pointer bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-full font-bold">Add Image</label>
+          <input id="file-input" type="file" accept="image/*" class="hidden" />
+        </div>
+
+        <button id="send-button"
+          class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full mt-4 disabled"
+          disabled>Send</button>
       </section>
     </div>
   </div>
 
   <style>
-    .oauth-app-container {
-      padding: 1rem;
-      height: 100vh;
-      box-sizing: border-box;
-    }
-
     .dashboard-layout {
       display: flex;
       flex-direction: column;
       gap: 1rem;
       height: 100%;
-      max-height: 100%;
     }
-
-    @media(min-width: 1024px) {
+    @media(min-width:1280px){
       .dashboard-layout {
         flex-direction: row;
       }
     }
-
     section {
-      flex: 1;
+      flex: 1 1 0;
       display: flex;
       flex-direction: column;
+      min-height: 0; /* critical to allow children scroll */
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-      padding: 1.5rem;
-      min-height: 0;
+      padding: 1.25rem;
       overflow: hidden;
     }
-
-    #calendar-container {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-    }
-
-    .calendar-event {
-      padding: 12px;
-      border-bottom: 1px solid #e5e7eb;
-      background: white;
-      margin-bottom: 4px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .calendar-event:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .event-date {
-      font-size: 0.875rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
-
-    .event-title {
-      font-weight: 600;
-      color: #111827;
-      margin-top: 2px;
-    }
-
-    .no-events {
-      text-align: center;
-      color: #6b7280;
-      font-style: italic;
-      padding: 2rem;
+    #calendar-container, #message-log {
+      min-height: 0;
     }
   </style>
 
@@ -160,12 +110,7 @@
             sessionStorage.setItem("googleAccessToken", accessToken);
 
             // Load user profile to fetch email
-            await gapi.client.init({
-              discoveryDocs: [
-                "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-                "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-              ]
-            });
+            await gapi.client.init({});
             gapi.client.setToken({ access_token: accessToken });
             const profileResp = await gapi.client.request({ path: "https://www.googleapis.com/oauth2/v2/userinfo" });
             userEmail = profileResp.result.email;
@@ -202,42 +147,27 @@
         const now = new Date();
         const response = await gapi.client.calendar.events.list({
           calendarId: "primary",
-          timeMin: now.toISOString(),
+          timeMin: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+          timeMax: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString(),
           showDeleted: false,
           singleEvents: true,
-          maxResults: 10,
           orderBy: "startTime"
         });
         const events = response.result.items || [];
         const container = document.getElementById("calendar-container");
         container.innerHTML = "";
-        
         if (!events.length) {
-          container.innerHTML = '<div class="no-events">No upcoming events found.</div>';
+          container.innerHTML = "<p>No events found this month.</p>";
         } else {
           events.forEach(ev => {
             const div = document.createElement("div");
-            div.className = "calendar-event";
-            
-            const dateDiv = document.createElement("div");
-            dateDiv.className = "event-date";
-            const startDate = new Date(ev.start.dateTime || ev.start.date);
-            dateDiv.textContent = startDate.toLocaleDateString() + " " + 
-              (ev.start.dateTime ? startDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'All day');
-            
-            const titleDiv = document.createElement("div");
-            titleDiv.className = "event-title";
-            titleDiv.textContent = ev.summary || '(No title)';
-            
-            div.appendChild(dateDiv);
-            div.appendChild(titleDiv);
+            div.className = "p-2 border-b";
+            div.textContent = `${ev.start.dateTime || ev.start.date} — ${ev.summary}`;
             container.appendChild(div);
           });
         }
       } catch (err) {
         console.error("Calendar load error", err);
-        document.getElementById("calendar-container").innerHTML = 
-          '<div class="no-events">Error loading calendar events.</div>';
       }
     }
 
@@ -245,67 +175,44 @@
       const sendButton = document.getElementById("send-button");
       const messageInput = document.getElementById("message-input");
       const fileInput = document.getElementById("file-input");
-      const imagePreview = document.getElementById("image-preview");
       const log = document.getElementById("message-log");
 
       sendButton.disabled = false;
       sendButton.classList.remove("disabled");
 
-      let imageData = null;
-
-      // Handle image selection
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            imageData = ev.target.result;
-            imagePreview.textContent = `Image selected: ${file.name}`;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
       sendButton.onclick = async () => {
         const msgText = messageInput.value.trim();
-        if (!msgText && !imageData) return;
+        if (!msgText) return;
 
-        const subject = `Message from ${userEmail || "Dashboard User"}`;
-        let emailContent = `To: save@mie.today\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=utf-8\r\n\r\n`;
-        emailContent += msgText;
-        if (imageData) {
-          emailContent += `<br><br><img src="${imageData}" style="max-width: 400px;">`;
-        }
+        const subject = `Message received from ${userEmail || "unknown sender"}`;
+        const raw = [
+          `From: ${userEmail}`,
+          "To: save@mie.today",
+          `Subject: ${subject}`,
+          "Content-Type: text/plain; charset=utf-8",
+          "",
+          msgText
+        ].join("\n");
 
         try {
-          const b64 = btoa(unescape(encodeURIComponent(emailContent)))
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=+$/, "");
-
+          const b64 = btoa(unescape(encodeURIComponent(raw))).replace(/\+/g, "-").replace(/\//g, "_");
           await gapi.client.gmail.users.messages.send({
             userId: "me",
             resource: { raw: b64 }
           });
 
           const entry = document.createElement("div");
-          entry.className = "p-3 bg-green-100 rounded mb-2 text-sm border-l-4 border-green-500";
-          entry.innerHTML = `<strong>Sent:</strong> ${msgText}` + 
-            (imageData ? '<br><small>📎 Image attached</small>' : '');
+          entry.className = "p-2 bg-green-100 rounded mb-2 text-sm";
+          entry.textContent = `Sent: ${msgText}`;
           log.appendChild(entry);
-          
           messageInput.value = "";
           fileInput.value = "";
-          imageData = null;
-          imagePreview.textContent = "";
-          log.scrollTop = log.scrollHeight;
         } catch (err) {
           console.error("Message send error", err);
           const entry = document.createElement("div");
-          entry.className = "p-3 bg-red-100 rounded mb-2 text-sm border-l-4 border-red-500";
-          entry.innerHTML = `<strong>Error:</strong> ${err.result?.error?.message || err.message}`;
+          entry.className = "p-2 bg-red-100 rounded mb-2 text-sm";
+          entry.textContent = `Error: ${err.message}`;
           log.appendChild(entry);
-          log.scrollTop = log.scrollHeight;
         }
       };
     }
