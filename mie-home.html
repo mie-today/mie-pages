@@ -4,46 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIE Home</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 
 <style>
   body { font-family: Arial, sans-serif; margin: 0; padding: 20px; text-align: center; background-color:#f3f4f6; }
-
   .calendar {
-    width: 100%;
-    max-width: 500px;
-    height: 70vh;
-    margin: auto;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+    width: 100%; max-width: 500px; height: 70vh; margin: auto; border: 1px solid #ccc; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column;
   }
-
   .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f4f4f4;
-    padding: 0.5em 1em;
-    border-bottom: 1px solid #ddd;
-    font-weight: bold;
+    display: flex; justify-content: space-between; align-items: center; background: #f4f4f4; padding: 0.5em 1em; border-bottom: 1px solid #ddd; font-weight: bold;
   }
-
   .calendar-header button { background: none; border: none; font-size: 1.2em; cursor: pointer; flex: 0 0 auto; }
   .calendar-header span { font-size: 1.1em; flex:1; text-align:center; }
-
   .calendar-days, .calendar-dates { display: grid; grid-template-columns: repeat(7,1fr); }
   .calendar-days div { font-weight: bold; padding: 0.3em; font-size:0.9em; }
   .calendar-dates { flex: 1; overflow-y: auto; }
   .calendar-dates div { padding:1em 0; font-size:0.9em; border-radius:6px; }
   .calendar-dates div:hover { background:#e6f2ff; }
-
   @media(max-width:600px){
     .calendar { max-width:100%; border-radius:8px; height: 60vh; }
     .calendar-header span{font-size:1em;}
@@ -53,7 +32,6 @@
     .calendar-header span{font-size:0.9em;}
     .calendar-days div,.calendar-dates div{font-size:0.7em;}
   }
-
   .signin-container { margin-top: 20px; display:flex; justify-content:center; align-items:center; }
   .signin-status { margin-top: 10px; font-size: 14px; color: #666; }
 </style>
@@ -74,21 +52,7 @@
 </div>
 
 <div class="signin-container">
-  <div id="g_id_onload"
-       data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
-       data-context="signin"
-       data-ux_mode="popup"
-       data-callback="onSuccess"
-       data-auto_prompt="false">
-  </div>
-  <div class="g_id_signin"
-       data-type="standard"
-       data-shape="pill"
-       data-theme="dark"
-       data-text="signin_with"
-       data-size="large"
-       data-logo_alignment="left">
-  </div>
+    <div id="my-signin2"></div>
 </div>
 
 <script>
@@ -121,29 +85,33 @@ function changeMonth(delta){
 renderCalendar(currentMonth, currentYear);
 
 /* ---------------- Google Sign-In Logic ---------------- */
-function onSuccess(response){
-  // Store the JWT credential
-  sessionStorage.setItem("googleCredential", response.credential);
-
-  const decodedToken = parseJwt(response.credential);
-  console.log('Logged in as: ' + decodedToken.name);
+function onSuccess(googleUser) {
+  const accessToken = googleUser.getAuthResponse().access_token;
+  const profile = googleUser.getBasicProfile();
+  
+  // Store the access token in sessionStorage
+  sessionStorage.setItem("googleAccessToken", accessToken);
+  
+  console.log('Logged in as: ' + profile.getName());
   
   // Redirect to dashboard immediately
   window.location.href = "https://rylhong.github.io/mie-pages/dashboard.html";
 }
 
-function onFailure(error){
+function onFailure(error) {
   console.error('Sign-in failed:', error);
 }
 
-// Helper function to decode the JWT
-function parseJwt(token) {
-  const base64Url = token.split('.')[1];
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
-  return JSON.parse(jsonPayload);
+function renderButton() {
+  gapi.signin2.render('my-signin2', {
+    'scope': 'profile email https://www.googleapis.com/auth/calendar.readonly',
+    'width': 240,
+    'height': 50,
+    'longtitle': true,
+    'theme': 'dark',
+    'onsuccess': onSuccess,
+    'onfailure': onFailure
+  });
 }
 </script>
 
