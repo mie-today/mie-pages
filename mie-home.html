@@ -1,45 +1,3 @@
-Based on the information provided, the "invalid\_scope" error persists because the OAuth consent screen is likely still in **Testing** status. To fix this, you must publish your app. This moves it from testing to production, making the added scopes available to all users. The calendar view issue is separate from the Google Sign-In problem and is caused by the HTML rendering.
-
------
-
-### 1\. Fixing the "Invalid Scope" Error
-
-The `invalid_scope` error happens when a requested scope has been added to a Google Cloud project but the app is not yet published. In **Testing** status, only test users can use the added scopes. Since you're still getting the error, it means your app has not been published, or the change has not propagated.
-
-To fix this, you need to publish your app in the Google Cloud Console.
-
-1.  Go to the **Google Cloud Console**.
-2.  Navigate to **APIs & Services** \> **OAuth consent screen**.
-3.  In the "Publishing status" section, click the **"Publish App"** button.
-4.  You may be required to fill in some additional information about your app. Once done, the status will change to "In Production" or "In Review" (if a sensitive scope is used).
-
-This will make the `https://www.googleapis.com/auth/calendar` scope available to all users, resolving the "invalid scope" error.
-
------
-
-### 2\. Fixing the Skewed Calendar View
-
-The HTML you provided has two conflicting JavaScript functions for rendering the sign-in button. The one that causes the calendar view to break is:
-
-```javascript
-function renderButton(){ 
-   gapi.signin2.render('my-signin2',{ 
-     'scope':'profile email', 
-     'width':240, 
-     'height':50, 
-     'longtitle':true, 
-     'theme':'dark', 
-     'onsuccess':onSuccess, 
-     'onfailure':onFailure 
-   }); 
- }
-```
-
-The updated HTML I provided in the previous response correctly modified this function to include the calendar scope. The HTML snippet you included in your last message is the **original HTML code** without the fix, which is why the calendar appears normal, but the login fails. The correct code you need to use is the one I previously provided, which has the updated scope.
-
-Here is the correct and complete HTML file that fixes both the **`invalid_scope`** error (once you publish your app) and the calendar display issues.
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -178,3 +136,4 @@ function renderButton(){
 </body>
 </html>
 ```
+
