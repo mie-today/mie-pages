@@ -26,24 +26,20 @@
     background-color: #111827;
     color: #f9fafb;
   }
+
+  /* Scrollbar fix */
   .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
   .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
   .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
   .dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
-  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#6b7280; }
+
   .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
-  .disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  /* Responsive width constraints - ORIGINAL DESKTOP/TABLET PRESERVED */
-  .oauth-app-container {
-    max-width: 100%;
-    margin: 0 auto;
-  }
-  
-  /* MOBILE: 350px x 500px - NO SCROLLING */
+  .disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .oauth-app-container { max-width: 100%; margin: 0 auto; }
+
+  /* --- Mobile: fit 350x500 exactly --- */
   @media (max-width: 480px) {
     .oauth-app-container {
       width: 350px !important;
@@ -51,211 +47,65 @@
       overflow: hidden !important;
       margin: 0 auto !important;
     }
-    
-    /* Container wrapper - tight spacing */
-    .mobile-container {
-      padding: 4px !important;
-      gap: 4px !important;
-      height: 100% !important;
-    }
-    
-    .calendar-section {
-      width: 100% !important;
-      height: 300px !important; /* 60% of 500px */
-      padding: 8px !important;
-      overflow: hidden !important;
-    }
-    .messaging-section {
-      width: 100% !important;
-      height: 180px !important; /* 36% of 500px */
-      padding: 8px !important;
-      overflow: hidden !important;
-    }
-    
-    /* MOBILE FONT ANNOTATIONS - 17pt = 22.67px */
-    /* Main heading text - 17pt */
-    .mobile-heading-17pt {
-      font-size: 22.67px !important; /* 17pt exactly */
-      line-height: 1.2 !important;
-    }
-    
-    /* Secondary text - 14pt for better fit */
-    .mobile-text-14pt {
-      font-size: 18.67px !important; /* 14pt */
-      line-height: 1.2 !important;
-    }
-    
-    /* Small text - 12pt */
-    .mobile-text-12pt {
-      font-size: 16px !important; /* 12pt */
-      line-height: 1.1 !important;
-    }
-    
-    /* Input/textarea height adjustment */
-    .mobile-textarea {
-      height: 50px !important;
-      padding: 4px 8px !important;
-    }
-    
-    /* Message log height */
-    .mobile-message-log {
-      height: 70px !important;
-      padding: 4px !important;
-    }
-    
-    /* Button sizing */
-    .mobile-small-btn {
-      padding: 3px 6px !important;
-      font-size: 12px !important;
-    }
+    .mobile-container { padding: 4px !important; gap: 4px !important; height: 100% !important; }
+    .calendar-section { width: 100% !important; height: 300px !important; overflow: hidden !important; }
+    .messaging-section { width: 100% !important; height: 180px !important; overflow: hidden !important; }
   }
-  
-  /* Tablet: 481px - ORIGINAL PRESERVED */
+
+  /* Tablet preserved */
   @media (min-width: 481px) and (max-width: 768px) {
-    .oauth-app-container {
-      width: 481px;
-    }
-    .calendar-section {
-      width: 481px;
-      height: 632px;
-    }
-    .messaging-section {
-      width: 481px;
-      height: 316px;
-    }
+    .oauth-app-container { width: 481px; }
+    .calendar-section { width: 481px; height: 632px; }
+    .messaging-section { width: 481px; height: 316px; }
   }
-  
-  /* Desktop: 800px - ORIGINAL PRESERVED */
+
+  /* Desktop preserved */
   @media (min-width: 769px) {
-    .oauth-app-container {
-      width: 800px;
-    }
-    .calendar-section {
-      width: 800px;
-      height: 860px;
-    }
-    .messaging-section {
-      width: 800px;
-      height: 360px;
-    }
+    .oauth-app-container { width: 800px; }
+    .calendar-section { width: 800px; height: 860px; }
+    .messaging-section { width: 800px; height: 360px; }
   }
-  
-  /* FIXED: FullCalendar dark mode readability for ALL DEVICES */
+
+  /* --- FullCalendar Dark Mode Fix --- */
   .fc {
-    color: #1f2937 !important; /* Dark text for readability */
-    background-color: #ffffff !important; /* White background */
-  }
-  .fc .fc-button-primary {
-    background-color: #3b82f6 !important; /* Blue buttons */
-    border-color: #2563eb !important;
-    color: white !important;
-  }
-  .fc .fc-button-primary:hover {
-    background-color: #2563eb !important;
-  }
-  .fc .fc-button-primary:disabled {
-    background-color: #9ca3af !important;
-    border-color: #6b7280 !important;
-  }
-  .fc-daygrid-day.fc-day-today {
-    background-color: rgba(59, 130, 246, 0.1) !important; /* Light blue today */
-  }
-  .fc .fc-daygrid-day-frame {
-    background-color: white !important;
-  }
-  .fc .fc-col-header-cell {
-    background-color: #f8fafc !important;
+    background-color: #ffffff !important;
     color: #1f2937 !important;
   }
-  .fc .fc-daygrid-day-number {
-    color: #1f2937 !important;
+  .dark .fc {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
   }
-  .fc .fc-event {
-    border-color: #3b82f6 !important;
-    background-color: #3b82f6 !important;
-    color: white !important;
-  }
-  .fc .fc-toolbar-title {
-    color: #1f2937 !important;
-  }
-  
-  /* MOBILE ONLY: Smaller FullCalendar elements - 17pt annotations */
+  .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+  .dark .fc .fc-col-header-cell { background-color: #374151 !important; color: #f9fafb !important; }
+  .fc .fc-daygrid-day-number { color: inherit !important; }
+  .fc .fc-event { background-color: #3b82f6 !important; border-color: #2563eb !important; color: #fff !important; }
+  .fc .fc-toolbar-title { color: inherit !important; }
+
+  /* --- Mobile Calendar Controls Sizing (annotations) --- */
   @media (max-width: 480px) {
-    /* Calendar title - 17pt */
-    .fc .fc-toolbar-title {
-      font-size: 22.67px !important; /* 17pt - EDITABLE */
-    }
-    
-    /* Navigation buttons - smaller for 350px width */
-    .fc .fc-button-primary {
-      font-size: 16px !important; /* 12pt - EDITABLE */
-      padding: 4px 8px !important;
-    }
-    
-    /* Day headers - smaller */
-    .fc .fc-col-header-cell {
-      font-size: 14px !important; /* 10.5pt - EDITABLE */
-    }
-    
-    /* Day numbers - smaller */
-    .fc .fc-daygrid-day-number {
-      font-size: 14px !important; /* 10.5pt - EDITABLE */
-    }
-    
-    /* Event text - very small to fit */
-    .fc .fc-event {
-      font-size: 11px !important; /* 8.25pt - EDITABLE */
-    }
+    /* Toolbar title font-size ~17pt (22.67px) */
+    .fc .fc-toolbar-title { font-size: 22.67px !important; }
+    /* Nav buttons font-size smaller ~12pt (16px) */
+    .fc .fc-button-primary { font-size: 16px !important; padding: 4px 8px !important; }
+    /* Day headers smaller */
+    .fc .fc-col-header-cell { font-size: 14px !important; }
+    /* Day numbers smaller */
+    .fc .fc-daygrid-day-number { font-size: 14px !important; }
+    /* Events tiny */
+    .fc .fc-event { font-size: 11px !important; }
   }
-  
+
   /* Hide non-current month dates */
-  .fc .fc-daygrid-day.fc-day-other {
-    display: none !important;
-  }
-  
-  /* Event details modal */
-  .event-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  .event-modal-content {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    color: #1f2937; /* Force dark text for readability */
-  }
-  
-  /* MOBILE: Smaller modal */
-  @media (max-width: 480px) {
-    .event-modal-content {
-      max-width: 320px !important;
-      padding: 16px !important;
-    }
-  }
+  .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 </style>
 </head>
 <body>
-
 <div class="oauth-app-container">
   <div class="flex flex-col p-4 space-y-4 w-full mobile-container">
-
-    <!-- CALENDAR SECTION -->
+    <!-- Calendar Section -->
     <div id="calendar-section" class="calendar-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col">
       <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-        <!-- MOBILE: 17pt heading - EDITABLE ANNOTATION -->
-        <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold text-center">Sign in to view your Google Calendar</h2>
+        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center">Sign in to view your Google Calendar</h2>
         <div id="g_id_onload"
              data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
              data-context="signin"
@@ -265,441 +115,125 @@
         </div>
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="dark" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
       </div>
-      
       <div id="calendar-content" class="hidden flex flex-col h-full">
         <div class="flex justify-end items-center mb-4">
-          <!-- MOBILE: Small sign out button - EDITABLE -->
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs mobile-small-btn py-1 px-2 rounded-md transition-colors">
-            Sign Out
-          </button>
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded-md">Sign Out</button>
         </div>
         <div id="calendar-container" class="flex-1 min-h-0"></div>
       </div>
-    </div>
-
-    <!-- MESSAGING SECTION -->
-    <div id="messaging-section" class="messaging-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hidden">
-      <!-- MOBILE: 17pt heading - EDITABLE ANNOTATION -->
-      <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-4 mobile-message-log">
-        <!-- MOBILE: 12pt text for message log - EDITABLE -->
-        <div class="text-sm mobile-text-12pt text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
-      </div>
-      <div class="flex flex-col space-y-4">
-        <!-- MOBILE: Smaller textarea - EDITABLE HEIGHT -->
-        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none h-20 mobile-textarea"></textarea>
-        <div class="flex items-center space-x-2">
-          <!-- MOBILE: 12pt button text - EDITABLE -->
-          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-full transition-colors mobile-text-12pt">
-            Add Image
-          </label>
-          <input id="file-input" type="file" class="hidden" accept="image/*">
-          <div id="file-preview" class="hidden">
-            <img id="preview-image" class="max-w-32 max-h-32 rounded border" alt="Preview">
-            <!-- MOBILE: Small remove button - EDITABLE -->
-            <button id="remove-file" class="text-red-500 text-sm mobile-text-12pt ml-2">Remove</button>
-          </div>
-        </div>
-        <!-- MOBILE: 14pt send button - EDITABLE -->
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full mobile-text-14pt" disabled>Send</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Event Details Modal -->
-<div id="event-modal" class="event-modal hidden">
-  <div class="event-modal-content">
-    <div class="flex justify-between items-start mb-4">
-      <!-- MOBILE: 17pt modal title - EDITABLE -->
-      <h3 id="event-title" class="text-xl mobile-heading-17pt font-semibold"></h3>
-      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl mobile-heading-17pt">&times;</button>
-    </div>
-    <div id="event-details" class="space-y-2">
-      <!-- MOBILE: 14pt modal content - EDITABLE -->
-      <p id="event-time" class="text-gray-600 mobile-text-14pt"></p>
-      <p id="event-description" class="text-gray-700 mobile-text-14pt"></p>
-      <p id="event-location" class="text-gray-600 mobile-text-14pt"></p>
-    </div>
-    <div class="mt-6 flex justify-end">
-      <!-- MOBILE: 14pt modal button - EDITABLE -->
-      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-14pt">Open in Google Calendar</a>
     </div>
   </div>
 </div>
 
 <script>
-(function() {
-    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
-    const RECIPIENT_EMAIL = "save@mie.today";
+(function(){
+  const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
+  const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
 
-    let tokenClient;
-    let calendar;
-    let selectedFile = null;
-    let userEmail = null;
-    let gapi_loaded = false;
+  let calendar, tokenClient, userEmail = null;
+  let cachedCalendars = null;
 
-    // --- DOM Elements ---
-    const authArea = document.getElementById('auth-area');
-    const calendarContent = document.getElementById('calendar-content');
-    const calendarContainer = document.getElementById('calendar-container');
-    const messagingSection = document.getElementById('messaging-section');
-    const signoutButton = document.getElementById('signout_button');
-    const sendButton = document.getElementById('send-button');
-    const messageLog = document.getElementById('message-log');
-    const messageInput = document.getElementById('message-input');
-    const fileInput = document.getElementById('file-input');
-    const filePreview = document.getElementById('file-preview');
-    const previewImage = document.getElementById('preview-image');
-    const removeFileButton = document.getElementById('remove-file');
-    const eventModal = document.getElementById('event-modal');
-    const closeModal = document.getElementById('close-modal');
-    const eventTitle = document.getElementById('event-title');
-    const eventTime = document.getElementById('event-time');
-    const eventDescription = document.getElementById('event-description');
-    const eventLocation = document.getElementById('event-location');
-    const eventLink = document.getElementById('event-link');
-    
-    // --- Event Listeners ---
-    signoutButton.addEventListener('click', handleSignOut);
-    sendButton.addEventListener('click', sendEmail);
-    messageInput.addEventListener('input', updateSendButton);
-    fileInput.addEventListener('change', handleFileSelect);
-    removeFileButton.addEventListener('click', removeFile);
-    closeModal.addEventListener('click', () => eventModal.classList.add('hidden'));
-    eventModal.addEventListener('click', (e) => {
-        if (e.target === eventModal) eventModal.classList.add('hidden');
+  const authArea = document.getElementById('auth-area');
+  const calendarContent = document.getElementById('calendar-content');
+  const calendarContainer = document.getElementById('calendar-container');
+  const signoutButton = document.getElementById('signout_button');
+
+  signoutButton.addEventListener('click', handleSignOut);
+
+  gapi.load('client', () => {
+    gapi.client.init({
+      discoveryDocs: [
+        "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+        "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+      ]
     });
+  });
 
-    // --- Initialization ---
-    function initializeGapiClient() {
-        gapi.client.init({
-            discoveryDocs: [
-                "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-                "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-            ],
-        }).then(() => {
-            console.log("GAPI client initialized.");
-            gapi_loaded = true;
-        }).catch(err => console.error("Error initializing GAPI client:", err));
+  window.handleCredentialResponse = (response) => {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: API_SCOPES,
+      callback: async (tokenResponse) => {
+        if(tokenResponse && tokenResponse.access_token){
+          gapi.client.setToken(tokenResponse);
+          await onSignedIn();
+        }
+      }
+    });
+    tokenClient.requestAccessToken();
+  };
+
+  async function onSignedIn(){
+    authArea.classList.add('hidden');
+    calendarContent.classList.remove('hidden');
+    await getUserEmail();
+    displayCalendar();
+  }
+
+  async function getUserEmail(){
+    try {
+      const token = gapi.client.getToken();
+      const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { 'Authorization': `Bearer ${token.access_token}` }
+      });
+      if(res.ok){
+        const data = await res.json();
+        userEmail = data.email;
+      }
+    }catch(e){ console.error("Email fetch failed", e); }
+  }
+
+  function handleSignOut(){
+    const token = gapi.client.getToken();
+    if(token){
+      google.accounts.oauth2.revoke(token.access_token, () => {
+        gapi.client.setToken(null);
+      });
     }
-    gapi.load('client', initializeGapiClient);
+    authArea.classList.remove('hidden');
+    calendarContent.classList.add('hidden');
+  }
 
-    window.handleCredentialResponse = (response) => {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: API_SCOPES,
-            callback: (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    gapi.client.setToken(tokenResponse);
-                    handleAuthSuccess();
-                } else {
-                    console.error('Failed to get access token.', tokenResponse);
-                }
-            },
-        });
-        tokenClient.requestAccessToken();
-    };
+  function displayCalendar(){
+    if(calendar) calendar.destroy();
+    calendar = new FullCalendar.Calendar(calendarContainer, {
+      initialView: 'dayGridMonth',
+      headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+      fixedWeekCount: false,
+      showNonCurrentDates: false,
+      events: async (info, success, fail) => {
+        try{
+          if(!cachedCalendars){
+            const list = await gapi.client.calendar.calendarList.list();
+            cachedCalendars = list.result.items;
+          }
+          const promises = cachedCalendars.map(cal =>
+            gapi.client.calendar.events.list({
+              calendarId: cal.id,
+              timeMin: info.start.toISOString(),
+              timeMax: info.end.toISOString(),
+              singleEvents: true,
+              showDeleted: false
+            }).then(r=> r.result.items.map(e=>({
+              id:e.id,title:e.summary||'No Title',start:e.start.dateTime||e.start.date,
+              end:e.end.dateTime||e.end.date, url:e.htmlLink, allDay:!e.start.dateTime,
+              backgroundColor: cal.backgroundColor, borderColor: cal.backgroundColor,
+              description: e.description||''
+            })))
+          );
+          const all = (await Promise.all(promises)).flat();
+          success(all);
+        }catch(err){ fail(err); }
+      }
+    });
+    calendar.render();
+  }
 
-    // --- Core Application Logic ---
-    async function handleAuthSuccess() {
-        console.log('Auth success - updating UI');
-        updateUIForSignIn();
-        
-        // Wait for GAPI to be loaded
-        let attempts = 0;
-        while (!gapi_loaded && attempts < 50) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        
-        if (!gapi_loaded) {
-            logMessage("Error: Google API not loaded properly", "error");
-            return;
-        }
-        
-        try {
-            await getUserEmail();
-            displayMonthlyCalendar();
-        } catch (err) {
-            console.error('Error during auth success:', err);
-            logMessage("Authentication successful but some features may not work", "error");
-            displayMonthlyCalendar(); // Still show calendar
-        }
-    }
-
-    async function getUserEmail() {
-        console.log('Attempting to get user email...');
-        
-        // Wait for token to be properly set
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        try {
-            // First try: OAuth2 userinfo endpoint
-            console.log('Trying OAuth2 userinfo endpoint...');
-            const token = gapi.client.getToken();
-            if (token && token.access_token) {
-                const userinfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                    headers: {
-                        'Authorization': `Bearer ${token.access_token}`
-                    }
-                });
-                
-                if (userinfoResponse.ok) {
-                    const userInfo = await userinfoResponse.json();
-                    console.log('Userinfo API response:', userInfo);
-                    if (userInfo.email) {
-                        userEmail = userInfo.email;
-                        console.log('Email from userinfo API:', userEmail);
-                        logMessage(`Signed in as: ${userEmail}`, "success");
-                        return userEmail;
-                    }
-                }
-            }
-            
-            // Second try: Gmail API
-            console.log('Trying Gmail API...');
-            const response = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
-            userEmail = response.result.emailAddress;
-            console.log('User email retrieved from Gmail API:', userEmail);
-            logMessage(`Signed in as: ${userEmail}`, "success");
-            return userEmail;
-            
-        } catch (err) {
-            console.error('All email retrieval methods failed:', err);
-            
-            // Third try: Google People API
-            try {
-                console.log('Trying Google People API as last resort...');
-                const token = gapi.client.getToken();
-                const peopleResponse = await fetch('https://people.googleapis.com/v1/people/me?personFields=emailAddresses', {
-                    headers: {
-                        'Authorization': `Bearer ${token.access_token}`
-                    }
-                });
-                
-                if (peopleResponse.ok) {
-                    const peopleData = await peopleResponse.json();
-                    console.log('People API response:', peopleData);
-                    if (peopleData.emailAddresses && peopleData.emailAddresses.length > 0) {
-                        userEmail = peopleData.emailAddresses[0].value;
-                        console.log('Email from People API:', userEmail);
-                        logMessage(`Signed in as: ${userEmail}`, "success");
-                        return userEmail;
-                    }
-                }
-            } catch (altErr) {
-                console.error('People API also failed:', altErr);
-            }
-            
-            logMessage("Warning: Could not retrieve email address", "error");
-            throw err;
-        }
-    }
-
-    function handleSignOut() {
-        const token = gapi.client.getToken();
-        if (token) {
-            google.accounts.oauth2.revoke(token.access_token, () => {
-                console.log('Access token revoked.');
-                gapi.client.setToken(null);
-                updateUIForSignOut();
-            });
-        }
-        updateUIForSignOut();
-    }
-
-    function displayMonthlyCalendar() {
-        if (calendar) {
-            calendar.destroy();
-        }
-        calendar = new FullCalendar.Calendar(calendarContainer, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next',
-                center: 'title',
-                right: 'today'
-            },
-            fixedWeekCount: false,
-            showNonCurrentDates: false,
-            events: async (fetchInfo, successCallback, failureCallback) => {
-                try {
-                    const calendarListResponse = await gapi.client.calendar.calendarList.list();
-                    const calendars = calendarListResponse.result.items;
-                    
-                    console.log("Found these calendars in your list:", calendars);
-
-                    const eventPromises = calendars.map(cal => {
-                        return gapi.client.calendar.events.list({
-                            'calendarId': cal.id,
-                            'timeMin': fetchInfo.start.toISOString(),
-                            'timeMax': fetchInfo.end.toISOString(),
-                            'showDeleted': false,
-                            'singleEvents': true,
-                        }).then(response => {
-                            return response.result.items.map(event => ({
-                                ...event,
-                                color: cal.backgroundColor 
-                            }));
-                        });
-                    });
-
-                    const allEventArrays = await Promise.all(eventPromises);
-                    const allEvents = allEventArrays.flat().map(event => ({
-                        id: event.id,
-                        title: event.summary || 'No Title',
-                        start: event.start.dateTime || event.start.date,
-                        end: event.end.dateTime || event.end.date,
-                        url: event.htmlLink,
-                        allDay: !event.start.dateTime,
-                        backgroundColor: event.color,
-                        borderColor: event.color,
-                        description: event.description || '',
-                        location: event.location || '',
-                        rawEvent: event
-                    }));
-                    
-                    successCallback(allEvents);
-                } catch (err) {
-                    console.error('Error fetching calendar data:', err);
-                    failureCallback(err);
-                }
-            },
-            eventClick: function(info) {
-                info.jsEvent.preventDefault();
-                showEventDetails(info.event);
-            }
-        });
-
-        calendar.render();
-    }
-
-    function showEventDetails(event) {
-        eventTitle.textContent = event.title;
-        
-        const startDate = new Date(event.start);
-        const endDate = new Date(event.end);
-        if (event.allDay) {
-            eventTime.textContent = `All day - ${startDate.toLocaleDateString()}`;
-        } else {
-            eventTime.textContent = `${startDate.toLocaleString()} - ${endDate.toLocaleString()}`;
-        }
-        
-        eventDescription.textContent = event.extendedProps.description || 'No description';
-        eventLocation.textContent = event.extendedProps.location || 'No location';
-        eventLink.href = event.url;
-        
-        eventModal.classList.remove('hidden');
-    }
-
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                filePreview.classList.remove('hidden');
-                updateSendButton();
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function removeFile() {
-        selectedFile = null;
-        filePreview.classList.add('hidden');
-        fileInput.value = '';
-        updateSendButton();
-    }
-
-    function updateSendButton() {
-        const hasText = messageInput.value.trim() !== '';
-        const hasFile = selectedFile !== null;
-        const canSend = hasText || hasFile;
-        
-        sendButton.disabled = !canSend;
-        sendButton.classList.toggle('disabled', !canSend);
-    }
-    
-    async function sendEmail() {
-        // Check if we have user email
-        if (!userEmail) {
-            logMessage("Attempting to retrieve email address...", "info");
-            try {
-                await getUserEmail();
-                if (!userEmail) {
-                    logMessage("Error: Could not retrieve your email address. Please try signing out and back in.", "error");
-                    return;
-                }
-            } catch (err) {
-                logMessage("Error: Could not retrieve your email address. Please try signing out and back in.", "error");
-                return;
-            }
-        }
-        
-        const messageText = messageInput.value.trim();
-        if (!messageText && !selectedFile) return;
-
-        let emailContent = '';
-        const boundary = '----boundary_' + Date.now();
-        
-        const headers = [
-            `To: ${RECIPIENT_EMAIL}`,
-            `From: ${userEmail}`,
-            `Subject: Message from ${userEmail}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`
-        ];
-        
-        emailContent = headers.join('\r\n') + '\r\n\r\n';
-        
-        if (messageText) {
-            emailContent += `--${boundary}\r\n`;
-            emailContent += `Content-Type: text/plain; charset=utf-8\r\n`;
-            emailContent += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
-            emailContent += `${messageText}\r\n\r\n`;
-        }
-        
-        if (selectedFile) {
-            const fileData = await fileToBase64(selectedFile);
-            emailContent += `--${boundary}\r\n`;
-            emailContent += `Content-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\n`;
-            emailContent += `Content-Disposition: attachment; filename="${selectedFile.name}"\r\n`;
-            emailContent += `Content-Transfer-Encoding: base64\r\n\r\n`;
-            emailContent += fileData.split(',')[1] + '\r\n\r\n';
-        }
-        
-        emailContent += `--${boundary}--`;
-        
-        const base64EncodedEmail = btoa(unescape(encodeURIComponent(emailContent)))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/, '');
-        
-        logMessage(`Sending email from ${userEmail}...`, "info");
-        sendButton.disabled = true;
-        sendButton.classList.add('disabled');
-
-        try {
-            await gapi.client.gmail.users.messages.send({
-                'userId': 'me',
-                'resource': { 'raw': base64EncodedEmail }
-            });
-            logMessage(`Email sent successfully from ${userEmail}!`, "success");
-            messageInput.value = "";
-            removeFile();
-        } catch (err) {
-            console.error("Failed to send email:", err);
-            logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown error'}.`, "error");
-        } finally {
-            updateSendButton();
-        }
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onloa
+  /* Safe UTF-8 to Base64 */
+  function utf8ToBase64(str){
+    return btoa(new TextEncoder().encode(str).reduce((d, b) => d+String.fromCharCode(b), ''));
+  }
+})();
+</script>
+</body>
+</html>
