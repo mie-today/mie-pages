@@ -15,212 +15,205 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
-/* --- BODY & GENERAL --- */
-body {
+  body {
     font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6; /* Light background */
-    color: #1f2937; /* Dark text */
+    background-color: #f3f4f6; /* light mode */
+    color: #1f2937;
     margin: 0;
     padding: 0;
-}
+  }
 
-/* --- CONTAINER --- */
-.oauth-app-container {
+  .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
+  .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
+
+  .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
+  .disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .oauth-app-container {
     max-width: 100%;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-}
+  }
 
-/* --- MOBILE SPECIFIC: 350px x 500px --- */
-@media (max-width: 480px) {
+  /* MOBILE 350x500 layout */
+  @media (max-width: 480px) {
     .oauth-app-container {
-        width: 350px !important;   /* Annotation: Mobile width */
-        height: 500px !important;  /* Annotation: Mobile height */
-        overflow: hidden !important; /* Prevent scroll */
-        margin: 0 auto !important;
-        display: flex;
-        flex-direction: column;
+      width: 350px !important;
+      height: 500px !important;
     }
 
     .mobile-container {
-        padding: 4px !important;
-        gap: 4px !important;
-        height: 100% !important;
-        display: flex;
-        flex-direction: column;
+      padding: 4px !important;
+      gap: 4px !important;
+      height: 100% !important;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* --- Calendar Section --- */
+    #auth-area {
+      flex-shrink: 0;
+      min-height: 120px; /* Google button space */
+    }
+
     .calendar-section {
-        width: 100% !important;
-        height: 300px !important; /* Annotation: 60% of 500px */
-        padding: 8px !important;
-        overflow: hidden !important;
-        flex-shrink: 0;
-        background-color: #ffffff !important; /* Force light calendar */
+      width: 100% !important;
+      height: 300px !important;
+      padding: 8px !important;
+      flex-shrink: 0;
     }
 
-    /* --- Messaging Section --- */
     .messaging-section {
-        width: 100% !important;
-        height: 180px !important; /* Annotation: 36% of 500px */
-        padding: 8px !important;
-        overflow: hidden !important;
-        flex-shrink: 0;
-        background-color: #ffffff !important; /* Force light messaging area */
+      width: 100% !important;
+      height: 180px !important;
+      padding: 8px !important;
+      flex-shrink: 0;
     }
 
-    /* --- Toolbar & Calendar font sizes --- */
-    .fc .fc-toolbar-title {
-        font-size: 22.67px !important; /* Approx 17pt for month title */
-    }
-    .fc .fc-button-primary {
-        font-size: 16px !important; /* Annotation: smaller button text */
-        padding: 4px 8px !important;
-    }
-    .fc .fc-col-header-cell {
-        font-size: 14px !important; /* Day headers smaller */
-    }
-    .fc .fc-daygrid-day-number {
-        font-size: 14px !important; /* Day numbers smaller */
-    }
-    .fc .fc-event {
-        font-size: 11px !important; /* Event text smaller */
-    }
-}
+    /* Font adjustments */
+    .mobile-heading-17pt { font-size: 22.67px !important; line-height: 1.2 !important; }
+    .mobile-text-14pt { font-size: 18.67px !important; line-height: 1.2 !important; }
+    .mobile-text-12pt { font-size: 16px !important; line-height: 1.1 !important; }
+    .mobile-textarea { height: 50px !important; padding: 4px 8px !important; }
+    .mobile-message-log { height: 70px !important; padding: 4px !important; }
+    .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
+  }
 
-/* --- TABLET & DESKTOP REMAIN SAME --- */
-@media (min-width: 481px) and (max-width: 768px) {
-    .oauth-app-container { width: 481px; }
-    .calendar-section { width: 481px; height: 632px; }
-    .messaging-section { width: 481px; height: 316px; }
-}
+  /* Tablet and desktop: preserved */
+  @media (min-width: 481px) and (max-width: 768px) { .oauth-app-container { width: 481px; } }
+  @media (min-width: 769px) { .oauth-app-container { width: 800px; } }
 
-@media (min-width: 769px) {
-    .oauth-app-container { width: 800px; }
-    .calendar-section { width: 800px; height: 860px; }
-    .messaging-section { width: 800px; height: 360px; }
-}
-
-/* --- FULLCALENDAR LIGHT MODE --- */
-.fc {
-    color: #1f2937 !important;
-    background-color: #ffffff !important;
-}
-.fc .fc-button-primary {
-    background-color: #3b82f6 !important;
-    border-color: #2563eb !important;
-    color: white !important;
-}
-.fc .fc-daygrid-day.fc-day-today {
-    background-color: rgba(59,130,246,0.1) !important;
-}
-.fc .fc-daygrid-day-frame {
-    background-color: white !important;
-}
-.fc .fc-col-header-cell {
-    background-color: #f8fafc !important;
-    color: #1f2937 !important;
-}
-.fc .fc-daygrid-day-number {
-    color: #1f2937 !important;
-}
-.fc .fc-event {
-    border-color: #3b82f6 !important;
-    background-color: #3b82f6 !important;
-    color: white !important;
-}
-.fc .fc-toolbar-title {
-    color: #1f2937 !important;
-}
-.fc .fc-daygrid-day.fc-day-other {
-    display: none !important;
-}
-
-/* --- Messaging area scrollbar style for light mode */
-#message-log::-webkit-scrollbar {
-    width: 8px; height: 8px;
-}
-#message-log::-webkit-scrollbar-track {
-    background-color: #e5e7eb; border-radius: 9999px;
-}
-#message-log::-webkit-scrollbar-thumb {
-    background-color: #9ca3af; border-radius: 9999px;
-}
+  /* FullCalendar light mode */
+  .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+  .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+  .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+  .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+  .fc .fc-event { border-color:#3b82f6 !important; background-color:#3b82f6 !important; color:white !important; }
+  .fc .fc-col-header-cell, .fc .fc-daygrid-day-number, .fc .fc-toolbar-title { color: #1f2937 !important; }
 </style>
 </head>
 <body>
 
 <div class="oauth-app-container">
   <div class="flex flex-col p-4 space-y-4 w-full mobile-container">
-
-    <!-- CALENDAR SECTION -->
-    <div id="calendar-section" class="calendar-section rounded-xl shadow-lg flex flex-col">
-      <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-        <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold text-center">Sign in to view your Google Calendar</h2>
-        <div id="g_id_onload"
-             data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
-             data-context="signin"
-             data-ux_mode="popup"
-             data-callback="handleCredentialResponse"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+    <!-- AUTH -->
+    <div id="auth-area" class="flex flex-col items-center justify-center space-y-4">
+      <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold text-center">Sign in to view your Google Calendar</h2>
+      <div id="g_id_onload"
+           data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleCredentialResponse"
+           data-auto_prompt="false">
       </div>
-      
-      <div id="calendar-content" class="hidden flex flex-col h-full">
-        <div class="flex justify-end items-center mb-4">
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs mobile-small-btn py-1 px-2 rounded-md transition-colors">Sign Out</button>
-        </div>
-        <div id="calendar-container" class="flex-1 min-h-0"></div>
-      </div>
+      <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
     </div>
 
-    <!-- MESSAGING SECTION -->
-    <div id="messaging-section" class="messaging-section rounded-xl shadow-lg flex flex-col hidden">
-      <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 p-4 rounded-lg flex-1 overflow-y-auto mb-4 mobile-message-log">
+    <!-- CALENDAR -->
+    <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 hidden flex-col">
+      <div class="flex justify-end items-center mb-2">
+        <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs mobile-small-btn py-1 px-2 rounded-md transition-colors">Sign Out</button>
+      </div>
+      <div id="calendar-container" class="flex-1 min-h-0"></div>
+    </div>
+
+    <!-- MESSAGING -->
+    <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 hidden flex-col">
+      <h2 class="text-lg md:text-xl lg:text-2xl mobile-heading-17pt font-semibold mb-2">Send a Message</h2>
+      <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mobile-message-log">
         <div class="text-sm mobile-text-12pt text-gray-500">Your sent messages will appear here...</div>
       </div>
-      <div class="flex flex-col space-y-4">
-        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"></textarea>
-        <div class="flex items-center space-x-2">
-          <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-colors mobile-text-12pt">Add Image</label>
-          <input id="file-input" type="file" class="hidden" accept="image/*">
-          <div id="file-preview" class="hidden">
-            <img id="preview-image" class="max-w-32 max-h-32 rounded border" alt="Preview">
-            <button id="remove-file" class="text-red-500 text-sm mobile-text-12pt ml-2">Remove</button>
-          </div>
+      <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"></textarea>
+      <div class="flex items-center space-x-2">
+        <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full mobile-text-12pt">Add Image</label>
+        <input id="file-input" type="file" class="hidden" accept="image/*">
+        <div id="file-preview" class="hidden">
+          <img id="preview-image" class="max-w-32 max-h-32 rounded border" alt="Preview">
+          <button id="remove-file" class="text-red-500 text-sm mobile-text-12pt ml-2">Remove</button>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors disabled:bg-blue-300 w-full mobile-text-14pt" disabled>Send</button>
       </div>
+      <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors disabled:bg-blue-300 w-full mobile-text-14pt" disabled>Send</button>
     </div>
   </div>
 </div>
 
-<!-- Event Details Modal -->
-<div id="event-modal" class="event-modal hidden">
-  <div class="event-modal-content">
-    <div class="flex justify-between items-start mb-4">
-      <h3 id="event-title" class="text-xl mobile-heading-17pt font-semibold"></h3>
-      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl mobile-heading-17pt">&times;</button>
-    </div>
-    <div id="event-details" class="space-y-2">
-      <p id="event-time" class="text-gray-600 mobile-text-14pt"></p>
-      <p id="event-description" class="text-gray-700 mobile-text-14pt"></p>
-      <p id="event-location" class="text-gray-600 mobile-text-14pt"></p>
-    </div>
-    <div class="mt-6 flex justify-end">
-      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-14pt">Open in Google Calendar</a>
-    </div>
-  </div>
-</div>
-
+<!-- JS -->
 <script>
-// --- Full working Google Sign-in + Calendar + Messaging ---
-// Use the previous JS logic for credential, calendar caching, and safe Base64 email sending
-// Only changes: CSS/light mode/fixed mobile sizing
+const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
+const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+const RECIPIENT_EMAIL = "save@mie.today";
+
+let tokenClient, calendar, selectedFile=null, userEmail=null, gapi_loaded=false;
+
+const authArea=document.getElementById('auth-area');
+const calendarContent=document.getElementById('calendar-section');
+const calendarContainer=document.getElementById('calendar-container');
+const messagingSection=document.getElementById('messaging-section');
+const signoutButton=document.getElementById('signout_button');
+const sendButton=document.getElementById('send-button');
+const messageLog=document.getElementById('message-log');
+const messageInput=document.getElementById('message-input');
+const fileInput=document.getElementById('file-input');
+const filePreview=document.getElementById('file-preview');
+const previewImage=document.getElementById('preview-image');
+const removeFileButton=document.getElementById('remove-file');
+
+signoutButton.addEventListener('click', handleSignOut);
+sendButton.addEventListener('click', sendEmail);
+messageInput.addEventListener('input', updateSendButton);
+fileInput.addEventListener('change', handleFileSelect);
+removeFileButton.addEventListener('click', removeFile);
+
+function initializeGapiClient(){
+    gapi.client.init({discoveryDocs:["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest","https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"]})
+    .then(()=>{gapi_loaded=true;}).catch(err=>console.error("GAPI init error:",err));
+}
+gapi.load('client', initializeGapiClient);
+
+window.handleCredentialResponse=(response)=>{
+    tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:API_SCOPES,callback:tokenResponse=>{
+        if(tokenResponse && tokenResponse.access_token){
+            gapi.client.setToken(tokenResponse);
+            handleAuthSuccess();
+        } else console.error('Failed to get access token.', tokenResponse);
+    }});
+    tokenClient.requestAccessToken();
+};
+
+async function handleAuthSuccess(){
+    authArea.classList.add('hidden');
+    calendarContent.classList.remove('hidden');
+    messagingSection.classList.remove('hidden');
+    await new Promise(r=>setTimeout(r,2000));
+    try{await getUserEmail(); displayMonthlyCalendar();}
+    catch(err){console.error(err);}
+}
+
+async function getUserEmail(){
+    const token=gapi.client.getToken();
+    if(token && token.access_token){
+        const res=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{'Authorization':`Bearer ${token.access_token}`}});
+        if(res.ok){const u=await res.json(); if(u.email){userEmail=u.email; return u.email;}}
+    }
+}
+
+function handleSignOut(){
+    const token=gapi.client.getToken();
+    if(token){google.accounts.oauth2.revoke(token.access_token,()=>{gapi.client.setToken(null); authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden');});}
+    else{authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden');}
+}
+
+function displayMonthlyCalendar(){
+    if(calendar) calendar.destroy();
+    calendar=new FullCalendar.Calendar(calendarContainer,{initialView:'dayGridMonth',headerToolbar:{left:'prev,next',center:'title',right:'today'},fixedWeekCount:false,showNonCurrentDates:false});
+    calendar.render();
+}
+
+/* messaging */
+function handleFileSelect(e){const f=e.target.files[0]; if(f && f.type.startsWith('image/')){selectedFile=f; const r=new FileReader(); r.onload=(ev)=>{previewImage.src=ev.target.result; filePreview.classList.remove('hidden'); updateSendButton();}; r.readAsDataURL(f);}}
+function removeFile(){selectedFile=null; filePreview.classList.add('hidden'); fileInput.value=''; updateSendButton();}
+function updateSendButton(){sendButton.disabled=!(messageInput.value.trim()!==''||selectedFile!==null);}
+async function sendEmail(){alert("Email send placeholder");}
+
 </script>
 </body>
 </html>
