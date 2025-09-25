@@ -69,15 +69,17 @@ window.handleCredentialResponse = function(response) {
 
 /* MOBILE 350x860 */
 @media (max-width: 480px) {
+    /* Container full viewport */
     .oauth-app-container { 
         width: 100% !important;
         min-height: 100vh !important;  /* full viewport height */
         display: flex;
         flex-direction: column;
-        overflow: visible !important;  /* page scroll instead of internal scroll */
+        overflow: visible !important;   /* page scroll only */
         margin: 0 auto !important; 
     }
 
+    /* Mobile wrapper */
     .mobile-container { 
         display: flex; 
         flex-direction: column; 
@@ -86,20 +88,31 @@ window.handleCredentialResponse = function(response) {
         padding: 2px !important;
     }
 
+    /* Calendar & messaging sections expand naturally */
     .calendar-section, 
     .messaging-section { 
         width: 100% !important; 
-        height: auto !important;  /* let content determine height */
+        height: auto !important;      /* let content determine height */
         overflow: visible !important; /* remove internal scroll */
         flex-shrink: 0;
         padding: 4px !important; 
     }
 
-    /* Make inner elements expand naturally */
-    .flex-grow-scroll { overflow: visible !important; flex-grow: unset; }
-    #message-log { overflow: visible !important; height: auto !important; }
-    #calendar-container { flex: unset; min-height: auto !important; }
+    /* Inner elements expand */
+    .flex-grow-scroll { 
+        overflow: visible !important; 
+        flex-grow: unset; 
+    }
+    #message-log { 
+        overflow: visible !important; 
+        height: auto !important; 
+    }
+    #calendar-container { 
+        flex: unset; 
+        min-height: auto !important; 
+    }
 
+    /* Font and element sizing */
     .mobile-heading-17pt { font-size: 22.67px !important; line-height: 1.2 !important; }
     .mobile-text-14pt { font-size: 18.67px !important; line-height: 1.2 !important; }
     .mobile-text-12pt { font-size: 16px !important; line-height: 1.1 !important; }
@@ -107,12 +120,15 @@ window.handleCredentialResponse = function(response) {
     .mobile-message-log { height: auto !important; padding: 4px !important; }
     .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
     .mobile-text-14pt-btn { font-size: 18.67px !important; }
+
+    /* FullCalendar adjustments */
     .fc .fc-toolbar-title { font-size: 22.67px !important; }
     .fc .fc-button-primary { font-size: 16px !important; padding: 4px 8px !important; }
     .fc .fc-col-header-cell { font-size: 14px !important; }
     .fc .fc-daygrid-day-number { font-size: 14px !important; }
     .fc .fc-event { font-size: 11px !important; }
 }
+
 
 
 
@@ -309,6 +325,7 @@ window.handleCredentialResponse = function(response) {
             headerToolbar:{ left:'prev,next',center:'title',right:'today' },
             fixedWeekCount:false,
             showNonCurrentDates:false,
+            height: 'auto',
             events:async (fetchInfo,successCallback,failureCallback)=>{
                 try{
                     const calList=gapi.client.getToken()?calendarCache.list:null;
