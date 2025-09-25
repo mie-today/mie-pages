@@ -155,23 +155,23 @@
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="dark" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
       </div>
       
-      <div id="calendar-content" class="hidden flex flex-col flex-grow">
+      <div id="calendar-content" class="hidden flex flex-col h-full">
         <div class="flex justify-end items-center mb-4">
           <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded-md transition-colors">
             Sign Out
           </button>
         </div>
-        <div id="calendar-container" class="flex-grow"></div>
+        <div id="calendar-container" class="flex-1 min-h-0"></div>
       </div>
     </div>
 
     <div id="messaging-section" class="messaging-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hidden">
       <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-grow-scroll mb-4 min-h-[100px]">
+      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-4">
         <div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
       </div>
       <div class="flex flex-col space-y-4">
-        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-y min-h-[80px]"></textarea>
+        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none h-20"></textarea>
         <div class="flex items-center space-x-2">
           <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-full transition-colors">
             Add Image
@@ -209,7 +209,7 @@
 <script>
 (function() {
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send';
+    const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
     const RECIPIENT_EMAIL = "save@mie.today";
 
     let tokenClient;
@@ -310,25 +310,47 @@
     async function getUserEmail() {
         console.log('Attempting to get user email...');
         
-        // Wait a bit more for the token to be properly set
+        // Wait for token to be properly set
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         try {
-            console.log('Calling Gmail API for profile...');
+            // First try: OAuth2 userinfo endpoint
+            console.log('Trying OAuth2 userinfo endpoint...');
+            const token = gapi.client.getToken();
+            if (token && token.access_token) {
+                const userinfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                    headers: {
+                        'Authorization': `Bearer ${token.access_token}`
+                    }
+                });
+                
+                if (userinfoResponse.ok) {
+                    const userInfo = await userinfoResponse.json();
+                    console.log('Userinfo API response:', userInfo);
+                    if (userInfo.email) {
+                        userEmail = userInfo.email;
+                        console.log('Email from userinfo API:', userEmail);
+                        logMessage(`Signed in as: ${userEmail}`, "success");
+                        return userEmail;
+                    }
+                }
+            }
+            
+            // Second try: Gmail API
+            console.log('Trying Gmail API...');
             const response = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
             userEmail = response.result.emailAddress;
-            console.log('User email retrieved successfully:', userEmail);
+            console.log('User email retrieved from Gmail API:', userEmail);
             logMessage(`Signed in as: ${userEmail}`, "success");
             return userEmail;
-        } catch (err) {
-            console.error('Gmail API call failed:', err);
             
-            // Try to get email from Google Identity
+        } catch (err) {
+            console.error('All email retrieval methods failed:', err);
+            
+            // Third try: Google People API
             try {
+                console.log('Trying Google People API as last resort...');
                 const token = gapi.client.getToken();
-                console.log('Token object:', token);
-                
-                // Try using Google People API instead
                 const peopleResponse = await fetch('https://people.googleapis.com/v1/people/me?personFields=emailAddresses', {
                     headers: {
                         'Authorization': `Bearer ${token.access_token}`
@@ -346,7 +368,7 @@
                     }
                 }
             } catch (altErr) {
-                console.error('Alternative email retrieval failed:', altErr);
+                console.error('People API also failed:', altErr);
             }
             
             logMessage("Warning: Could not retrieve email address", "error");
