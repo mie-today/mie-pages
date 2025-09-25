@@ -1,24 +1,3 @@
-Of course. The sign-in issue in your code is caused by a missing initialization step for the Google API client (`gapi`).
-
-While the Google Identity Services (GIS) part correctly handles the sign-in and gets an access token, the `gapi` library, which is needed to actually communicate with Google Calendar and Gmail, is never properly initialized. When your code calls `gapi.client.setToken`, the `gapi.client` object isn't ready to be used, causing the process to fail silently.
-
-The fix involves adding the necessary JavaScript to load and initialize the `gapi` client before any API calls are made. I've also included the complete JavaScript logic to make the calendar and messaging sections fully functional.
-
------
-
-### Full Working HTML Code
-
-Here is the complete, corrected code. You can copy and paste this directly into an HTML file.
-
-**Key Changes:**
-
-  * A new `<script>` block has been added at the end of the `<body>`.
-  * This script contains the logic to properly initialize the `gapi` client.
-  * It includes the full functionality for fetching calendar events, displaying them, and sending messages.
-
-<!-- end list -->
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -446,4 +425,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-```
