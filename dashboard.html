@@ -73,18 +73,18 @@
     }
   }
   
-  /* Desktop: 600px */
+  /* Desktop: 800px */
   @media (min-width: 769px) {
     .oauth-app-container {
-      width: 600px;
+      width: 800px;
     }
     .calendar-section {
-      width: 600px;
-      height: 600px; /* 1137px - 379px = 758px for calendar */
+      width: 800px;
+      height: 600px;
     }
     .messaging-section {
-      width: 673px;
-      height: 379px; /* 1/3 of total height (1137px ÷ 3 = 379px) */
+      width: 800px;
+      height: 300px;
     }
   }
   
@@ -156,9 +156,8 @@
       </div>
       
       <div id="calendar-content" class="hidden flex flex-col flex-grow">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg md:text-xl lg:text-2xl font-semibold">Your Calendar</h2>
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
+        <div class="flex justify-end items-center mb-4">
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded-full transition-colors">
             Sign Out
           </button>
         </div>
@@ -183,7 +182,7 @@
             <button id="remove-file" class="text-red-500 text-sm ml-2">Remove</button>
           </div>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled" disabled>Send</button>
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full" disabled>Send</button>
       </div>
     </div>
   </div>
@@ -281,17 +280,47 @@
     // --- Core Application Logic ---
     async function handleAuthSuccess() {
         updateUIForSignIn();
-        await getUserEmail();
-        displayMonthlyCalendar();
+        try {
+            await getUserEmail();
+            if (userEmail) {
+                logMessage(`Signed in as: ${userEmail}`, "success");
+                displayMonthlyCalendar();
+            } else {
+                logMessage("Warning: Could not retrieve email address", "error");
+                displayMonthlyCalendar(); // Still show calendar
+            }
+        } catch (err) {
+            console.error('Error during auth success:', err);
+            logMessage("Authentication successful but email retrieval failed", "error");
+            displayMonthlyCalendar(); // Still show calendar
+        }
     }
 
     async function getUserEmail() {
         try {
+            // Wait a moment for the token to be properly set
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             const response = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
             userEmail = response.result.emailAddress;
             console.log('User email retrieved:', userEmail);
+            return userEmail;
         } catch (err) {
             console.error('Error getting user email:', err);
+            // Try alternative method
+            try {
+                const tokenResponse = gapi.client.getToken();
+                if (tokenResponse && tokenResponse.access_token) {
+                    // Decode the token to get email (if available)
+                    const payload = JSON.parse(atob(tokenResponse.access_token.split('.')[1]));
+                    userEmail = payload.email || null;
+                    console.log('Email from token:', userEmail);
+                    return userEmail;
+                }
+            } catch (altErr) {
+                console.error('Alternative email retrieval failed:', altErr);
+            }
+            throw err;
         }
     }
 
@@ -314,9 +343,9 @@
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: 'dayGridMonth',
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev',
                 center: 'title',
-                right: '' // Remove view switching buttons
+                right: 'next today'
             },
             fixedWeekCount: false, // This prevents showing partial weeks from next month
             showNonCurrentDates: false, // Hide dates from other months
@@ -533,5 +562,3 @@
 </script>
 </body>
 </html>
-
-
