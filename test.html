@@ -26,6 +26,7 @@
     background-color: #111827;
     color: #f9fafb;
   }
+  
   .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
   .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
   .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
@@ -37,16 +38,12 @@
     cursor: not-allowed;
   }
   
-  /* Responsive width constraints - ORIGINAL DESIGN FOR DESKTOP/TABLET */
-  .oauth-app-container {
-    max-width: 100%;
-    margin: 0 auto;
-  }
-  
-  /* Desktop: 800px - ORIGINAL DIMENSIONS */
+  /* ==== DESKTOP DIMENSIONS (ORIGINAL) - 800px ==== */
   @media (min-width: 769px) {
     .oauth-app-container {
       width: 800px;
+      max-width: 100%;
+      margin: 0 auto;
     }
     .calendar-section {
       width: 800px;
@@ -56,16 +53,14 @@
       width: 800px;
       height: 360px;
     }
-    /* DESKTOP FONT SIZE: Original size */
-    .desktop-font-lg { font-size: 1.5rem; } /* 24px */
-    .desktop-font-xl { font-size: 1.875rem; } /* 30px */
-    .desktop-font-2xl { font-size: 2.25rem; } /* 36px */
   }
   
-  /* Tablet: 481px - ORIGINAL DIMENSIONS */
+  /* ==== TABLET DIMENSIONS (ORIGINAL) - 481px ==== */
   @media (min-width: 481px) and (max-width: 768px) {
     .oauth-app-container {
       width: 481px;
+      max-width: 100%;
+      margin: 0 auto;
     }
     .calendar-section {
       width: 481px;
@@ -75,44 +70,143 @@
       width: 481px;
       height: 316px;
     }
-    /* TABLET FONT SIZE: Original size */
-    .tablet-font-lg { font-size: 1.25rem; } /* 20px */
-    .tablet-font-xl { font-size: 1.5rem; } /* 24px */
-    .tablet-font-2xl { font-size: 1.875rem; } /* 30px */
   }
   
-  /* Mobile: 350px - NEW SPECIFICATIONS WITH NO SCROLLING */
+  /* ==== MOBILE DIMENSIONS - FIXED 350px x 500px, NO SCROLLING ==== */
   @media (max-width: 480px) {
+    /* CONTAINER: Exactly 350px wide, 500px tall, centered, no overflow */
     .oauth-app-container {
-      width: 350px;
-      height: 500px; /* Fixed total height */
-      overflow: hidden; /* No scrolling */
-      margin: 0 auto;
+      width: 350px !important;
+      height: 500px !important;
+      margin: 0 auto !important;
+      overflow: hidden !important;
+      position: relative;
     }
-    .calendar-section {
-      width: 350px;
-      height: 300px; /* Adjusted for no scrolling */
-    }
-    .messaging-section {
-      width: 350px;
-      height: 180px; /* Adjusted for no scrolling */
-    }
-    /* MOBILE FONT SIZE: 17pt = 22.67px ≈ 1.417rem */
-    .mobile-font-base { font-size: 1.417rem !important; } /* 17pt for headings */
-    .mobile-font-sm { font-size: 1.06rem !important; } /* ~13pt for smaller text */
-    .mobile-font-xs { font-size: 0.94rem !important; } /* ~11pt for very small text */
     
-    /* Remove padding/margins that cause scrolling */
-    .oauth-app-container .flex.flex-col.p-4.space-y-4 {
-      padding: 8px !important;
-      gap: 8px !important;
+    /* MAIN WRAPPER: Remove all padding/margins that cause overflow */
+    .mobile-wrapper {
+      padding: 6px !important;
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 6px !important;
     }
-    .calendar-section, .messaging-section {
-      padding: 12px !important;
+    
+    /* CALENDAR SECTION: 60% of total height */
+    .calendar-section {
+      width: 100% !important;
+      height: 290px !important;
+      padding: 8px !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    /* MESSAGING SECTION: 40% of total height */
+    .messaging-section {
+      width: 100% !important;
+      height: 192px !important;
+      padding: 8px !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    /* ==== MOBILE FONT SIZES - ALL 17PT (22.67px) ==== */
+    /* Main headings - 17pt */
+    .mobile-heading {
+      font-size: 22.67px !important;
+      line-height: 1.2 !important;
+      margin: 0 !important;
+    }
+    
+    /* Body text - 17pt */
+    .mobile-body {
+      font-size: 22.67px !important;
+      line-height: 1.3 !important;
+    }
+    
+    /* Small text (buttons, labels) - 14pt for better fit */
+    .mobile-small {
+      font-size: 18.67px !important;
+      line-height: 1.2 !important;
+    }
+    
+    /* Tiny text (timestamps, etc) - 12pt */
+    .mobile-tiny {
+      font-size: 16px !important;
+      line-height: 1.1 !important;
+    }
+    
+    /* ==== MOBILE CALENDAR LIGHT MODE OVERRIDE ==== */
+    .fc {
+      color: #1f2937 !important;
+      background-color: #ffffff !important;
+      font-size: 14px !important; /* Smaller calendar text to fit */
+    }
+    .fc .fc-button-primary {
+      background-color: #3b82f6 !important;
+      border-color: #2563eb !important;
+      color: white !important;
+      font-size: 12px !important; /* Smaller button text */
+      padding: 2px 6px !important; /* Smaller button padding */
+    }
+    .fc .fc-button-primary:hover {
+      background-color: #2563eb !important;
+    }
+    .fc .fc-toolbar-title {
+      color: #1f2937 !important;
+      font-size: 16px !important; /* Smaller title */
+    }
+    .fc .fc-col-header-cell {
+      background-color: #f8fafc !important;
+      color: #1f2937 !important;
+      font-size: 12px !important;
+    }
+    .fc .fc-daygrid-day-number {
+      color: #1f2937 !important;
+      font-size: 12px !important;
+    }
+    .fc .fc-event {
+      font-size: 10px !important; /* Very small event text */
+      background-color: #3b82f6 !important;
+      border-color: #3b82f6 !important;
+    }
+    .fc-daygrid-day.fc-day-today {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    /* ==== MOBILE UI ELEMENT SIZING ==== */
+    /* Smaller buttons */
+    .mobile-btn-small {
+      padding: 4px 8px !important;
+      font-size: 14px !important;
+    }
+    
+    /* Smaller input fields */
+    .mobile-input {
+      padding: 6px 8px !important;
+      font-size: 16px !important;
+      height: 60px !important; /* Shorter textarea */
+    }
+    
+    /* Message log - smaller */
+    .mobile-message-log {
+      height: 80px !important;
+      padding: 6px !important;
+      font-size: 14px !important;
+      overflow-y: auto !important;
+    }
+    
+    /* Remove any margin/padding that causes overflow */
+    .mobile-no-spacing > * {
+      margin: 0 !important;
+    }
+    
+    .mobile-tight-spacing {
+      gap: 4px !important;
     }
   }
   
-  /* ORIGINAL FullCalendar style overrides for dark mode (DESKTOP/TABLET ONLY) */
+  /* ==== ORIGINAL DARK MODE STYLES (DESKTOP/TABLET ONLY) ==== */
   @media (min-width: 481px) {
     .dark .fc {
       color: #f9fafb;
@@ -129,61 +223,12 @@
     }
   }
   
-  /* MOBILE ONLY: Force light mode for FullCalendar to ensure readability */
-  @media (max-width: 480px) {
-    .fc {
-      color: #1f2937 !important;
-      background-color: #ffffff !important;
-    }
-    .fc .fc-button-primary {
-      background-color: #3b82f6 !important;
-      border-color: #2563eb !important;
-      color: white !important;
-    }
-    .fc .fc-button-primary:hover {
-      background-color: #2563eb !important;
-      border-color: #1d4ed8 !important;
-    }
-    .fc .fc-button-primary:disabled {
-      background-color: #9ca3af !important;
-      border-color: #6b7280 !important;
-    }
-    .fc-daygrid-day.fc-day-today {
-      background-color: rgba(59, 130, 246, 0.1) !important;
-    }
-    .fc .fc-daygrid-day-frame {
-      background-color: white !important;
-    }
-    .fc .fc-col-header-cell {
-      background-color: #f8fafc !important;
-      color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day-number {
-      color: #1f2937 !important;
-    }
-    .fc .fc-event {
-      border-color: #3b82f6 !important;
-      background-color: #3b82f6 !important;
-      color: white !important;
-    }
-    .fc .fc-event:hover {
-      background-color: #2563eb !important;
-      border-color: #2563eb !important;
-    }
-    .fc .fc-toolbar-title {
-      color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day-top {
-      color: #1f2937 !important;
-    }
-  }
-  
   /* Hide non-current month dates */
   .fc .fc-daygrid-day.fc-day-other {
     display: none !important;
   }
   
-  /* Event details modal */
+  /* ==== EVENT MODAL STYLES ==== */
   .event-modal {
     position: fixed;
     top: 0;
@@ -211,11 +256,19 @@
     color: #f9fafb;
   }
   
-  /* MOBILE: Override modal for light theme */
+  /* MOBILE: Force light modal */
   @media (max-width: 480px) {
     .event-modal-content {
       background: white !important;
       color: #1f2937 !important;
+      max-width: 320px !important;
+      padding: 16px !important;
+    }
+    .event-modal-content h3 {
+      font-size: 18px !important;
+    }
+    .event-modal-content p {
+      font-size: 14px !important;
     }
   }
 </style>
@@ -223,13 +276,18 @@
 <body>
 
 <div class="oauth-app-container">
-  <div class="flex flex-col p-4 space-y-4 w-full">
+  <!-- MOBILE: Special wrapper with tight spacing -->
+  <div class="flex flex-col p-4 space-y-4 w-full mobile-wrapper">
 
-    <!-- CALENDAR SECTION -->
+    <!-- ==== CALENDAR SECTION ==== -->
     <div id="calendar-section" class="calendar-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col">
-      <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-        <!-- MOBILE: 17pt font size for headings -->
-        <h2 class="text-lg md:text-xl lg:text-2xl mobile-font-base font-semibold text-center">Sign in to view your Google Calendar</h2>
+      
+      <!-- AUTH AREA (Google Sign-in) -->
+      <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full mobile-no-spacing">
+        <!-- MOBILE: 17pt heading font -->
+        <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center mobile-heading">
+          Sign in to view your Google Calendar
+        </h2>
         <div id="g_id_onload"
              data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
              data-context="signin"
@@ -240,10 +298,11 @@
         <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="dark" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
       </div>
       
+      <!-- CALENDAR CONTENT (after sign-in) -->
       <div id="calendar-content" class="hidden flex flex-col h-full">
-        <div class="flex justify-end items-center mb-4">
-          <!-- MOBILE: Smaller button with 17pt font -->
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs mobile-font-xs py-1 px-2 rounded-md transition-colors">
+        <div class="flex justify-end items-center mb-2">
+          <!-- MOBILE: Small sign-out button -->
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white mobile-btn-small rounded-md transition-colors">
             Sign Out
           </button>
         </div>
@@ -251,31 +310,40 @@
       </div>
     </div>
 
-    <!-- MESSAGING SECTION -->
+    <!-- ==== MESSAGING SECTION ==== -->
     <div id="messaging-section" class="messaging-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hidden">
-      <!-- MOBILE: 17pt font size for headings -->
-      <h2 class="text-lg md:text-xl lg:text-2xl mobile-font-base font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-4">
-        <!-- MOBILE: Smaller font for message log -->
-        <div class="text-sm mobile-font-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
+      
+      <!-- MOBILE: 17pt heading -->
+      <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-2 mobile-heading">Send a Message</h2>
+      
+      <!-- MESSAGE LOG: Compact for mobile -->
+      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-2 mobile-message-log">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mobile-tiny">Your sent messages will appear here...</div>
       </div>
-      <div class="flex flex-col space-y-4">
-        <!-- MOBILE: 17pt font in textarea -->
-        <textarea id="message-input" placeholder="Type your message..." class="mobile-font-sm rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none h-20"></textarea>
+      
+      <!-- MESSAGE INPUT & CONTROLS: Tight spacing -->
+      <div class="flex flex-col mobile-tight-spacing">
+        <!-- MOBILE: 17pt textarea, shorter height -->
+        <textarea id="message-input" 
+                  placeholder="Type your message..." 
+                  class="rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none mobile-input"></textarea>
+        
         <div class="flex items-center space-x-2">
-          <!-- MOBILE: Smaller button with appropriate font -->
-          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 mobile-font-xs rounded-full transition-colors">
+          <!-- MOBILE: Smaller file button -->
+          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold rounded-full transition-colors mobile-btn-small">
             Add Image
           </label>
           <input id="file-input" type="file" class="hidden" accept="image/*">
           <div id="file-preview" class="hidden">
-            <img id="preview-image" class="max-w-32 max-h-32 rounded border" alt="Preview">
-            <!-- MOBILE: Smaller remove button -->
-            <button id="remove-file" class="text-red-500 mobile-font-xs ml-2">Remove</button>
+            <img id="preview-image" class="max-w-16 max-h-16 rounded border" alt="Preview">
+            <button id="remove-file" class="text-red-500 mobile-tiny ml-1">Remove</button>
           </div>
         </div>
-        <!-- MOBILE: 17pt font in send button -->
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 mobile-font-sm rounded-lg shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full" disabled>Send</button>
+        
+        <!-- MOBILE: Compact send button -->
+        <button id="send-button" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full mobile-btn-small" 
+                disabled>Send</button>
       </div>
     </div>
   </div>
@@ -285,19 +353,16 @@
 <div id="event-modal" class="event-modal hidden">
   <div class="event-modal-content">
     <div class="flex justify-between items-start mb-4">
-      <!-- MOBILE: 17pt font for modal title -->
-      <h3 id="event-title" class="text-xl mobile-font-base font-semibold"></h3>
-      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl mobile-font-base">&times;</button>
+      <h3 id="event-title" class="text-xl font-semibold"></h3>
+      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
     </div>
     <div id="event-details" class="space-y-2">
-      <!-- MOBILE: Smaller fonts for modal content -->
-      <p id="event-time" class="text-gray-600 dark:text-gray-300 mobile-font-sm"></p>
-      <p id="event-description" class="text-gray-700 dark:text-gray-200 mobile-font-sm"></p>
-      <p id="event-location" class="text-gray-600 dark:text-gray-300 mobile-font-sm"></p>
+      <p id="event-time" class="text-gray-600 dark:text-gray-300"></p>
+      <p id="event-description" class="text-gray-700 dark:text-gray-200"></p>
+      <p id="event-location" class="text-gray-600 dark:text-gray-300"></p>
     </div>
     <div class="mt-6 flex justify-end">
-      <!-- MOBILE: 17pt font for modal button -->
-      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mobile-font-sm rounded-lg">Open in Google Calendar</a>
+      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Open in Google Calendar</a>
     </div>
   </div>
 </div>
@@ -652,51 +717,4 @@
             .replace(/\//g, '_')
             .replace(/=+$/, '');
         
-        logMessage(`Sending email from ${userEmail}...`, "info");
-        sendButton.disabled = true;
-        sendButton.classList.add('disabled');
-
-        try {
-            await gapi.client.gmail.users.messages.send({
-                'userId': 'me',
-                'resource': { 'raw': base64EncodedEmail }
-            });
-            logMessage(`Email sent successfully from ${userEmail}!`, "success");
-            messageInput.value = "";
-            removeFile();
-        } catch (err) {
-            console.error("Failed to send email:", err);
-            logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown error'}.`, "error");
-        } finally {
-            updateSendButton();
-        }
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    function updateUIForSignIn() {
-        authArea.classList.add('hidden');
-        calendarContent.classList.remove('hidden');
-        messagingSection.classList.remove('hidden');
-    }
-
-    function updateUIForSignOut() {
-        authArea.classList.remove('hidden');
-        calendarContent.classList.add('hidden');
-        messagingSection.classList.add('hidden');
-        calendarContainer.innerHTML = '';
-        messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`;
-        messageInput.value = "";
-        removeFile();
-        userEmail = null;
-    }
-    
-    function logMessage(text, type = 'info') {
-        if
+        logMessage(`Sending email
