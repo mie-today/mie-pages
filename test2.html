@@ -11,17 +11,24 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <!-- Google Identity Services -->
 <script>
-    // This function is called when the user signs in.
-    window.handleCredentialResponse = function(response) {
-        console.log('GIS credential received', response);
-        if (!response.credential) {
-            console.error('No credential returned.');
-            return;
-        }
-        // The rest of the logic to get an access token will be handled
-        // by the main script block after GAPI is initialized.
-        document.dispatchEvent(new CustomEvent('gis-credential-received'));
-    };
+window.handleCredentialResponse = function(response) {
+    console.log('GIS credential received', response);
+    if (!response.credential) { console.error('No credential returned.'); return; }
+
+    if (!window.tokenClient) {
+        window.tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
+            scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
+            callback: async (tokenResponse) => {
+                if (tokenResponse && tokenResponse.access_token) {
+                    gapi.client.setToken(tokenResponse);
+                    document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
+                } else { console.error('Failed to get access token.', tokenResponse); }
+            },
+        });
+    }
+    window.tokenClient.requestAccessToken({ prompt: "" });
+};
 </script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
@@ -52,25 +59,42 @@
 
     .oauth-app-container { max-width: 100%; margin: 0 auto; }
 
-    /* MOBILE 350x860 */
-    @media (max-width: 480px) {
-        .oauth-app-container { width: 350px !important; height: 600px !important; overflow: hidden !important; margin: 0 auto !important; }
-        .mobile-container { padding: 1px !important; gap: 1px !important; height: 100% !important; display: flex; flex-direction: column; }
-        .calendar-section { width: 100% !important; height: 290px !important; padding: 4px !important; overflow: hidden !important; flex-shrink: 0; }
-        .messaging-section { width: 100% !important; height: 290px !important; padding: 4px !important; overflow: hidden !important; flex-shrink: 0; }
-        .mobile-heading-17pt { font-size: 22.67px !important; line-height: 1.2 !important; }
-        .mobile-text-14pt { font-size: 18.67px !important; line-height: 1.2 !important; }
-        .mobile-text-12pt { font-size: 16px !important; line-height: 1.1 !important; }
-        .mobile-textarea { height: 50px !important; padding: 4px 8px !important; }
-        .mobile-message-log { height: 70px !important; padding: 4px !important; }
-        .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
-        .mobile-text-14pt-btn { font-size: 18.67px !important; }
-        .fc .fc-toolbar-title { font-size: 22.67px !important; }
-        .fc .fc-button-primary { font-size: 16px !important; padding: 4px 8px !important; }
-        .fc .fc-col-header-cell { font-size: 14px !important; }
-        .fc .fc-daygrid-day-number { font-size: 14px !important; }
-        .fc .fc-event { font-size: 11px !important; }
+   /* MOBILE 350x860 */
+@media (max-width: 480px) {
+    .oauth-app-container { 
+        width: 100% !important;        /* fill mobile screen width */
+        min-height: 100vh !important;  /* use full viewport height */
+        overflow: visible !important;  /* allow scrolling inside sections if needed */
+        margin: 0 auto !important; 
     }
+    .mobile-container { 
+        padding: 1px !important; 
+        gap: 1px !important; 
+        height: 100% !important; 
+        display: flex; 
+        flex-direction: column; 
+    }
+    .calendar-section, .messaging-section { 
+        width: 100% !important; 
+        height: auto !important;      /* allow natural height */
+        flex-grow: 1;                  /* sections expand to fill container */
+        padding: 4px !important; 
+        overflow: auto !important;    /* scroll content if it overflows */
+    }
+    .mobile-heading-17pt { font-size: 22.67px !important; line-height: 1.2 !important; }
+    .mobile-text-14pt { font-size: 18.67px !important; line-height: 1.2 !important; }
+    .mobile-text-12pt { font-size: 16px !important; line-height: 1.1 !important; }
+    .mobile-textarea { height: 50px !important; padding: 4px 8px !important; }
+    .mobile-message-log { height: 70px !important; padding: 4px !important; }
+    .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
+    .mobile-text-14pt-btn { font-size: 18.67px !important; }
+    .fc .fc-toolbar-title { font-size: 22.67px !important; }
+    .fc .fc-button-primary { font-size: 16px !important; padding: 4px 8px !important; }
+    .fc .fc-col-header-cell { font-size: 14px !important; }
+    .fc .fc-daygrid-day-number { font-size: 14px !important; }
+    .fc .fc-event { font-size: 11px !important; }
+}
+
 
     /* Tablet */
     @media (min-width: 481px) and (max-width: 768px) {
@@ -169,266 +193,133 @@
     </div>
 </div>
 
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- CONFIGURATION ---
-    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    // IMPORTANT: Add your API Key here. Get it from Google Cloud Console.
-    const API_KEY = "YOUR_API_KEY"; 
-    const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest";
-    const SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email";
+(async function(){
+    const CLIENT_ID="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
+    const API_SCOPES='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+    const RECIPIENT_EMAIL="save@mie.today";
 
-    // --- DOM ELEMENTS ---
-    const authArea = document.getElementById('auth-area');
-    const calendarContent = document.getElementById('calendar-content');
-    const messagingSection = document.getElementById('messaging-section');
-    const signoutButton = document.getElementById('signout_button');
-    const sendButton = document.getElementById('send-button');
-    const messageInput = document.getElementById('message-input');
-    const messageLog = document.getElementById('message-log');
-    const fileInput = document.getElementById('file-input');
-    const filePreview = document.getElementById('file-preview');
-    const previewImage = document.getElementById('preview-image');
-    const removeFileButton = document.getElementById('remove-file');
-    const eventModal = document.getElementById('event-modal');
-    const closeModalButton = document.getElementById('close-modal');
+    let calendar=null;
+    let selectedFile=null;
+    let userEmail=null;
+    let gapi_loaded=false;
+    const calendarCache={};
 
-    let tokenClient;
-    let calendar;
-    let attachedFile = null;
-    let userEmail = '';
+    // DOM
+    const authArea=document.getElementById('auth-area');
+    const calendarContent=document.getElementById('calendar-content');
+    const calendarContainer=document.getElementById('calendar-container');
+    const messagingSection=document.getElementById('messaging-section');
+    const signoutButton=document.getElementById('signout_button');
+    const sendButton=document.getElementById('send-button');
+    const messageLog=document.getElementById('message-log');
+    const messageInput=document.getElementById('message-input');
+    const fileInput=document.getElementById('file-input');
+    const filePreview=document.getElementById('file-preview');
+    const previewImage=document.getElementById('preview-image');
+    const removeFileButton=document.getElementById('remove-file');
+    const eventModal=document.getElementById('event-modal');
+    const closeModal=document.getElementById('close-modal');
+    const eventTitle=document.getElementById('event-title');
+    const eventTime=document.getElementById('event-time');
+    const eventDescription=document.getElementById('event-description');
+    const eventLocation=document.getElementById('event-location');
+    const eventLink=document.getElementById('event-link');
 
-    // --- INITIALIZATION ---
-    gapi.load('client', initializeGapiClient);
+    // Listeners
+    signoutButton.addEventListener('click',handleSignOut);
+    sendButton.addEventListener('click',sendEmail);
+    messageInput.addEventListener('input',updateSendButton);
+    fileInput.addEventListener('change',handleFileSelect);
+    removeFileButton.addEventListener('click',removeFile);
+    closeModal.addEventListener('click',()=>eventModal.classList.add('hidden'));
+    eventModal.addEventListener('click',(e)=>{ if(e.target===eventModal) eventModal.classList.add('hidden'); });
 
-    async function initializeGapiClient() {
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: [DISCOVERY_DOC],
-        });
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: tokenCallback,
-        });
-        // Listen for the custom event from the head script
-        document.addEventListener('gis-credential-received', () => {
-             tokenClient.requestAccessToken({ prompt: '' });
-        });
-    }
-    
-    // --- AUTHENTICATION ---
-    async function tokenCallback(tokenResponse) {
-        if (tokenResponse && tokenResponse.access_token) {
-            gapi.client.setToken(tokenResponse);
-            toggleUI(true); // User is authenticated
-            const userInfo = await gapi.client.oauth2.userinfo.get();
-            userEmail = userInfo.result.email;
-            console.log('User signed in:', userEmail);
-            loadCalendarEvents();
-        } else {
-            console.error('Failed to get access token.', tokenResponse);
-        }
+    // GAPI init
+    gapi.load('client',()=>{ gapi.client.init({ discoveryDocs:["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest","https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"] }).then(()=>{ gapi_loaded=true; console.log("GAPI client ready"); }); });
+
+    document.addEventListener('gis-token-received',async ()=>{ await handleAuthSuccess(); });
+
+    function updateUIForSignIn(){ authArea.classList.add('hidden'); calendarContent.classList.remove('hidden'); messagingSection.classList.remove('hidden'); }
+    function updateUIForSignOut(){ authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden'); }
+
+    async function handleAuthSuccess(){
+        updateUIForSignIn();
+        let attempts=0;
+        while(!gapi_loaded && attempts<50){ await new Promise(r=>setTimeout(r,100)); attempts++; }
+        if(!gapi_loaded){ logMessage("Error: GAPI not loaded","error"); return; }
+        try{ await getUserEmail(); displayMonthlyCalendar(); } catch(e){ logMessage("Auth success but some features may not work","error"); displayMonthlyCalendar(); }
     }
 
-    signoutButton.onclick = () => {
-        const token = gapi.client.getToken();
-        if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token, () => {
-                gapi.client.setToken('');
-                toggleUI(false); // User is signed out
-                userEmail = '';
-                console.log('User signed out.');
-            });
-        }
-    };
-
-    // --- UI MANAGEMENT ---
-    function toggleUI(isAuthenticated) {
-        if (isAuthenticated) {
-            authArea.classList.add('hidden');
-            calendarContent.classList.remove('hidden');
-            messagingSection.classList.remove('hidden');
-        } else {
-            authArea.classList.remove('hidden');
-            calendarContent.classList.add('hidden');
-            messagingSection.classList.add('hidden');
-            if (calendar) calendar.removeAllEvents();
-        }
+    async function getUserEmail(){
+        try{
+            const token=gapi.client.getToken();
+            const resp=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{ headers:{ 'Authorization':`Bearer ${token.access_token}` } });
+            if(resp.ok){ const data=await resp.json(); if(data.email){ userEmail=data.email; logMessage(`Signed in as: ${userEmail}`,"success"); return userEmail; } }
+            const gmailResp=await gapi.client.gmail.users.getProfile({'userId':'me'}); userEmail=gmailResp.result.emailAddress; logMessage(`Signed in as: ${userEmail}`,"success"); return userEmail;
+        }catch(e){ console.error(e); throw e; }
     }
 
-    // --- CALENDAR LOGIC ---
-    function initializeCalendar() {
-        const calendarEl = document.getElementById('calendar-container');
-        calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    function handleFileSelect(e){ const file=e.target.files[0]; if(file&&file.type.startsWith('image/')){ selectedFile=file; const reader=new FileReader(); reader.onload=(e)=>{ previewImage.src=e.target.result; filePreview.classList.remove('hidden'); updateSendButton(); }; reader.readAsDataURL(file); } }
+    function removeFile(){ selectedFile=null; filePreview.classList.add('hidden'); fileInput.value=''; updateSendButton(); }
+    function updateSendButton(){ const canSend=messageInput.value.trim()!=='' || selectedFile!==null; sendButton.disabled=!canSend; sendButton.classList.toggle('disabled',!canSend); }
+
+    async function sendEmail(){
+        if(!userEmail){ logMessage("Retrieving email...","info"); await getUserEmail(); if(!userEmail){ logMessage("Cannot retrieve email","error"); return; } }
+        if(!messageInput.value.trim() && !selectedFile) return;
+        const boundary='----boundary_'+Date.now();
+        const headers=[`To: ${RECIPIENT_EMAIL}`,`From: ${userEmail}`,`Subject: Message from ${userEmail}`,`MIME-Version: 1.0`,`Content-Type: multipart/mixed; boundary="${boundary}"`];
+        let emailContent=headers.join('\r\n')+'\r\n\r\n';
+        if(messageInput.value.trim()){ emailContent+=`--${boundary}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n${messageInput.value.trim()}\r\n\r\n`; }
+        if(selectedFile){ const fileData=await fileToBase64(selectedFile); emailContent+=`--${boundary}\r\nContent-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\nContent-Disposition: attachment; filename="${selectedFile.name}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${fileData.split(',')[1]}\r\n\r\n`; }
+        emailContent+=`--${boundary}--`;
+        const base64Encoded=btoa(unescape(encodeURIComponent(emailContent))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        logMessage(`Sending email from ${userEmail}...`,"info"); sendButton.disabled=true; sendButton.classList.add('disabled');
+        try{ await gapi.client.gmail.users.messages.send({'userId':'me','resource':{'raw':base64Encoded}}); logMessage("Email sent!","success"); messageInput.value=''; removeFile(); }catch(err){ logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown'}`,"error"); }finally{ updateSendButton(); }
+    }
+    function fileToBase64(file){ return new Promise((res,rej)=>{ const reader=new FileReader(); reader.readAsDataURL(file); reader.onload=()=>res(reader.result); reader.onerror=err=>rej(err); }); }
+
+    function logMessage(msg,type){ const div=document.createElement('div'); div.textContent=msg; div.className=`text-sm ${type==='error'?'text-red-500':type==='success'?'text-green-500':'text-gray-600'} mb-1`; messageLog.appendChild(div); messageLog.scrollTop=messageLog.scrollHeight; }
+
+    function displayMonthlyCalendar(){
+        if(calendar) calendar.destroy();
+        calendar=new FullCalendar.Calendar(calendarContainer,{
+            initialView:'dayGridMonth',
+            headerToolbar:{ left:'prev,next',center:'title',right:'today' },
+            fixedWeekCount:false,
+            showNonCurrentDates:false,
+            events:async (fetchInfo,successCallback,failureCallback)=>{
+                try{
+                    const calList=gapi.client.getToken()?calendarCache.list:null;
+                    if(!calList){ const res=await gapi.client.calendar.calendarList.list(); calendarCache.list=res.result.items; }
+                    const calendars=calendarCache.list;
+                    const eventPromises=calendars.map(cal=>gapi.client.calendar.events.list({calendarId:cal.id,timeMin:fetchInfo.start.toISOString(),timeMax:fetchInfo.end.toISOString(),showDeleted:false,singleEvents:true}).then(resp=>resp.result.items.map(e=>({...e,color:cal.backgroundColor}))));
+                    const allEvents=(await Promise.all(eventPromises)).flat().map(e=>({id:e.id,title:e.summary||'No Title',start:e.start.dateTime||e.start.date,end:e.end.dateTime||e.end.date,url:e.htmlLink,allDay:!e.start.dateTime,backgroundColor:e.color,borderColor:e.color,description:e.description||'',location:e.location||'',rawEvent:e}));
+                    successCallback(allEvents);
+                }catch(err){ console.error(err); failureCallback(err); }
             },
-            eventClick: handleEventClick,
-            height: '100%',
+            eventClick:function(info){ info.jsEvent.preventDefault(); showEventDetails(info.event); }
         });
         calendar.render();
     }
-    
-    async function loadCalendarEvents() {
-        try {
-            const response = await gapi.client.calendar.events.list({
-                'calendarId': 'primary',
-                'timeMin': (new Date()).toISOString(),
-                'showDeleted': false,
-                'singleEvents': true,
-                'maxResults': 250,
-                'orderBy': 'startTime'
-            });
 
-            const events = response.result.items.map(event => ({
-                title: event.summary,
-                start: event.start.dateTime || event.start.date,
-                end: event.end.dateTime || event.end.date,
-                extendedProps: {
-                    description: event.description,
-                    location: event.location,
-                    link: event.htmlLink,
-                }
-            }));
-            
-            if (calendar) {
-                calendar.removeAllEvents();
-                calendar.addEventSource(events);
-            }
-
-        } catch (err) {
-            console.error('Error fetching calendar events:', err);
-        }
-    }
-
-    // --- EVENT MODAL ---
-    function handleEventClick(info) {
-        const { title, extendedProps } = info.event;
-        const start = info.event.start;
-
-        document.getElementById('event-title').textContent = title;
-        document.getElementById('event-time').textContent = `When: ${start.toLocaleString()}`;
-        document.getElementById('event-description').innerHTML = extendedProps.description ? `Description: ${extendedProps.description}` : 'No description provided.';
-        document.getElementById('event-location').textContent = extendedProps.location ? `Location: ${extendedProps.location}` : '';
-        document.getElementById('event-link').href = extendedProps.link;
-        
+    function showEventDetails(event){
+        eventTitle.textContent=event.title;
+        const start=new Date(event.start), end=new Date(event.end);
+        eventTime.textContent=event.allDay?`All day - ${start.toLocaleDateString()}`:`${start.toLocaleString()} - ${end.toLocaleString()}`;
+        eventDescription.textContent=event.extendedProps.description||'No description';
+        eventLocation.textContent=event.extendedProps.location||'No location';
+        eventLink.href=event.url;
         eventModal.classList.remove('hidden');
     }
 
-    closeModalButton.onclick = () => eventModal.classList.add('hidden');
-    eventModal.onclick = (e) => {
-        if (e.target === eventModal) eventModal.classList.add('hidden');
-    };
-
-    // --- MESSAGING LOGIC ---
-    messageInput.addEventListener('input', () => {
-        sendButton.disabled = messageInput.value.trim() === '';
-    });
-
-    sendButton.onclick = async () => {
-        const messageText = messageInput.value.trim();
-        if (messageText === '' || !userEmail) return;
-
-        sendButton.disabled = true;
-        sendButton.textContent = 'Sending...';
-
-        try {
-            await sendMessage(messageText, attachedFile);
-            logMessage(messageText, 'sent');
-            messageInput.value = '';
-            removeAttachment();
-        } catch (error) {
-            console.error('Error sending message:', error);
-            logMessage('Failed to send message.', 'error');
-        } finally {
-            sendButton.disabled = false;
-            sendButton.textContent = 'Send';
-        }
-    };
-    
-    function sendMessage(body, file) {
-        const to = userEmail; // Sending to self as an example
-        const subject = 'Message from My Dashboard';
-        
-        const boundary = "-------314159265358979323846";
-        const delimiter = "\r\n--" + boundary + "\r-n";
-        const close_delim = "\r\n--" + boundary + "--";
-
-        let message = `To: ${to}\r\n`;
-        message += `Subject: ${subject}\r\n`;
-        message += "MIME-Version: 1.0\r\n";
-        message += `Content-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
-
-        message += delimiter;
-        message += 'Content-Type: text/plain; charset="UTF-8"\r\n\r\n';
-        message += body;
-
-        if (file) {
-             message += delimiter;
-             message += `Content-Type: ${file.type}; name="${file.name}"\r\n`;
-             message += "Content-Transfer-Encoding: base64\r\n\r\n";
-             message += file.data;
-        }
-
-        message += close_delim;
-
-        const rawMessage = btoa(message).replace(/\+/g, '-').replace(/\//g, '_');
-
-        return gapi.client.gmail.users.messages.send({
-            'userId': 'me',
-            'resource': { 'raw': rawMessage }
-        });
+    function handleSignOut(){
+        const token=gapi.client.getToken();
+        if(token) google.accounts.oauth2.revoke(token.access_token,()=>{ gapi.client.setToken(null); updateUIForSignOut(); });
+        updateUIForSignOut();
     }
-    
-    function logMessage(text, type) {
-        const logEntry = document.createElement('div');
-        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-        logEntry.className = 'text-sm mobile-text-12pt p-1 rounded';
-        logEntry.style.color = type === 'error' ? '#ef4444' : '#1f2937';
-        messageLog.appendChild(logEntry);
-        // Clear placeholder text
-        if (messageLog.children.length === 2 && messageLog.children[0].textContent.includes('appear here')) {
-            messageLog.children[0].remove();
-        }
-        messageLog.scrollTop = messageLog.scrollHeight;
-    }
-
-    // --- FILE ATTACHMENT ---
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            previewImage.src = event.target.result;
-            filePreview.classList.remove('hidden');
-            attachedFile = {
-                name: file.name,
-                type: file.type,
-                data: event.target.result.split(',')[1] // Get base64 part
-            };
-        };
-        reader.readAsDataURL(file);
-    };
-
-    removeFileButton.onclick = removeAttachment;
-
-    function removeAttachment() {
-        fileInput.value = ''; // Reset the file input
-        filePreview.classList.add('hidden');
-        previewImage.src = '';
-        attachedFile = null;
-    }
-    
-    // --- STARTUP ---
-    initializeCalendar();
-});
+})();
 </script>
-
 </body>
 </html>
-
