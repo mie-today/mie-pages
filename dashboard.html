@@ -50,11 +50,11 @@
     }
     .calendar-section {
       width: 368px;
-      height: 484px; /* 726px - 242px = 484px for calendar */
+      height: 484px;
     }
     .messaging-section {
       width: 368px;
-      height: 242px; /* 1/3 of total height (726px ÷ 3 = 242px) */
+      height: 242px;
     }
   }
   
@@ -65,11 +65,11 @@
     }
     .calendar-section {
       width: 481px;
-      height: 632px; /* 948px - 316px = 632px for calendar */
+      height: 632px;
     }
     .messaging-section {
       width: 481px;
-      height: 316px; /* 1/3 of total height (948px ÷ 3 = 316px) */
+      height: 316px;
     }
   }
   
@@ -157,7 +157,7 @@
       
       <div id="calendar-content" class="hidden flex flex-col flex-grow">
         <div class="flex justify-end items-center mb-4">
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-sm py-1 px-3 rounded-full transition-colors">
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded-md transition-colors">
             Sign Out
           </button>
         </div>
@@ -182,7 +182,7 @@
             <button id="remove-file" class="text-red-500 text-sm ml-2">Remove</button>
           </div>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full" disabled>Send</button>
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full" disabled>Send</button>
       </div>
     </div>
   </div>
@@ -193,7 +193,7 @@
   <div class="event-modal-content">
     <div class="flex justify-between items-start mb-4">
       <h3 id="event-title" class="text-xl font-semibold"></h3>
-      <button id="close-modal" class="text-gray-500 hover:text-gray-700">&times;</button>
+      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
     </div>
     <div id="event-details" class="space-y-2">
       <p id="event-time" class="text-gray-600 dark:text-gray-300"></p>
@@ -201,7 +201,7 @@
       <p id="event-location" class="text-gray-600 dark:text-gray-300"></p>
     </div>
     <div class="mt-6 flex justify-end">
-      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full">Open in Google Calendar</a>
+      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Open in Google Calendar</a>
     </div>
   </div>
 </div>
@@ -216,6 +216,7 @@
     let calendar;
     let selectedFile = null;
     let userEmail = null;
+    let gapi_loaded = false;
 
     // --- DOM Elements ---
     const authArea = document.getElementById('auth-area');
@@ -256,8 +257,10 @@
                 "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
                 "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
             ],
-        }).then(() => console.log("GAPI client initialized."))
-          .catch(err => console.error("Error initializing GAPI client:", err));
+        }).then(() => {
+            console.log("GAPI client initialized.");
+            gapi_loaded = true;
+        }).catch(err => console.error("Error initializing GAPI client:", err));
     }
     gapi.load('client', initializeGapiClient);
 
@@ -279,47 +282,74 @@
 
     // --- Core Application Logic ---
     async function handleAuthSuccess() {
+        console.log('Auth success - updating UI');
         updateUIForSignIn();
+        
+        // Wait for GAPI to be loaded
+        let attempts = 0;
+        while (!gapi_loaded && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!gapi_loaded) {
+            logMessage("Error: Google API not loaded properly", "error");
+            return;
+        }
+        
         try {
             await getUserEmail();
-            if (userEmail) {
-                logMessage(`Signed in as: ${userEmail}`, "success");
-                displayMonthlyCalendar();
-            } else {
-                logMessage("Warning: Could not retrieve email address", "error");
-                displayMonthlyCalendar(); // Still show calendar
-            }
+            displayMonthlyCalendar();
         } catch (err) {
             console.error('Error during auth success:', err);
-            logMessage("Authentication successful but email retrieval failed", "error");
+            logMessage("Authentication successful but some features may not work", "error");
             displayMonthlyCalendar(); // Still show calendar
         }
     }
 
     async function getUserEmail() {
+        console.log('Attempting to get user email...');
+        
+        // Wait a bit more for the token to be properly set
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
         try {
-            // Wait a moment for the token to be properly set
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
+            console.log('Calling Gmail API for profile...');
             const response = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
             userEmail = response.result.emailAddress;
-            console.log('User email retrieved:', userEmail);
+            console.log('User email retrieved successfully:', userEmail);
+            logMessage(`Signed in as: ${userEmail}`, "success");
             return userEmail;
         } catch (err) {
-            console.error('Error getting user email:', err);
-            // Try alternative method
+            console.error('Gmail API call failed:', err);
+            
+            // Try to get email from Google Identity
             try {
-                const tokenResponse = gapi.client.getToken();
-                if (tokenResponse && tokenResponse.access_token) {
-                    // Decode the token to get email (if available)
-                    const payload = JSON.parse(atob(tokenResponse.access_token.split('.')[1]));
-                    userEmail = payload.email || null;
-                    console.log('Email from token:', userEmail);
-                    return userEmail;
+                const token = gapi.client.getToken();
+                console.log('Token object:', token);
+                
+                // Try using Google People API instead
+                const peopleResponse = await fetch('https://people.googleapis.com/v1/people/me?personFields=emailAddresses', {
+                    headers: {
+                        'Authorization': `Bearer ${token.access_token}`
+                    }
+                });
+                
+                if (peopleResponse.ok) {
+                    const peopleData = await peopleResponse.json();
+                    console.log('People API response:', peopleData);
+                    if (peopleData.emailAddresses && peopleData.emailAddresses.length > 0) {
+                        userEmail = peopleData.emailAddresses[0].value;
+                        console.log('Email from People API:', userEmail);
+                        logMessage(`Signed in as: ${userEmail}`, "success");
+                        return userEmail;
+                    }
                 }
             } catch (altErr) {
                 console.error('Alternative email retrieval failed:', altErr);
             }
+            
+            logMessage("Warning: Could not retrieve email address", "error");
             throw err;
         }
     }
@@ -343,12 +373,12 @@
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: 'dayGridMonth',
             headerToolbar: {
-                left: 'prev',
+                left: 'prev,next',
                 center: 'title',
-                right: 'next today'
+                right: 'today'
             },
-            fixedWeekCount: false, // This prevents showing partial weeks from next month
-            showNonCurrentDates: false, // Hide dates from other months
+            fixedWeekCount: false,
+            showNonCurrentDates: false,
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
                     const calendarListResponse = await gapi.client.calendar.calendarList.list();
@@ -404,7 +434,6 @@
     function showEventDetails(event) {
         eventTitle.textContent = event.title;
         
-        // Format time
         const startDate = new Date(event.start);
         const endDate = new Date(event.end);
         if (event.allDay) {
@@ -472,7 +501,6 @@
         let emailContent = '';
         const boundary = '----boundary_' + Date.now();
         
-        // Email headers
         const headers = [
             `To: ${RECIPIENT_EMAIL}`,
             `From: ${userEmail}`,
@@ -483,7 +511,6 @@
         
         emailContent = headers.join('\r\n') + '\r\n\r\n';
         
-        // Text part
         if (messageText) {
             emailContent += `--${boundary}\r\n`;
             emailContent += `Content-Type: text/plain; charset=utf-8\r\n`;
@@ -491,7 +518,6 @@
             emailContent += `${messageText}\r\n\r\n`;
         }
         
-        // Attachment part
         if (selectedFile) {
             const fileData = await fileToBase64(selectedFile);
             emailContent += `--${boundary}\r\n`;
@@ -537,7 +563,6 @@
         });
     }
 
-    // --- UI and Utilities ---
     function updateUIForSignIn() {
         authArea.classList.add('hidden');
         calendarContent.classList.remove('hidden');
