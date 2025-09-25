@@ -451,9 +451,19 @@
     }
     
     async function sendEmail() {
+        // Check if we have user email
         if (!userEmail) {
-            logMessage("Error: Could not retrieve your email address.", "error");
-            return;
+            logMessage("Attempting to retrieve email address...", "info");
+            try {
+                await getUserEmail();
+                if (!userEmail) {
+                    logMessage("Error: Could not retrieve your email address. Please try signing out and back in.", "error");
+                    return;
+                }
+            } catch (err) {
+                logMessage("Error: Could not retrieve your email address. Please try signing out and back in.", "error");
+                return;
+            }
         }
         
         const messageText = messageInput.value.trim();
@@ -498,7 +508,7 @@
             .replace(/\//g, '_')
             .replace(/=+$/, '');
         
-        logMessage("Sending email...", "info");
+        logMessage(`Sending email from ${userEmail}...`, "info");
         sendButton.disabled = true;
         sendButton.classList.add('disabled');
 
@@ -507,12 +517,12 @@
                 'userId': 'me',
                 'resource': { 'raw': base64EncodedEmail }
             });
-            logMessage("Email sent successfully!", "success");
+            logMessage(`Email sent successfully from ${userEmail}!`, "success");
             messageInput.value = "";
             removeFile();
         } catch (err) {
             console.error("Failed to send email:", err);
-            logMessage(`Failed to send email: ${err.result?.error?.message || 'Unknown error'}.`, "error");
+            logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown error'}.`, "error");
         } finally {
             updateSendButton();
         }
