@@ -22,85 +22,160 @@
     margin: 0;
     padding: 0;
   }
+  .dark body {
+    background-color: #111827;
+    color: #f9fafb;
+  }
   .oauth-app-container #message-log::-webkit-scrollbar, .oauth-app-container #event-list::-webkit-scrollbar { width:8px; height:8px; }
   .oauth-app-container #message-log::-webkit-scrollbar-track, .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
   .oauth-app-container #message-log::-webkit-scrollbar-thumb, .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-track, .dark .oauth-app-container #event-list::-webkit-scrollbar-track { background-color:#374151; }
+  .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb, .dark .oauth-app-container #event-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
   .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
   .disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
   
-  /* Fixed 500px width for entire container */
+  /* Responsive width constraints - ORIGINAL DESIGN FOR DESKTOP/TABLET */
   .oauth-app-container {
-    width: 500px;
     max-width: 100%;
     margin: 0 auto;
   }
   
-  /* Responsive adjustments for smaller screens */
-  @media (max-width: 520px) {
+  /* Desktop: 800px - ORIGINAL DIMENSIONS */
+  @media (min-width: 769px) {
     .oauth-app-container {
-      width: calc(100% - 20px);
-      margin: 0 10px;
+      width: 800px;
+    }
+    .calendar-section {
+      width: 800px;
+      height: 860px;
+    }
+    .messaging-section {
+      width: 800px;
+      height: 360px;
+    }
+    /* DESKTOP FONT SIZE: Original size */
+    .desktop-font-lg { font-size: 1.5rem; } /* 24px */
+    .desktop-font-xl { font-size: 1.875rem; } /* 30px */
+    .desktop-font-2xl { font-size: 2.25rem; } /* 36px */
+  }
+  
+  /* Tablet: 481px - ORIGINAL DIMENSIONS */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .oauth-app-container {
+      width: 481px;
+    }
+    .calendar-section {
+      width: 481px;
+      height: 632px;
+    }
+    .messaging-section {
+      width: 481px;
+      height: 316px;
+    }
+    /* TABLET FONT SIZE: Original size */
+    .tablet-font-lg { font-size: 1.25rem; } /* 20px */
+    .tablet-font-xl { font-size: 1.5rem; } /* 24px */
+    .tablet-font-2xl { font-size: 1.875rem; } /* 30px */
+  }
+  
+  /* Mobile: 350px - NEW SPECIFICATIONS WITH NO SCROLLING */
+  @media (max-width: 480px) {
+    .oauth-app-container {
+      width: 350px;
+      height: 500px; /* Fixed total height */
+      overflow: hidden; /* No scrolling */
+      margin: 0 auto;
+    }
+    .calendar-section {
+      width: 350px;
+      height: 300px; /* Adjusted for no scrolling */
+    }
+    .messaging-section {
+      width: 350px;
+      height: 180px; /* Adjusted for no scrolling */
+    }
+    /* MOBILE FONT SIZE: 17pt = 22.67px ≈ 1.417rem */
+    .mobile-font-base { font-size: 1.417rem !important; } /* 17pt for headings */
+    .mobile-font-sm { font-size: 1.06rem !important; } /* ~13pt for smaller text */
+    .mobile-font-xs { font-size: 0.94rem !important; } /* ~11pt for very small text */
+    
+    /* Remove padding/margins that cause scrolling */
+    .oauth-app-container .flex.flex-col.p-4.space-y-4 {
+      padding: 8px !important;
+      gap: 8px !important;
+    }
+    .calendar-section, .messaging-section {
+      padding: 12px !important;
     }
   }
   
-  .calendar-section {
-    width: 100%;
-    height: 400px; /* Reduced height to fit with messaging in 500px total */
+  /* ORIGINAL FullCalendar style overrides for dark mode (DESKTOP/TABLET ONLY) */
+  @media (min-width: 481px) {
+    .dark .fc {
+      color: #f9fafb;
+    }
+    .dark .fc .fc-button-primary {
+      background-color: #374151;
+      border-color: #4b5563;
+    }
+    .dark .fc .fc-button-primary:hover {
+      background-color: #4b5563;
+    }
+    .dark .fc-daygrid-day.fc-day-today {
+      background-color: rgba(96, 165, 250, 0.2);
+    }
   }
   
-  .messaging-section {
-    width: 100%;
-    height: 280px; /* Adjusted height for better fit */
-  }
-  
-  /* Force light mode for FullCalendar to ensure readability */
-  .fc {
-    color: #1f2937 !important;
-    background-color: #ffffff !important;
-  }
-  .fc .fc-button-primary {
-    background-color: #3b82f6 !important;
-    border-color: #2563eb !important;
-    color: white !important;
-  }
-  .fc .fc-button-primary:hover {
-    background-color: #2563eb !important;
-    border-color: #1d4ed8 !important;
-  }
-  .fc .fc-button-primary:disabled {
-    background-color: #9ca3af !important;
-    border-color: #6b7280 !important;
-  }
-  .fc-daygrid-day.fc-day-today {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-  }
-  .fc .fc-daygrid-day-frame {
-    background-color: white !important;
-  }
-  .fc .fc-col-header-cell {
-    background-color: #f8fafc !important;
-    color: #1f2937 !important;
-  }
-  .fc .fc-daygrid-day-number {
-    color: #1f2937 !important;
-  }
-  .fc .fc-event {
-    border-color: #3b82f6 !important;
-    background-color: #3b82f6 !important;
-    color: white !important;
-  }
-  .fc .fc-event:hover {
-    background-color: #2563eb !important;
-    border-color: #2563eb !important;
-  }
-  .fc .fc-toolbar-title {
-    color: #1f2937 !important;
-  }
-  .fc .fc-daygrid-day-top {
-    color: #1f2937 !important;
+  /* MOBILE ONLY: Force light mode for FullCalendar to ensure readability */
+  @media (max-width: 480px) {
+    .fc {
+      color: #1f2937 !important;
+      background-color: #ffffff !important;
+    }
+    .fc .fc-button-primary {
+      background-color: #3b82f6 !important;
+      border-color: #2563eb !important;
+      color: white !important;
+    }
+    .fc .fc-button-primary:hover {
+      background-color: #2563eb !important;
+      border-color: #1d4ed8 !important;
+    }
+    .fc .fc-button-primary:disabled {
+      background-color: #9ca3af !important;
+      border-color: #6b7280 !important;
+    }
+    .fc-daygrid-day.fc-day-today {
+      background-color: rgba(59, 130, 246, 0.1) !important;
+    }
+    .fc .fc-daygrid-day-frame {
+      background-color: white !important;
+    }
+    .fc .fc-col-header-cell {
+      background-color: #f8fafc !important;
+      color: #1f2937 !important;
+    }
+    .fc .fc-daygrid-day-number {
+      color: #1f2937 !important;
+    }
+    .fc .fc-event {
+      border-color: #3b82f6 !important;
+      background-color: #3b82f6 !important;
+      color: white !important;
+    }
+    .fc .fc-event:hover {
+      background-color: #2563eb !important;
+      border-color: #2563eb !important;
+    }
+    .fc .fc-toolbar-title {
+      color: #1f2937 !important;
+    }
+    .fc .fc-daygrid-day-top {
+      color: #1f2937 !important;
+    }
   }
   
   /* Hide non-current month dates */
@@ -124,12 +199,24 @@
   
   .event-modal-content {
     background: white;
-    color: #1f2937;
     border-radius: 12px;
     padding: 24px;
     max-width: 400px;
     width: 90%;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .event-modal-content {
+    background: #374151;
+    color: #f9fafb;
+  }
+  
+  /* MOBILE: Override modal for light theme */
+  @media (max-width: 480px) {
+    .event-modal-content {
+      background: white !important;
+      color: #1f2937 !important;
+    }
   }
 </style>
 </head>
@@ -138,9 +225,11 @@
 <div class="oauth-app-container">
   <div class="flex flex-col p-4 space-y-4 w-full">
 
-    <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-6 flex flex-col">
+    <!-- CALENDAR SECTION -->
+    <div id="calendar-section" class="calendar-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col">
       <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-        <h2 class="text-lg font-semibold text-center">Sign in to view your Google Calendar</h2>
+        <!-- MOBILE: 17pt font size for headings -->
+        <h2 class="text-lg md:text-xl lg:text-2xl mobile-font-base font-semibold text-center">Sign in to view your Google Calendar</h2>
         <div id="g_id_onload"
              data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
              data-context="signin"
@@ -153,7 +242,8 @@
       
       <div id="calendar-content" class="hidden flex flex-col h-full">
         <div class="flex justify-end items-center mb-4">
-          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded-md transition-colors">
+          <!-- MOBILE: Smaller button with 17pt font -->
+          <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs mobile-font-xs py-1 px-2 rounded-md transition-colors">
             Sign Out
           </button>
         </div>
@@ -161,24 +251,31 @@
       </div>
     </div>
 
-    <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-6 flex flex-col hidden">
-      <h2 class="text-lg font-semibold mb-4">Send a Message</h2>
-      <div id="message-log" class="bg-gray-50 p-4 rounded-lg flex-1 overflow-y-auto mb-4">
-        <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
+    <!-- MESSAGING SECTION -->
+    <div id="messaging-section" class="messaging-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hidden">
+      <!-- MOBILE: 17pt font size for headings -->
+      <h2 class="text-lg md:text-xl lg:text-2xl mobile-font-base font-semibold mb-4">Send a Message</h2>
+      <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-4">
+        <!-- MOBILE: Smaller font for message log -->
+        <div class="text-sm mobile-font-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>
       </div>
       <div class="flex flex-col space-y-4">
-        <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white text-gray-900 resize-none h-20"></textarea>
+        <!-- MOBILE: 17pt font in textarea -->
+        <textarea id="message-input" placeholder="Type your message..." class="mobile-font-sm rounded-2xl border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 px-4 py-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none h-20"></textarea>
         <div class="flex items-center space-x-2">
-          <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-colors text-sm">
+          <!-- MOBILE: Smaller button with appropriate font -->
+          <label for="file-input" class="cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 mobile-font-xs rounded-full transition-colors">
             Add Image
           </label>
           <input id="file-input" type="file" class="hidden" accept="image/*">
           <div id="file-preview" class="hidden">
             <img id="preview-image" class="max-w-32 max-h-32 rounded border" alt="Preview">
-            <button id="remove-file" class="text-red-500 text-sm ml-2">Remove</button>
+            <!-- MOBILE: Smaller remove button -->
+            <button id="remove-file" class="text-red-500 mobile-font-xs ml-2">Remove</button>
           </div>
         </div>
-        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors disabled:bg-blue-300 disabled w-full" disabled>Send</button>
+        <!-- MOBILE: 17pt font in send button -->
+        <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 mobile-font-sm rounded-lg shadow transition-colors disabled:bg-blue-300 dark:disabled:bg-blue-900 disabled w-full" disabled>Send</button>
       </div>
     </div>
   </div>
@@ -188,16 +285,19 @@
 <div id="event-modal" class="event-modal hidden">
   <div class="event-modal-content">
     <div class="flex justify-between items-start mb-4">
-      <h3 id="event-title" class="text-xl font-semibold"></h3>
-      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      <!-- MOBILE: 17pt font for modal title -->
+      <h3 id="event-title" class="text-xl mobile-font-base font-semibold"></h3>
+      <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl mobile-font-base">&times;</button>
     </div>
     <div id="event-details" class="space-y-2">
-      <p id="event-time" class="text-gray-600"></p>
-      <p id="event-description" class="text-gray-700"></p>
-      <p id="event-location" class="text-gray-600"></p>
+      <!-- MOBILE: Smaller fonts for modal content -->
+      <p id="event-time" class="text-gray-600 dark:text-gray-300 mobile-font-sm"></p>
+      <p id="event-description" class="text-gray-700 dark:text-gray-200 mobile-font-sm"></p>
+      <p id="event-location" class="text-gray-600 dark:text-gray-300 mobile-font-sm"></p>
     </div>
     <div class="mt-6 flex justify-end">
-      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Open in Google Calendar</a>
+      <!-- MOBILE: 17pt font for modal button -->
+      <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mobile-font-sm rounded-lg">Open in Google Calendar</a>
     </div>
   </div>
 </div>
@@ -592,26 +692,11 @@
         calendarContent.classList.add('hidden');
         messagingSection.classList.add('hidden');
         calendarContainer.innerHTML = '';
-        messageLog.innerHTML = `<div class="text-sm text-gray-500">Your sent messages will appear here...</div>`;
+        messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`;
         messageInput.value = "";
         removeFile();
         userEmail = null;
     }
     
     function logMessage(text, type = 'info') {
-        if (messageLog.children.length === 1 && messageLog.firstChild.textContent.startsWith('Your sent messages')) {
-            messageLog.innerHTML = '';
-        }
-        const p = document.createElement('p');
-        p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-        const colors = { success: 'text-green-500', error: 'text-red-500', info: 'text-gray-900' };
-        p.className = `text-sm mb-1 ${colors[type]}`;
-        messageLog.appendChild(p);
-        messageLog.scrollTop = messageLog.scrollHeight;
-    }
-    
-    updateUIForSignOut();
-})();
-</script>
-</body>
-</html>
+        if
