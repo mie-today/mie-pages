@@ -46,27 +46,35 @@ window.handleCredentialResponse = function(response) {
         padding: 0;
     }
 
-    /* Scrollbars - light mode */
-    .oauth-app-container #message-log::-webkit-scrollbar,
-    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-track,
-    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
-    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+/* Scrollbars - light mode (keep styling) */
+.oauth-app-container #message-log::-webkit-scrollbar,
+.oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
+.oauth-app-container #message-log::-webkit-scrollbar-track,
+.oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
+.oauth-app-container #message-log::-webkit-scrollbar-thumb,
+.oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
 
-    .oauth-app-container .flex-grow-scroll { overflow-y: auto; flex-grow: 1; }
-    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
+/* Remove internal scrollbars */
+.oauth-app-container .flex-grow-scroll,
+#message-log,
+#calendar-container {
+    overflow: visible !important;
+    height: auto !important;
+    flex-grow: unset !important;
+}
 
-    .oauth-app-container { max-width: 100%; margin: 0 auto; }
+.disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
 
-   /* MOBILE 350x860 */
+.oauth-app-container { max-width: 100%; margin: 0 auto; }
+
+/* MOBILE 350x860 */
 @media (max-width: 480px) {
     .oauth-app-container { 
         width: 100% !important;
-        min-height: 100vh !important;     /* full viewport height */
+        min-height: 100vh !important;  /* full viewport height */
         display: flex;
         flex-direction: column;
-        overflow: visible !important;     /* allow natural page scrolling */
+        overflow: visible !important;  /* page scroll instead of internal scroll */
         margin: 0 auto !important; 
     }
 
@@ -74,29 +82,29 @@ window.handleCredentialResponse = function(response) {
         display: flex; 
         flex-direction: column; 
         gap: 4px !important; 
-        overflow: visible;                /* no internal scroll */
+        overflow: visible !important; /* remove internal scroll */
         padding: 2px !important;
     }
 
-    .calendar-section { 
+    .calendar-section, 
+    .messaging-section { 
         width: 100% !important; 
-        height: auto !important;          /* let content dictate height */
-        overflow: visible !important;     /* remove inner scroll */
+        height: auto !important;  /* let content determine height */
+        overflow: visible !important; /* remove internal scroll */
+        flex-shrink: 0;
         padding: 4px !important; 
     }
 
-    .messaging-section { 
-        width: 100% !important; 
-        height: auto !important;          /* full content height */
-        overflow: visible !important;     /* remove inner scroll */
-        padding: 4px !important; 
-    }
+    /* Make inner elements expand naturally */
+    .flex-grow-scroll { overflow: visible !important; flex-grow: unset; }
+    #message-log { overflow: visible !important; height: auto !important; }
+    #calendar-container { flex: unset; min-height: auto !important; }
 
     .mobile-heading-17pt { font-size: 22.67px !important; line-height: 1.2 !important; }
     .mobile-text-14pt { font-size: 18.67px !important; line-height: 1.2 !important; }
     .mobile-text-12pt { font-size: 16px !important; line-height: 1.1 !important; }
     .mobile-textarea { height: 50px !important; padding: 4px 8px !important; }
-    .mobile-message-log { height: auto !important; padding: 4px !important; } /* auto height */
+    .mobile-message-log { height: auto !important; padding: 4px !important; }
     .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
     .mobile-text-14pt-btn { font-size: 18.67px !important; }
     .fc .fc-toolbar-title { font-size: 22.67px !important; }
