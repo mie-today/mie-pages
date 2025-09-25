@@ -5,6 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard</title>
 
+<script>
+  // Expose client config and tokenClient holder early so GIS can call the callback even if it loads early.
+  window.__CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
+  window.__API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+  window.__tokenClient = null;
+  // Placeholder callback — the real callback will be defined in the main script if redefinition needed.
+  window.handleCredentialResponse = function(response) {
+    // This function will be invoked by the GIS button when user interacts.
+    // We initialize the token client on demand and request an access token.
+    try {
+      window.__tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: window.__CLIENT_ID,
+        scope: window.__API_SCOPES,
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            // set token on gapi client when available; the main app will handle post-login steps
+            if (window.gapi && window.gapi.client) window.gapi.client.setToken(tokenResponse);
+            // dispatch a custom event so the main script knows sign-in succeeded
+            window.dispatchEvent(new Event('gis-token-received'));
+          } else {
+            console.error('GIS: token response missing', tokenResponse);
+            window.dispatchEvent(new CustomEvent('gis-token-error', { detail: tokenResponse }));
+          }
+        }
+      });
+      window.__tokenClient.requestAccessToken();
+    } catch (err) {
+      console.error('handleCredentialResponse error', err);
+      window.dispatchEvent(new CustomEvent('gis-token-error', { detail: err }));
+    }
+  };
+</script>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -23,49 +56,30 @@
     background-color: #f3f4f6;
     color: #1f2937;
   }
-  .dark body {
-    background-color: #111827;
-    color: #f9fafb;
-  }
+  .dark body { background-color: #111827; color: #f9fafb; }
 
-  /* Scrollbar styles (fixed selector names) */
   .oauth-app-container #message-log::-webkit-scrollbar { width:8px; height:8px; }
   .oauth-app-container #message-log::-webkit-scrollbar-track { background-color:#e5e7eb; border-radius:9999px; }
   .oauth-app-container #message-log::-webkit-scrollbar-thumb { background-color:#9ca3af; border-radius:9999px; }
   .dark .oauth-app-container #message-log::-webkit-scrollbar-track { background-color:#374151; }
   .dark .oauth-app-container #message-log::-webkit-scrollbar-thumb { background-color:#6b7280; }
 
-  .oauth-app-container .flex-grow-scroll { overflow-y:auto; flex-grow:1; }
   .disabled { opacity: 0.5; cursor: not-allowed; }
-
   .oauth-app-container { max-width: 100%; margin: 0 auto; }
 
-  /* --- Mobile: fit 350x500 exactly --- */
+  /* Mobile: fit 350x500 exactly */
   @media (max-width: 480px) {
     html, body { height: 100%; }
     body { overflow: hidden; }
-    .oauth-app-container {
-      width: 350px !important;
-      height: 500px !important;
-      overflow: hidden !important;
-      margin: 0 auto !important;
-    }
+    .oauth-app-container { width: 350px !important; height: 500px !important; overflow: hidden !important; margin: 0 auto !important; }
     .mobile-container { padding: 4px !important; gap: 4px !important; height: 100% !important; }
-
-    /* Reduce internal paddings so sums fit within 500px */
     .calendar-section { width: 100% !important; height: 300px !important; padding: 8px !important; overflow: hidden !important; }
     .messaging-section { width: 100% !important; height: 180px !important; padding: 8px !important; overflow: hidden !important; }
-
-    /* Make inner calendar container fit available space */
     #calendar-container { height: calc(100% - 44px) !important; min-height: 0 !important; overflow: hidden !important; }
-
-    /* Messaging internals */
     #message-log { height: 70px !important; padding: 6px !important; overflow-y: auto !important; }
     .mobile-textarea { height: 50px !important; padding: 6px 8px !important; }
     .mobile-small-btn { padding: 3px 6px !important; font-size: 12px !important; }
-
-    /* Calendar control sizing (annotations) */
-    .fc .fc-toolbar-title { font-size: 22.67px !important; } /* 17pt */
+    .fc .fc-toolbar-title { font-size: 22.67px !important; } /* ~17pt */
     .fc .fc-button-primary { font-size: 16px !important; padding: 4px 8px !important; }
     .fc .fc-col-header-cell { font-size: 14px !important; }
     .fc .fc-daygrid-day-number { font-size: 14px !important; }
@@ -95,11 +109,8 @@
   .dark .fc .fc-col-header-cell { background-color: #374151 !important; color: #f9fafb !important; }
   .fc .fc-event { background-color: #3b82f6 !important; border-color: #2563eb !important; color: #fff !important; }
   .fc .fc-toolbar-title { color: inherit !important; }
-
-  /* Hide non-current month dates */
   .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
-  /* Event modal */
   .event-modal { position: fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
   .event-modal-content { background: white; border-radius: 12px; padding: 16px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
   .dark .event-modal-content { background: #374151; color: #f9fafb; }
@@ -131,7 +142,6 @@
       </div>
     </div>
 
-    <!-- Messaging section restored -->
     <div id="messaging-section" class="messaging-section bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 flex flex-col hidden">
       <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-4">Send a Message</h2>
       <div id="message-log" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg flex-1 overflow-y-auto mb-4">
@@ -154,7 +164,6 @@
   </div>
 </div>
 
-<!-- Event Details Modal -->
 <div id="event-modal" class="event-modal hidden">
   <div class="event-modal-content">
     <div class="flex justify-between items-start mb-4">
@@ -174,11 +183,11 @@
 
 <script>
 (function() {
-    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-    const API_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+    const CLIENT_ID = window.__CLIENT_ID;
+    const API_SCOPES = window.__API_SCOPES;
     const RECIPIENT_EMAIL = "save@mie.today";
 
-    let tokenClient;
+    let tokenClient = null;
     let calendar;
     let selectedFile = null;
     let userEmail = null;
@@ -226,28 +235,30 @@
     }
     gapi.load('client', initializeGapiClient);
 
-    window.handleCredentialResponse = (response) => {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: API_SCOPES,
-            callback: (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    gapi.client.setToken(tokenResponse);
-                    handleAuthSuccess();
-                } else {
-                    console.error('Failed to get access token.', tokenResponse);
-                }
-            }
-        });
-        tokenClient.requestAccessToken();
-    };
+    // GIS token received event from head-level handler
+    window.addEventListener('gis-token-received', async () => {
+      // ensure gapi init is done before proceeding
+      let attempts = 0;
+      while (!gapi_loaded && attempts < 50) { await new Promise(r=>setTimeout(r,100)); attempts++; }
+      if (!gapi_loaded) { logMessage('Error: Google API not initialized', 'error'); return; }
+
+      // use token that gapi.client has already been set with by head script
+      handleAuthSuccess();
+    });
+
+    window.addEventListener('gis-token-error', (e) => { console.error('GIS token error', e.detail); logMessage('Sign-in failed (token).', 'error'); });
+
+    // For robustness, if GIS initialized token client object exists on window, keep reference
+    function ensureTokenClient() {
+      if (!tokenClient) tokenClient = window.__tokenClient || null;
+    }
 
     async function handleAuthSuccess() {
+        ensureTokenClient();
         authArea.classList.add('hidden');
         calendarContent.classList.remove('hidden');
         messagingSection.classList.remove('hidden');
 
-        // Wait for gapi client initialization
         let attempts = 0;
         while (!gapi_loaded && attempts < 50) { await new Promise(r=>setTimeout(r,100)); attempts++; }
         if (!gapi_loaded) { logMessage('Error: Google API not loaded properly', 'error'); return; }
@@ -257,49 +268,30 @@
     }
 
     async function getUserEmail() {
-        // Try userinfo endpoint -> Gmail -> People API
         try {
-            await new Promise(r=>setTimeout(r, 500)); // small delay to let token settle
+            await new Promise(r=>setTimeout(r, 500));
             const token = gapi.client.getToken();
             if (token && token.access_token) {
                 const userinfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { 'Authorization': `Bearer ${token.access_token}` } });
-                if (userinfoResponse.ok) {
-                    const userInfo = await userinfoResponse.json();
-                    if (userInfo.email) { userEmail = userInfo.email; logMessage(`Signed in as: ${userEmail}`, 'success'); return userEmail; }
-                }
+                if (userinfoResponse.ok) { const userInfo = await userinfoResponse.json(); if (userInfo.email) { userEmail = userInfo.email; logMessage(`Signed in as: ${userEmail}`, 'success'); return userEmail; } }
             }
-            // Gmail fallback
             const gmailResp = await gapi.client.gmail.users.getProfile({ 'userId': 'me' });
             if (gmailResp && gmailResp.result && gmailResp.result.emailAddress) { userEmail = gmailResp.result.emailAddress; logMessage(`Signed in as: ${userEmail}`, 'success'); return userEmail; }
-
-            // People API fallback
             const peopleResp = await fetch('https://people.googleapis.com/v1/people/me?personFields=emailAddresses', { headers: { 'Authorization': `Bearer ${token.access_token}` } });
             if (peopleResp.ok) { const pd = await peopleResp.json(); if (pd.emailAddresses && pd.emailAddresses.length>0) { userEmail = pd.emailAddresses[0].value; logMessage(`Signed in as: ${userEmail}`, 'success'); return userEmail; } }
-
             logMessage('Warning: Could not retrieve email address', 'error');
-        } catch (err) {
-            console.error('All email retrieval methods failed', err);
-            logMessage('Warning: Could not retrieve email address', 'error');
-            throw err;
-        }
+        } catch (err) { console.error('All email retrieval methods failed', err); logMessage('Warning: Could not retrieve email address', 'error'); throw err; }
     }
 
     function handleSignOut() {
         const token = gapi.client.getToken();
-        if (token) {
-            google.accounts.oauth2.revoke(token.access_token, () => {
-                gapi.client.setToken(null);
-            });
-        }
+        if (token) { google.accounts.oauth2.revoke(token.access_token, () => { gapi.client.setToken(null); }); }
         updateUIForSignOut();
     }
 
     function displayMonthlyCalendar() {
         if (calendar) calendar.destroy();
-
-        // ensure calendar container has a clientHeight
         const containerHeight = Math.max(200, calendarContainer.clientHeight || 300);
-
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
@@ -308,43 +300,17 @@
             height: containerHeight,
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
-                    if (!cachedCalendars) {
-                        const calendarListResponse = await gapi.client.calendar.calendarList.list();
-                        cachedCalendars = calendarListResponse.result.items || [];
-                    }
+                    if (!cachedCalendars) { const calendarListResponse = await gapi.client.calendar.calendarList.list(); cachedCalendars = calendarListResponse.result.items || []; }
                     const eventPromises = cachedCalendars.map(cal => {
-                        return gapi.client.calendar.events.list({
-                            'calendarId': cal.id,
-                            'timeMin': fetchInfo.start.toISOString(),
-                            'timeMax': fetchInfo.end.toISOString(),
-                            'showDeleted': false,
-                            'singleEvents': true,
-                        }).then(response => (response.result.items || []).map(event => ({
-                            id: event.id,
-                            title: event.summary || 'No Title',
-                            start: event.start.dateTime || event.start.date,
-                            end: event.end.dateTime || event.end.date,
-                            url: event.htmlLink,
-                            allDay: !event.start.dateTime,
-                            backgroundColor: cal.backgroundColor || undefined,
-                            borderColor: cal.backgroundColor || undefined,
-                            description: event.description || '',
-                            location: event.location || '',
-                            rawEvent: event
-                        })));
+                        return gapi.client.calendar.events.list({ 'calendarId': cal.id, 'timeMin': fetchInfo.start.toISOString(), 'timeMax': fetchInfo.end.toISOString(), 'showDeleted': false, 'singleEvents': true }).then(response => (response.result.items || []).map(event => ({ id: event.id, title: event.summary || 'No Title', start: event.start.dateTime || event.start.date, end: event.end.dateTime || event.end.date, url: event.htmlLink, allDay: !event.start.dateTime, backgroundColor: cal.backgroundColor || undefined, borderColor: cal.backgroundColor || undefined, description: event.description || '', location: event.location || '', rawEvent: event })));
                     });
-
                     const allEventArrays = await Promise.all(eventPromises);
                     const allEvents = allEventArrays.flat();
                     successCallback(allEvents);
-                } catch (err) {
-                    console.error('Error fetching calendar data:', err);
-                    failureCallback(err);
-                }
+                } catch (err) { console.error('Error fetching calendar data:', err); failureCallback(err); }
             },
             eventClick: function(info) { info.jsEvent.preventDefault(); showEventDetails(info.event); }
         });
-
         calendar.render();
     }
 
@@ -352,143 +318,56 @@
         eventTitle.textContent = event.title;
         const startDate = new Date(event.start);
         const endDate = new Date(event.end);
-        if (event.allDay) { eventTime.textContent = `All day - ${startDate.toLocaleDateString()}`; }
-        else { eventTime.textContent = `${startDate.toLocaleString()} - ${endDate.toLocaleString()}`; }
+        eventTime.textContent = event.allDay ? `All day - ${startDate.toLocaleDateString()}` : `${startDate.toLocaleString()} - ${endDate.toLocaleString()}`;
         eventDescription.textContent = event.extendedProps?.description || 'No description';
         eventLocation.textContent = event.extendedProps?.location || 'No location';
         eventLink.href = event.url;
         eventModal.classList.remove('hidden');
     }
 
-    function handleFileSelect(e) {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (ev) => { previewImage.src = ev.target.result; filePreview.classList.remove('hidden'); updateSendButton(); };
-            reader.readAsDataURL(file);
-        }
-    }
-
+    function handleFileSelect(e) { const file = e.target.files[0]; if (file && file.type.startsWith('image/')) { selectedFile = file; const reader = new FileReader(); reader.onload = (ev) => { previewImage.src = ev.target.result; filePreview.classList.remove('hidden'); updateSendButton(); }; reader.readAsDataURL(file); } }
     function removeFile() { selectedFile = null; filePreview.classList.add('hidden'); fileInput.value = ''; updateSendButton(); }
-
-    function updateSendButton() {
-        const hasText = messageInput.value.trim() !== '';
-        const hasFile = selectedFile !== null;
-        const canSend = hasText || hasFile;
-        sendButton.disabled = !canSend;
-        sendButton.classList.toggle('disabled', !canSend);
-    }
+    function updateSendButton() { const hasText = messageInput.value.trim() !== ''; const hasFile = selectedFile !== null; const canSend = hasText || hasFile; sendButton.disabled = !canSend; sendButton.classList.toggle('disabled', !canSend); }
 
     async function sendEmail() {
-        if (!userEmail) {
-            try { await getUserEmail(); if (!userEmail) { logMessage('Error: Could not retrieve your email address. Please sign out and sign in again.', 'error'); return; } }
-            catch(e) { logMessage('Error: Could not retrieve your email address. Please sign out and sign in again.', 'error'); return; }
-        }
-
-        const messageText = messageInput.value.trim();
-        if (!messageText && !selectedFile) return;
-
+        if (!userEmail) { try { await getUserEmail(); if (!userEmail) { logMessage('Error: Could not retrieve your email address. Please sign out and sign in again.', 'error'); return; } } catch(e) { logMessage('Error: Could not retrieve your email address. Please sign out and sign in again.', 'error'); return; } }
+        const messageText = messageInput.value.trim(); if (!messageText && !selectedFile) return;
         const boundary = '----boundary_' + Date.now();
-        const headers = [
-            `To: ${RECIPIENT_EMAIL}`,
-            `From: ${userEmail}`,
-            `Subject: Message from ${userEmail}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`
-        ];
-
+        const headers = [ `To: ${RECIPIENT_EMAIL}`, `From: ${userEmail}`, `Subject: Message from ${userEmail}`, `MIME-Version: 1.0`, `Content-Type: multipart/mixed; boundary="${boundary}"` ];
         let emailContent = headers.join('
 ') + '
 
 ';
+        if (messageText) { emailContent += `--${boundary}
+`; emailContent += `Content-Type: text/plain; charset=utf-8
+`; emailContent += `Content-Transfer-Encoding: 7bit
 
-        if (messageText) {
-            emailContent += `--${boundary}
-`;
-            emailContent += `Content-Type: text/plain; charset=utf-8
-`;
-            emailContent += `Content-Transfer-Encoding: 7bit
+`; emailContent += `${messageText}
 
-`;
-            emailContent += `${messageText}
+`; }
+        if (selectedFile) { const fileData = await fileToBase64(selectedFile); emailContent += `--${boundary}
+`; emailContent += `Content-Type: ${selectedFile.type}; name="${selectedFile.name}"
+`; emailContent += `Content-Disposition: attachment; filename="${selectedFile.name}"
+`; emailContent += `Content-Transfer-Encoding: base64
 
-`;
-        }
+`; emailContent += fileData.split(',')[1] + '
 
-        if (selectedFile) {
-            const fileData = await fileToBase64(selectedFile);
-            emailContent += `--${boundary}
-`;
-            emailContent += `Content-Type: ${selectedFile.type}; name="${selectedFile.name}"
-`;
-            emailContent += `Content-Disposition: attachment; filename="${selectedFile.name}"
-`;
-            emailContent += `Content-Transfer-Encoding: base64
-
-`;
-            emailContent += fileData.split(',')[1] + '
-
-';
-        }
-
+'; }
         emailContent += `--${boundary}--`;
-
         const base64EncodedEmail = base64UrlEncode(emailContent);
-
-        logMessage(`Sending email from ${userEmail}...`, 'info');
-        sendButton.disabled = true; sendButton.classList.add('disabled');
-
-        try {
-            await gapi.client.gmail.users.messages.send({ 'userId': 'me', 'resource': { 'raw': base64EncodedEmail } });
-            logMessage(`Email sent successfully from ${userEmail}!`, 'success');
-            messageInput.value = ''; removeFile();
-        } catch (err) {
-            console.error('Failed to send email:', err);
-            logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown error'}.`, 'error');
-        } finally { updateSendButton(); }
+        logMessage(`Sending email from ${userEmail}...`, 'info'); sendButton.disabled = true; sendButton.classList.add('disabled');
+        try { await gapi.client.gmail.users.messages.send({ 'userId': 'me', 'resource': { 'raw': base64EncodedEmail } }); logMessage(`Email sent successfully from ${userEmail}!`, 'success'); messageInput.value = ''; removeFile(); } catch (err) { console.error('Failed to send email:', err); logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown error'}.`, 'error'); } finally { updateSendButton(); }
     }
 
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
+    function fileToBase64(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); }); }
+    function base64UrlEncode(str) { const bytes = new TextEncoder().encode(str); let binary = ''; for (let i = 0; i < bytes.length; i++) { binary += String.fromCharCode(bytes[i]); } return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 
-    function base64UrlEncode(str) {
-        const bytes = new TextEncoder().encode(str);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) { binary += String.fromCharCode(bytes[i]); }
-        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
+    function updateUIForSignOut() { authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden'); if (calendar) { calendar.destroy(); calendar = null; } messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`; messageInput.value = ''; removeFile(); userEmail = null; cachedCalendars = null; }
+    function logMessage(text, type='info') { if (messageLog.children.length === 1 && messageLog.firstChild.textContent.startsWith('Your sent messages')) messageLog.innerHTML = ''; const p = document.createElement('p'); p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`; const colors = { success: 'text-green-500', error: 'text-red-500', info: 'text-gray-900 dark:text-gray-200' }; p.className = `text-sm mb-1 ${colors[type] || colors.info}`; messageLog.appendChild(p); messageLog.scrollTop = messageLog.scrollHeight; }
 
-    function updateUIForSignOut() {
-        authArea.classList.remove('hidden');
-        calendarContent.classList.add('hidden');
-        messagingSection.classList.add('hidden');
-        if (calendar) { calendar.destroy(); calendar = null; }
-        messageLog.innerHTML = `<div class="text-sm text-gray-500 dark:text-gray-400">Your sent messages will appear here...</div>`;
-        messageInput.value = '';
-        removeFile();
-        userEmail = null;
-        cachedCalendars = null;
-    }
-
-    function logMessage(text, type='info') {
-        if (messageLog.children.length === 1 && messageLog.firstChild.textContent.startsWith('Your sent messages')) messageLog.innerHTML = '';
-        const p = document.createElement('p');
-        p.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-        const colors = { success: 'text-green-500', error: 'text-red-500', info: 'text-gray-900 dark:text-gray-200' };
-        p.className = `text-sm mb-1 ${colors[type] || colors.info}`;
-        messageLog.appendChild(p);
-        messageLog.scrollTop = messageLog.scrollHeight;
-    }
-
-    // init state
+    // start signed-out
     updateUIForSignOut();
+
 })();
 </script>
 </body>
