@@ -13,20 +13,33 @@
 <script>
 window.handleCredentialResponse = function(response) {
     console.log('GIS credential received', response);
-    if (!response.credential) { console.error('No credential returned.'); return; }
-
-    if (!window.tokenClient) {
-        window.tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
-            scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
-            callback: async (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    gapi.client.setToken(tokenResponse);
-                    document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
-                } else { console.error('Failed to get access token.', tokenResponse); }
-            },
-        });
+    if (!response.credential) { 
+        console.error('No credential returned.'); 
+        return; 
     }
+
+    // Prevent multiple initializations
+    if (window.tokenClient) {
+        console.log('Token client already exists, requesting access...');
+        window.tokenClient.requestAccessToken({ prompt: "" });
+        return;
+    }
+
+    window.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
+        callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+                console.log('Access token received, setting up GAPI...');
+                gapi.client.setToken(tokenResponse);
+                document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
+            } else { 
+                console.error('Failed to get access token.', tokenResponse); 
+            }
+        },
+    });
+    
+    console.log('Requesting access token...');
     window.tokenClient.requestAccessToken({ prompt: "" });
 };
 </script>
@@ -296,6 +309,7 @@ window.handleCredentialResponse = function(response) {
     let selectedFile=null;
     let userEmail=null;
     let gapi_loaded=false;
+    let isAuthenticated=false; // Track authentication state
     const calendarCache={};
 
     // DOM
@@ -333,11 +347,63 @@ window.handleCredentialResponse = function(response) {
 
     document.addEventListener('gis-token-received',async ()=>{ await handleAuthSuccess(); });
 
-    function updateUIForSignIn(){ authArea.classList.add('hidden'); calendarContent.classList.remove('hidden'); messagingSection.classList.remove('hidden'); }
-    function updateUIForSignOut(){ authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden'); }
+    // Initialize UI to clean sign-out state on page load
+    function initializeUI() {
+        updateUIForSignOut();
+        console.log('UI initialized to sign-out state');
+    }
+    
+    // Call initialization when page loads
+    initializeUI();
+
+    function updateUIForSignIn(){ 
+        // Hide auth area completely
+        authArea.classList.add('hidden'); 
+        authArea.style.display = 'none';
+        
+        // Show calendar content and messaging
+        calendarContent.classList.remove('hidden'); 
+        calendarContent.style.display = 'block';
+        messagingSection.classList.remove('hidden'); 
+        messagingSection.style.display = 'block';
+        
+        console.log('UI updated for sign-in state');
+    }
+    
+    function updateUIForSignOut(){ 
+        // Show only auth area
+        authArea.classList.remove('hidden'); 
+        authArea.style.display = 'flex';
+        
+        // Hide calendar content and messaging completely
+        calendarContent.classList.add('hidden'); 
+        calendarContent.style.display = 'none';
+        messagingSection.classList.add('hidden'); 
+        messagingSection.style.display = 'none';
+        
+        // Clear any existing calendar
+        if(calendar) {
+            calendar.destroy();
+            calendar = null;
+        }
+        
+        // Reset message log
+        messageLog.innerHTML = '<div class="mobile-text-12pt text-gray-500">Your sent messages will appear here...</div>';
+        messageInput.value = '';
+        
+        console.log('UI updated for sign-out state');
+    }
 
     async function handleAuthSuccess(){
+        if(isAuthenticated) {
+            console.log('Already authenticated, skipping...');
+            return;
+        }
+        
+        console.log('Processing authentication...');
+        isAuthenticated = true;
         updateUIForSignIn();
+        
         let attempts=0;
         while(!gapi_loaded && attempts<50){ await new Promise(r=>setTimeout(r,100)); attempts++; }
         if(!gapi_loaded){ logMessage("Error: GAPI not loaded","error"); return; }
@@ -409,8 +475,18 @@ window.handleCredentialResponse = function(response) {
     }
 
     function handleSignOut(){
+        console.log('Signing out...');
         const token=gapi.client.getToken();
-        if(token) google.accounts.oauth2.revoke(token.access_token,()=>{ gapi.client.setToken(null); updateUIForSignOut(); });
+        if(token) {
+            google.accounts.oauth2.revoke(token.access_token,()=>{ 
+                console.log('Token revoked');
+                gapi.client.setToken(null); 
+            });
+        }
+        
+        // Reset authentication state
+        isAuthenticated = false;
+        userEmail = null;
         updateUIForSignOut();
     }
 })();
