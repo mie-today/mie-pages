@@ -57,6 +57,13 @@ window.handleCredentialResponse = function(response) {
     .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
 
     .oauth-app-container { max-width: 100%; margin: 0 auto; }
+    
+    /* Fix auth area height globally - prevent double login on all devices */
+    #auth-area {
+        height: auto !important;
+        min-height: 200px;
+        padding: 40px 20px;
+    }
 
     /* MOBILE - FIXED SCROLLING ISSUES */
     @media (max-width: 480px) {
@@ -65,13 +72,6 @@ window.handleCredentialResponse = function(response) {
             height: 100%;
             overflow-x: hidden;
             overflow-y: auto; /* Allow page scroll only */
-        }
-        
-        /* Fix auth area height - prevent double login display */
-        #auth-area {
-            height: auto !important;
-            min-height: 200px !important; /* Reasonable minimum height */
-            padding: 20px !important;
         }
         
         /* Container - use full viewport height naturally */
@@ -189,18 +189,11 @@ window.handleCredentialResponse = function(response) {
         .fc .fc-event { font-size: 11px !important; }
     }
 
-    /* Tablet - keep original dimensions but fix auth area */
+    /* Tablet - keep original dimensions */
     @media (min-width: 481px) and (max-width: 768px) {
         .oauth-app-container { width: 481px; }
         .calendar-section { width: 481px; height: 632px; }
         .messaging-section { width: 481px; height: 316px; }
-        
-        /* Fix auth area height for tablet - prevent double login */
-        #auth-area {
-            height: auto !important;
-            min-height: 300px !important; /* Tablet appropriate height */
-            padding: 30px !important;
-        }
     }
 
     /* Desktop - keep original */
