@@ -168,7 +168,7 @@
                 </div>
                 <!-- The container where FullCalendar will be rendered -->
                  <!-- REQUEST 3: Gap reduced by removing margin from the button container above. -->
-                <div id="calendar-container" class="flex-1 min-h-0 mt-2"></div>
+                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
         </div>
 
@@ -316,7 +316,21 @@
     // This function gets the user's email address after they sign in.
     async function getUserEmail() {
         try {
-            const gmailResp = await gapi.client.gmail.users.getProfile({'userId': 'me'});
+            // First, try the more general userinfo endpoint which is very reliable.
+            const token = gapi.client.getToken();
+            const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { 
+                headers: { 'Authorization': `Bearer ${token.access_token}` } 
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.email) {
+                    userEmail = data.email;
+                    logMessage(`Signed in as: ${userEmail}`, "success");
+                    return userEmail;
+                }
+            }
+            // As a fallback, try the Gmail API.
+            const gmailResp = await gapi.client.gmail.users.getProfile({'userId':'me'});
             userEmail = gmailResp.result.emailAddress;
             logMessage(`Signed in as: ${userEmail}`, "success");
             return userEmail;
@@ -505,3 +519,4 @@
 </script>
 </body>
 </html>
+
