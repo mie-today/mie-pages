@@ -6,50 +6,305 @@
   <title>Mie - Sign Up</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    .logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; }
-    .welcome { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 600; margin-bottom: 10px; color: #222; }
-    h2 { margin-bottom: 20px; color: #333; }
-    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-    button { width: 100%; padding: 12px; background: #4CAF50; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 16px; transition: background-color 0.3s; }
-    button:hover { background: #45a049; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    .message { font-size: 14px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; }
-    .error { color: #D8000C; background-color: #FFD2D2; }
-    .success { color: #4F8A10; background-color: #DFF2BF; }
-    .link { margin-top: 15px; font-size: 14px; }
-    .link a { color: #4CAF50; text-decoration: none; }
+    /* ==================== RESET AND BASE STYLES ==================== */
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh; /* EDIT: Changed back to 100vh for full mobile coverage */
+    }
+    
+    /* ==================== MAIN WRAPPER CONTAINER ==================== */
+    .wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh; /* EDIT: Full viewport height */
+      padding: 5px; /* EDIT: Reduced from 10px - controls outer spacing */
+      width: 100%;
+    }
+    
+    /* ==================== FORM CONTAINER ==================== */
+    .container {
+      background: #fff;
+      padding: 15px; /* EDIT: Reduced from 30px - controls inner spacing */
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      margin-top: 5px; /* EDIT: Reduced from 15px - controls top spacing */
+    }
+    
+    /* ==================== LOGO STYLING ==================== */
+    .logo {
+      width: 80px; /* EDIT: Reduced from 100px - makes logo smaller */
+      height: 80px; /* EDIT: Reduced from 100px - makes logo smaller */
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 8px; /* EDIT: Reduced from 15px - space below logo */
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    /* ==================== TYPOGRAPHY ==================== */
+    .welcome {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px; /* EDIT: Reduced from 20px - welcome text size */
+      font-weight: 600;
+      margin-bottom: 5px; /* EDIT: Reduced from 10px - space below welcome */
+      color: #222;
+    }
+    
+    h2 {
+      margin-bottom: 12px; /* EDIT: Reduced from 20px - space below "Welcome" */
+      color: #333;
+      font-size: 16px; /* EDIT: Reduced from 18px - subtitle size */
+    }
+    
+    /* ==================== FORM ELEMENTS ==================== */
+    input {
+      width: 100%;
+      padding: 10px; /* EDIT: Reduced from 12px - input field height */
+      margin: 4px 0; /* EDIT: Reduced from 8px - space between inputs */
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px; /* EDIT: Keep 16px to prevent zoom on iOS */
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px; /* EDIT: Keep button padding for touch targets */
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px; /* EDIT: Reduced from 10px - space above button */
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    
+    button:hover:not(:disabled) {
+      background: #45a049;
+    }
+    
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    
+    /* ==================== MESSAGE STYLING ==================== */
+    .message {
+      font-size: 14px;
+      margin-bottom: 8px; /* EDIT: Reduced from 10px - space below messages */
+      display: none;
+      padding: 8px; /* EDIT: Reduced from 10px - message padding */
+      border-radius: 8px;
+      text-align: left;
+    }
+    
+    .error {
+      color: #D8000C;
+      background-color: #FFD2D2;
+      border: 1px solid #D8000C;
+    }
+    
+    .success {
+      color: #4F8A10;
+      background-color: #DFF2BF;
+      border: 1px solid #4F8A10;
+    }
+    
+    /* ==================== LINK STYLING ==================== */
+    .link {
+      margin-top: 10px; /* EDIT: Reduced from 15px - space above link */
+      font-size: 14px;
+    }
+    
+    .link a {
+      color: #4CAF50;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .link a:hover {
+      color: #45a049;
+      text-decoration: underline;
+    }
+    
+    /* ==================== RESPONSIVE BREAKPOINTS ==================== */
+    
+    /* MOBILE PHONES (up to 480px) - PRIMARY TARGET */
+    @media screen and (max-width: 480px) {
+      .wrapper {
+        padding: 3px; /* EDIT: Minimal outer padding on mobile */
+        align-items: center;
+      }
+      
+      .container {
+        padding: 12px; /* EDIT: Reduced inner padding on mobile */
+        margin-top: 0; /* EDIT: No top margin on mobile */
+        max-width: 100%;
+        min-width: 280px;
+      }
+      
+      .welcome {
+        font-size: 16px; /* EDIT: Smaller welcome text on mobile */
+      }
+      
+      h2 {
+        font-size: 14px; /* EDIT: Smaller subtitle on mobile */
+        margin-bottom: 8px; /* EDIT: Less space below subtitle */
+      }
+      
+      .logo {
+        width: 70px; /* EDIT: Even smaller logo on mobile */
+        height: 70px; /* EDIT: Even smaller logo on mobile */
+        margin-bottom: 6px; /* EDIT: Less space below logo */
+      }
+      
+      input {
+        padding: 12px; /* EDIT: Slightly larger for touch targets */
+        margin: 3px 0; /* EDIT: Minimal space between inputs */
+      }
+      
+      button {
+        padding: 12px;
+        margin-top: 6px; /* EDIT: Less space above button */
+      }
+      
+      .message {
+        margin-bottom: 6px; /* EDIT: Less space below messages */
+        padding: 6px; /* EDIT: Smaller message padding */
+      }
+      
+      .link {
+        margin-top: 8px; /* EDIT: Less space above link */
+      }
+    }
+    
+    /* TABLETS (481px to 768px) */
+    @media screen and (min-width: 481px) and (max-width: 768px) {
+      .wrapper {
+        padding: 8px; /* EDIT: Medium padding for tablets */
+      }
+      
+      .container {
+        padding: 18px; /* EDIT: Medium padding for tablets */
+        margin-top: 5px;
+        max-width: 420px;
+      }
+    }
+    
+    /* DESKTOP (769px and above) */
+    @media screen and (min-width: 769px) {
+      .wrapper {
+        padding: 15px; /* EDIT: Full padding for desktop */
+      }
+      
+      .container {
+        padding: 20px; /* EDIT: Full padding for desktop */
+        margin-top: 10px;
+      }
+    }
+    
+    /* ==================== GOOGLE SITES EMBEDDING COMPATIBILITY ==================== */
+    .embedded-container {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    
+    /* Ensure centering regardless of container width */
+    @media screen and (min-width: 400px) {
+      .container {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+    
+    /* ==================== CUSTOM EDIT ANNOTATIONS ==================== */
+    /*
+    QUICK EDIT GUIDE:
+    
+    SPACING ADJUSTMENTS:
+    - .container padding: Controls inner form spacing
+    - .wrapper padding: Controls outer margins
+    - input margin: Space between form fields
+    - .welcome margin-bottom: Space below "Hey, it's Mie"
+    - h2 margin-bottom: Space below "Welcome"
+    - .logo margin-bottom: Space below logo
+    - button margin-top: Space above sign up button
+    - .link margin-top: Space above "Already have account" link
+    
+    SIZE ADJUSTMENTS:
+    - .logo width/height: Logo size
+    - .welcome font-size: Main heading size
+    - h2 font-size: Subtitle size
+    - input padding: Form field height
+    - button padding: Button height
+    
+    MOBILE SPECIFIC:
+    - All mobile adjustments are in @media (max-width: 480px)
+    - Reduce any value to make more compact
+    - Increase any value to add more spacing
+    */
   </style>
 </head>
 <body>
-  <div class="container">
-    <a href="https://example.com" class="logo-link">
-      <img src="https://placehold.co/100x100/4CAF50/FFFFFF?text=Mie" alt="Mie Logo" class="logo">
-    </a>
-    <h1 class="welcome">Hey, it's Mie. </h1>
-    <h2>Welcome</h2>
-    <form id="signupForm">
-      <input type="text" id="fullName" placeholder="Full Name" required>
-      <input type="email" id="emailAddress" placeholder="Email Address" required>
-      <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
-      <input type="password" id="pin" placeholder="PIN" required pattern="\d{4,6}" title="PIN must be 4 to 6 digits.">
-      <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
-      <div class="message error" id="errorMsg">PINs do not match or are invalid.</div>
-      <div class="message success" id="successMsg"></div>
-      <button type="submit" id="submitButton">Sign Up</button>
-    </form>
-    <div class="link">
-      Already have an account? <a href="index.html">Sign In</a>
+  <div class="wrapper">
+    <div class="container embedded-container">
+      <!-- LOGO SECTION - EDIT: Replace src with your image URL -->
+      <img src="https://drive.google.com/uc?export=view&id=1-OSochOdfKMVCIbI0oAl5wE4ZTjLL-3A" alt="Mie Logo" class="logo">
+      
+      <!-- HEADING SECTION -->
+      <h1 class="welcome">Hey, it's Mie.</h1>
+      <h2>Welcome</h2>
+      
+      <!-- FORM SECTION -->
+      <form id="signupForm">
+        <input type="text" id="fullName" placeholder="Full Name" required>
+        <input type="email" id="emailAddress" placeholder="Email Address" required>
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+        <input type="password" id="pin" placeholder="PIN" required pattern="\d{4,6}" title="PIN must be 4 to 6 digits.">
+        <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
+        
+        <!-- MESSAGE SECTION -->
+        <div class="message error" id="errorMsg">PINs do not match or are invalid.</div>
+        <div class="message success" id="successMsg"></div>
+        
+        <!-- SUBMIT BUTTON -->
+        <button type="submit" id="submitButton">Sign Up</button>
+      </form>
+      
+      <!-- LINK SECTION -->
+      <div class="link">
+        Already have an account? <a href="dashboard.html">Sign In</a>
+      </div>
     </div>
   </div>
 
   <script>
-    // --- IMPORTANT ---
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycbw4_oZDXqoozT6AorvYRum1POgzX5GV8vK2mgx9xnblnqaV-zK1iv2HCAJPNAnT6qY/exec
-";
+    // ==================== CONFIGURATION ====================
+    // EDIT: Update this URL with your Google Apps Script endpoint
+    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycbw4_oZDXqoozT6AorvYRum1POgzX5GV8vK2mgx9xnblnqaV-zK1iv2HCAJPNAnT6qY/exec";
 
+    // ==================== DOM ELEMENTS ====================
     const form = document.getElementById("signupForm");
     const pin = document.getElementById("pin");
     const confirmPin = document.getElementById("confirmPin");
@@ -57,21 +312,23 @@
     const successMsg = document.getElementById("successMsg");
     const submitButton = document.getElementById("submitButton");
 
+    // ==================== FORM SUBMISSION HANDLER ====================
     form.addEventListener("submit", function(e) {
       e.preventDefault(); // Prevent default form submission
 
-      // 1. Validate PIN
+      // VALIDATION: Check if PINs match and are valid format
       if (pin.value !== confirmPin.value || !/^\d{4,6}$/.test(pin.value)) {
         errorMsg.style.display = "block";
         successMsg.style.display = "none";
-        return; // Stop the function
+        return; // Stop execution if validation fails
       }
       
+      // Hide error message and show loading state
       errorMsg.style.display = "none";
       submitButton.disabled = true;
       submitButton.textContent = "Signing Up...";
 
-      // 2. Prepare data and send to Google Apps Script
+      // PREPARE DATA: Create form data object
       const formData = {
         fullName: document.getElementById("fullName").value,
         emailAddress: document.getElementById("emailAddress").value,
@@ -79,29 +336,46 @@
         pin: pin.value,
       };
 
+      // SUBMIT TO GOOGLE APPS SCRIPT
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // Important for sending to Apps Script from a browser
+        mode: 'no-cors', // Required for Apps Script cross-origin requests
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData)
       })
       .then(response => {
-        // Since we use 'no-cors', we can't read the response.
-        // We will assume success and show a generic success message.
+        // SUCCESS: Show success message (no-cors prevents reading response)
         successMsg.textContent = "Sign up successful! Please check for a confirmation.";
         successMsg.style.display = "block";
-        form.reset(); // Clear the form
+        form.reset(); // Clear all form fields
       })
       .catch(error => {
+        // ERROR: Show error message
         console.error('Error:', error);
         errorMsg.textContent = "An error occurred. Please try again.";
         errorMsg.style.display = "block";
       })
       .finally(() => {
+        // CLEANUP: Reset button state
         submitButton.disabled = false;
         submitButton.textContent = "Sign Up";
+      });
+    });
+
+    // ==================== ENHANCED USER EXPERIENCE ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add subtle focus effects to input fields
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.style.transform = 'scale(1.02)'; // Slight scale on focus
+        });
+        
+        input.addEventListener('blur', function() {
+          this.style.transform = 'scale(1)'; // Reset scale when focus lost
+        });
       });
     });
   </script>
