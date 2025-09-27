@@ -25,6 +25,7 @@
     .message { font-size: 14px; margin-top: 10px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; text-align: left; }
     .error { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; }
     .success { color: #4F8A10; background-color: #DFF2BF; border: 1px solid #4F8A10; }
+    .debug { color: #0066CC; background-color: #E6F3FF; border: 1px solid #0066CC; }
     /* COMPACT EDIT: Reduced top margin */
     .link { margin-top: 12px; font-size: 14px; }
     .link a { color: #4CAF50; text-decoration: none; font-weight: bold; }
@@ -46,6 +47,7 @@
       
       <div class="message error" id="errorMsg"></div>
       <div class="message success" id="successMsg"></div>
+      <div class="message debug" id="debugMsg"></div>
       
       <button type="submit" id="submitButton">Sign Up</button>
     </form>
@@ -55,7 +57,11 @@
   </div>
 
   <script>
+    // DEBUG: Test both your current URL and a standard format
     const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycby9ZL1XvNhHHkr5cKhfJQgO8y0HHVfJumIJuR1UhaOZV_tNsKBorI0ndjHy3yEHHeM/exec";
+    
+    // Alternative URL format to try if the above doesn't work:
+    // const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9ZL1XvNhHHkr5cKhfJQgO8y0HHVfJumIJuR1UhaOZV_tNsKBorI0ndjHy3yEHHeM/exec";
 
     const form = document.getElementById("signupForm");
     const fullNameInput = document.getElementById("fullName");
@@ -65,7 +71,26 @@
     const confirmPinInput = document.getElementById("confirmPin");
     const errorMsg = document.getElementById("errorMsg");
     const successMsg = document.getElementById("successMsg");
+    const debugMsg = document.getElementById("debugMsg");
     const submitButton = document.getElementById("submitButton");
+
+    // DEBUG: Test script URL on page load
+    function testScriptUrl() {
+      debugMsg.innerHTML = `Testing script URL: ${SCRIPT_URL}`;
+      debugMsg.style.display = "block";
+      
+      fetch(SCRIPT_URL, {
+        method: 'GET',
+        mode: 'no-cors'
+      }).then(() => {
+        console.log('Script URL appears to be accessible');
+      }).catch(error => {
+        console.error('Script URL test failed:', error);
+      });
+    }
+
+    // Call test on page load
+    window.addEventListener('load', testScriptUrl);
 
     form.addEventListener("submit", function(e) {
       e.preventDefault();
@@ -73,7 +98,9 @@
       const errors = [];
       errorMsg.style.display = "none";
       successMsg.style.display = "none";
+      debugMsg.style.display = "none";
 
+      // Validation (same as before)
       if (!/^\S+\s\S+.*$/.test(fullNameInput.value)) {
         errors.push("Please enter your full name (first and last).");
       }
@@ -104,22 +131,62 @@
         emailAddress: emailInput.value,
         phoneNumber: phoneInput.value,
         pin: pinInput.value,
+        timestamp: new Date().toISOString() // Add timestamp for debugging
       };
 
+      // DEBUG: Show what we're sending
+      console.log('Sending data:', formData);
+      debugMsg.innerHTML = `Sending data to: ${SCRIPT_URL}<br>Data: ${JSON.stringify(formData, null, 2)}`;
+      debugMsg.style.display = "block";
+
+      // TRY METHOD 1: With no-cors (your current method)
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', 
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(formData)
       })
       .then(response => {
-        successMsg.textContent = "Sign up successful! Your information has been submitted.";
+        console.log('Response received (no-cors mode - cannot read details)');
+        successMsg.textContent = "Sign up submitted! Data sent to Google Sheets.";
         successMsg.style.display = "block";
         form.reset();
       })
       .catch(error => {
-        console.error('Network Error:', error);
-        errorMsg.innerHTML = "A network error occurred. Please check your connection and try again.";
+        console.error('Method 1 failed:', error);
+        
+        // TRY METHOD 2: With CORS (might work if script is configured properly)
+        return fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData)
+        });
+      })
+      .then(response => {
+        if (response) {
+          console.log('Method 2 response:', response);
+          return response.text();
+        }
+      })
+      .then(data => {
+        if (data) {
+          console.log('Response data:', data);
+          debugMsg.innerHTML = `Response received: ${data}`;
+          successMsg.textContent = "Sign up successful! Data confirmed in Google Sheets.";
+          successMsg.style.display = "block";
+        }
+      })
+      .catch(error => {
+        console.error('All methods failed:', error);
+        errorMsg.innerHTML = `Network error: ${error.message}<br><br>Possible issues:<br>
+        1. Google Apps Script not deployed properly<br>
+        2. Script permissions not set to "Anyone"<br>
+        3. Workspace restrictions<br>
+        4. Wrong script URL format`;
         errorMsg.style.display = "block";
       })
       .finally(() => {
@@ -127,7 +194,24 @@
         submitButton.textContent = "Sign Up";
       });
     });
+
+    // DEBUG: Add URL testing buttons (for development)
+    const debugButtons = document.createElement('div');
+    debugButtons.style.marginTop = '10px';
+    debugButtons.innerHTML = `
+      <button type="button" onclick="testDirectAccess()" style="font-size:12px; padding:5px;">Test Direct Access</button>
+      <button type="button" onclick="testAlternateUrl()" style="font-size:12px; padding:5px;">Test Alt URL</button>
+    `;
+    document.querySelector('.container').appendChild(debugButtons);
+
+    function testDirectAccess() {
+      window.open(SCRIPT_URL, '_blank');
+    }
+
+    function testAlternateUrl() {
+      const altUrl = SCRIPT_URL.replace('/a/macros/mie.today/', '/macros/');
+      window.open(altUrl, '_blank');
+    }
   </script>
 </body>
 </html>
-
