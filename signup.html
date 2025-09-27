@@ -4,122 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mie - Sign Up</title>
-  <!-- Montserrat font -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
-
   <style>
-    /* Global styles */
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    /* Container */
-    .container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    /* Logo */
-    .logo {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 15px;
-    }
-
-    /* Welcome text */
-    .welcome {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: #222;
-    }
-
-    /* Headings */
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    /* Input fields */
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-    }
-
-    /* Buttons */
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-      font-size: 16px;
-    }
-
-    button:hover {
-      background: #45a049;
-    }
-
-    /* Error messages */
-    .error {
-      color: red;
-      font-size: 14px;
-      margin-bottom: 10px;
-      display: none;
-    }
-
-    /* Links */
-    .link {
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
-    .link a {
-      color: #4CAF50;
-      text-decoration: none;
-    }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    .logo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; }
+    .welcome { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 600; margin-bottom: 10px; color: #222; }
+    h2 { margin-bottom: 20px; color: #333; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #4CAF50; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 16px; transition: background-color 0.3s; }
+    button:hover { background: #45a049; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+    .message { font-size: 14px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; }
+    .error { color: #D8000C; background-color: #FFD2D2; }
+    .success { color: #4F8A10; background-color: #DFF2BF; }
+    .link { margin-top: 15px; font-size: 14px; }
+    .link a { color: #4CAF50; text-decoration: none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Logo with link -->
     <a href="https://example.com" class="logo-link">
-      <img src="logo.png" alt="Mie Logo" class="logo">
+      <img src="https://placehold.co/100x100/4CAF50/FFFFFF?text=Mie" alt="Mie Logo" class="logo">
     </a>
-
-    <!-- Welcome header -->
-    <h1 class="welcome">Join Mie</h1>
-
-    <h2>Sign Up</h2>
-    <form id="signupForm" action="index.html">
-      <input type="text" placeholder="Full Name" required>
-      <input type="email" placeholder="Email Address" required>
-      <input type="tel" placeholder="Phone Number" required>
-      <input type="password" id="password" placeholder="Password" required>
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-      <div class="error" id="errorMsg">Passwords do not match</div>
-      <button type="submit">Sign Up</button>
+    <h1 class="welcome">Hey, it's Mie. </h1>
+    <h2>Welcome</h2>
+    <form id="signupForm">
+      <input type="text" id="fullName" placeholder="Full Name" required>
+      <input type="email" id="emailAddress" placeholder="Email Address" required>
+      <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+      <input type="password" id="pin" placeholder="PIN" required pattern="\d{4,6}" title="PIN must be 4 to 6 digits.">
+      <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
+      <div class="message error" id="errorMsg">PINs do not match or are invalid.</div>
+      <div class="message success" id="successMsg"></div>
+      <button type="submit" id="submitButton">Sign Up</button>
     </form>
     <div class="link">
       Already have an account? <a href="index.html">Sign In</a>
@@ -127,18 +45,64 @@
   </div>
 
   <script>
+    // --- IMPORTANT ---
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycbw4_oZDXqoozT6AorvYRum1POgzX5GV8vK2mgx9xnblnqaV-zK1iv2HCAJPNAnT6qY/exec
+";
+
     const form = document.getElementById("signupForm");
-    const password = document.getElementById("password");
-    const confirmPassword = document.getElementById("confirmPassword");
+    const pin = document.getElementById("pin");
+    const confirmPin = document.getElementById("confirmPin");
     const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+    const submitButton = document.getElementById("submitButton");
 
     form.addEventListener("submit", function(e) {
-      if (password.value !== confirmPassword.value) {
-        e.preventDefault();
+      e.preventDefault(); // Prevent default form submission
+
+      // 1. Validate PIN
+      if (pin.value !== confirmPin.value || !/^\d{4,6}$/.test(pin.value)) {
         errorMsg.style.display = "block";
-      } else {
-        errorMsg.style.display = "none";
+        successMsg.style.display = "none";
+        return; // Stop the function
       }
+      
+      errorMsg.style.display = "none";
+      submitButton.disabled = true;
+      submitButton.textContent = "Signing Up...";
+
+      // 2. Prepare data and send to Google Apps Script
+      const formData = {
+        fullName: document.getElementById("fullName").value,
+        emailAddress: document.getElementById("emailAddress").value,
+        phoneNumber: document.getElementById("phoneNumber").value,
+        pin: pin.value,
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Important for sending to Apps Script from a browser
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => {
+        // Since we use 'no-cors', we can't read the response.
+        // We will assume success and show a generic success message.
+        successMsg.textContent = "Sign up successful! Please check for a confirmation.";
+        successMsg.style.display = "block";
+        form.reset(); // Clear the form
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        errorMsg.textContent = "An error occurred. Please try again.";
+        errorMsg.style.display = "block";
+      })
+      .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = "Sign Up";
+      });
     });
   </script>
 </body>
