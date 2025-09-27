@@ -1,165 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard</title>
-
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Google API -->
-<script src="https://apis.google.com/js/api.js"></script>
-<!-- Google Identity Services -->
-<script>
-window.handleCredentialResponse = function(response) {
-    if (!response.credential) return;
-    if (!window.tokenClient) {
-        window.tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
-            scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
-            callback: async (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    gapi.client.setToken(tokenResponse);
-                    document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
-                }
-            },
-        });
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mie - Sign Up</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
+  <style>
+    /* Reset and base styles */
+    * {
+      box-sizing: border-box;
     }
-    window.tokenClient.requestAccessToken({ prompt: "" });
-};
-</script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
-<style>
-body {
-    font-family: 'Inter', sans-serif;
-    margin:0; padding:0;
-    background:#fff; color:#1f2937;
-}
-
-/* Scrollbars */
-.oauth-app-container #message-log::-webkit-scrollbar,
-.oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
-.oauth-app-container #message-log::-webkit-scrollbar-track,
-.oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
-.oauth-app-container #message-log::-webkit-scrollbar-thumb,
-.oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
-
-.disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* CONTAINER */
-.oauth-app-container { max-width: 100%; margin:0 auto; }
-
-/* MOBILE */
-@media (max-width:480px){
-    .oauth-app-container { 
-        width:100%; min-height:100vh; display:flex; flex-direction:column; overflow:visible; 
+    
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
     }
-    .mobile-container { display:flex; flex-direction:column; gap:4px; overflow:visible; padding:2px; }
-    .calendar-section, .messaging-section { 
-        width:100%; height:auto; overflow:visible; flex-shrink:0; padding:4px; 
+    
+    /* Container wrapper for perfect centering */
+    .wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+      width: 100%;
     }
-    #calendar-container, #message-log { overflow:visible; height:auto; flex-grow:unset; }
-}
-
-/* TABLET */
-@media (min-width:481px) and (max-width:768px){
-    .oauth-app-container { width:481px; }
-    .calendar-section { width:481px; height:632px; }
-    .messaging-section { width:481px; height:316px; }
-}
-
-/* DESKTOP */
-@media (min-width:769px){
-    .oauth-app-container { width:800px; }
-    .calendar-section { width:800px; height:860px; }
-    .messaging-section { width:800px; height:360px; }
-}
-
-/* FullCalendar Light Mode */
-.fc { color:#1f2937 !important; background:#fff !important; }
-.fc .fc-button-primary { background-color:#3b82f6 !important; border-color:#2563eb !important; color:white !important; }
-.fc-daygrid-day.fc-day-other { display:none !important; }
-
-/* Event modal */
-.event-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
-.event-modal-content { background:white; border-radius:12px; padding:24px; max-width:400px; width:90%; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); color:#1f2937; }
-@media (max-width:480px){ .event-modal-content{ max-width:320px !important; padding:16px !important; } }
-</style>
+    
+    /* Main container - responsive sizing */
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      margin-top: 20px; /* Top spacing for better positioning */
+    }
+    
+    /* Logo styling */
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 15px;
+      transition: transform 0.3s ease;
+    }
+    
+    .logo:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Typography */
+    .welcome {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #222;
+    }
+    
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+      font-size: 18px;
+    }
+    
+    /* Form elements */
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    
+    button:hover:not(:disabled) {
+      background: #45a049;
+    }
+    
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    
+    /* Message styling */
+    .message {
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: none;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: left;
+    }
+    
+    .error {
+      color: #D8000C;
+      background-color: #FFD2D2;
+      border: 1px solid #D8000C;
+    }
+    
+    .success {
+      color: #4F8A10;
+      background-color: #DFF2BF;
+      border: 1px solid #4F8A10;
+    }
+    
+    /* Link styling */
+    .link {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    
+    .link a {
+      color: #4CAF50;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    .link a:hover {
+      color: #45a049;
+      text-decoration: underline;
+    }
+    
+    /* Responsive breakpoints for different devices */
+    
+    /* Mobile phones (up to 480px) */
+    @media screen and (max-width: 480px) {
+      .wrapper {
+        padding: 10px;
+        align-items: center; /* Center vertically on mobile */
+      }
+      
+      .container {
+        padding: 20px;
+        margin-top: 0;
+        max-width: 100%;
+        min-width: 280px;
+      }
+      
+      .welcome {
+        font-size: 20px;
+      }
+      
+      h2 {
+        font-size: 16px;
+      }
+      
+      .logo {
+        width: 80px;
+        height: 80px;
+      }
+      
+      input, button {
+        padding: 14px; /* Slightly larger for better mobile usability */
+      }
+    }
+    
+    /* Tablets (481px to 768px) */
+    @media screen and (min-width: 481px) and (max-width: 768px) {
+      .wrapper {
+        padding: 15px;
+      }
+      
+      .container {
+        padding: 25px;
+        margin-top: 10px;
+        max-width: 420px;
+      }
+    }
+    
+    /* Desktop and larger screens */
+    @media screen and (min-width: 769px) {
+      .wrapper {
+        padding: 20px;
+      }
+      
+      .container {
+        margin-top: 20px;
+      }
+    }
+    
+    /* Special styles for Google Sites embedding */
+    /* Ensures the form displays properly when embedded */
+    .embedded-container {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    
+    /* Ensure the form is always centered regardless of container width */
+    @media screen and (min-width: 400px) {
+      .container {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div class="oauth-app-container">
-    <div class="flex flex-col space-y-4 p-4 mobile-container">
-
-        <!-- Calendar Section -->
-        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
-            <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 h-full">
-                <h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-center text-gray-800">Sign in to view your Google Calendar</h2>
-                <div id="g_id_onload"
-                     data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
-                     data-context="signin"
-                     data-ux_mode="popup"
-                     data-callback="handleCredentialResponse"
-                     data-auto_prompt="false"></div>
-                <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
-            </div>
-            <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-end mb-2">
-                    <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-2 rounded-md">Sign Out</button>
-                </div>
-                <div id="calendar-container" class="flex-1 min-h-0"></div>
-            </div>
-        </div>
-
-        <!-- Messaging Section -->
-        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
-            <h2 class="text-lg md:text-xl lg:text-2xl font-semibold mb-2 text-gray-800">Send a Message</h2>
-            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 mb-2">
-                <div class="text-sm text-gray-500">Your sent messages will appear here...</div>
-            </div>
-            <textarea id="message-input" placeholder="Type your message..." class="rounded-2xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20"></textarea>
-            <div class="flex items-center space-x-2 mt-2">
-                <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-1 px-3 rounded-full">Add Image</label>
-                <input id="file-input" type="file" class="hidden" accept="image/*">
-                <div id="file-preview" class="hidden flex items-center space-x-2">
-                    <img id="preview-image" class="w-16 h-16 object-cover rounded border" alt="Preview">
-                    <button id="remove-file" class="text-red-500 text-sm">Remove</button>
-                </div>
-            </div>
-            <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2" disabled>Send</button>
-        </div>
-
+  <div class="wrapper">
+    <div class="container embedded-container">
+      <img src="https://drive.google.com/uc?export=view&id=1-OSochOdfKMVCIbI0oAl5wE4ZTjLL-3A" alt="Mie Logo" class="logo">
+      <h1 class="welcome">Hey, it's Mie.</h1>
+      <h2>Welcome</h2>
+      <form id="signupForm">
+        <input type="text" id="fullName" placeholder="Full Name" required>
+        <input type="email" id="emailAddress" placeholder="Email Address" required>
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+        <input type="password" id="pin" placeholder="PIN" required pattern="\d{4,6}" title="PIN must be 4 to 6 digits.">
+        <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
+        <div class="message error" id="errorMsg">PINs do not match or are invalid.</div>
+        <div class="message success" id="successMsg"></div>
+        <button type="submit" id="submitButton">Sign Up</button>
+      </form>
+      <div class="link">
+        Already have an account? <a href="index.html">Sign In</a>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Event modal -->
-<div id="event-modal" class="event-modal hidden">
-    <div class="event-modal-content">
-        <div class="flex justify-between items-start mb-4">
-            <h3 id="event-title" class="text-xl font-semibold"></h3>
-            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-        </div>
-        <div id="event-details" class="space-y-2">
-            <p id="event-time" class="text-gray-600"></p>
-            <p id="event-description" class="text-gray-700"></p>
-            <p id="event-location" class="text-gray-600"></p>
-        </div>
-        <div class="mt-4 flex justify-end">
-            <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Open in Google Calendar</a>
-        </div>
-    </div>
-</div>
+  <script>
+    // --- IMPORTANT ---
+    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycbw4_oZDXqoozT6AorvYRum1POgzX5GV8vK2mgx9xnblnqaV-zK1iv2HCAJPNAnT6qY/exec";
 
-<script>
-// --- Your original JS untouched ---
-// All auth, FullCalendar, messaging, file handling, and email send code remain unchanged
-</script>
+    const form = document.getElementById("signupForm");
+    const pin = document.getElementById("pin");
+    const confirmPin = document.getElementById("confirmPin");
+    const errorMsg = document.getElementById("errorMsg");
+    const successMsg = document.getElementById("successMsg");
+    const submitButton = document.getElementById("submitButton");
 
+    form.addEventListener("submit", function(e) {
+      e.preventDefault(); // Prevent default form submission
+
+      // 1. Validate PIN
+      if (pin.value !== confirmPin.value || !/^\d{4,6}$/.test(pin.value)) {
+        errorMsg.style.display = "block";
+        successMsg.style.display = "none";
+        return; // Stop the function
+      }
+      
+      errorMsg.style.display = "none";
+      submitButton.disabled = true;
+      submitButton.textContent = "Signing Up...";
+
+      // 2. Prepare data and send to Google Apps Script
+      const formData = {
+        fullName: document.getElementById("fullName").value,
+        emailAddress: document.getElementById("emailAddress").value,
+        phoneNumber: document.getElementById("phoneNumber").value,
+        pin: pin.value,
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Important for sending to Apps Script from a browser
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => {
+        // Since we use 'no-cors', we can't read the response.
+        // We will assume success and show a generic success message.
+        successMsg.textContent = "Sign up successful! Please check for a confirmation.";
+        successMsg.style.display = "block";
+        form.reset(); // Clear the form
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        errorMsg.textContent = "An error occurred. Please try again.";
+        errorMsg.style.display = "block";
+      })
+      .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = "Sign Up";
+      });
+    });
+
+    // Optional: Add some visual feedback for better UX
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add focus effects to inputs
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+          this.style.transform = 'scale(1.02)';
+        });
+        
+        input.addEventListener('blur', function() {
+          this.style.transform = 'scale(1)';
+        });
+      });
+    });
+  </script>
 </body>
 </html>
