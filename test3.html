@@ -7,18 +7,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 10px;}
-    .container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    .logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
-    .welcome { font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 600; margin-bottom: 10px; color: #222; }
-    h2 { margin-bottom: 15px; color: #555; font-size: 16px; font-weight: normal; }
-    input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 12px; background: #4CAF50; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 16px; transition: background-color 0.3s; }
+    /* COMPACT EDIT: Reduced container padding */
+    .container { background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    /* COMPACT EDIT: Reduced logo size and margin */
+    .logo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 8px; }
+    /* COMPACT EDIT: Reduced font size and margin */
+    .welcome { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 5px; color: #222; }
+    /* COMPACT EDIT: Reduced margin */
+    h2 { margin-top: 0; margin-bottom: 12px; color: #555; font-size: 16px; font-weight: normal; }
+    /* COMPACT EDIT: Reduced vertical margin */
+    input { width: 100%; padding: 12px; margin: 4px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+    /* COMPACT EDIT: Reduced top margin */
+    button { width: 100%; padding: 12px; background: #4CAF50; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; font-size: 16px; transition: background-color 0.3s; }
     button:hover:not(:disabled) { background: #45a049; }
     button:disabled { background: #aaa; cursor: not-allowed; }
-    .message { font-size: 14px; margin-top: 15px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; text-align: left; }
+    /* COMPACT EDIT: Reduced top margin */
+    .message { font-size: 14px; margin-top: 10px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; text-align: left; }
     .error { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; }
     .success { color: #4F8A10; background-color: #DFF2BF; border: 1px solid #4F8A10; }
-    .link { margin-top: 15px; font-size: 14px; }
+    /* COMPACT EDIT: Reduced top margin */
+    .link { margin-top: 12px; font-size: 14px; }
     .link a { color: #4CAF50; text-decoration: none; font-weight: bold; }
   </style>
 </head>
@@ -30,7 +38,6 @@
     <h1 class="welcome">Hey, it's Mie.</h1>
     <h2>Welcome</h2>
     <form id="signupForm">
-      <!-- UPDATED Input fields with specific placeholders and validation patterns -->
       <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required pattern="^.+\s.+$" title="Please enter your first and last name.">
       <input type="email" id="emailAddress" placeholder="Gmail Address (e.g., johndoe@gmail.com)" required pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" title="Please enter a valid @gmail.com address.">
       <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required pattern="^\d{10,}$" title="Please enter at least 10 digits.">
@@ -48,10 +55,7 @@
   </div>
 
   <script>
-    // --- IMPORTANT ---
-    // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-    // FIXED: Removed the extra line break from the URL
-    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycbw4_oZDXqoozT6AorvYRum1POgzX5GV8vK2mgx9xnblnqaV-zK1iv2HCAJPNAnT6qY/exec";
+    const SCRIPT_URL = "https://script.google.com/a/macros/mie.today/s/AKfycby9ZL1XvNhHHkr5cKhfJQgO8y0HHVfJumIJuR1UhaOZV_tNsKBorI0ndjHy3yEHHeM/exec";
 
     const form = document.getElementById("signupForm");
     const fullNameInput = document.getElementById("fullName");
@@ -64,9 +68,8 @@
     const submitButton = document.getElementById("submitButton");
 
     form.addEventListener("submit", function(e) {
-      e.preventDefault(); // Prevent default form submission
+      e.preventDefault();
 
-      // --- NEW: Comprehensive Validation ---
       const errors = [];
       errorMsg.style.display = "none";
       successMsg.style.display = "none";
@@ -87,7 +90,6 @@
         errors.push("PINs do not match.");
       }
 
-      // If there are any errors, display them and stop
       if (errors.length > 0) {
         errorMsg.innerHTML = errors.join('<br>');
         errorMsg.style.display = "block";
@@ -106,9 +108,6 @@
 
       fetch(SCRIPT_URL, {
         method: 'POST',
-        // 'no-cors' is required for simple Apps Script web apps.
-        // It means we can't read the response, so we can't see server-side errors here.
-        // If data doesn't appear in the sheet, check the script's execution logs in Apps Script.
         mode: 'no-cors', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -119,7 +118,6 @@
         form.reset();
       })
       .catch(error => {
-        // This catch will only trigger on network failures, not script errors.
         console.error('Network Error:', error);
         errorMsg.innerHTML = "A network error occurred. Please check your connection and try again.";
         errorMsg.style.display = "block";
