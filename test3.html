@@ -1,217 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mie - Sign Up</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 10px;}
-    /* COMPACT EDIT: Reduced container padding */
-    .container { background: #fff; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    /* COMPACT EDIT: Reduced logo size and margin */
-    .logo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; margin-bottom: 8px; }
-    /* COMPACT EDIT: Reduced font size and margin */
-    .welcome { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 5px; color: #222; }
-    /* COMPACT EDIT: Reduced margin */
-    h2 { margin-top: 0; margin-bottom: 12px; color: #555; font-size: 16px; font-weight: normal; }
-    /* COMPACT EDIT: Reduced vertical margin */
-    input { width: 100%; padding: 12px; margin: 4px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    /* COMPACT EDIT: Reduced top margin */
-    button { width: 100%; padding: 12px; background: #4CAF50; color: #fff; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; font-size: 16px; transition: background-color 0.3s; }
-    button:hover:not(:disabled) { background: #45a049; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    /* COMPACT EDIT: Reduced top margin */
-    .message { font-size: 14px; margin-top: 10px; margin-bottom: 10px; display: none; padding: 10px; border-radius: 8px; text-align: left; }
-    .error { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; }
-    .success { color: #4F8A10; background-color: #DFF2BF; border: 1px solid #4F8A10; }
-    .debug { color: #0066CC; background-color: #E6F3FF; border: 1px solid #0066CC; }
-    /* COMPACT EDIT: Reduced top margin */
-    .link { margin-top: 12px; font-size: 14px; }
-    .link a { color: #4CAF50; text-decoration: none; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <a href="dashboard.html" class="logo-link">
-      <img src="https://drive.google.com/uc?export=view&id=1-OSochOdfKMVCIbI0oAl5wE4ZTjLL-3A" alt="Mie Logo" class="logo">
-    </a>
-    <h1 class="welcome">Hey, it's Mie.</h1>
-    <h2>Welcome</h2>
-    <form id="signupForm">
-      <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required pattern="^.+\s.+$" title="Please enter your first and last name.">
-      <input type="email" id="emailAddress" placeholder="Gmail Address (e.g., johndoe@gmail.com)" required pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" title="Please enter a valid @gmail.com address.">
-      <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required pattern="^\d{10,}$" title="Please enter at least 10 digits.">
-      <input type="password" id="pin" placeholder="4-Digit PIN (e.g., 1234)" required pattern="\d{4}" title="PIN must be exactly 4 digits.">
-      <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
-      
-      <div class="message error" id="errorMsg"></div>
-      <div class="message success" id="successMsg"></div>
-      <div class="message debug" id="debugMsg"></div>
-      
-      <button type="submit" id="submitButton">Sign Up</button>
-    </form>
-    <div class="link">
-      Already have an account? <a href="dashboard.html">Sign In</a>
-    </div>
-  </div>
+// CONFIGURATION
+const SPREADSHEET_ID = "1T9qiDQa1DUwMF06V6M_TBO0Nc-36IKeTuIWkpdxh40U";
+const SHEET_NAME = "Sheet1";
 
-  <script>
-    // DEBUG: Test both your current URL and a standard format
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzedCJrKhgDj2FHGjdUXnlp31WKcDTPSh7G-YWm5hYh4hBLGmzkyWxpXWkTUDu_CBM/exec";
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    "status": "success", 
+    "message": "Script is working! Use POST method to submit data."
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    console.log('Received POST request');
+    const data = JSON.parse(e.postData.contents);
+    console.log('Parsed data:', data);
     
-    // Alternative URL format to try if the above doesn't work:
-    // const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzedCJrKhgDj2FHGjdUXnlp31WKcDTPSh7G-YWm5hYh4hBLGmzkyWxpXWkTUDu_CBM/exec";
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+    const timestamp = new Date();
+    
+    const rowData = [
+      timestamp,
+      data.fullName || 'N/A',
+      data.emailAddress || 'N/A', 
+      data.phoneNumber || 'N/A',
+      data.pin || 'N/A',
+      "Yes" // Approved column
+    ];
+    
+    sheet.appendRow(rowData);
+    console.log('Data written to sheet successfully');
+    
+    // Send welcome notifications since user is auto-approved
+    sendWelcomeNotifications(data.emailAddress, data.phoneNumber, data.fullName);
+    
+    return ContentService.createTextOutput(JSON.stringify({ 
+      "status": "success", 
+      "message": "Data saved and welcome messages sent" 
+    })).setMimeType(ContentService.MimeType.JSON);
+    
+  } catch (error) {
+    console.error('Error in doPost:', error);
+    return ContentService.createTextOutput(JSON.stringify({ 
+      "status": "error", 
+      "message": error.toString() 
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
 
-    const form = document.getElementById("signupForm");
-    const fullNameInput = document.getElementById("fullName");
-    const emailInput = document.getElementById("emailAddress");
-    const phoneInput = document.getElementById("phoneNumber");
-    const pinInput = document.getElementById("pin");
-    const confirmPinInput = document.getElementById("confirmPin");
-    const errorMsg = document.getElementById("errorMsg");
-    const successMsg = document.getElementById("successMsg");
-    const debugMsg = document.getElementById("debugMsg");
-    const submitButton = document.getElementById("submitButton");
+function sendWelcomeNotifications(email, phoneNumber, fullName) {
+  const firstName = fullName.split(' ')[0]; // Extract first name
+  
+  try {
+    // Send Welcome Email
+    sendWelcomeEmail(email, firstName);
+    console.log('Welcome email sent to:', email);
+    
+    // Send Welcome SMS
+    sendWelcomeSMS(phoneNumber, firstName);
+    console.log('Welcome SMS sent to:', phoneNumber);
+    
+  } catch (error) {
+    console.error('Error sending notifications:', error);
+    // Don't throw error - we still want the signup to succeed even if notifications fail
+  }
+}
 
-    // DEBUG: Test script URL on page load
-    function testScriptUrl() {
-      debugMsg.innerHTML = `Testing script URL: ${SCRIPT_URL}`;
-      debugMsg.style.display = "block";
-      
-      fetch(SCRIPT_URL, {
-        method: 'GET',
-        mode: 'no-cors'
-      }).then(() => {
-        console.log('Script URL appears to be accessible');
-      }).catch(error => {
-        console.error('Script URL test failed:', error);
-      });
-    }
-
-    // Call test on page load
-    window.addEventListener('load', testScriptUrl);
-
-    form.addEventListener("submit", function(e) {
-      e.preventDefault();
-
-      const errors = [];
-      errorMsg.style.display = "none";
-      successMsg.style.display = "none";
-      debugMsg.style.display = "none";
-
-      // Validation (same as before)
-      if (!/^\S+\s\S+.*$/.test(fullNameInput.value)) {
-        errors.push("Please enter your full name (first and last).");
-      }
-      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value)) {
-        errors.push("A valid @gmail.com address is required.");
-      }
-      if (!/^\d{10,}$/.test(phoneInput.value)) {
-        errors.push("Phone number must be at least 10 digits.");
-      }
-      if (!/^\d{4}$/.test(pinInput.value)) {
-        errors.push("PIN must be exactly 4 digits.");
-      }
-      if (pinInput.value !== confirmPinInput.value) {
-        errors.push("PINs do not match.");
-      }
-
-      if (errors.length > 0) {
-        errorMsg.innerHTML = errors.join('<br>');
-        errorMsg.style.display = "block";
-        return;
-      }
-      
-      submitButton.disabled = true;
-      submitButton.textContent = "Signing Up...";
-
-      const formData = {
-        fullName: fullNameInput.value,
-        emailAddress: emailInput.value,
-        phoneNumber: phoneInput.value,
-        pin: pinInput.value,
-        timestamp: new Date().toISOString() // Add timestamp for debugging
-      };
-
-      // DEBUG: Show what we're sending
-      console.log('Sending data:', formData);
-      debugMsg.innerHTML = `Sending data to: ${SCRIPT_URL}<br>Data: ${JSON.stringify(formData, null, 2)}`;
-      debugMsg.style.display = "block";
-
-      // TRY METHOD 1: With no-cors (your current method)
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      })
-      .then(response => {
-        console.log('Response received (no-cors mode - cannot read details)');
-        successMsg.textContent = "Sign up submitted! Data sent to Google Sheets.";
-        successMsg.style.display = "block";
-        form.reset();
-      })
-      .catch(error => {
-        console.error('Method 1 failed:', error);
-        
-        // TRY METHOD 2: With CORS (might work if script is configured properly)
-        return fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData)
-        });
-      })
-      .then(response => {
-        if (response) {
-          console.log('Method 2 response:', response);
-          return response.text();
-        }
-      })
-      .then(data => {
-        if (data) {
-          console.log('Response data:', data);
-          debugMsg.innerHTML = `Response received: ${data}`;
-          successMsg.textContent = "Sign up successful! Data confirmed in Google Sheets.";
-          successMsg.style.display = "block";
-        }
-      })
-      .catch(error => {
-        console.error('All methods failed:', error);
-        errorMsg.innerHTML = `Network error: ${error.message}<br><br>Possible issues:<br>
-        1. Google Apps Script not deployed properly<br>
-        2. Script permissions not set to "Anyone"<br>
-        3. Workspace restrictions<br>
-        4. Wrong script URL format`;
-        errorMsg.style.display = "block";
-      })
-      .finally(() => {
-        submitButton.disabled = false;
-        submitButton.textContent = "Sign Up";
-      });
-    });
-
-    // DEBUG: Add URL testing buttons (for development)
-    const debugButtons = document.createElement('div');
-    debugButtons.style.marginTop = '10px';
-    debugButtons.innerHTML = `
-      <button type="button" onclick="testDirectAccess()" style="font-size:12px; padding:5px;">Test Direct Access</button>
-      <button type="button" onclick="testAlternateUrl()" style="font-size:12px; padding:5px;">Test Alt URL</button>
-    `;
-    document.querySelector('.container').appendChild(debugButtons);
-
-    function testDirectAccess() {
-      window.open(SCRIPT_URL, '_blank');
-    }
-
-    function testAlternateUrl() {
-      const altUrl = SCRIPT_URL.replace('/a/macros/mie.today/', '/macros/');
-      window.open(altUrl, '_blank');
-    }
-  </script>
-</body>
-</html>
+function sendWelcomeEmail(email, firstName) {
+  const subject = "Welcome to Mie - Access Granted!";
+  const htmlBody = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #4CAF50; color: white; pad
