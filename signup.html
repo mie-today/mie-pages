@@ -36,12 +36,11 @@
       margin-bottom: 8px; 
     }
 
-    /* HEADER STYLING */
     .welcome { 
       font-family: 'Montserrat', sans-serif; 
       font-size: 20px; 
       font-weight: 600; 
-      margin-bottom: 20px; /* 🔑 INCREASED from 5px → 20px for more space before "Welcome" */
+      margin-bottom: 20px; 
       color: #222; 
     }
 
@@ -122,14 +121,14 @@
     <a href="dashboard.html" class="logo-link">
       <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="logo">
     </a>
-    <h1 class="welcome">Hey, it's Mie.</h1> <!-- 🔑 Margin-bottom adjusted in CSS -->
+    <h1 class="welcome">Hey, it's Mie.</h1>
     <h2>Welcome</h2>
     
     <form id="signupForm">
-      <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required pattern="^.+\s.+$" title="Please enter your first and last name.">
-      <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$" title="Please enter a valid @gmail.com address.">
-      <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required pattern="^\d{10,}$" title="Please enter at least 10 digits.">
-      <input type="password" id="pin" placeholder="4-Digit PIN (e.g., 1234)" required pattern="\d{4}" title="PIN must be exactly 4 digits.">
+      <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required>
+      <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required>
+      <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required>
+      <input type="password" id="pin" placeholder="4-Digit PIN (e.g., 1234)" required>
       <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
       
       <div class="message error" id="errorMsg"></div>
@@ -144,7 +143,6 @@
   </div>
 
   <script>
-    // 🔑 UPDATED SCRIPT URL to correct Apps Script deployment
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznUPKZlnFhnfWwT9b5ntpRMGG6rNoUP6d3s7FC8aS44gTwBGc1WenVSOhDVi5KqT4h/exec";
 
     const form = document.getElementById("signupForm");
@@ -164,20 +162,28 @@
       errorMsg.style.display = "none";
       successMsg.style.display = "none";
 
-      // Validation
-      if (!/^\S+\s\S+.*$/.test(fullNameInput.value)) {
-        errors.push("Please enter your full name (first and last).");
+      // Full Name: first + last (letters only, space between)
+      if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) {
+        errors.push("Full Name must include FIRST and LAST name (letters only).");
       }
-      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value)) {
+
+      // Email: must be @gmail.com
+      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) {
         errors.push("A valid @gmail.com address is required.");
       }
-      if (!/^\d{10,}$/.test(phoneInput.value)) {
-        errors.push("Phone number must be at least 10 digits.");
+
+      // Phone: must start with 1 and be 11 digits total
+      if (!/^1\d{10}$/.test(phoneInput.value.trim())) {
+        errors.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
       }
-      if (!/^\d{4}$/.test(pinInput.value)) {
+
+      // PIN: exactly 4 digits
+      if (!/^\d{4}$/.test(pinInput.value.trim())) {
         errors.push("PIN must be exactly 4 digits.");
       }
-      if (pinInput.value !== confirmPinInput.value) {
+
+      // Confirm PIN
+      if (pinInput.value.trim() !== confirmPinInput.value.trim()) {
         errors.push("PINs do not match.");
       }
 
@@ -191,16 +197,16 @@
       submitButton.textContent = "Signing Up...";
 
       const formData = {
-        fullName: fullNameInput.value,
-        emailAddress: emailInput.value,
-        phoneNumber: phoneInput.value,
-        pin: pinInput.value,
+        fullName: fullNameInput.value.trim(),
+        emailAddress: emailInput.value.trim(),
+        phoneNumber: phoneInput.value.trim(),
+        pin: pinInput.value.trim(),
         timestamp: new Date().toISOString()
       };
 
       fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // 🔑 no-cors still hides response; success assumed
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
