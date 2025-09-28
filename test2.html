@@ -17,15 +17,14 @@
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<!-- Added Montserrat and Lato fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap" rel="stylesheet" />
 
 <style>
     /* --- General Body and Layout --- */
     body {
         font-family: 'Inter', sans-serif;
-        background-color: #ffffff; /* Page background color */
-        color: #1f2937; /* Default text color */
+        background-color: #ffffff;
+        color: #1f2937;
         margin: 0;
         padding: 0;
     }
@@ -33,7 +32,6 @@
     /* Custom font classes */
     .font-montserrat { font-family: 'Montserrat', sans-serif; }
     .font-lato { font-family: 'Lato', sans-serif; }
-
 
     /* --- Scrollbar Styling --- */
     .oauth-app-container #message-log::-webkit-scrollbar,
@@ -60,7 +58,7 @@
         }
         .calendar-section, .messaging-section {
             width: 100% !important;
-            height: auto !important; /* Height adjusts to content */
+            height: auto !important;
             padding: 8px !important;
         }
         .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
@@ -106,9 +104,11 @@
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
     @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
+
+    /* --- Access Denied Styling --- */
+    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
 </style>
 
-<!-- This script is called by Google's sign-in button after a successful login. -->
 <script>
     window.handleCredentialResponse = function(response) {
         console.log('GIS credential received', response);
@@ -138,14 +138,12 @@
         <!-- ===== Calendar Section ===== -->
         <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
             
-            <!-- MODIFIED Authentication Area (visible when signed out) -->
-            <div id="auth-area" class="flex flex-col items-center justify-center h-full p-4">
-                <!-- New Header Section -->
-                <img src="https://placehold.co/100x100/4CAF50/FFFFFF?text=M" alt="Mie Logo" class="rounded-full mb-4">
+            <!-- Authentication Area (visible when signed out) -->
+            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
 
-                <!-- Existing Google Sign-In Button -->
                 <div id="g_id_onload"
                      data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
                      data-context="signin"
@@ -154,19 +152,40 @@
                      data-auto_prompt="false"></div>
                 <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
 
-                <!-- New "Create Account" Link -->
                 <div class="mt-6 text-sm text-gray-500">
                     or <a href="signup.html" class="font-semibold text-green-600 hover:text-green-700 hover:underline">Create an account</a>
                 </div>
             </div>
 
-            <!-- Calendar Content (visible when signed in) -->
+            <!-- Access Verification Area (visible during access check) -->
+            <div id="access-check-area" class="hidden flex flex-col items-center justify-center h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
+            </div>
+
+            <!-- Access Denied Area (visible when access is denied) -->
+            <div id="access-denied-area" class="hidden flex flex-col items-center justify-center h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
+                <div class="access-denied text-center max-w-md">
+                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
+                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
+                    <div class="space-y-3">
+                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
+                        <br>
+                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">Try a Different Account</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Content (visible when signed in and approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
-                <!-- Sign Out Button Area -->
-                <div class="flex justify-end">
+                <div class="flex justify-between items-center">
+                    <span id="welcome-message" class="text-sm text-gray-600"></span>
                     <button id="signout_button" class="bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md">Sign Out</button>
                 </div>
-                <!-- The container where FullCalendar will be rendered -->
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
         </div>
@@ -175,26 +194,21 @@
         <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
             <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
             
-            <!-- Log of sent messages -->
             <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
                 <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
             </div>
             
-            <!-- Text input for the message -->
             <textarea id="message-input" placeholder="Type your message..." class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"></textarea>
             
-            <!-- Attachment Controls -->
             <div class="flex items-center space-x-2 mt-2">
                 <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text">Attachment</label>
                 <input id="file-input" type="file" class="hidden" accept="image/*">
-                <!-- This area shows a preview of the attached image. -->
                 <div id="file-preview" class="hidden flex items-center space-x-2">
                     <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview">
                     <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
                 </div>
             </div>
 
-            <!-- Send Button -->
             <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn" disabled>Send</button>
         </div>
     </div>
@@ -218,22 +232,28 @@
     </div>
 </div>
 
-
-<!-- ===== Main JavaScript Logic ===== -->
 <script>
-// Using an IIFE (Immediately Invoked Function Expression) to keep variables out of the global scope.
 (async function(){
+    // Configuration - Update this with your Google Apps Script URL for access checking
+    const ACCESS_CHECK_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
     const RECIPIENT_EMAIL = "save@mie.today";
+    
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let gapi_loaded = false;
-    const calendarCache = {};
+    let userHasAccess = false;
+    
+    // DOM elements
     const authArea = document.getElementById('auth-area');
+    const accessCheckArea = document.getElementById('access-check-area');
+    const accessDeniedArea = document.getElementById('access-denied-area');
     const calendarContent = document.getElementById('calendar-content');
     const calendarContainer = document.getElementById('calendar-container');
     const messagingSection = document.getElementById('messaging-section');
+    const welcomeMessage = document.getElementById('welcome-message');
     const signoutButton = document.getElementById('signout_button');
+    const tryDifferentAccountBtn = document.getElementById('try-different-account');
     const sendButton = document.getElementById('send-button');
     const messageLog = document.getElementById('message-log');
     const messageInput = document.getElementById('message-input');
@@ -248,13 +268,18 @@
     const eventDescription = document.getElementById('event-description');
     const eventLocation = document.getElementById('event-location');
     const eventLink = document.getElementById('event-link');
+
+    // Event listeners
     signoutButton.addEventListener('click', handleSignOut);
+    tryDifferentAccountBtn.addEventListener('click', handleSignOut);
     sendButton.addEventListener('click', sendEmail);
     messageInput.addEventListener('input', updateSendButton);
     fileInput.addEventListener('change', handleFileSelect);
     removeFileButton.addEventListener('click', removeFile);
     closeModal.addEventListener('click', () => eventModal.classList.add('hidden'));
     eventModal.addEventListener('click', (e) => { if(e.target === eventModal) eventModal.classList.add('hidden'); });
+
+    // Initialize GAPI
     gapi.load('client', () => {
         gapi.client.init({
             discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"]
@@ -263,28 +288,85 @@
             console.log("GAPI client ready");
         });
     });
+
+    // Listen for successful authentication
     document.addEventListener('gis-token-received', async () => {
         await handleAuthSuccess();
     });
-    function updateUIForSignIn(){ authArea.classList.add('hidden'); calendarContent.classList.remove('hidden'); messagingSection.classList.remove('hidden'); }
-    function updateUIForSignOut(){ authArea.classList.remove('hidden'); calendarContent.classList.add('hidden'); messagingSection.classList.add('hidden'); }
+
+    // UI state management
+    function showAuthArea() {
+        authArea.classList.remove('hidden');
+        accessCheckArea.classList.add('hidden');
+        accessDeniedArea.classList.add('hidden');
+        calendarContent.classList.add('hidden');
+        messagingSection.classList.add('hidden');
+    }
+
+    function showAccessCheck() {
+        authArea.classList.add('hidden');
+        accessCheckArea.classList.remove('hidden');
+        accessDeniedArea.classList.add('hidden');
+        calendarContent.classList.add('hidden');
+        messagingSection.classList.add('hidden');
+    }
+
+    function showAccessDenied() {
+        authArea.classList.add('hidden');
+        accessCheckArea.classList.add('hidden');
+        accessDeniedArea.classList.remove('hidden');
+        calendarContent.classList.add('hidden');
+        messagingSection.classList.add('hidden');
+    }
+
+    function showDashboard() {
+        authArea.classList.add('hidden');
+        accessCheckArea.classList.add('hidden');
+        accessDeniedArea.classList.add('hidden');
+        calendarContent.classList.remove('hidden');
+        messagingSection.classList.remove('hidden');
+    }
+
+    // Handle successful Google authentication
     async function handleAuthSuccess(){
-        updateUIForSignIn();
+        showAccessCheck();
+        
+        // Wait for GAPI to be ready
         let attempts = 0;
         while (!gapi_loaded && attempts < 50) {
             await new Promise(r => setTimeout(r, 100));
             attempts++;
         }
-        if (!gapi_loaded) { logMessage("Error: GAPI not loaded", "error"); return; }
+        if (!gapi_loaded) { 
+            console.error("GAPI not loaded");
+            showAccessDenied();
+            return; 
+        }
         
         try {
-            await getUserEmail();
-            displayMonthlyCalendar();
+            // Get user email
+            userEmail = await getUserEmail();
+            console.log("User email:", userEmail);
+            
+            // Check if user has access
+            const hasAccess = await checkUserAccess(userEmail);
+            
+            if (hasAccess) {
+                userHasAccess = true;
+                welcomeMessage.textContent = `Welcome, ${userEmail}`;
+                showDashboard();
+                displayMonthlyCalendar();
+            } else {
+                userHasAccess = false;
+                showAccessDenied();
+            }
         } catch(e) {
-            logMessage("Auth success but some features may not work", "error");
-            displayMonthlyCalendar();
+            console.error("Error during auth process:", e);
+            showAccessDenied();
         }
     }
+
+    // Get user's Gmail address
     async function getUserEmail() {
         try {
             const token = gapi.client.getToken();
@@ -294,30 +376,57 @@
             if (resp.ok) {
                 const data = await resp.json();
                 if (data.email) {
-                    userEmail = data.email;
-                    logMessage(`Signed in as: ${userEmail}`, "success");
-                    return userEmail;
+                    return data.email;
                 }
             }
             const gmailResp = await gapi.client.gmail.users.getProfile({'userId':'me'});
-            userEmail = gmailResp.result.emailAddress;
-            logMessage(`Signed in as: ${userEmail}`, "success");
-            return userEmail;
+            return gmailResp.result.emailAddress;
         } catch (e) {
-            console.error(e);
+            console.error("Error getting user email:", e);
             throw e;
         }
     }
+
+    // Check if user has access by querying the spreadsheet
+    async function checkUserAccess(email) {
+        try {
+            console.log("Checking access for:", email);
+            
+            const response = await fetch(`${ACCESS_CHECK_URL}?action=checkAccess&email=${encodeURIComponent(email)}`, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            if (!response.ok) {
+                console.error("Access check request failed:", response.status);
+                return false;
+            }
+            
+            const data = await response.json();
+            console.log("Access check response:", data);
+            
+            return data.hasAccess === true;
+        } catch (error) {
+            console.error("Error checking user access:", error);
+            return false;
+        }
+    }
+
+    // Handle sign out
     function handleSignOut(){
         const token = gapi.client.getToken();
         if (token) {
             google.accounts.oauth2.revoke(token.access_token, () => {
                 gapi.client.setToken(null);
-                updateUIForSignOut();
+                showAuthArea();
             });
         }
-        updateUIForSignOut();
+        userEmail = null;
+        userHasAccess = false;
+        showAuthArea();
     }
+
+    // File handling
     function handleFileSelect(e){
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
@@ -338,18 +447,23 @@
         fileInput.value = '';
         updateSendButton();
     }
+
     function updateSendButton() {
         const canSend = messageInput.value.trim() !== '' || selectedFile !== null;
         sendButton.disabled = !canSend;
     }
+
+    // Email sending functionality
     async function sendEmail() {
-        if (!userEmail) {
-            logMessage("Error: Could not determine your email address.", "error");
+        if (!userEmail || !userHasAccess) {
+            logMessage("Error: Access denied or not signed in.", "error");
             return;
         }
         if (!messageInput.value.trim() && !selectedFile) return;
+        
         logMessage(`Sending email...`, "info");
         sendButton.disabled = true;
+        
         const boundary = '----boundary_' + Date.now();
         const headers = [
             `To: ${RECIPIENT_EMAIL}`,
@@ -368,6 +482,7 @@
             emailContent += `--${boundary}\r\nContent-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\nContent-Disposition: attachment; filename="${selectedFile.name}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${fileData.split(',')[1]}\r\n\r\n`;
         }
         emailContent += `--${boundary}--`;
+        
         const base64Encoded = btoa(unescape(encodeURIComponent(emailContent))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         
         try {
@@ -381,6 +496,7 @@
             updateSendButton();
         }
     }
+
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -389,6 +505,7 @@
             reader.onerror = err => reject(err);
         });
     }
+
     function logMessage(msg, type) {
         const div = document.createElement('div');
         div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -398,7 +515,11 @@
         messageLog.appendChild(div);
         messageLog.scrollTop = messageLog.scrollHeight;
     }
+
+    // Calendar functionality
     function displayMonthlyCalendar() {
+        if (!userHasAccess) return;
+        
         if (calendar) calendar.destroy();
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: 'dayGridMonth',
@@ -439,6 +560,7 @@
         });
         calendar.render();
     }
+
     function showEventDetails(event) {
         eventTitle.textContent = event.title;
         const start = new Date(event.start);
@@ -461,4 +583,3 @@
 </script>
 </body>
 </html>
-
