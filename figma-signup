@@ -1,0 +1,204 @@
+import { useState } from 'react';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
+
+export default function App() {
+  const [showPin, setShowPin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    emailAddress: '',
+    phoneNumber: '',
+    pin: '',
+    confirmPin: ''
+  });
+
+  const [message, setMessage] = useState<{ type: 'error' | 'success' | 'warning'; text: string } | null>(null);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    if (!/^[A-Za-z]+ [A-Za-z]+$/.test(formData.fullName.trim())) {
+      errors.push("Full Name must include FIRST and LAST name (letters only).");
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(formData.emailAddress.trim())) {
+      errors.push("A valid @gmail.com address is required.");
+    }
+    if (!/^1\d{10}$/.test(formData.phoneNumber.trim())) {
+      errors.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
+    }
+    if (!/^\d{4}$/.test(formData.pin.trim())) {
+      errors.push("PIN must be exactly 4 digits.");
+    }
+    if (formData.pin.trim() !== formData.confirmPin.trim()) {
+      errors.push("PINs do not match.");
+    }
+
+    return errors;
+  };
+
+  const handleSignUp = () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setMessage({ type: 'error', text: errors.join(' ') });
+      return;
+    }
+
+    // TODO: Replace with API call (Google Script URL)
+    console.log('Form submitted:', formData);
+    setMessage({ type: 'success', text: '✅ Signup successful! Welcome to Mie.' });
+  };
+
+  const handleSignInClick = () => {
+    console.log('Navigate to sign in');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <img
+            src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true"
+            alt="Mie Logo"
+            className="w-16 h-16 mx-auto mb-3 rounded-full"
+          />
+          <h1 className="text-3xl font-bold text-blue-900 mb-1">Hey, it's Mie.</h1>
+          <p className="text-blue-600">Welcome</p>
+        </div>
+
+        {/* Form */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+          {/* Full Name */}
+          <div className="space-y-2">
+            <Label htmlFor="fullName" className="text-blue-800">
+              Full Name
+            </Label>
+            <Input
+              id="fullName"
+              type="text"
+              placeholder="Full Name (e.g., John Doe)"
+              value={formData.fullName}
+              onChange={(e) => handleInputChange('fullName', e.target.value)}
+            />
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-blue-800">
+              Gmail Address
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="Gmail Account (e.g., johndoe@gmail.com)"
+              value={formData.emailAddress}
+              onChange={(e) => handleInputChange('emailAddress', e.target.value)}
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-blue-800">
+              Phone Number
+            </Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Cell Phone Number (e.g., 16509009000)"
+              value={formData.phoneNumber}
+              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+            />
+          </div>
+
+          {/* PIN */}
+          <div className="space-y-2">
+            <Label htmlFor="pin" className="text-blue-800">
+              4-Digit PIN
+            </Label>
+            <div className="relative">
+              <Input
+                id="pin"
+                type={showPin ? 'text' : 'password'}
+                placeholder="4-Digit PIN (e.g., 1234)"
+                value={formData.pin}
+                onChange={(e) => handleInputChange('pin', e.target.value)}
+                className="pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400"
+              >
+                {showPin ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm PIN */}
+          <div className="space-y-2">
+            <Label htmlFor="confirmPin" className="text-blue-800">
+              Confirm PIN
+            </Label>
+            <div className="relative">
+              <Input
+                id="confirmPin"
+                type={showConfirmPin ? 'text' : 'password'}
+                placeholder="Confirm PIN"
+                value={formData.confirmPin}
+                onChange={(e) => handleInputChange('confirmPin', e.target.value)}
+                className="pr-12"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPin(!showConfirmPin)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-400"
+              >
+                {showConfirmPin ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Validation Message */}
+          {message && (
+            <div
+              className={`p-3 rounded-md text-sm ${
+                message.type === 'error'
+                  ? 'bg-red-100 text-red-700 border border-red-400'
+                  : message.type === 'success'
+                  ? 'bg-green-100 text-green-700 border border-green-400'
+                  : 'bg-yellow-100 text-yellow-700 border border-yellow-400'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          {/* Sign Up Button */}
+          <Button onClick={handleSignUp} className="w-full">
+            Sign Up
+          </Button>
+
+          {/* Sign In Link */}
+          <div className="text-center pt-2">
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <button
+                onClick={handleSignInClick}
+                className="text-blue-600 hover:underline font-medium"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
