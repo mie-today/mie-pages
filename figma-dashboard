@@ -1,0 +1,115 @@
+import { useState, useEffect } from 'react';
+import { AuthenticationState } from './components/AuthenticationState';
+import { AccessCheckState } from './components/AccessCheckState';
+import { AccessDeniedState } from './components/AccessDeniedState';
+import { DashboardState } from './components/DashboardState';
+
+type AppState = 'authentication' | 'accessCheck' | 'accessDenied' | 'dashboard';
+
+export default function App() {
+  const [currentState, setCurrentState] = useState<AppState>('authentication');
+  const [userEmail, setUserEmail] = useState<string>('');
+
+  // Simulate authentication flow
+  const simulateAccessCheck = async () => {
+    setCurrentState('accessCheck');
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // For demo purposes, randomly grant or deny access
+    const hasAccess = Math.random() > 0.3; // 70% chance of access
+    
+    if (hasAccess) {
+      setCurrentState('dashboard');
+    } else {
+      setCurrentState('accessDenied');
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    // Simulate Google sign-in
+    setUserEmail('user@gmail.com');
+    simulateAccessCheck();
+  };
+
+  const handleCreateAccount = () => {
+    // Navigate to account creation (could be signup form)
+    console.log('Navigate to create account');
+  };
+
+  const handleSignUpForAccess = () => {
+    // Navigate to access request form
+    console.log('Navigate to sign up for access');
+  };
+
+  const handleTryDifferentAccount = () => {
+    // Reset to authentication state
+    setCurrentState('authentication');
+    setUserEmail('');
+  };
+
+  const handleSignOut = () => {
+    setCurrentState('authentication');
+    setUserEmail('');
+  };
+
+  // Add font imports to document head
+  useEffect(() => {
+    // Add Google Fonts
+    const link1 = document.createElement('link');
+    link1.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap';
+    link1.rel = 'stylesheet';
+    document.head.appendChild(link1);
+
+    const link2 = document.createElement('link');
+    link2.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap';
+    link2.rel = 'stylesheet';
+    document.head.appendChild(link2);
+
+    return () => {
+      document.head.removeChild(link1);
+      document.head.removeChild(link2);
+    };
+  }, []);
+
+  const renderCurrentState = () => {
+    switch (currentState) {
+      case 'authentication':
+        return (
+          <AuthenticationState
+            onGoogleSignIn={handleGoogleSignIn}
+            onCreateAccount={handleCreateAccount}
+          />
+        );
+      
+      case 'accessCheck':
+        return <AccessCheckState />;
+      
+      case 'accessDenied':
+        return (
+          <AccessDeniedState
+            onSignUpForAccess={handleSignUpForAccess}
+            onTryDifferentAccount={handleTryDifferentAccount}
+          />
+        );
+      
+      case 'dashboard':
+        return (
+          <DashboardState
+            userEmail={userEmail}
+            onSignOut={handleSignOut}
+          />
+        );
+      
+      default:
+        return <AuthenticationState onGoogleSignIn={handleGoogleSignIn} onCreateAccount={handleCreateAccount} />;
+    }
+  };
+
+  return (
+    <div className="w-full max-w-sm mx-auto bg-white min-h-screen">
+      {renderCurrentState()}
+    </div>
+  );
+}
