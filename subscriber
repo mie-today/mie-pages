@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribe to Mie</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:wght@700&display=swap');
+
+        body {
+            font-family: 'Lato', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+
+        .subscribe-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .subscribe-container h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .subscribe-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .subscribe-form input[type="email"] {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .subscribe-form button {
+            padding: 12px 20px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .subscribe-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .subscribe-form button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 14px;
+            height: 20px;
+        }
+        
+        .success {
+            color: green;
+        }
+        
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="subscribe-container">
+        <h2>Subscribe and get updates</h2>
+        <form class="subscribe-form" id="subscribeForm">
+            <input type="email" name="email" placeholder="Enter your email address" required>
+            <button type="submit">Subscribe</button>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        const form = document.getElementById('subscribeForm');
+        const messageEl = document.getElementById('message');
+        const submitButton = form.querySelector('button');
+        // IMPORTANT: Paste your Web App URL here
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzkyJ2AcVOrsnXjla2zav_iOEuWb5xPQqbusYE-aq7XQZ_dGYdxvLe3OzJ925UK_SA/exec
+';
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            messageEl.textContent = 'Submitting...';
+            messageEl.className = '';
+            submitButton.disabled = true;
+
+            fetch(scriptURL, {
+                    method: 'POST',
+                    body: new FormData(form)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.result === 'success') {
+                        messageEl.textContent = 'Thank you for subscribing!';
+                        messageEl.className = 'success';
+                        form.reset();
+                    } else {
+                        // Handle specific error for duplicates
+                        if (data.message && data.message.includes('already subscribed')) {
+                           messageEl.textContent = 'This email is already subscribed!';
+                        } else {
+                           messageEl.textContent = 'An error occurred. Please try again.';
+                        }
+                        messageEl.className = 'error';
+                        console.error('Error:', data.message);
+                    }
+                })
+                .catch(error => {
+                    messageEl.textContent = 'An error occurred. Please try again.';
+                    messageEl.className = 'error';
+                    console.error('Fetch Error:', error.message);
+                })
+                .finally(() => {
+                   submitButton.disabled = false;
+                });
+        });
+    </script>
+
+</body>
+</html>
