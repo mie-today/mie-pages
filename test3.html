@@ -1,318 +1,495 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mie - Sign Up</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f5f5f5; 
-      display: flex; 
-      justify-content: center; 
-      align-items: flex-start; 
-      min-height: calc(100vh - 30px); 
-      margin: 0; 
-      padding: 20px 10px; 
-      box-sizing: border-box;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google API -->
+<script src="https://apis.google.com/js/api.js"></script>
+<!-- Google Identity Services -->
+<script>
+window.handleCredentialResponse = function(response) {
+    console.log('GIS credential received', response);
+    if (!response.credential) { 
+        console.error('No credential returned.'); 
+        return; 
     }
 
-    .container { 
-      background: #fff; 
-      padding: 15px 20px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-      width: 100%; 
-      max-width: 400px; 
-      text-align: center; 
+    // Prevent multiple initializations
+    if (window.tokenClient) {
+        console.log('Token client already exists, requesting access...');
+        window.tokenClient.requestAccessToken({ prompt: "" });
+        return;
     }
 
-    .logo { 
-      width: 70px; 
-      height: 70px; 
-      border-radius: 50%; 
-      object-fit: cover; 
-      margin-bottom: 8px; 
+    window.tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
+        callback: async (tokenResponse) => {
+            if (tokenResponse && tokenResponse.access_token) {
+                console.log('Access token received, setting up GAPI...');
+                gapi.client.setToken(tokenResponse);
+                document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
+            } else { 
+                console.error('Failed to get access token.', tokenResponse); 
+            }
+        },
+    });
+    
+    console.log('Requesting access token...');
+    window.tokenClient.requestAccessToken({ prompt: "" });
+};
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #ffffff;
+        color: #1f2937;
+        margin: 0;
+        padding: 0;
     }
 
-    .welcome { 
-      font-family: 'Montserrat', sans-serif; 
-      font-size: 20px; 
-      font-weight: 600; 
-      margin-bottom: 20px; 
-      color: #222; 
+    /* Scrollbars - light mode */
+    .oauth-app-container #message-log::-webkit-scrollbar,
+    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-track,
+    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+
+    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .oauth-app-container { max-width: 100%; margin: 0 auto; }
+    
+    /* Fix auth area height globally - prevent double login on all devices */
+    #auth-area {
+        height: auto !important;
+        min-height: 200px;
+        padding: 40px 20px;
     }
 
-    h2 { 
-      margin-top: 0; 
-      margin-bottom: 12px; 
-      color: #555; 
-      font-size: 16px; 
-      font-weight: normal; 
-    }
-
-    input { 
-      width: 100%; 
-      padding: 12px; 
-      margin: 4px 0; 
-      border: 1px solid #ccc; 
-      border-radius: 8px; 
-      box-sizing: border-box; 
-      font-size: 16px; 
-    }
-
-    button { 
-      width: 100%; 
-      padding: 12px; 
-      background: #4CAF50; 
-      color: #fff; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      margin-top: 8px; 
-      font-size: 16px; 
-      transition: background-color 0.3s; 
-    }
-
-    button:hover:not(:disabled) { background: #45a049; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-
-    .message { 
-      font-size: 14px; 
-      margin-top: 10px; 
-      margin-bottom: 10px; 
-      display: none; 
-      padding: 10px; 
-      border-radius: 8px; 
-      text-align: left; 
-    }
-
-    .error { 
-      color: #D8000C; 
-      background-color: #FFD2D2; 
-      border: 1px solid #D8000C; 
-    }
-
-    .success { 
-      color: #4F8A10; 
-      background-color: #DFF2BF; 
-      border: 1px solid #4F8A10; 
-    }
-
-    .warning { 
-      color: #9F6000; 
-      background-color: #FEEFB3; 
-      border: 1px solid #9F6000; 
-    }
-
-    .link { 
-      margin-top: 12px; 
-      font-size: 14px; 
-    }
-
-    .link a { 
-      color: #4CAF50; 
-      text-decoration: none; 
-      font-weight: bold; 
-    }
-
+    /* MOBILE - FIXED SCROLLING ISSUES */
     @media (max-width: 480px) {
-      body { padding: 10px 10px; }
+        /* Body and html - prevent any viewport issues */
+        html, body {
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto; /* Allow page scroll only */
+        }
+        
+        /* Container - use full viewport height naturally */
+        .oauth-app-container { 
+            width: 100% !important;
+            min-height: 100vh !important;
+            display: block !important; /* Changed from flex to block */
+            overflow: visible !important;
+            margin: 0 !important; 
+            padding: 4px !important;
+        }
+
+        /* Mobile wrapper - simple vertical stack */
+        .mobile-container { 
+            display: block !important; /* Changed from flex to block */
+            width: 100% !important;
+            overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Calendar & messaging sections - natural height expansion */
+        .calendar-section { 
+            width: 100% !important; 
+            height: auto !important; /* Let content determine height */
+            overflow: visible !important;
+            margin-bottom: 8px !important;
+            padding: 8px !important;
+            display: block !important;
+        }
+        
+        .messaging-section { 
+            width: 100% !important; 
+            height: auto !important; /* Let content determine height */
+            overflow: visible !important;
+            padding: 8px !important;
+            display: block !important;
+        }
+
+        /* Remove all flex constraints that cause scrolling */
+        #calendar-content {
+            display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        #calendar-container { 
+            height: auto !important;
+            overflow: visible !important;
+            min-height: auto !important;
+        }
+        
+        #message-log { 
+            height: auto !important;
+            max-height: 120px !important; /* Set reasonable max height */
+            overflow-y: auto !important; /* Allow scroll only in message log */
+            padding: 8px !important;
+            margin-bottom: 8px !important;
+        }
+
+        /* Font and element sizing - 17pt annotations */
+        .mobile-heading-17pt { 
+            font-size: 22.67px !important; /* 17pt exactly */
+            line-height: 1.2 !important; 
+        }
+        .mobile-text-14pt { 
+            font-size: 18.67px !important; /* 14pt */
+            line-height: 1.2 !important; 
+        }
+        .mobile-text-12pt { 
+            font-size: 16px !important; /* 12pt */
+            line-height: 1.1 !important; 
+        }
+        .mobile-textarea { 
+            height: 60px !important; 
+            padding: 8px !important; 
+            width: 100% !important;
+            margin-bottom: 8px !important;
+        }
+        .mobile-small-btn { 
+            padding: 4px 8px !important; 
+            font-size: 12px !important; 
+        }
+        .mobile-text-14pt-btn { 
+            font-size: 18.67px !important; 
+            padding: 8px 16px !important;
+        }
+
+        /* FullCalendar - force natural height and remove internal scrolling */
+        .fc {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        .fc .fc-view-harness {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        .fc .fc-scroller {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        .fc .fc-daygrid-body {
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* FullCalendar text sizing for mobile */
+        .fc .fc-toolbar-title { font-size: 20px !important; } /* Slightly smaller for mobile */
+        .fc .fc-button-primary { font-size: 14px !important; padding: 6px 10px !important; }
+        .fc .fc-col-header-cell { font-size: 13px !important; }
+        .fc .fc-daygrid-day-number { font-size: 13px !important; }
+        .fc .fc-event { font-size: 11px !important; }
     }
-  </style>
+
+    /* Tablet - keep original dimensions */
+    @media (min-width: 481px) and (max-width: 768px) {
+        .oauth-app-container { width: 481px; }
+        .calendar-section { width: 481px; height: 632px; }
+        .messaging-section { width: 481px; height: 316px; }
+    }
+
+    /* Desktop - keep original */
+    @media (min-width: 769px) {
+        .oauth-app-container { width: 800px; }
+        .calendar-section { width: 800px; height: 860px; }
+        .messaging-section { width: 800px; height: 360px; }
+    }
+
+    /* FullCalendar light mode - all devices */
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+    .fc-daygrid-day.fc-day-today { background-color: rgba(59, 130, 246, 0.1) !important; }
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
+    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
+
+    /* Event modal - light mode */
+    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
+    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
+</style>
 </head>
 <body>
-  <div class="container">
-    <a href="dashboard.html" class="logo-link">
-      <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="logo">
-    </a>
-    <h1 class="welcome">Hey, it's Mie.</h1>
-    <h2>Welcome</h2>
-    
-    <form id="signupForm">
-      <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required>
-      <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required>
-      <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required>
-      <input type="password" id="pin" placeholder="4-Digit PIN (e.g., 1234)" required>
-      <input type="password" id="confirmPin" placeholder="Confirm PIN" required>
-      
-      <div class="message error" id="errorMsg"></div>
-      <div class="message success" id="successMsg"></div>
-      <div class="message warning" id="warningMsg"></div>
-      
-      <button type="submit" id="submitButton">Sign Up</button>
-    </form>
-    
-    <div class="link">
-      Already have an account? <a href="dashboard.html">Sign In</a>
+
+<div class="oauth-app-container">
+    <div class="mobile-container">
+
+        <!-- Calendar Section -->
+        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg">
+            <div id="auth-area" class="flex flex-col items-center justify-center space-y-4 py-8">
+                <h2 class="mobile-heading-17pt font-semibold text-center text-gray-800">Sign in to view your Google Calendar</h2>
+                <div id="g_id_onload"
+                     data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false"></div>
+                <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
+            </div>
+            <div id="calendar-content" class="hidden">
+                <div class="flex justify-end mb-2">
+                    <button id="signout_button" class="bg-red-600 hover:bg-red-700 text-white mobile-small-btn rounded-md">Sign Out</button>
+                </div>
+                <div id="calendar-container"></div>
+            </div>
+        </div>
+
+        <!-- Messaging Section -->
+        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg hidden">
+            <h2 class="mobile-heading-17pt font-semibold mb-3 text-gray-800">Send a Message</h2>
+            <div id="message-log" class="bg-gray-50 rounded-lg mobile-message-log">
+                <div class="mobile-text-12pt text-gray-500">Your sent messages will appear here...</div>
+            </div>
+            <textarea id="message-input" placeholder="Type your message..." class="mobile-textarea rounded-2xl border border-gray-300 bg-white text-gray-900 resize-none"></textarea>
+            <div class="flex items-center space-x-2 mb-3">
+                <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-full mobile-text-12pt">Add Image</label>
+                <input id="file-input" type="file" class="hidden" accept="image/*">
+                <div id="file-preview" class="hidden flex items-center space-x-2">
+                    <img id="preview-image" class="w-16 h-16 object-cover rounded border" alt="Preview">
+                    <button id="remove-file" class="text-red-500 mobile-text-12pt">Remove</button>
+                </div>
+            </div>
+            <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow disabled:bg-blue-300 w-full mobile-text-14pt-btn" disabled>Send</button>
+        </div>
+
     </div>
-  </div>
+</div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz6TgtlBRZ2FdQ2iKI3Tqv1k73mXsWbVb6bfBI6irEmSLGBGhVpKnVA1FuiORLN2Z2V/exec";
+<!-- Event modal -->
+<div id="event-modal" class="event-modal hidden">
+    <div class="event-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <h3 id="event-title" class="mobile-heading-17pt font-semibold"></h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 mobile-heading-17pt">&times;</button>
+        </div>
+        <div id="event-details" class="space-y-2">
+            <p id="event-time" class="text-gray-600 mobile-text-14pt"></p>
+            <p id="event-description" class="text-gray-700 mobile-text-14pt"></p>
+            <p id="event-location" class="text-gray-600 mobile-text-14pt"></p>
+        </div>
+        <div class="mt-4 flex justify-end">
+            <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-14pt-btn">Open in Google Calendar</a>
+        </div>
+    </div>
+</div>
 
-    const form = document.getElementById("signupForm");
-    const fullNameInput = document.getElementById("fullName");
-    const emailInput = document.getElementById("emailAddress");
-    const phoneInput = document.getElementById("phoneNumber");
-    const pinInput = document.getElementById("pin");
-    const confirmPinInput = document.getElementById("confirmPin");
-    const errorMsg = document.getElementById("errorMsg");
-    const successMsg = document.getElementById("successMsg");
-    const warningMsg = document.getElementById("warningMsg");
-    const submitButton = document.getElementById("submitButton");
+<script>
+(async function(){
+    const CLIENT_ID="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
+    const API_SCOPES='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email';
+    const RECIPIENT_EMAIL="save@mie.today";
 
-    // Hide all messages
-    function hideAllMessages() {
-      errorMsg.style.display = "none";
-      successMsg.style.display = "none";
-      warningMsg.style.display = "none";
+    let calendar=null;
+    let selectedFile=null;
+    let userEmail=null;
+    let gapi_loaded=false;
+    let isAuthenticated=false; // Track authentication state
+    const calendarCache={};
+
+    // DOM
+    const authArea=document.getElementById('auth-area');
+    const calendarContent=document.getElementById('calendar-content');
+    const calendarContainer=document.getElementById('calendar-container');
+    const messagingSection=document.getElementById('messaging-section');
+    const signoutButton=document.getElementById('signout_button');
+    const sendButton=document.getElementById('send-button');
+    const messageLog=document.getElementById('message-log');
+    const messageInput=document.getElementById('message-input');
+    const fileInput=document.getElementById('file-input');
+    const filePreview=document.getElementById('file-preview');
+    const previewImage=document.getElementById('preview-image');
+    const removeFileButton=document.getElementById('remove-file');
+    const eventModal=document.getElementById('event-modal');
+    const closeModal=document.getElementById('close-modal');
+    const eventTitle=document.getElementById('event-title');
+    const eventTime=document.getElementById('event-time');
+    const eventDescription=document.getElementById('event-description');
+    const eventLocation=document.getElementById('event-location');
+    const eventLink=document.getElementById('event-link');
+
+    // Listeners
+    signoutButton.addEventListener('click',handleSignOut);
+    sendButton.addEventListener('click',sendEmail);
+    messageInput.addEventListener('input',updateSendButton);
+    fileInput.addEventListener('change',handleFileSelect);
+    removeFileButton.addEventListener('click',removeFile);
+    closeModal.addEventListener('click',()=>eventModal.classList.add('hidden'));
+    eventModal.addEventListener('click',(e)=>{ if(e.target===eventModal) eventModal.classList.add('hidden'); });
+
+    // GAPI init
+    gapi.load('client',()=>{ gapi.client.init({ discoveryDocs:["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest","https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"] }).then(()=>{ gapi_loaded=true; console.log("GAPI client ready"); }); });
+
+    document.addEventListener('gis-token-received',async ()=>{ await handleAuthSuccess(); });
+
+    // Initialize UI to clean sign-out state on page load
+    function initializeUI() {
+        updateUIForSignOut();
+        console.log('UI initialized to sign-out state');
     }
+    
+    // Call initialization when page loads
+    initializeUI();
 
-    // Show error message
-    function showError(message) {
-      hideAllMessages();
-      errorMsg.innerHTML = message;
-      errorMsg.style.display = "block";
-    }
-
-    // Show success message
-    function showSuccess(message) {
-      hideAllMessages();
-      successMsg.innerHTML = message;
-      successMsg.style.display = "block";
-    }
-
-    // Show warning message
-    function showWarning(message) {
-      hideAllMessages();
-      warningMsg.innerHTML = message;
-      warningMsg.style.display = "block";
-    }
-
-    form.addEventListener("submit", function(e) {
-      e.preventDefault();
-      console.log("Form submission started");
-
-      const errors = [];
-      hideAllMessages();
-
-      // Full Name: first + last (letters only, space between)
-      if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) {
-        errors.push("Full Name must include FIRST and LAST name (letters only).");
-      }
-
-      // Email: must be @gmail.com
-      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) {
-        errors.push("A valid @gmail.com address is required.");
-      }
-
-      // Phone: must start with 1 and be 11 digits total
-      if (!/^1\d{10}$/.test(phoneInput.value.trim())) {
-        errors.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
-      }
-
-      // PIN: exactly 4 digits
-      if (!/^\d{4}$/.test(pinInput.value.trim())) {
-        errors.push("PIN must be exactly 4 digits.");
-      }
-
-      // Confirm PIN
-      if (pinInput.value.trim() !== confirmPinInput.value.trim()) {
-        errors.push("PINs do not match.");
-      }
-
-      if (errors.length > 0) {
-        showError(errors.join('<br>'));
-        return;
-      }
-      
-      submitButton.disabled = true;
-      submitButton.textContent = "Signing Up...";
-
-      const formData = {
-        fullName: fullNameInput.value.trim(),
-        emailAddress: emailInput.value.trim(),
-        phoneNumber: phoneInput.value.trim(),
-        pin: pinInput.value.trim(),
-        timestamp: new Date().toISOString()
-      };
-
-      console.log("Sending data:", formData);
-
-      // ATTEMPT 1: Try to get proper response (works if CORS is properly configured)
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(formData)
-      })
-      .then(response => {
-        console.log("Response status:", response.status);
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
-      })
-      .then(data => {
-        console.log("Response data:", data);
-        handleResponse(data);
-      })
-      .catch(error => {
-        console.log("First attempt failed, trying with no-cors mode:", error);
+    function updateUIForSignIn(){ 
+        // Hide auth area completely
+        authArea.classList.add('hidden'); 
+        authArea.style.display = 'none';
         
-        // ATTEMPT 2: Fallback to no-cors mode
-        return fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-      })
-      .then(response => {
-        if (response && response.type === 'opaque') {
-          console.log("Request sent with no-cors mode - cannot read response");
-          // Show generic message since we can't read the response
-          showWarning("Sign up submitted! If you entered the correct PIN, you should receive a welcome email shortly. If not, your application is pending approval.");
-          form.reset();
-        }
-      })
-      .catch(error => {
-        console.error('Final error:', error);
-        showError("An error occurred. Please try again or contact support.");
-      })
-      .finally(() => {
-        submitButton.disabled = false;
-        submitButton.textContent = "Sign Up";
-      });
-    });
-
-    // Handle response from the script
-    function handleResponse(data) {
-      console.log("Handling response:", data);
-      
-      if (data.status === "success") {
-        if (data.approved) {
-          // User was approved
-          if (data.emailSent) {
-            showSuccess("✅ Welcome to Mie! Your account is approved and a welcome email has been sent to your inbox.");
-          } else {
-            showSuccess("✅ Your account is approved! However, there was an issue sending the welcome email. Please contact support.");
-          }
-        } else {
-          // User was not approved (wrong PIN)
-          showWarning("⚠️ Your application has been submitted but is pending approval. You'll receive a welcome email once approved.");
-        }
-        form.reset();
-      } else if (data.status === "error") {
-        showError("❌ " + data.message);
-      } else {
-        showError("❌ Unexpected response from server. Please try again.");
-      }
+        // Show calendar content and messaging
+        calendarContent.classList.remove('hidden'); 
+        calendarContent.style.display = 'block';
+        messagingSection.classList.remove('hidden'); 
+        messagingSection.style.display = 'block';
+        
+        console.log('UI updated for sign-in state');
     }
-  </script>
+    
+    function updateUIForSignOut(){ 
+        // Show only auth area
+        authArea.classList.remove('hidden'); 
+        authArea.style.display = 'flex';
+        
+        // Hide calendar content and messaging completely
+        calendarContent.classList.add('hidden'); 
+        calendarContent.style.display = 'none';
+        messagingSection.classList.add('hidden'); 
+        messagingSection.style.display = 'none';
+        
+        // Clear any existing calendar
+        if(calendar) {
+            calendar.destroy();
+            calendar = null;
+        }
+        
+        // Reset message log
+        messageLog.innerHTML = '<div class="mobile-text-12pt text-gray-500">Your sent messages will appear here...</div>';
+        messageInput.value = '';
+        
+        console.log('UI updated for sign-out state');
+    }
+
+    async function handleAuthSuccess(){
+        if(isAuthenticated) {
+            console.log('Already authenticated, skipping...');
+            return;
+        }
+        
+        console.log('Processing authentication...');
+        isAuthenticated = true;
+        updateUIForSignIn();
+        
+        let attempts=0;
+        while(!gapi_loaded && attempts<50){ await new Promise(r=>setTimeout(r,100)); attempts++; }
+        if(!gapi_loaded){ logMessage("Error: GAPI not loaded","error"); return; }
+        try{ await getUserEmail(); displayMonthlyCalendar(); } catch(e){ logMessage("Auth success but some features may not work","error"); displayMonthlyCalendar(); }
+    }
+
+    async function getUserEmail(){
+        try{
+            const token=gapi.client.getToken();
+            const resp=await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{ headers:{ 'Authorization':`Bearer ${token.access_token}` } });
+            if(resp.ok){ const data=await resp.json(); if(data.email){ userEmail=data.email; logMessage(`Signed in as: ${userEmail}`,"success"); return userEmail; } }
+            const gmailResp=await gapi.client.gmail.users.getProfile({'userId':'me'}); userEmail=gmailResp.result.emailAddress; logMessage(`Signed in as: ${userEmail}`,"success"); return userEmail;
+        }catch(e){ console.error(e); throw e; }
+    }
+
+    function handleFileSelect(e){ const file=e.target.files[0]; if(file&&file.type.startsWith('image/')){ selectedFile=file; const reader=new FileReader(); reader.onload=(e)=>{ previewImage.src=e.target.result; filePreview.classList.remove('hidden'); updateSendButton(); }; reader.readAsDataURL(file); } }
+    function removeFile(){ selectedFile=null; filePreview.classList.add('hidden'); fileInput.value=''; updateSendButton(); }
+    function updateSendButton(){ const canSend=messageInput.value.trim()!=='' || selectedFile!==null; sendButton.disabled=!canSend; sendButton.classList.toggle('disabled',!canSend); }
+
+    async function sendEmail(){
+        if(!userEmail){ logMessage("Retrieving email...","info"); await getUserEmail(); if(!userEmail){ logMessage("Cannot retrieve email","error"); return; } }
+        if(!messageInput.value.trim() && !selectedFile) return;
+        const boundary='----boundary_'+Date.now();
+        const headers=[`To: ${RECIPIENT_EMAIL}`,`From: ${userEmail}`,`Subject: Message from ${userEmail}`,`MIME-Version: 1.0`,`Content-Type: multipart/mixed; boundary="${boundary}"`];
+        let emailContent=headers.join('\r\n')+'\r\n\r\n';
+        if(messageInput.value.trim()){ emailContent+=`--${boundary}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 7bit\r\n\r\n${messageInput.value.trim()}\r\n\r\n`; }
+        if(selectedFile){ const fileData=await fileToBase64(selectedFile); emailContent+=`--${boundary}\r\nContent-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\nContent-Disposition: attachment; filename="${selectedFile.name}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${fileData.split(',')[1]}\r\n\r\n`; }
+        emailContent+=`--${boundary}--`;
+        const base64Encoded=btoa(unescape(encodeURIComponent(emailContent))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        logMessage(`Sending email from ${userEmail}...`,"info"); sendButton.disabled=true; sendButton.classList.add('disabled');
+        try{ await gapi.client.gmail.users.messages.send({'userId':'me','resource':{'raw':base64Encoded}}); logMessage("Email sent!","success"); messageInput.value=''; removeFile(); }catch(err){ logMessage(`Failed to send email: ${err.result?.error?.message || err.message || 'Unknown'}`,"error"); }finally{ updateSendButton(); }
+    }
+    function fileToBase64(file){ return new Promise((res,rej)=>{ const reader=new FileReader(); reader.readAsDataURL(file); reader.onload=()=>res(reader.result); reader.onerror=err=>rej(err); }); }
+
+    function logMessage(msg,type){ const div=document.createElement('div'); div.textContent=msg; div.className=`text-sm ${type==='error'?'text-red-500':type==='success'?'text-green-500':'text-gray-600'} mb-1`; messageLog.appendChild(div); messageLog.scrollTop=messageLog.scrollHeight; }
+
+    function displayMonthlyCalendar(){
+        if(calendar) calendar.destroy();
+        calendar=new FullCalendar.Calendar(calendarContainer,{
+            initialView:'dayGridMonth',
+            headerToolbar:{ left:'prev,next',center:'title',right:'today' },
+            fixedWeekCount:false,
+            showNonCurrentDates:false,
+            height: 'auto', // This is key - let calendar expand naturally
+            contentHeight: 'auto', // Also important for mobile
+            events:async (fetchInfo,successCallback,failureCallback)=>{
+                try{
+                    const calList=gapi.client.getToken()?calendarCache.list:null;
+                    if(!calList){ const res=await gapi.client.calendar.calendarList.list(); calendarCache.list=res.result.items; }
+                    const calendars=calendarCache.list;
+                    const eventPromises=calendars.map(cal=>gapi.client.calendar.events.list({calendarId:cal.id,timeMin:fetchInfo.start.toISOString(),timeMax:fetchInfo.end.toISOString(),showDeleted:false,singleEvents:true}).then(resp=>resp.result.items.map(e=>({...e,color:cal.backgroundColor}))));
+                    const allEvents=(await Promise.all(eventPromises)).flat().map(e=>({id:e.id,title:e.summary||'No Title',start:e.start.dateTime||e.start.date,end:e.end.dateTime||e.end.date,url:e.htmlLink,allDay:!e.start.dateTime,backgroundColor:e.color,borderColor:e.color,description:e.description||'',location:e.location||'',rawEvent:e}));
+                    successCallback(allEvents);
+                }catch(err){ console.error(err); failureCallback(err); }
+            },
+            eventClick:function(info){ info.jsEvent.preventDefault(); showEventDetails(info.event); }
+        });
+        calendar.render();
+    }
+
+    function showEventDetails(event){
+        eventTitle.textContent=event.title;
+        const start=new Date(event.start), end=new Date(event.end);
+        eventTime.textContent=event.allDay?`All day - ${start.toLocaleDateString()}`:`${start.toLocaleString()} - ${end.toLocaleString()}`;
+        eventDescription.textContent=event.extendedProps.description||'No description';
+        eventLocation.textContent=event.extendedProps.location||'No location';
+        eventLink.href=event.url;
+        eventModal.classList.remove('hidden');
+    }
+
+    function handleSignOut(){
+        console.log('Signing out...');
+        const token=gapi.client.getToken();
+        if(token) {
+            google.accounts.oauth2.revoke(token.access_token,()=>{ 
+                console.log('Token revoked');
+                gapi.client.setToken(null); 
+            });
+        }
+        
+        // Reset authentication state
+        isAuthenticated = false;
+        userEmail = null;
+        updateUIForSignOut();
+    }
+})();
+</script>
 </body>
 </html>
