@@ -516,7 +516,7 @@
         messageLog.scrollTop = messageLog.scrollHeight;
     }
 
-    // Calendar functionality - NOW SHOWS ALL CALENDARS
+    // Calendar functionality - MODIFIED TO SHOW ALL CALENDARS
     function displayMonthlyCalendar() {
         if (!userHasAccess) return;
         
@@ -529,13 +529,13 @@
             height: 'auto',
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
-                    // First, get all calendars (including shared ones)
+                    // Get all calendars (primary + shared)
                     const calendarListResponse = await gapi.client.calendar.calendarList.list();
                     const calendars = calendarListResponse.result.items;
                     
                     console.log(`Found ${calendars.length} calendars:`, calendars.map(c => c.summary));
                     
-                    // Fetch events from all calendars in parallel
+                    // Fetch events from all calendars
                     const eventPromises = calendars.map(async (cal) => {
                         try {
                             const res = await gapi.client.calendar.events.list({
@@ -546,11 +546,7 @@
                                 'singleEvents': true,
                                 'orderBy': 'startTime'
                             });
-                            
-                            const events = res.result.items || [];
-                            console.log(`Calendar "${cal.summary}": ${events.length} events`);
-                            
-                            return events.map(e => ({
+                            return (res.result.items || []).map(e => ({
                                 id: e.id,
                                 title: e.summary || 'No Title',
                                 start: e.start.dateTime || e.start.date,
@@ -563,7 +559,7 @@
                                 borderColor: cal.backgroundColor || '#3b82f6',
                             }));
                         } catch (err) {
-                            console.error(`Error fetching events from calendar "${cal.summary}":`, err);
+                            console.error(`Error fetching from ${cal.summary}:`, err);
                             return [];
                         }
                     });
@@ -571,7 +567,7 @@
                     const eventArrays = await Promise.all(eventPromises);
                     const allEvents = eventArrays.flat();
                     
-                    console.log(`Total events loaded: ${allEvents.length}`);
+                    console.log(`Total events: ${allEvents.length}`);
                     successCallback(allEvents);
                 } catch (err) {
                     console.error("Error fetching calendar events: ", err);
@@ -593,4 +589,6 @@
         
         let timeString = 'All-day';
         if (!event.allDay) {
-            timeString = start.toLocaleTimeString([], { hour: 'numeric', minute:
+            timeString = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            if (end) {
+                timeString += ` - ${end.toLocaleTime
