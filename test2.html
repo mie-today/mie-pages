@@ -516,71 +516,71 @@
         messageLog.scrollTop = messageLog.scrollHeight;
     }
 
-    // Calendar functionality - MODIFIED TO SHOW ALL CALENDARS
-    function displayMonthlyCalendar() {
-        if (!userHasAccess) return;
-        
-        if (calendar) calendar.destroy();
-        calendar = new FullCalendar.Calendar(calendarContainer, {
-            initialView: 'dayGridMonth',
-            headerToolbar: { left: 'today', center: 'title', right: 'prev,next' },
-            fixedWeekCount: false,
-            showNonCurrentDates: false,
-            height: 'auto',
-            events: async (fetchInfo, successCallback, failureCallback) => {
-                try {
-                    // Get all calendars (primary + shared)
-                    const calendarListResponse = await gapi.client.calendar.calendarList.list();
-                    const calendars = calendarListResponse.result.items;
-                    
-                    console.log(`Found ${calendars.length} calendars:`, calendars.map(c => c.summary));
-                    
-                    // Fetch events from all calendars
-                    const eventPromises = calendars.map(async (cal) => {
-                        try {
-                            const res = await gapi.client.calendar.events.list({
-                                'calendarId': cal.id,
-                                'timeMin': fetchInfo.start.toISOString(),
-                                'timeMax': fetchInfo.end.toISOString(),
-                                'showDeleted': false,
-                                'singleEvents': true,
-                                'orderBy': 'startTime'
-                            });
-                            return (res.result.items || []).map(e => ({
-                                id: e.id,
-                                title: e.summary || 'No Title',
-                                start: e.start.dateTime || e.start.date,
-                                end: e.end.dateTime || e.end.date,
-                                url: e.htmlLink,
-                                allDay: !e.start.dateTime,
-                                description: e.description || '',
-                                location: e.location || '',
-                                backgroundColor: cal.backgroundColor || '#3b82f6',
-                                borderColor: cal.backgroundColor || '#3b82f6',
-                            }));
-                        } catch (err) {
-                            console.error(`Error fetching from ${cal.summary}:`, err);
-                            return [];
-                        }
-                    });
-                    
-                    const eventArrays = await Promise.all(eventPromises);
-                    const allEvents = eventArrays.flat();
-                    
-                    console.log(`Total events: ${allEvents.length}`);
-                    successCallback(allEvents);
-                } catch (err) {
-                    console.error("Error fetching calendar events: ", err);
-                    failureCallback(err);
-                }
-            },
-            eventClick: function(info) {
-                info.jsEvent.preventDefault();
-                showEventDetails(info.event);
+// Calendar functionality
+function displayMonthlyCalendar() {
+    if (!userHasAccess) return;
+    
+    if (calendar) calendar.destroy();
+    calendar = new FullCalendar.Calendar(calendarContainer, {
+        initialView: 'dayGridMonth',
+        headerToolbar: { left: 'today', center: 'title', right: 'prev,next' },
+        fixedWeekCount: false,
+        showNonCurrentDates: false,
+        height: 'auto',
+        events: async (fetchInfo, successCallback, failureCallback) => {
+            try {
+                // Get all calendars (primary + shared)
+                const calendarListResponse = await gapi.client.calendar.calendarList.list();
+                const calendars = calendarListResponse.result.items;
+                
+                console.log(`Found ${calendars.length} calendars:`, calendars.map(c => c.summary));
+                
+                // Fetch events from all calendars
+                const eventPromises = calendars.map(async (cal) => {
+                    try {
+                        const res = await gapi.client.calendar.events.list({
+                            'calendarId': cal.id,
+                            'timeMin': fetchInfo.start.toISOString(),
+                            'timeMax': fetchInfo.end.toISOString(),
+                            'showDeleted': false,
+                            'singleEvents': true,
+                            'orderBy': 'startTime'
+                        });
+                        return (res.result.items || []).map(e => ({
+                            id: e.id,
+                            title: e.summary || 'No Title',
+                            start: e.start.dateTime || e.start.date,
+                            end: e.end.dateTime || e.end.date,
+                            url: e.htmlLink,
+                            allDay: !e.start.dateTime,
+                            description: e.description || '',
+                            location: e.location || '',
+                            backgroundColor: cal.backgroundColor || '#3b82f6',
+                            borderColor: cal.backgroundColor || '#3b82f6',
+                        }));
+                    } catch (err) {
+                        console.error(`Error fetching from ${cal.summary}:`, err);
+                        return [];
+                    }
+                });
+                
+                const eventArrays = await Promise.all(eventPromises);
+                const allEvents = eventArrays.flat();
+                
+                console.log(`Total events: ${allEvents.length}`);
+                successCallback(allEvents);
+            } catch (err) {
+                console.error("Error fetching calendar events: ", err);
+                failureCallback(err);
             }
-        });
-        calendar.render();
-    }
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            showEventDetails(info.event);
+        }
+    });
+    calendar.render();
+}
 
     function showEventDetails(event) {
         eventTitle.textContent = event.title;
@@ -591,4 +591,17 @@
         if (!event.allDay) {
             timeString = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             if (end) {
-                timeString += ` - ${end.toLocaleTime
+                timeString += ` - ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            }
+        }
+        eventTime.textContent = `${start.toLocaleDateString()}${event.allDay ? '' : ' | ' + timeString}`;
+        eventDescription.textContent = event.extendedProps.description || 'No description provided.';
+        eventLocation.textContent = event.extendedProps.location || 'No location provided.';
+        eventLink.href = event.url;
+        eventModal.classList.remove('hidden');
+    }
+})();
+</script>
+</body>
+</html>
+
