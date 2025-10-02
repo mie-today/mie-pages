@@ -1,176 +1,212 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIE Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscribe to Mie</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:wght@700&display=swap');
 
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-  /* Base styles for a full-height, flexible layout */
-  html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Prevent scrollbars on the main page */
-  }
-
-  body {
-    font-family: Lato, sans-serif;
-    display: flex; /* Use flexbox to easily center content */
-    justify-content: center;
-    align-items: center;
-    padding: 20px; /* This creates the padded background area */
-    box-sizing: border-box; /* Ensures padding is included in the 100% height */
-    text-align: center;
-    background-color: #f3f4f6;
-  }
-
-  .calendar {
-    width: 100%;
-    max-width: 500px;
-    height: 100%; /* The calendar will fill the padded body area */
-    max-height: 700px; /* A cap for very large desktop screens */
-    margin: auto;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    overflow: hidden; /* Important: prevents internal content from causing scrollbars */
-    display: flex;
-    flex-direction: column; /* Stack header, days, and dates vertically */
-  }
-
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f4f4f4;
-    padding: 0.5em 1em;
-    border-bottom: 1px solid #ddd;
-    font-weight: bold;
-    flex-shrink: 0; /* Prevents the header from shrinking */
-  }
-
-  .calendar-header button {
-    background: none;
-    border: none;
-    font-size: 1.2em;
-    cursor: pointer;
-    flex: 0 0 auto;
-  }
-
-  .calendar-header span {
-    font-size: 1.1em;
-    flex: 1;
-    text-align: center;
-  }
-
-  .calendar-days, .calendar-dates {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-  }
-
-  .calendar-days {
-    flex-shrink: 0; /* Prevents the days row from shrinking */
-  }
-
-  .calendar-days div {
-    font-weight: bold;
-    padding: 0.3em;
-    font-size: 0.9em;
-  }
-
-  .calendar-dates {
-    flex-grow: 1; /* This makes the date grid expand to fill all remaining vertical space */
-    grid-auto-rows: 1fr; /* This distributes the available height equally among the date rows */
-  }
-
-  .calendar-dates div {
-    font-size: 0.9em;
-    border-radius: 6px;
-    display: flex; /* Centers the date number perfectly in its cell */
-    align-items: center;
-    justify-content: center;
-    cursor: default;
-  }
-
-  .calendar-dates div:hover {
-    background: #e6f2ff;
-  }
-
-  /* Responsive adjustments for mobile and tablet */
-  @media(max-width: 500px) {
     body {
-        padding: 10px; /* Reduce the padding on smaller screens */
+      margin: 0;
+      padding: 0;
+      font-family: 'Lato', sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    .calendar {
-        border-radius: 8px;
-    }
-    .calendar-header span {
-        font-size: 1em;
-    }
-    .calendar-days div, .calendar-dates div {
-        font-size: 0.75em;
-    }
-  }
 
-  @media(max-width: 400px) {
-    .calendar-header span {
-        font-size: 0.9em;
+    .layout {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      max-width: 1200px;
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      gap: 20px;
     }
-    .calendar-days div, .calendar-dates div {
-        font-size: 0.7em;
+
+    .image-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-  }
-</style>
+
+    .image-container img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .subscribe-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      box-sizing: border-box;
+    }
+
+    .subscribe-container h2 {
+      font-family: 'Montserrat', sans-serif;
+      color: #333;
+      margin: 0 0 15px 0;
+      font-size: 22px;
+    }
+
+    .subscribe-form {
+      display: flex;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .subscribe-form input[type="email"] {
+      flex-grow: 1;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      min-width: 0;
+    }
+
+    .subscribe-form button {
+      padding: 12px 20px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .subscribe-form button:hover {
+      background-color: #0056b3;
+    }
+
+    .subscribe-form button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #message {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .success {
+      color: green;
+    }
+
+    .error {
+      color: red;
+    }
+
+    /* --- Responsive Styles for Mobile & Tablet --- */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .image-container {
+        width: 100%;
+      }
+
+      .subscribe-container {
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .subscribe-form {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .subscribe-form input[type="email"] {
+        font-size: 12px;
+        padding: 10px;
+      }
+
+      .subscribe-form button {
+        font-size: 12px;
+        padding: 10px;
+        width: 100%;
+      }
+
+      #message {
+        font-size: 12px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<div class="calendar">
-  <div class="calendar-header">
-    <button onclick="changeMonth(-1)">&lt;</button>
-    <span id="monthYear"></span>
-    <button onclick="changeMonth(1)">&gt;</button>
+  <div class="layout">
+    <div class="image-container">
+      <img src="https://mie-today.github.io/mie-pages/Simple%20Coming%20Soon%20Instagram%20Post.png" alt="Coming Soon">
+    </div>
+
+    <div class="subscribe-container">
+      <h2>Subscribe and get updates</h2>
+      <form class="subscribe-form" id="subscribeForm">
+        <input type="email" name="email" placeholder="Enter your email address" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <p id="message"></p>
+    </div>
   </div>
-  <div class="calendar-days">
-    <div>Sun</div><div>Mon</div><div>Tue</div>
-    <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-  </div>
-  <div class="calendar-dates" id="calendarDates"></div>
-</div>
 
-<script>
-/* ---------------- Calendar Logic ---------------- */
-const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
+  <script>
+    const form = document.getElementById('subscribeForm');
+    const messageEl = document.getElementById('message');
+    const submitButton = form.querySelector('button');
 
-function renderCalendar(month, year){
-  document.getElementById("monthYear").textContent = monthNames[month] + " " + year;
-  const dates = document.getElementById("calendarDates");
-  dates.innerHTML = "";
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  for (let i = 0; i < firstDay; i++) dates.appendChild(document.createElement("div"));
-  for (let i = 1; i <= daysInMonth; i++) {
-    const day = document.createElement("div");
-    day.textContent = i;
-    dates.appendChild(day);
-  }
-}
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxNczz3c-Z9DXBarnoYpkyuGKfX5ktJUxPFS9hG_AmiabKORFG1hJvCRTHRELY2y0I/exe';
 
-function changeMonth(delta){
-  currentMonth += delta;
-  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-  else if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-  renderCalendar(currentMonth, currentYear);
-}
+    form.addEventListener('submit', e => {
+      e.preventDefault();
 
-renderCalendar(currentMonth, currentYear);
-</script>
+      messageEl.textContent = 'Submitting...';
+      messageEl.className = '';
+      submitButton.disabled = true;
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: new FormData(form)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.result === 'success') {
+            messageEl.textContent = 'Thank you for subscribing!';
+            messageEl.className = 'success';
+            form.reset();
+          } else {
+            if (data.message && data.message.includes('already subscribed')) {
+              messageEl.textContent = 'This email is already subscribed!';
+            } else {
+              messageEl.textContent = 'An error occurred. Please try again.';
+            }
+            messageEl.className = 'error';
+            console.error('Error:', data.message);
+          }
+        })
+        .catch(error => {
+          messageEl.textContent = 'An error occurred. Please try again.';
+          messageEl.className = 'error';
+          console.error('Fetch Error:', error.message);
+        })
+        .finally(() => {
+          submitButton.disabled = false;
+        });
+    });
+  </script>
 
 </body>
 </html>
-
