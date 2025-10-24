@@ -150,169 +150,99 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkdyK5nxIr-bcf2YWZYy51lh-JxrFaSNeamedbVMKzfSN6C_TycFdeC3SibB-TmoA2/exec";
+  // MUST be your latest deployment URL:
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznJzS3OmwPgYm1fATgXdqJIhWy3TnPbs0WjkCQSEqxnkThKz440Py51u2C-keWWhTN/exec";
 
-    const form = document.getElementById("signupForm");
-    const fullNameInput = document.getElementById("fullName");
-    const emailInput = document.getElementById("emailAddress");
-    const phoneInput = document.getElementById("phoneNumber");
-    const pinInput = document.getElementById("pin");
-    const confirmPinInput = document.getElementById("confirmPin");
-    const errorMsg = document.getElementById("errorMsg");
-    const successMsg = document.getElementById("successMsg");
-    const warningMsg = document.getElementById("warningMsg");
-    const submitButton = document.getElementById("submitButton");
+  const form = document.getElementById("signupForm");
+  const fullNameInput = document.getElementById("fullName");
+  const emailInput = document.getElementById("emailAddress");
+  const phoneInput = document.getElementById("phoneNumber");
+  const pinInput = document.getElementById("pin");
+  const confirmPinInput = document.getElementById("confirmPin");
+  const errorMsg = document.getElementById("errorMsg");
+  const successMsg = document.getElementById("successMsg");
+  const warningMsg = document.getElementById("warningMsg");
+  const submitButton = document.getElementById("submitButton");
 
-    // Hide all messages
-    function hideAllMessages() {
-      errorMsg.style.display = "none";
-      successMsg.style.display = "none";
-      warningMsg.style.display = "none";
-    }
+  function hideAllMessages() {
+    errorMsg.style.display = "none";
+    successMsg.style.display = "none";
+    warningMsg.style.display = "none";
+  }
+  function showError(m)   { hideAllMessages(); errorMsg.innerHTML = m;   errorMsg.style.display = "block"; }
+  function showSuccess(m) { hideAllMessages(); successMsg.innerHTML = m; successMsg.style.display = "block"; }
+  function showWarning(m) { hideAllMessages(); warningMsg.innerHTML = m; warningMsg.style.display = "block"; }
 
-    // Show error message
-    function showError(message) {
-      hideAllMessages();
-      errorMsg.innerHTML = message;
-      errorMsg.style.display = "block";
-    }
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideAllMessages();
 
-    // Show success message
-    function showSuccess(message) {
-      hideAllMessages();
-      successMsg.innerHTML = message;
-      successMsg.style.display = "block";
-    }
+    const errs = [];
+    if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) errs.push("Full Name must include FIRST and LAST name (letters only).");
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) errs.push("A valid @gmail.com address is required.");
+    if (!/^1\d{10}$/.test(phoneInput.value.trim())) errs.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
+    if (!/^\d{4}$/.test(pinInput.value.trim())) errs.push("PIN must be exactly 4 digits.");
+    if (pinInput.value.trim() !== confirmPinInput.value.trim()) errs.push("PINs do not match.");
+    if (errs.length) { showError(errs.join("<br>")); return; }
 
-    // Show warning message
-    function showWarning(message) {
-      hideAllMessages();
-      warningMsg.innerHTML = message;
-      warningMsg.style.display = "block";
-    }
+    submitButton.disabled = true;
+    submitButton.textContent = "Signing Up...";
 
-    form.addEventListener("submit", function(e) {
-      e.preventDefault();
-      console.log("Form submission started");
+    const payload = {
+      fullName: fullNameInput.value.trim(),
+      emailAddress: emailInput.value.trim(),
+      phoneNumber: phoneInput.value.trim(),
+      pin: pinInput.value.trim(),
+      timestamp: new Date().toISOString()
+    };
 
-      const errors = [];
-      hideAllMessages();
-
-      // Full Name: first + last (letters only, space between)
-      if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) {
-        errors.push("Full Name must include FIRST and LAST name (letters only).");
-      }
-
-      // Email: must be @gmail.com
-      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) {
-        errors.push("A valid @gmail.com address is required.");
-      }
-
-      // Phone: must start with 1 and be 11 digits total
-      if (!/^1\d{10}$/.test(phoneInput.value.trim())) {
-        errors.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
-      }
-
-      // PIN: exactly 4 digits
-      if (!/^\d{4}$/.test(pinInput.value.trim())) {
-        errors.push("PIN must be exactly 4 digits.");
-      }
-
-      // Confirm PIN
-      if (pinInput.value.trim() !== confirmPinInput.value.trim()) {
-        errors.push("PINs do not match.");
-      }
-
-      if (errors.length > 0) {
-        showError(errors.join('<br>'));
-        return;
-      }
-      
-      submitButton.disabled = true;
-      submitButton.textContent = "Signing Up...";
-
-      const formData = {
-        fullName: fullNameInput.value.trim(),
-        emailAddress: emailInput.value.trim(),
-        phoneNumber: phoneInput.value.trim(),
-        pin: pinInput.value.trim(),
-        timestamp: new Date().toISOString()
-      };
-
-      console.log("Sending data:", formData);
-
-      // ATTEMPT 1: Try to get proper response (works if CORS is properly configured)
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(formData)
-      })
-      .then(response => {
-        console.log("Response status:", response.status);
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
-      })
-      .then(data => {
-        console.log("Response data:", data);
-        handleResponse(data);
-      })
-      .catch(error => {
-        console.log("First attempt failed, trying with no-cors mode:", error);
-        
-        // ATTEMPT 2: Fallback to no-cors mode
-        return fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-      })
-      .then(response => {
-        if (response && response.type === 'opaque') {
-          console.log("Request sent with no-cors mode - cannot read response");
-          // Show generic message since we can't read the response
-          showWarning("Sign up submitted! If you entered the correct PIN, you should receive a welcome email shortly. If not, your application is pending approval.");
-          form.reset();
-        }
-      })
-      .catch(error => {
-        console.error('Final error:', error);
-        showError("An error occurred. Please try again or contact support.");
-      })
-      .finally(() => {
-        submitButton.disabled = false;
-        submitButton.textContent = "Sign Up";
+    try {
+      const resp = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
-    });
 
-    // Handle response from the script
-    function handleResponse(data) {
-      console.log("Handling response:", data);
-      
-      if (data.status === "success") {
-        if (data.approved) {
-          // User was approved
-          if (data.emailSent) {
-            showSuccess("✅ Welcome to Mie! Your account is approved and a welcome email has been sent to your inbox.");
-          } else {
-            showSuccess("✅ Your account is approved! However, there was an issue sending the welcome email. Please contact support.");
-          }
-        } else {
-          // User was not approved (wrong PIN)
-          showWarning("⚠️ Your application has been submitted but is pending approval. You'll receive a welcome email once approved.");
-        }
-        form.reset();
-      } else if (data.status === "error") {
-        showError("❌ " + data.message);
-      } else {
-        showError("❌ Unexpected response from server. Please try again.");
+      if (!resp.ok) {
+        const t = await resp.text();
+        throw new Error(`Server responded ${resp.status}: ${t}`);
       }
+
+      const data = await resp.json();
+      handleResponse(data);
+      form.reset();
+
+    } catch (err) {
+      console.error(err);
+      showError("❌ Submission failed. Please retry or contact support.");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Sign Up";
     }
-  </script>
+  });
+
+  function handleResponse(data) {
+    if (data.status !== "success") {
+      showError("❌ " + (data.message || "Unexpected server response."));
+      return;
+    }
+    if (!data.approved) {
+      showWarning("⚠️ PIN invalid or approval failed. Your application is pending.");
+      return;
+    }
+    if (data.approved && !data.emailSent) {
+      showWarning("✅ Approved, but welcome email failed. We'll follow up.");
+      return;
+    }
+    // Approved + emailSent
+    if (data.provisioned) {
+      showSuccess("✅ You're in! Email sent and your workspace has been provisioned.");
+    } else {
+      const reason = (data.details && data.details.error) ? ` Reason: ${data.details.error}` : "";
+      showWarning("✅ Email sent, but provisioning hit a snag." + reason);
+    }
+  }
+</script>
+
 </body>
 </html>
