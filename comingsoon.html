@@ -3,32 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coming Soon - Mie</title>
+  <title>Subscribe to Mie</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:wght@700&display=swap');
 
+    /* --- Editable Font Settings --- */
+    :root {
+      --left-font-family: 'Impact', sans-serif;
+      --left-font-size: 60px;
+      --right-font-family: 'Lato', sans-serif;
+      --right-font-size: 14px;
+    }
+
     body {
-      font-family: 'Lato', sans-serif;
+      margin: 0;
+      padding: 0;
+      font-family: var(--right-font-family);
+      background-color: #f4f4f4;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
       min-height: 100vh;
-      margin: 0;
+    }
+
+    .layout {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      max-width: 1200px;
+      width: 100%;
       padding: 20px;
-      background-color: #f4f4f4;
       box-sizing: border-box;
+      gap: 20px;
     }
 
-    /* Updated image styling */
-    .comingsoon-image {
-      width: 100%;       /* full width of container */
-      max-width: 1200px; /* limit so it doesn't overflow large screens */
-      height: auto;      /* maintain aspect ratio */
-      margin-bottom: 30px;
-      display: block;
+    /* --- Left Side Text --- */
+    .left-text-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #333;
+      font-family: var(--left-font-family);
+      font-size: var(--left-font-size);
     }
 
+    /* --- Subscribe Section --- */
     .subscribe-container {
       background-color: #fff;
       padding: 20px;
@@ -36,15 +58,23 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       text-align: center;
       width: 100%;
-      max-width: 400px;
+      max-width: 500px;
       box-sizing: border-box;
     }
 
     .subscribe-container h2 {
       font-family: 'Montserrat', sans-serif;
       color: #333;
-      margin: 0 0 15px 0;
+      margin: 0 0 8px 0;
       font-size: 22px;
+    }
+
+    /* --- Right Side Description Text --- */
+    .subscribe-container p.description {
+      font-family: var(--right-font-family);
+      font-size: var(--right-font-size);
+      color: #666;
+      margin: 0 0 20px 0;
     }
 
     .subscribe-form {
@@ -85,54 +115,84 @@
     #message {
       margin-top: 12px;
       font-size: 14px;
-      height: auto;
     }
 
-    .success { color: green; }
-    .error { color: red; }
+    .success {
+      color: green;
+    }
 
-    /* Responsive for mobile */
-    @media (max-width: 480px) {
-      .comingsoon-image { max-width: 100%; margin-bottom: 20px; }
-      .subscribe-container { padding: 15px; max-width: 320px; }
-      .subscribe-container h2 { font-size: 18px; }
-      .subscribe-form { flex-direction: column; gap: 8px; }
-      .subscribe-form input[type="email"] { font-size: 12px; padding: 10px; }
-      .subscribe-form button { font-size: 12px; padding: 10px; width: 100%; }
-      #message { font-size: 12px; }
+    .error {
+      color: red;
+    }
+
+    /* --- Responsive Styles --- */
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .left-text-container {
+        font-size: calc(var(--left-font-size) - 4px);
+      }
+
+      .subscribe-container {
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .subscribe-form {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .subscribe-form input[type="email"],
+      .subscribe-form button {
+        font-size: 12px;
+        padding: 10px;
+      }
+
+      #message {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top center image -->
-  <img src="https://mie-today.github.io/mie-pages/coming_soon.png" alt="Coming Soon" class="comingsoon-image">
+  <div class="layout">
+    <div class="left-text-container">
+      <span>Something Awesome Is Coming</span>
+    </div>
 
-  <!-- Subscription form below image -->
-  <div class="subscribe-container">
-    <h2>Subscribe and get updates</h2>
-    <form class="subscribe-form" id="subscribeForm">
-      <input type="email" name="email" placeholder="Enter your email address" required>
-      <button type="submit">Subscribe</button>
-    </form>
-    <p id="message"></p>
+    <div class="subscribe-container">
+      <h2>Subscribe and get updates</h2>
+      <p class="description">Sign up to find out when it's ready</p>
+      <form class="subscribe-form" id="subscribeForm">
+        <input type="email" name="email" placeholder="Enter your email address" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <p id="message"></p>
+    </div>
   </div>
 
   <script>
     const form = document.getElementById('subscribeForm');
     const messageEl = document.getElementById('message');
     const submitButton = form.querySelector('button');
-    
-    // Your Web App URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxNczz3c-Z9DXBarnoYpkyuGKfX5ktJUxPFS9hG_AmiabKORFG1hJvCRTHRELY2y0I/exec';
+
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwGXtLUvfvzIjybT7AklXWlZjBIHNY23qfin_ZnRiinWyhewkZhN_dtAtzHjFK_gw/exec';
 
     form.addEventListener('submit', e => {
       e.preventDefault();
+
       messageEl.textContent = 'Submitting...';
       messageEl.className = '';
       submitButton.disabled = true;
 
-      fetch(scriptURL, { method: 'POST', body: new FormData(form) })
+      fetch(scriptURL, {
+        method: 'POST',
+        body: new FormData(form)
+      })
         .then(response => response.json())
         .then(data => {
           if (data.result === 'success') {
@@ -154,7 +214,9 @@
           messageEl.className = 'error';
           console.error('Fetch Error:', error.message);
         })
-        .finally(() => { submitButton.disabled = false; });
+        .finally(() => {
+          submitButton.disabled = false;
+        });
     });
   </script>
 
