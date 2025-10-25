@@ -248,52 +248,25 @@
     </div>
 </div>
 
-<!-- ===== Session Expired Overlay ===== -->
-<div id="session-expired-area"
-     class="hidden fixed inset-0 bg-white z-[2000] flex flex-col items-center justify-center p-6 text-center">
-    <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true"
-         alt="Mie Logo"
-         class="rounded-full mb-4" />
-
-    <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-2">
-        Session ended
-    </h2>
-
-    <p class="text-sm text-gray-600 mb-6 max-w-xs">
-        Your Google session expired. Please reconnect to continue.
-    </p>
-
-    <button
-        id="reconnect-button"
-        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm shadow"
-        style="min-width:200px;"
-    >
-        Reconnect
-    </button>
-</div>
-
 <script>
 /*
-    Auth model (no popup):
-    - User clicks "Connect Google".
-    - We redirect (same tab) to Google's OAuth endpoint with response_type=token.
-    - Google shows consent and redirects back with #access_token=...
-    - On load we parse that access_token, clear it from URL, and inject it into gapi.client.
-    - We run access check, calendar load, Gmail send, etc.
+    High-level auth model (no popup):
+    1. User clicks "Connect Google".
+    2. We redirect (same tab) to Google's OAuth endpoint with response_type=token.
+    3. Google asks for consent.
+    4. Google redirects back to THIS PAGE with access_token in the URL hash.
+    5. On load, we parse the hash, stash the token, scrub the hash from the URL,
+       and proceed with API calls like before.
 
-    Token lifecycle:
-    - If any Google API call returns 401, we hard-stop:
-      * revoke local token
-      * hide all app surfaces
-      * show "Session ended. Reconnect"
-      * Reconnect button triggers same redirect flow.
+    This is standards-compliant implicit OAuth 2.0 flow for public JS apps.
+    It avoids window.open() popups.
 */
 
 (async function () {
     // ======== CONFIG =========
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
 
-    // Scopes the app needs
+    // Scopes you need for this dashboard
     const SCOPES = [
         "https://www.googleapis.com/auth/calendar.readonly",
         "https://www.googleapis.com/auth/gmail.send",
@@ -304,7 +277,7 @@
     const ACCESS_CHECK_URL =
         "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
 
-    // Email target
+    // Where outbound messages get sent
     const RECIPIENT_EMAIL = "save@mie.today";
 
     // ======== STATE =========
@@ -313,7 +286,7 @@
     let userEmail = null;
     let gapi_loaded = false;
     let userHasAccess = false;
-    let accessToken = null; // OAuth access_token in memory only
+    let accessToken = null; // OAuth access_token
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -344,15 +317,11 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    const sessionExpiredArea = document.getElementById("session-expired-area");
-    const reconnectButton = document.getElementById("reconnect-button");
-
     // ======== EVENT LISTENERS =========
     signoutButton.addEventListener("click", handleSignOut);
     tryDifferentAccountBtn.addEventListener("click", handleSignOut);
 
     connectGoogleBtn.addEventListener("click", beginGoogleAuthRedirect);
-    reconnectButton.addEventListener("click", beginGoogleAuthRedirect);
 
     sendButton.addEventListener("click", sendEmail);
     messageInput.addEventListener("input", updateSendButton);
@@ -364,27 +333,27 @@
         if (e.target === eventModal) eventModal.classList.add("hidden");
     });
 
-    // ======== AUTH FLOW BOOTSTRAP =========
+    // ======== AUTH FLOW (REDIRECT MODE) =========
 
-    // 1. parse OAuth redirect result (#access_token=...)
+    // Step 1: check URL fragment for access_token from Google redirect.
     parseAccessTokenFromHash();
 
-    // 2. init GAPI
+    // Step 2: init GAPI client library
     await initGapiClient();
 
-    // 3. if we have a token, inject it and continue to dashboard boot
+    // Step 3: if we have an access token, bind it into gapi and continue
     if (accessToken) {
         gapi.client.setToken({ access_token: accessToken });
-        await handleAuthSuccess();
+        // Move to next step: gated access, calendar, etc.
+        handleAuthSuccess();
     } else {
+        // No token -> show unauth state
         showAuthArea();
     }
 
-    // ======== CORE AUTH + STATE MANAGEMENT =========
-
     /**
-     * Sends user to Google's OAuth 2.0 consent screen in SAME TAB.
-     * response_type=token (implicit flow, we get access_token back in hash).
+     * Build Google OAuth URL (implicit flow, response_type=token) and redirect.
+     * This is same-tab. No popup.
      */
     function beginGoogleAuthRedirect() {
         const redirectUri = window.location.origin + window.location.pathname;
@@ -392,26 +361,24 @@
         const params = new URLSearchParams({
             client_id: CLIENT_ID,
             redirect_uri: redirectUri,
-            response_type: "token",
+            response_type: "token", // implicit flow -> we get access_token in hash
             scope: SCOPES,
             include_granted_scopes: "true",
-            prompt: "consent",
+            prompt: "consent", // ensure we actually get consent screen for Gmail/Calendar scopes
             state: "mie_oauth_state_" + Date.now()
         });
 
-        const oauthUrl =
-            "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
-
+        const oauthUrl = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
         window.location = oauthUrl;
     }
 
     /**
-     * Reads the access_token out of URL hash if we just came back from Google,
-     * then scrubs the URL so the token isn't sitting in the address bar.
+     * Pulls access_token, expires_in, token_type from URL hash if present.
+     * Then cleans the hash out of the URL (cosmetic + basic token hygiene).
      */
     function parseAccessTokenFromHash() {
         if (!window.location.hash || window.location.hash.length < 2) return;
-        const frag = window.location.hash.substring(1); // strip '#'
+        const frag = window.location.hash.substring(1); // drop '#'
         const data = new URLSearchParams(frag);
 
         const tokenFromHash = data.get("access_token");
@@ -419,7 +386,10 @@
             accessToken = tokenFromHash;
         }
 
-        // cleanup: remove fragment from the URL
+        // optional: could read expires_in, token_type, scope, state
+        // const expiresIn = data.get("expires_in");
+
+        // Clean URL so token isn't sitting in the bar/history moving forward.
         window.history.replaceState(
             {},
             document.title,
@@ -428,7 +398,7 @@
     }
 
     /**
-     * Initialize gapi client discovery docs (Calendar + Gmail).
+     * Initialize gapi client discovery docs (Calendar + Gmail)
      */
     async function initGapiClient() {
         return new Promise((resolve) => {
@@ -448,14 +418,13 @@
         });
     }
 
-    // ======== VIEW STATE HELPERS =========
+    // ======== UI STATE MGMT =========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
         accessDeniedArea.classList.add("hidden");
         calendarContent.classList.add("hidden");
         messagingSection.classList.add("hidden");
-        sessionExpiredArea.classList.add("hidden");
     }
 
     function showAccessCheck() {
@@ -464,7 +433,6 @@
         accessDeniedArea.classList.add("hidden");
         calendarContent.classList.add("hidden");
         messagingSection.classList.add("hidden");
-        sessionExpiredArea.classList.add("hidden");
     }
 
     function showAccessDenied() {
@@ -473,7 +441,6 @@
         accessDeniedArea.classList.remove("hidden");
         calendarContent.classList.add("hidden");
         messagingSection.classList.add("hidden");
-        sessionExpiredArea.classList.add("hidden");
     }
 
     function showDashboard() {
@@ -482,83 +449,26 @@
         accessDeniedArea.classList.add("hidden");
         calendarContent.classList.remove("hidden");
         messagingSection.classList.remove("hidden");
-        sessionExpiredArea.classList.add("hidden");
     }
 
-    /**
-     * Kill session when Google rejects our token.
-     * Hide all app UI, show reconnect wall.
-     */
-    function handleAuthExpired() {
-        // wipe auth
-        gapi.client.setToken(null);
-        accessToken = null;
-        userEmail = null;
-        userHasAccess = false;
-
-        // hide all surfaces
-        authArea.classList.add("hidden");
-        accessCheckArea.classList.add("hidden");
-        accessDeniedArea.classList.add("hidden");
-        calendarContent.classList.add("hidden");
-        messagingSection.classList.add("hidden");
-
-        // show reconnect overlay
-        sessionExpiredArea.classList.remove("hidden");
-    }
-
-    /**
-     * Given any response/err from Google, detect 401 and trigger handleAuthExpired().
-     * Returns true if it handled an auth failure.
-     */
-    function checkFor401(errOrResponse) {
-        // gapi-style structured result (calendar/gmail client libs)
-        if (
-            errOrResponse &&
-            (
-                errOrResponse.status === 401 ||
-                errOrResponse.result?.error?.code === 401
-            )
-        ) {
-            handleAuthExpired();
-            return true;
-        }
-
-        // fetch() Response object (userinfo endpoint)
-        if (
-            errOrResponse instanceof Response &&
-            errOrResponse.status === 401
-        ) {
-            handleAuthExpired();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Auth success path:
-     * - show "Verifying Access..."
-     * - resolve user email from token
-     * - check allowlist
-     * - show dashboard or showAccessDenied
-     * - render calendar
-     */
+    // ======== AUTH SUCCESS HANDLER =========
     async function handleAuthSuccess() {
+        // Sanity gate
         if (!gapi_loaded || !accessToken) {
             console.error("Auth success path hit without gapi/token");
             showAccessDenied();
             return;
         }
 
+        // Move UI to "Verifying Access..."
         showAccessCheck();
 
         try {
-            // 1. get signed-in user's email
+            // 1. Resolve the user's email (identity)
             userEmail = await getUserEmail();
             console.log("User email:", userEmail);
 
-            // 2. check allowlist
+            // 2. Hit allowlist service
             const hasAccess = await checkUserAccess(userEmail);
 
             if (hasAccess) {
@@ -572,61 +482,41 @@
             }
         } catch (e) {
             console.error("Error during auth process:", e);
-            // if it's not already handled as 401, show denied
             showAccessDenied();
         }
     }
 
-    /**
-     * Return the user's Gmail address using the OAuth token.
-     * First try userinfo; fallback to Gmail profile.
-     * Any 401 triggers handleAuthExpired().
-     */
+    // ======== USER EMAIL RESOLUTION =========
     async function getUserEmail() {
-        const token = gapi.client.getToken();
-        if (!token || !token.access_token) {
-            handleAuthExpired();
-            throw new Error("No token in gapi client");
-        }
-
-        // Try Google OAuth2 userinfo
-        const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-            headers: { Authorization: `Bearer ${token.access_token}` }
-        });
-
-        if (checkFor401(resp)) {
-            throw new Error("Unauthorized (userinfo)");
-        }
-
-        if (resp.ok) {
-            const data = await resp.json();
-            if (data.email) {
-                return data.email;
-            }
-        }
-
-        // Fallback: Gmail profile
         try {
+            // We have an OAuth access token for Gmail/Calendar scopes already set on gapi.client.
+            // We'll call the userinfo endpoint (userinfo.email is in scope).
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) throw new Error("No token in gapi client");
+
+            const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+                headers: { Authorization: `Bearer ${token.access_token}` }
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.email) {
+                    return data.email;
+                }
+            }
+
+            // Fallback to Gmail profile if userinfo didn't return email
             const gmailResp = await gapi.client.gmail.users.getProfile({
                 userId: "me"
             });
-
-            if (checkFor401(gmailResp)) {
-                throw new Error("Unauthorized (gmail.getProfile)");
-            }
-
             return gmailResp.result.emailAddress;
-        } catch (err) {
-            if (!checkFor401(err)) {
-                console.error("Error getting user email:", err);
-            }
-            throw err;
+        } catch (e) {
+            console.error("Error getting user email:", e);
+            throw e;
         }
     }
 
-    /**
-     * Call Apps Script endpoint to verify entitlement.
-     */
+    // ======== ACCESS CONTROL (ALLOWLIST CHECK) =========
     async function checkUserAccess(email) {
         try {
             console.log("Checking access for:", email);
@@ -654,15 +544,13 @@
         }
     }
 
-    /**
-     * Sign out / revoke token. Goes back to unauth state.
-     */
+    // ======== SIGN OUT =========
     function handleSignOut() {
+        // Revoke token with Google's revoke endpoint
         const tokenObj = gapi.client.getToken();
         const tokenToRevoke = tokenObj && tokenObj.access_token;
 
         if (tokenToRevoke) {
-            // Best-effort revoke. We don't block on result.
             fetch(
                 "https://oauth2.googleapis.com/revoke?token=" +
                     encodeURIComponent(tokenToRevoke),
@@ -677,6 +565,7 @@
             });
         }
 
+        // Clear local app state
         gapi.client.setToken(null);
         accessToken = null;
         userEmail = null;
@@ -685,8 +574,7 @@
         showAuthArea();
     }
 
-    // ======== FILE + MESSAGE UI =========
-
+    // ======== FILE ATTACHMENT / MESSAGE UI =========
     function handleFileSelect(e) {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
@@ -714,10 +602,7 @@
         sendButton.disabled = !canSend;
     }
 
-    /**
-     * Send email through Gmail API using current token.
-     * On 401, force reconnect flow.
-     */
+    // ======== EMAIL SEND VIA GMAIL API =========
     async function sendEmail() {
         if (!userEmail || !userHasAccess) {
             logMessage("Error: Access denied or not signed in.", "error");
@@ -758,37 +643,27 @@
 
         emailContent += `--${boundary}--`;
 
-        // Gmail API requires base64url
+        // Base64URL encode per Gmail API spec
         const base64Encoded = btoa(unescape(encodeURIComponent(emailContent)))
             .replace(/\+/g, "-")
             .replace(/\//g, "_")
             .replace(/=+$/, "");
 
         try {
-            const sendResp = await gapi.client.gmail.users.messages.send({
+            await gapi.client.gmail.users.messages.send({
                 userId: "me",
                 resource: { raw: base64Encoded }
             });
-
-            if (checkFor401(sendResp)) {
-                logMessage("Session ended. Reconnect required.", "error");
-                return;
-            }
-
             logMessage("Message sent", "success");
             messageInput.value = "";
             removeFile();
         } catch (err) {
-            if (checkFor401(err)) {
-                logMessage("Session ended. Reconnect required.", "error");
-            } else {
-                logMessage(
-                    `Failed to send email: ${
-                        err.result?.error?.message || "Unknown error"
-                    }`,
-                    "error"
-                );
-            }
+            logMessage(
+                `Failed to send email: ${
+                    err.result?.error?.message || "Unknown error"
+                }`,
+                "error"
+            );
         } finally {
             updateSendButton();
         }
@@ -819,13 +694,7 @@
         messageLog.scrollTop = messageLog.scrollHeight;
     }
 
-    // ======== CALENDAR RENDERING =========
-
-    /**
-     * Build / render the calendar (month view).
-     * Pulls events from all calendars in user's account.
-     * Any 401 during list => handleAuthExpired().
-     */
+    // ======== CALENDAR RENDER =========
     function displayMonthlyCalendar() {
         if (!userHasAccess) return;
 
@@ -843,51 +712,49 @@
             height: "auto",
             events: async (fetchInfo, successCallback, failureCallback) => {
                 try {
-                    // 1. list calendars
-                    const calendarListResponse = await gapi.client.calendar.calendarList.list();
+                    // Get all calendars (primary + shared)
+                    const calendarListResponse =
+                        await gapi.client.calendar.calendarList.list();
+                    const calendars = calendarListResponse.result.items;
 
-                    if (checkFor401(calendarListResponse)) {
-                        failureCallback({ message: "unauthorized" });
-                        return;
-                    }
+                    console.log(
+                        `Found ${calendars.length} calendars:`,
+                        calendars.map((c) => c.summary)
+                    );
 
-                    const calendars = calendarListResponse.result.items || [];
-
-                    // 2. for each calendar, get events in the visible range
+                    // Fetch events from all calendars for the visible range
                     const eventPromises = calendars.map(async (cal) => {
                         try {
-                            const res = await gapi.client.calendar.events.list({
-                                calendarId: cal.id,
-                                timeMin: fetchInfo.start.toISOString(),
-                                timeMax: fetchInfo.end.toISOString(),
-                                showDeleted: false,
-                                singleEvents: true,
-                                orderBy: "startTime"
-                            });
-
-                            if (checkFor401(res)) {
-                                return [];
-                            }
+                            const res =
+                                await gapi.client.calendar.events.list({
+                                    calendarId: cal.id,
+                                    timeMin: fetchInfo.start.toISOString(),
+                                    timeMax: fetchInfo.end.toISOString(),
+                                    showDeleted: false,
+                                    singleEvents: true,
+                                    orderBy: "startTime"
+                                });
 
                             return (res.result.items || []).map((e) => ({
                                 id: e.id,
                                 title: e.summary || "No Title",
-                                start: e.start.dateTime || e.start.date,
+                                start:
+                                    e.start.dateTime || e.start.date,
                                 end: e.end?.dateTime || e.end?.date,
                                 url: e.htmlLink,
                                 allDay: !e.start.dateTime,
                                 description: e.description || "",
                                 location: e.location || "",
-                                backgroundColor: cal.backgroundColor || "#3b82f6",
-                                borderColor: cal.backgroundColor || "#3b82f6"
+                                backgroundColor:
+                                    cal.backgroundColor || "#3b82f6",
+                                borderColor:
+                                    cal.backgroundColor || "#3b82f6"
                             }));
                         } catch (err) {
-                            if (!checkFor401(err)) {
-                                console.error(
-                                    `Error fetching from ${cal.summary}:`,
-                                    err
-                                );
-                            }
+                            console.error(
+                                `Error fetching from ${cal.summary}:`,
+                                err
+                            );
                             return [];
                         }
                     });
@@ -895,11 +762,10 @@
                     const eventArrays = await Promise.all(eventPromises);
                     const allEvents = eventArrays.flat();
 
+                    console.log(`Total events: ${allEvents.length}`);
                     successCallback(allEvents);
                 } catch (err) {
-                    if (!checkFor401(err)) {
-                        console.error("Error fetching calendar events: ", err);
-                    }
+                    console.error("Error fetching calendar events: ", err);
                     failureCallback(err);
                 }
             },
