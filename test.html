@@ -1,27 +1,3 @@
-Below is a clean rewrite of `dashboard.html` that eliminates Google's popup consent window.
-
-Executive summary before code:
-
-* Google only allows two OAuth consent patterns for browser apps:
-
-  1. popup (what you have now),
-  2. full-page redirect to accounts.google.com and then back to your app.
-* Embedding the Google consent screen “inside the page” in an iframe/modal is blocked by Google (they send `X-Frame-Options: DENY`). You won't get Calendar/Gmail scopes that way.
-* So the only compliant way to avoid popups is redirect mode. We’ll do that.
-
-What this version does:
-
-1. Shows a `Connect Google` button.
-2. When clicked, we build the OAuth URL and `window.location` to it (same tab, no popup).
-3. Google redirects back to the same page with `#access_token=...` in the URL fragment.
-4. We parse that token on load, wipe the fragment from the URL (so it’s not sitting in history), inject it into `gapi.client`, and proceed exactly like before (access check, calendar load, Gmail send, etc.).
-5. Sign out revokes the token and returns you to pre-auth state.
-
-No `g_id_onload`, no `g_id_signin`, no `gsi/client`, no popup.
-
-Drop this in as `dashboard.html`:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -835,4 +811,3 @@ Drop this in as `dashboard.html`:
 </script>
 </body>
 </html>
-```
