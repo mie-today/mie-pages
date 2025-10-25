@@ -250,30 +250,37 @@
 
 <script>
 /*
-    High-level auth model (no popup):
-    1. User clicks "Connect Google".
-    2. We redirect (same tab) to Google's OAuth endpoint with response_type=token.
-    3. Google asks for consent.
-    4. Google redirects back to THIS PAGE with access_token in the URL hash.
-    5. On load, we parse the hash, stash the token, scrub the hash from the URL,
-       and proceed with API calls like before.
+    High-level auth model (two modes now):
 
-    This is standards-compliant implicit OAuth 2.0 flow for public JS apps.
-    It avoids window.open() popups.
+    MODE A: Browser (desktop/mobile web)
+    - User clicks "Connect Google"
+    - We redirect to Google OAuth (implicit flow, response_type=token)
+    - We get access_token back in URL hash
+    - We call Google Calendar + Gmail APIs directly from JS
+
+    MODE B: Android WebView (native bridge)
+    - User clicks "Connect Google"
+    - We call AndroidBridge.triggerGoogleSignIn()
+    - Native Google Sign-In runs in the app, returns profile data
+    - We POST that data to /auth/google/native-login
+    - Server sets session cookie for mie.today
+    - We reload dashboard in an authenticated state
+
+    This lets the same dashboard.html power both experiences.
 */
 
 (async function () {
     // ======== CONFIG =========
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
 
-    // Scopes you need for this dashboard
+    // Scopes you need for this dashboard (web mode)
     const SCOPES = [
         "https://www.googleapis.com/auth/calendar.readonly",
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/userinfo.email"
     ].join(" ");
 
-    // Google Apps Script endpoint for allowlist check
+    // Your allowlist check endpoint
     const ACCESS_CHECK_URL =
         "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
 
@@ -286,7 +293,9 @@
     let userEmail = null;
     let gapi_loaded = false;
     let userHasAccess = false;
-    let accessToken = null; // OAuth access_token
+
+    // Browser/implicit OAuth token
+    let accessToken = null;
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -321,7 +330,8 @@
     signoutButton.addEventListener("click", handleSignOut);
     tryDifferentAccountBtn.addEventListener("click", handleSignOut);
 
-    connectGoogleBtn.addEventListener("click", beginGoogleAuthRedirect);
+    // *** CHANGED: connectGoogleBtn now uses onGoogleSignInClick() instead of always redirecting ***
+    connectGoogleBtn.addEventListener("click", onGoogleSignInClick); // >>> NEW <<<
 
     sendButton.addEventListener("click", sendEmail);
     messageInput.addEventListener("input", updateSendButton);
@@ -333,7 +343,72 @@
         if (e.target === eventModal) eventModal.classList.add("hidden");
     });
 
-    // ======== AUTH FLOW (REDIRECT MODE) =========
+    // ======== ANDROID BRIDGE ENTRY POINT ========
+    // This is the function we call when user taps "Connect Google".
+    // If we're running inside Android WebView, AndroidBridge will exist and we'll trigger native sign-in.
+    // Otherwise we fall back to the normal web OAuth redirect.
+    async function onGoogleSignInClick() { // >>> NEW <<<
+        if (window.AndroidBridge && AndroidBridge.triggerGoogleSignIn) {
+            // We're in the Android app. Ask native layer to sign in.
+            AndroidBridge.triggerGoogleSignIn();
+            return;
+        }
+
+        // We're in normal browser. Use your existing redirect flow.
+        beginGoogleAuthRedirect();
+    }
+
+    // Native success callback.
+    // Android injects user info like { name, email, avatar, googleId, idToken }
+    // after Google Sign-In completes on the device.
+    window.__onAndroidGoogleSignIn = async function (data) { // >>> NEW <<<
+        // data looks like:
+        // {
+        //   name: "Jane Doe",
+        //   email: "jane@example.com",
+        //   avatar: "https://lh3.googleusercontent.com/...",
+        //   googleId: "11223344556677889900",
+        //   idToken: ""  // currently empty because we haven't requestedIdToken() yet
+        // }
+
+        try {
+            // Send to backend so backend can create a session + set cookie
+            // NOTE: backend must respond with Set-Cookie for domain .mie.today
+            const res = await fetch("/auth/google/native-login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include", // allow cookie back into WebView
+                body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+                // At this point backend should consider the user "signed in"
+                // Reload so UI moves to the authenticated dashboard state
+                window.location.reload();
+                return;
+            }
+
+            console.error("native-login failed with HTTP", res.status);
+            alert("Sign-in failed. Please try again.");
+        } catch (err) {
+            console.error("native-login network error", err);
+            alert("Network error while signing in.");
+        }
+    };
+
+    // Native error callback.
+    window.__onAndroidGoogleSignInError = function (statusCode) { // >>> NEW <<<
+        console.warn("Android Google Sign-In failed:", statusCode);
+        alert("Google Sign-In was cancelled or failed (code " + statusCode + ").");
+    };
+
+    // ======== AUTH FLOW (BROWSER MODE / IMPLICIT OAUTH) =========
+    //
+    // This is unchanged logic you already had. We keep it because:
+    // - Web visitors use this path.
+    // - Android WebView fallback also still works if native bridge is absent.
 
     // Step 1: check URL fragment for access_token from Google redirect.
     parseAccessTokenFromHash();
@@ -353,7 +428,7 @@
 
     /**
      * Build Google OAuth URL (implicit flow, response_type=token) and redirect.
-     * This is same-tab. No popup.
+     * Browser mode only. Android mode bypasses this and calls native instead.
      */
     function beginGoogleAuthRedirect() {
         const redirectUri = window.location.origin + window.location.pathname;
@@ -364,7 +439,7 @@
             response_type: "token", // implicit flow -> we get access_token in hash
             scope: SCOPES,
             include_granted_scopes: "true",
-            prompt: "consent", // ensure we actually get consent screen for Gmail/Calendar scopes
+            prompt: "consent", // force consent for Gmail/Calendar scopes
             state: "mie_oauth_state_" + Date.now()
         });
 
@@ -386,10 +461,7 @@
             accessToken = tokenFromHash;
         }
 
-        // optional: could read expires_in, token_type, scope, state
-        // const expiresIn = data.get("expires_in");
-
-        // Clean URL so token isn't sitting in the bar/history moving forward.
+        // Clean URL so token isn't exposed after initial load
         window.history.replaceState(
             {},
             document.title,
@@ -453,7 +525,10 @@
 
     // ======== AUTH SUCCESS HANDLER =========
     async function handleAuthSuccess() {
-        // Sanity gate
+        // NOTE: this code path is for the browser-token mode.
+        // In Android native-sign-in path, you will skip gapi and just rely on the
+        // backend cookie after /auth/google/native-login.
+
         if (!gapi_loaded || !accessToken) {
             console.error("Auth success path hit without gapi/token");
             showAccessDenied();
@@ -464,11 +539,11 @@
         showAccessCheck();
 
         try {
-            // 1. Resolve the user's email (identity)
+            // 1. Resolve the user's email
             userEmail = await getUserEmail();
             console.log("User email:", userEmail);
 
-            // 2. Hit allowlist service
+            // 2. Check allowlist
             const hasAccess = await checkUserAccess(userEmail);
 
             if (hasAccess) {
@@ -486,14 +561,13 @@
         }
     }
 
-    // ======== USER EMAIL RESOLUTION =========
+    // ======== USER EMAIL RESOLUTION (Browser OAuth mode) =========
     async function getUserEmail() {
         try {
-            // We have an OAuth access token for Gmail/Calendar scopes already set on gapi.client.
-            // We'll call the userinfo endpoint (userinfo.email is in scope).
             const token = gapi.client.getToken();
             if (!token || !token.access_token) throw new Error("No token in gapi client");
 
+            // Try userinfo endpoint first
             const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
                 headers: { Authorization: `Bearer ${token.access_token}` }
             });
@@ -505,7 +579,7 @@
                 }
             }
 
-            // Fallback to Gmail profile if userinfo didn't return email
+            // Fallback via Gmail profile
             const gmailResp = await gapi.client.gmail.users.getProfile({
                 userId: "me"
             });
@@ -546,7 +620,9 @@
 
     // ======== SIGN OUT =========
     function handleSignOut() {
-        // Revoke token with Google's revoke endpoint
+        // This sign-out logic is targeted at browser OAuth mode.
+        // In Android-native mode, you'd also want to clear the backend session cookie if you set one.
+
         const tokenObj = gapi.client.getToken();
         const tokenToRevoke = tokenObj && tokenObj.access_token;
 
@@ -811,3 +887,4 @@
 </script>
 </body>
 </html>
+
