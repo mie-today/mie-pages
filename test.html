@@ -1,212 +1,838 @@
+Below is a clean rewrite of `dashboard.html` that eliminates Google's popup consent window.
+
+Executive summary before code:
+
+* Google only allows two OAuth consent patterns for browser apps:
+
+  1. popup (what you have now),
+  2. full-page redirect to accounts.google.com and then back to your app.
+* Embedding the Google consent screen “inside the page” in an iframe/modal is blocked by Google (they send `X-Frame-Options: DENY`). You won't get Calendar/Gmail scopes that way.
+* So the only compliant way to avoid popups is redirect mode. We’ll do that.
+
+What this version does:
+
+1. Shows a `Connect Google` button.
+2. When clicked, we build the OAuth URL and `window.location` to it (same tab, no popup).
+3. Google redirects back to the same page with `#access_token=...` in the URL fragment.
+4. We parse that token on load, wipe the fragment from the URL (so it’s not sitting in history), inject it into `gapi.client`, and proceed exactly like before (access check, calendar load, Gmail send, etc.).
+5. Sign out revokes the token and returns you to pre-auth state.
+
+No `g_id_onload`, no `g_id_signin`, no `gsi/client`, no popup.
+
+Drop this in as `dashboard.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Subscribe to Mie</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Lato&family=Montserrat:wght@700&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard</title>
 
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google API Client Library (for Calendar + Gmail REST calls) -->
+<script src="https://apis.google.com/js/api.js"></script>
+
+<!-- FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+    /* --- General Body and Layout --- */
     body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Lato', sans-serif;
-      background-color: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+        font-family: 'Inter', sans-serif;
+        background-color: #ffffff;
+        color: #1f2937;
+        margin: 0;
+        padding: 0;
     }
 
-    .layout {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      max-width: 1200px;
-      width: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      gap: 20px;
+    /* Custom font classes */
+    .font-montserrat { font-family: 'Montserrat', sans-serif; }
+    .font-lato { font-family: 'Lato', sans-serif; }
+
+    /* --- Scrollbar Styling --- */
+    .oauth-app-container #message-log::-webkit-scrollbar,
+    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-track,
+    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+
+    /* Utility class for disabled elements */
+    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Main container for the entire application */
+    .oauth-app-container { max-width: 100%; margin: 0 auto; }
+
+    /* --- Responsive Styles for Mobile (up to 480px wide) --- */
+    @media (max-width: 480px) {
+        .oauth-app-container {
+            width: 100% !important;
+        }
+        .mobile-container {
+            padding: 4px !important;
+            gap: 4px !important;
+        }
+        .calendar-section, .messaging-section {
+            width: 100% !important;
+            height: auto !important;
+            padding: 8px !important;
+        }
+        .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
+        .mobile-text { font-size: 14px !important; line-height: 1.1 !important; }
+        .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
+        .mobile-text-btn { font-size: 16px !important; }
+        .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
+        .fc .fc-toolbar-title { font-size: 20px !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
+        .fc .fc-col-header-cell { font-size: 12px !important; }
+        .fc .fc-daygrid-day-number { font-size: 12px !important; }
+        .fc .fc-event { font-size: 10px !important; }
     }
 
-    .image-container {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    /* --- Responsive Styles for Tablet (481px to 768px) --- */
+    @media (min-width: 481px) and (max-width: 768px) {
+        .oauth-app-container { width: 481px; }
+        .calendar-section { width: 481px; height: 632px; }
+        .messaging-section { width: 481px; height: 316px; }
     }
 
-    .image-container img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
+    /* --- Responsive Styles for Desktop (769px and wider) --- */
+    @media (min-width: 769px) {
+        .oauth-app-container { width: 800px; }
+        .calendar-section { width: 800px; height: 860px; }
+        .messaging-section { width: 800px; height: 360px; }
     }
 
-    .subscribe-container {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
-    }
+    /* --- FullCalendar Light Mode Customization --- */
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
+    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
-    .subscribe-container h2 {
-      font-family: 'Montserrat', sans-serif;
-      color: #333;
-      margin: 0 0 15px 0;
-      font-size: 22px;
-    }
+    /* --- Event Modal Styling --- */
+    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
+    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
 
-    .subscribe-form {
-      display: flex;
-      gap: 10px;
-      margin: 0;
-    }
-
-    .subscribe-form input[type="email"] {
-      flex-grow: 1;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 14px;
-      min-width: 0;
-    }
-
-    .subscribe-form button {
-      padding: 12px 20px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 4px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    .subscribe-form button:hover {
-      background-color: #0056b3;
-    }
-
-    .subscribe-form button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-
-    #message {
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .success {
-      color: green;
-    }
-
-    .error {
-      color: red;
-    }
-
-    /* --- Responsive Styles for Mobile & Tablet --- */
-    @media (max-width: 768px) {
-      .layout {
-        flex-direction: column;
-      }
-
-      .image-container {
-        width: 100%;
-      }
-
-      .subscribe-container {
-        max-width: 500px;
-        width: 100%;
-      }
-
-      .subscribe-form {
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .subscribe-form input[type="email"] {
-        font-size: 12px;
-        padding: 10px;
-      }
-
-      .subscribe-form button {
-        font-size: 12px;
-        padding: 10px;
-        width: 100%;
-      }
-
-      #message {
-        font-size: 12px;
-      }
-    }
-  </style>
+    /* --- Access Denied Styling --- */
+    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
+</style>
 </head>
-<body>
+<body class="bg-white">
 
-  <div class="layout">
-    <div class="image-container">
-      <img src="https://mie-today.github.io/mie-pages/Simple%20Coming%20Soon%20Instagram%20Post.png" alt="Coming Soon">
+<!-- Main App Container -->
+<div class="oauth-app-container">
+    <div class="flex flex-col space-y-4 p-4 mobile-container">
+
+        <!-- ===== Calendar Section ===== -->
+        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
+
+            <!-- Authentication Area (signed out / pre-consent) -->
+            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
+                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
+
+                <!-- Inline connect CTA - no popup -->
+                <button
+                    id="connect-google-btn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
+                    style="min-width:200px; justify-content:center;"
+                >
+                    Connect Google
+                </button>
+
+                <div class="mt-6 text-sm text-gray-500">
+                    or
+                    <a href="signup.html"
+                       class="font-semibold text-green-600 hover:text-green-700 hover:underline">
+                    Create an account
+                    </a>
+                </div>
+            </div>
+
+            <!-- Access Verification Area -->
+            <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
+            </div>
+
+            <!-- Access Denied Area -->
+            <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
+                <div class="access-denied text-center max-w-md">
+                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
+                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
+                    <div class="space-y-3">
+                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
+                        <br />
+                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">
+                            Try a Different Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Content (signed in + approved) -->
+            <div id="calendar-content" class="hidden flex flex-col h-full">
+                <div class="flex justify-between items-center">
+                    <span id="welcome-message" class="text-sm text-gray-600"></span>
+                    <button
+                        id="signout_button"
+                        class="bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
+                    >
+                        Sign Out
+                    </button>
+                </div>
+                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
+            </div>
+        </div>
+
+        <!-- ===== Messaging Section ===== -->
+        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
+            <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
+
+            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
+                <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
+            </div>
+
+            <textarea
+                id="message-input"
+                placeholder="Type your message..."
+                class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"
+            ></textarea>
+
+            <div class="flex items-center space-x-2 mt-2">
+                <label
+                    for="file-input"
+                    class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text"
+                >
+                    Attachment
+                </label>
+                <input id="file-input" type="file" class="hidden" accept="image/*" />
+                <div id="file-preview" class="hidden flex items-center space-x-2">
+                    <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview" />
+                    <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
+                </div>
+            </div>
+
+            <button
+                id="send-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn"
+                disabled
+            >
+                Send
+            </button>
+        </div>
     </div>
+</div>
 
-    <div class="subscribe-container">
-      <h2>Subscribe and get updates</h2>
-      <form class="subscribe-form" id="subscribeForm">
-        <input type="email" name="email" placeholder="Enter your email address" required>
-        <button type="submit">Subscribe</button>
-      </form>
-      <p id="message"></p>
+<!-- ===== Event Details Modal (Popup for event info, not auth) ===== -->
+<div id="event-modal" class="event-modal hidden">
+    <div class="event-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="event-details" class="space-y-2">
+            <p id="event-time" class="text-gray-600 mobile-text"></p>
+            <p id="event-description" class="text-gray-700 mobile-text"></p>
+            <p id="event-location" class="text-gray-600 mobile-text"></p>
+        </div>
+        <div class="mt-4 flex justify-end">
+            <a
+                id="event-link"
+                target="_blank"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-btn"
+            >
+                Open in Google Calendar
+            </a>
+        </div>
     </div>
-  </div>
+</div>
 
-  <script>
-    const form = document.getElementById('subscribeForm');
-    const messageEl = document.getElementById('message');
-    const submitButton = form.querySelector('button');
+<script>
+/*
+    High-level auth model (no popup):
+    1. User clicks "Connect Google".
+    2. We redirect (same tab) to Google's OAuth endpoint with response_type=token.
+    3. Google asks for consent.
+    4. Google redirects back to THIS PAGE with access_token in the URL hash.
+    5. On load, we parse the hash, stash the token, scrub the hash from the URL,
+       and proceed with API calls like before.
 
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxNczz3c-Z9DXBarnoYpkyuGKfX5ktJUxPFS9hG_AmiabKORFG1hJvCRTHRELY2y0I/exe';
+    This is standards-compliant implicit OAuth 2.0 flow for public JS apps.
+    It avoids window.open() popups.
+*/
 
-    form.addEventListener('submit', e => {
-      e.preventDefault();
+(async function () {
+    // ======== CONFIG =========
+    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
 
-      messageEl.textContent = 'Submitting...';
-      messageEl.className = '';
-      submitButton.disabled = true;
+    // Scopes you need for this dashboard
+    const SCOPES = [
+        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/userinfo.email"
+    ].join(" ");
 
-      fetch(scriptURL, {
-        method: 'POST',
-        body: new FormData(form)
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.result === 'success') {
-            messageEl.textContent = 'Thank you for subscribing!';
-            messageEl.className = 'success';
-            form.reset();
-          } else {
-            if (data.message && data.message.includes('already subscribed')) {
-              messageEl.textContent = 'This email is already subscribed!';
-            } else {
-              messageEl.textContent = 'An error occurred. Please try again.';
-            }
-            messageEl.className = 'error';
-            console.error('Error:', data.message);
-          }
-        })
-        .catch(error => {
-          messageEl.textContent = 'An error occurred. Please try again.';
-          messageEl.className = 'error';
-          console.error('Fetch Error:', error.message);
-        })
-        .finally(() => {
-          submitButton.disabled = false;
-        });
+    // Google Apps Script endpoint for allowlist check
+    const ACCESS_CHECK_URL =
+        "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
+
+    // Where outbound messages get sent
+    const RECIPIENT_EMAIL = "save@mie.today";
+
+    // ======== STATE =========
+    let calendar = null;
+    let selectedFile = null;
+    let userEmail = null;
+    let gapi_loaded = false;
+    let userHasAccess = false;
+    let accessToken = null; // OAuth access_token
+
+    // ======== DOM HOOKS =========
+    const authArea = document.getElementById("auth-area");
+    const accessCheckArea = document.getElementById("access-check-area");
+    const accessDeniedArea = document.getElementById("access-denied-area");
+    const calendarContent = document.getElementById("calendar-content");
+    const calendarContainer = document.getElementById("calendar-container");
+    const messagingSection = document.getElementById("messaging-section");
+    const welcomeMessage = document.getElementById("welcome-message");
+    const signoutButton = document.getElementById("signout_button");
+    const tryDifferentAccountBtn = document.getElementById("try-different-account");
+
+    const connectGoogleBtn = document.getElementById("connect-google-btn");
+
+    const sendButton = document.getElementById("send-button");
+    const messageLog = document.getElementById("message-log");
+    const messageInput = document.getElementById("message-input");
+    const fileInput = document.getElementById("file-input");
+    const filePreview = document.getElementById("file-preview");
+    const previewImage = document.getElementById("preview-image");
+    const removeFileButton = document.getElementById("remove-file");
+
+    const eventModal = document.getElementById("event-modal");
+    const closeModal = document.getElementById("close-modal");
+    const eventTitle = document.getElementById("event-title");
+    const eventTime = document.getElementById("event-time");
+    const eventDescription = document.getElementById("event-description");
+    const eventLocation = document.getElementById("event-location");
+    const eventLink = document.getElementById("event-link");
+
+    // ======== EVENT LISTENERS =========
+    signoutButton.addEventListener("click", handleSignOut);
+    tryDifferentAccountBtn.addEventListener("click", handleSignOut);
+
+    connectGoogleBtn.addEventListener("click", beginGoogleAuthRedirect);
+
+    sendButton.addEventListener("click", sendEmail);
+    messageInput.addEventListener("input", updateSendButton);
+    fileInput.addEventListener("change", handleFileSelect);
+    removeFileButton.addEventListener("click", removeFile);
+
+    closeModal.addEventListener("click", () => eventModal.classList.add("hidden"));
+    eventModal.addEventListener("click", (e) => {
+        if (e.target === eventModal) eventModal.classList.add("hidden");
     });
-  </script>
 
+    // ======== AUTH FLOW (REDIRECT MODE) =========
+
+    // Step 1: check URL fragment for access_token from Google redirect.
+    parseAccessTokenFromHash();
+
+    // Step 2: init GAPI client library
+    await initGapiClient();
+
+    // Step 3: if we have an access token, bind it into gapi and continue
+    if (accessToken) {
+        gapi.client.setToken({ access_token: accessToken });
+        // Move to next step: gated access, calendar, etc.
+        handleAuthSuccess();
+    } else {
+        // No token -> show unauth state
+        showAuthArea();
+    }
+
+    /**
+     * Build Google OAuth URL (implicit flow, response_type=token) and redirect.
+     * This is same-tab. No popup.
+     */
+    function beginGoogleAuthRedirect() {
+        const redirectUri = window.location.origin + window.location.pathname;
+
+        const params = new URLSearchParams({
+            client_id: CLIENT_ID,
+            redirect_uri: redirectUri,
+            response_type: "token", // implicit flow -> we get access_token in hash
+            scope: SCOPES,
+            include_granted_scopes: "true",
+            prompt: "consent", // ensure we actually get consent screen for Gmail/Calendar scopes
+            state: "mie_oauth_state_" + Date.now()
+        });
+
+        const oauthUrl = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
+        window.location = oauthUrl;
+    }
+
+    /**
+     * Pulls access_token, expires_in, token_type from URL hash if present.
+     * Then cleans the hash out of the URL (cosmetic + basic token hygiene).
+     */
+    function parseAccessTokenFromHash() {
+        if (!window.location.hash || window.location.hash.length < 2) return;
+        const frag = window.location.hash.substring(1); // drop '#'
+        const data = new URLSearchParams(frag);
+
+        const tokenFromHash = data.get("access_token");
+        if (tokenFromHash) {
+            accessToken = tokenFromHash;
+        }
+
+        // optional: could read expires_in, token_type, scope, state
+        // const expiresIn = data.get("expires_in");
+
+        // Clean URL so token isn't sitting in the bar/history moving forward.
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname + window.location.search
+        );
+    }
+
+    /**
+     * Initialize gapi client discovery docs (Calendar + Gmail)
+     */
+    async function initGapiClient() {
+        return new Promise((resolve) => {
+            gapi.load("client", () => {
+                gapi.client
+                    .init({
+                        discoveryDocs: [
+                            "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+                            "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
+                        ]
+                    })
+                    .then(() => {
+                        gapi_loaded = true;
+                        resolve();
+                    });
+            });
+        });
+    }
+
+    // ======== UI STATE MGMT =========
+    function showAuthArea() {
+        authArea.classList.remove("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showAccessCheck() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.remove("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showAccessDenied() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.remove("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showDashboard() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.remove("hidden");
+        messagingSection.classList.remove("hidden");
+    }
+
+    // ======== AUTH SUCCESS HANDLER =========
+    async function handleAuthSuccess() {
+        // Sanity gate
+        if (!gapi_loaded || !accessToken) {
+            console.error("Auth success path hit without gapi/token");
+            showAccessDenied();
+            return;
+        }
+
+        // Move UI to "Verifying Access..."
+        showAccessCheck();
+
+        try {
+            // 1. Resolve the user's email (identity)
+            userEmail = await getUserEmail();
+            console.log("User email:", userEmail);
+
+            // 2. Hit allowlist service
+            const hasAccess = await checkUserAccess(userEmail);
+
+            if (hasAccess) {
+                userHasAccess = true;
+                welcomeMessage.textContent = `Welcome, ${userEmail}`;
+                showDashboard();
+                displayMonthlyCalendar();
+            } else {
+                userHasAccess = false;
+                showAccessDenied();
+            }
+        } catch (e) {
+            console.error("Error during auth process:", e);
+            showAccessDenied();
+        }
+    }
+
+    // ======== USER EMAIL RESOLUTION =========
+    async function getUserEmail() {
+        try {
+            // We have an OAuth access token for Gmail/Calendar scopes already set on gapi.client.
+            // We'll call the userinfo endpoint (userinfo.email is in scope).
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) throw new Error("No token in gapi client");
+
+            const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+                headers: { Authorization: `Bearer ${token.access_token}` }
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.email) {
+                    return data.email;
+                }
+            }
+
+            // Fallback to Gmail profile if userinfo didn't return email
+            const gmailResp = await gapi.client.gmail.users.getProfile({
+                userId: "me"
+            });
+            return gmailResp.result.emailAddress;
+        } catch (e) {
+            console.error("Error getting user email:", e);
+            throw e;
+        }
+    }
+
+    // ======== ACCESS CONTROL (ALLOWLIST CHECK) =========
+    async function checkUserAccess(email) {
+        try {
+            console.log("Checking access for:", email);
+
+            const response = await fetch(
+                `${ACCESS_CHECK_URL}?action=checkAccess&email=${encodeURIComponent(email)}`,
+                {
+                    method: "GET",
+                    mode: "cors"
+                }
+            );
+
+            if (!response.ok) {
+                console.error("Access check request failed:", response.status);
+                return false;
+            }
+
+            const data = await response.json();
+            console.log("Access check response:", data);
+
+            return data.hasAccess === true;
+        } catch (error) {
+            console.error("Error checking user access:", error);
+            return false;
+        }
+    }
+
+    // ======== SIGN OUT =========
+    function handleSignOut() {
+        // Revoke token with Google's revoke endpoint
+        const tokenObj = gapi.client.getToken();
+        const tokenToRevoke = tokenObj && tokenObj.access_token;
+
+        if (tokenToRevoke) {
+            fetch(
+                "https://oauth2.googleapis.com/revoke?token=" +
+                    encodeURIComponent(tokenToRevoke),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-type": "application/x-www-form-urlencoded"
+                    }
+                }
+            ).catch((err) => {
+                console.warn("Token revoke failed (non-blocking):", err);
+            });
+        }
+
+        // Clear local app state
+        gapi.client.setToken(null);
+        accessToken = null;
+        userEmail = null;
+        userHasAccess = false;
+
+        showAuthArea();
+    }
+
+    // ======== FILE ATTACHMENT / MESSAGE UI =========
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e2) => {
+                previewImage.src = e2.target.result;
+                filePreview.classList.remove("hidden");
+                updateSendButton();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeFile() {
+        selectedFile = null;
+        filePreview.classList.add("hidden");
+        fileInput.value = "";
+        updateSendButton();
+    }
+
+    function updateSendButton() {
+        const canSend =
+            messageInput.value.trim() !== "" || selectedFile !== null;
+        sendButton.disabled = !canSend;
+    }
+
+    // ======== EMAIL SEND VIA GMAIL API =========
+    async function sendEmail() {
+        if (!userEmail || !userHasAccess) {
+            logMessage("Error: Access denied or not signed in.", "error");
+            return;
+        }
+        if (!messageInput.value.trim() && !selectedFile) return;
+
+        logMessage(`Sending email...`, "info");
+        sendButton.disabled = true;
+
+        const boundary = "----boundary_" + Date.now();
+        const headers = [
+            `To: ${RECIPIENT_EMAIL}`,
+            `From: ${userEmail}`,
+            `Subject: Message from ${userEmail}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: multipart/mixed; boundary="${boundary}"`
+        ];
+
+        let emailContent = headers.join("\r\n") + "\r\n\r\n";
+
+        if (messageInput.value.trim()) {
+            emailContent +=
+                `--${boundary}\r\n` +
+                `Content-Type: text/plain; charset=utf-8\r\n\r\n` +
+                `${messageInput.value.trim()}\r\n\r\n`;
+        }
+
+        if (selectedFile) {
+            const fileData = await fileToBase64(selectedFile);
+            emailContent +=
+                `--${boundary}\r\n` +
+                `Content-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\n` +
+                `Content-Disposition: attachment; filename="${selectedFile.name}"\r\n` +
+                `Content-Transfer-Encoding: base64\r\n\r\n` +
+                `${fileData.split(",")[1]}\r\n\r\n`;
+        }
+
+        emailContent += `--${boundary}--`;
+
+        // Base64URL encode per Gmail API spec
+        const base64Encoded = btoa(unescape(encodeURIComponent(emailContent)))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+
+        try {
+            await gapi.client.gmail.users.messages.send({
+                userId: "me",
+                resource: { raw: base64Encoded }
+            });
+            logMessage("Message sent", "success");
+            messageInput.value = "";
+            removeFile();
+        } catch (err) {
+            logMessage(
+                `Failed to send email: ${
+                    err.result?.error?.message || "Unknown error"
+                }`,
+                "error"
+            );
+        } finally {
+            updateSendButton();
+        }
+    }
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (err) => reject(err);
+        });
+    }
+
+    function logMessage(msg, type) {
+        const div = document.createElement("div");
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        div.className = `text-sm mb-1 ${
+            type === "error"
+                ? "text-red-500"
+                : type === "success"
+                ? "text-green-500"
+                : "text-gray-600"
+        }`;
+        const placeholder = messageLog.querySelector(".text-gray-500");
+        if (placeholder) placeholder.remove();
+        messageLog.appendChild(div);
+        messageLog.scrollTop = messageLog.scrollHeight;
+    }
+
+    // ======== CALENDAR RENDER =========
+    function displayMonthlyCalendar() {
+        if (!userHasAccess) return;
+
+        if (calendar) calendar.destroy();
+
+        calendar = new FullCalendar.Calendar(calendarContainer, {
+            initialView: "dayGridMonth",
+            headerToolbar: {
+                left: "today",
+                center: "title",
+                right: "prev,next"
+            },
+            fixedWeekCount: false,
+            showNonCurrentDates: false,
+            height: "auto",
+            events: async (fetchInfo, successCallback, failureCallback) => {
+                try {
+                    // Get all calendars (primary + shared)
+                    const calendarListResponse =
+                        await gapi.client.calendar.calendarList.list();
+                    const calendars = calendarListResponse.result.items;
+
+                    console.log(
+                        `Found ${calendars.length} calendars:`,
+                        calendars.map((c) => c.summary)
+                    );
+
+                    // Fetch events from all calendars for the visible range
+                    const eventPromises = calendars.map(async (cal) => {
+                        try {
+                            const res =
+                                await gapi.client.calendar.events.list({
+                                    calendarId: cal.id,
+                                    timeMin: fetchInfo.start.toISOString(),
+                                    timeMax: fetchInfo.end.toISOString(),
+                                    showDeleted: false,
+                                    singleEvents: true,
+                                    orderBy: "startTime"
+                                });
+
+                            return (res.result.items || []).map((e) => ({
+                                id: e.id,
+                                title: e.summary || "No Title",
+                                start:
+                                    e.start.dateTime || e.start.date,
+                                end: e.end?.dateTime || e.end?.date,
+                                url: e.htmlLink,
+                                allDay: !e.start.dateTime,
+                                description: e.description || "",
+                                location: e.location || "",
+                                backgroundColor:
+                                    cal.backgroundColor || "#3b82f6",
+                                borderColor:
+                                    cal.backgroundColor || "#3b82f6"
+                            }));
+                        } catch (err) {
+                            console.error(
+                                `Error fetching from ${cal.summary}:`,
+                                err
+                            );
+                            return [];
+                        }
+                    });
+
+                    const eventArrays = await Promise.all(eventPromises);
+                    const allEvents = eventArrays.flat();
+
+                    console.log(`Total events: ${allEvents.length}`);
+                    successCallback(allEvents);
+                } catch (err) {
+                    console.error("Error fetching calendar events: ", err);
+                    failureCallback(err);
+                }
+            },
+            eventClick: function (info) {
+                info.jsEvent.preventDefault();
+                showEventDetails(info.event);
+            }
+        });
+
+        calendar.render();
+    }
+
+    function showEventDetails(event) {
+        eventTitle.textContent = event.title;
+
+        const start = new Date(event.start);
+        const end = event.end ? new Date(event.end) : null;
+
+        let timeString = "All-day";
+        if (!event.allDay) {
+            timeString = start.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit"
+            });
+            if (end) {
+                timeString +=
+                    ` - ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+            }
+        }
+
+        eventTime.textContent = `${start.toLocaleDateString()}${
+            event.allDay ? "" : " | " + timeString
+        }`;
+        eventDescription.textContent =
+            event.extendedProps.description || "No description provided.";
+        eventLocation.textContent =
+            event.extendedProps.location || "No location provided.";
+        eventLink.href = event.url;
+
+        eventModal.classList.remove("hidden");
+    }
+})();
+</script>
 </body>
 </html>
+```
