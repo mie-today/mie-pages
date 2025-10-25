@@ -701,4 +701,54 @@
                     });
 
                     const eventArrays = await Promise.all(eventPromises);
-                    const a
+                    const allEvents = eventArrays.flat();
+
+                    console.log(`Total events: ${allEvents.length}`);
+                    successCallback(allEvents);
+                } catch (err) {
+                    console.error("Error fetching calendar events: ", err);
+                    failureCallback(err);
+                }
+            },
+            eventClick: function (info) {
+                info.jsEvent.preventDefault();
+                showEventDetails(info.event);
+            }
+        });
+
+        calendar.render();
+    }
+
+    function showEventDetails(event) {
+        eventTitle.textContent = event.title;
+
+        const start = new Date(event.start);
+        const end = event.end ? new Date(event.end) : null;
+
+        let timeString = "All-day";
+        if (!event.allDay) {
+            timeString = start.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit"
+            });
+            if (end) {
+                timeString +=
+                    ` - ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+            }
+        }
+
+        eventTime.textContent = `${start.toLocaleDateString()}${
+            event.allDay ? "" : " | " + timeString
+        }`;
+        eventDescription.textContent =
+            event.extendedProps.description || "No description provided.";
+        eventLocation.textContent =
+            event.extendedProps.location || "No location provided.";
+        eventLink.href = event.url;
+
+        eventModal.classList.remove("hidden");
+    }
+})();
+</script>
+</body>
+</html>
