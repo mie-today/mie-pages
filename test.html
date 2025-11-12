@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
 
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
+<!-- Google API Client Library (for Calendar + Gmail REST calls) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
+<!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 
+<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -110,16 +114,20 @@
 </head>
 <body class="bg-white">
 
+<!-- Main App Container -->
 <div class="oauth-app-container">
     <div class="flex flex-col space-y-4 p-4 mobile-container">
 
+        <!-- ===== Calendar Section ===== -->
         <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
 
+            <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
 
+                <!-- Inline connect CTA - no popup -->
                 <button
                     id="connect-google-btn"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
@@ -137,6 +145,7 @@
                 </div>
             </div>
 
+            <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
@@ -144,6 +153,7 @@
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
+            <!-- Access Denied Area -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
@@ -160,6 +170,7 @@
                 </div>
             </div>
 
+            <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
                 <div class="flex justify-between items-center">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
@@ -174,6 +185,7 @@
             </div>
         </div>
 
+        <!-- ===== Messaging Section ===== -->
         <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
             <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
 
@@ -212,11 +224,12 @@
     </div>
 </div>
 
+<!-- ===== Event Details Modal (Popup for event info, not auth) ===== -->
 <div id="event-modal" class="event-modal hidden">
     <div class="event-modal-content">
         <div class="flex justify-between items-start mb-4">
             <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
-            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
         </div>
         <div id="event-details" class="space-y-2">
             <p id="event-time" class="text-gray-600 mobile-text"></p>
@@ -236,42 +249,26 @@
 </div>
 
 <script>
-/*
-    MODIFIED SCRIPT (Nov 2025)
-
-    High-level auth model:
-
-    MODE A: Browser (desktop/mobile web)
-    - User clicks "Connect Google"
-    - We redirect to Google OAuth (AUTHORIZATION CODE flow, response_type=code)
-    - We get a one-time 'code' back in the URL query parameters
-    - We POST this 'code' to our backend (Google Apps Script)
-    - Backend exchanges 'code' + 'client_secret' for an 'access_token' and 'refresh_token'
-    - Backend securely stores 'refresh_token' (e.g., in PropertiesService)
-    - Backend returns the short-lived 'access_token' to this script
-    - We call Google Calendar + Gmail APIs directly from JS using this 'access_token'
-
-    MODE B: Android WebView (native bridge)
-    - (This flow is unchanged and remains separate)
-*/
-
 (async function () {
     // ======== CONFIG =========
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
 
-    // *** MODIFIED: Updated scopes for Calendar write access ***
+    // UPDATED SCOPES: Added calendar write and kept Gmail send
     const SCOPES = [
-        "https://www.googleapis.com/auth/calendar.events", // <-- GRANTS WRITE ACCESS
+        "https://www.googleapis.com/auth/calendar",  // Full calendar access (read/write)
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/userinfo.email"
     ].join(" ");
 
+    // Your backend OAuth callback endpoint
+    const OAUTH_CALLBACK_ENDPOINT = "https://script.google.com/macros/s/AKfycbzhXov8noDHtO-aNZTbzsuzuf_QdRuRAs9_yjzFMjhEvK9qw5XVS_ROILyibzGw2w5F/exec";
+    
+    // Token refresh endpoint (same as callback)
+    const TOKEN_REFRESH_ENDPOINT = "https://script.google.com/macros/s/AKfycbzhXov8noDHtO-aNZTbzsuzuf_QdRuRAs9_yjzFMjhEvK9qw5XVS_ROILyibzGw2w5F/exec";
+
     // Your allowlist check endpoint
     const ACCESS_CHECK_URL =
-        "https://script.google.com/macros/s/AKfycbzhXov8noDHtO-aNZTbzsuzuf_QdRuRAs9_yjzFMjhEvK9qw5XVS_ROILyibzGw2w5F/exec";
-
-    // *** NEW: Endpoint for exchanging the code. This is the *same* as your ACCESS_CHECK_URL ***
-    const TOKEN_EXCHANGE_URL = ACCESS_CHECK_URL; 
+        "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
 
     // Where outbound messages get sent
     const RECIPIENT_EMAIL = "save@mie.today";
@@ -282,9 +279,8 @@
     let userEmail = null;
     let gapi_loaded = false;
     let userHasAccess = false;
-
-    // This token is now a short-lived *session* token provided by our backend
-    let sessionAccessToken = null; // <-- Renamed from accessToken
+    let accessToken = null;
+    let tokenExpiresAt = null;
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -297,6 +293,7 @@
     const signoutButton = document.getElementById("signout_button");
     const tryDifferentAccountBtn = document.getElementById("try-different-account");
     const connectGoogleBtn = document.getElementById("connect-google-btn");
+
     const sendButton = document.getElementById("send-button");
     const messageLog = document.getElementById("message-log");
     const messageInput = document.getElementById("message-input");
@@ -304,6 +301,7 @@
     const filePreview = document.getElementById("file-preview");
     const previewImage = document.getElementById("preview-image");
     const removeFileButton = document.getElementById("remove-file");
+
     const eventModal = document.getElementById("event-modal");
     const closeModal = document.getElementById("close-modal");
     const eventTitle = document.getElementById("event-title");
@@ -315,39 +313,43 @@
     // ======== EVENT LISTENERS =========
     signoutButton.addEventListener("click", handleSignOut);
     tryDifferentAccountBtn.addEventListener("click", handleSignOut);
-    connectGoogleBtn.addEventListener("click", onGoogleSignInClick); 
+    connectGoogleBtn.addEventListener("click", onGoogleSignInClick);
+
     sendButton.addEventListener("click", sendEmail);
     messageInput.addEventListener("input", updateSendButton);
     fileInput.addEventListener("change", handleFileSelect);
     removeFileButton.addEventListener("click", removeFile);
+
     closeModal.addEventListener("click", () => eventModal.classList.add("hidden"));
     eventModal.addEventListener("click", (e) => {
         if (e.target === eventModal) eventModal.classList.add("hidden");
     });
 
-    // ======== ANDROID BRIDGE ENTRY POINT (Unchanged) ========
-    async function onGoogleSignInClick() { 
+    // ======== ANDROID BRIDGE ENTRY POINT ========
+    async function onGoogleSignInClick() {
         if (window.AndroidBridge && AndroidBridge.triggerGoogleSignIn) {
             AndroidBridge.triggerGoogleSignIn();
             return;
         }
-        // We're in normal browser. Use the NEW redirect flow.
-        beginGoogleAuthRedirect(); // <-- This function is now modified
+        beginGoogleAuthRedirect();
     }
 
-    // (Android callback functions __onAndroidGoogleSignIn and __onAndroidGoogleSignInError remain unchanged)
-    window.__onAndroidGoogleSignIn = async function (data) { 
+    window.__onAndroidGoogleSignIn = async function (data) {
         try {
             const res = await fetch("/auth/google/native-login", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include", 
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
                 body: JSON.stringify(data),
             });
+
             if (res.ok) {
                 window.location.reload();
                 return;
             }
+
             console.error("native-login failed with HTTP", res.status);
             alert("Sign-in failed. Please try again.");
         } catch (err) {
@@ -355,50 +357,42 @@
             alert("Network error while signing in.");
         }
     };
-    window.__onAndroidGoogleSignInError = function (statusCode) { 
+
+    window.__onAndroidGoogleSignInError = function (statusCode) {
         console.warn("Android Google Sign-In failed:", statusCode);
         alert("Google Sign-In was cancelled or failed (code " + statusCode + ").");
     };
 
-
-    // ======== AUTH FLOW (BROWSER MODE / AUTH CODE FLOW) =========
+    // ======== AUTH FLOW (AUTHORIZATION CODE FLOW) =========
     
-    // Step 1: init GAPI client library (must happen before checking code)
+    // Step 1: Check if we're returning from OAuth with a code
+    parseAuthCodeFromUrl();
+
+    // Step 2: Initialize GAPI client library
     await initGapiClient();
 
-    // Step 2: check URL query params for an auth 'code' from Google redirect.
-    const authCode = parseAuthCodeFromUrlParams(); // <-- MODIFIED
+    // Step 3: Check if we have a valid token in session storage
+    loadTokenFromStorage();
 
-    // Step 3: If we have a code, exchange it. Otherwise, show login.
-    if (authCode) {
-        // We just returned from Google. 
-        // Show "Verifying..." while we exchange the code.
-        showAccessCheck(); 
-        try {
-            // Exchange code for an access_token via our backend
-            const token = await exchangeCodeForToken(authCode); // <-- NEW
-            
-            if (token) {
-                sessionAccessToken = token;
-                gapi.client.setToken({ access_token: sessionAccessToken });
-                // Now that we have a token, proceed to check access list
-                handleAuthSuccess();
-            } else {
-                throw new Error("Token exchange failed, no access token received.");
-            }
-        } catch (err) {
-            console.error("Failed to exchange auth code:", err);
-            logMessage("Sign-in failed during token exchange.", "error");
-            showAuthArea(); // Send back to login
+    // Step 4: If we have a token, proceed
+    if (accessToken && !isTokenExpired()) {
+        gapi.client.setToken({ access_token: accessToken });
+        handleAuthSuccess();
+    } else if (accessToken && isTokenExpired()) {
+        // Try to refresh the token
+        await refreshAccessToken();
+        if (accessToken && !isTokenExpired()) {
+            gapi.client.setToken({ access_token: accessToken });
+            handleAuthSuccess();
+        } else {
+            showAuthArea();
         }
     } else {
-        // No code in URL -> show unauth state
         showAuthArea();
     }
 
     /**
-     * *** MODIFIED ***
-     * Build Google OAuth URL (Auth Code flow) and redirect.
+     * Build Google OAuth URL (authorization code flow) and redirect
      */
     function beginGoogleAuthRedirect() {
         const redirectUri = window.location.origin + window.location.pathname;
@@ -406,11 +400,10 @@
         const params = new URLSearchParams({
             client_id: CLIENT_ID,
             redirect_uri: redirectUri,
-            response_type: "code", // <-- MODIFIED: 'code' instead of 'token'
+            response_type: "code",  // Authorization code flow
             scope: SCOPES,
-            include_granted_scopes: "true",
-            access_type: "offline", // <-- NEW: Request offline access to get a Refresh Token
-            prompt: "consent", // <-- IMPORTANT: Ensures refresh token is granted
+            access_type: "offline",  // Request refresh token
+            prompt: "consent",  // Force consent to ensure refresh token
             state: "mie_oauth_state_" + Date.now()
         });
 
@@ -419,64 +412,149 @@
     }
 
     /**
-     * *** NEW FUNCTION ***
-     * Pulls 'code' from URL query parameters (e.g., ?code=...).
-     * Then cleans the code out of the URL.
+     * Parse authorization code from URL and exchange for tokens
      */
-    function parseAuthCodeFromUrlParams() {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get("code");
-        
+    async function parseAuthCodeFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get("code");
+
         if (code) {
-            // Clean URL so the code isn't re-used on refresh
-            window.history.replaceState(
-                {},
-                document.title,
-                window.location.pathname // Remove all query params
-            );
+            console.log("Authorization code received, exchanging for tokens...");
+            
+            try {
+                // Exchange code for tokens via your backend
+                const response = await fetch(OAUTH_CALLBACK_ENDPOINT + "?action=exchangeCode", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        redirect_uri: window.location.origin + window.location.pathname
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store tokens
+                    accessToken = data.access_token;
+                    tokenExpiresAt = Date.now() + (data.expires_in * 1000);
+                    
+                    // Store refresh token securely
+                    if (data.refresh_token) {
+                        sessionStorage.setItem("mie_refresh_token", data.refresh_token);
+                    }
+                    
+                    sessionStorage.setItem("mie_access_token", accessToken);
+                    sessionStorage.setItem("mie_token_expires", tokenExpiresAt);
+                    
+                    // Clean URL
+                    window.history.replaceState(
+                        {},
+                        document.title,
+                        window.location.pathname
+                    );
+                    
+                    console.log("Tokens stored successfully");
+                } else {
+                    console.error("Token exchange failed:", response.status);
+                    const errorText = await response.text();
+                    console.error("Error details:", errorText);
+                    alert("Authentication failed. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error exchanging code for tokens:", error);
+                alert("Authentication error. Please try again.");
+            }
         }
-        return code;
     }
 
     /**
-     * *** NEW FUNCTION ***
-     * Sends the one-time auth code to our backend (Apps Script)
-     * to be exchanged for an access_token and refresh_token.
-     * The backend stores the refresh_token and returns the access_token.
+     * Load token from session storage
      */
-    async function exchangeCodeForToken(code) {
-        console.log("Exchanging code for token...");
-        // Use your existing Apps Script URL
-        const exchangeUrl = `${TOKEN_EXCHANGE_URL}?action=exchangeCode&code=${encodeURIComponent(code)}`;
-
-        try {
-            const response = await fetch(exchangeUrl, {
-                method: "GET", // Apps Script web apps use GET by default
-                mode: "cors",
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server responded with status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.access_token) {
-                console.log("Access token received from backend.");
-                return data.access_token;
-            } else {
-                throw new Error(data.error || "Backend did not return an access_token.");
-            }
-        } catch (error) {
-            console.error("Error during token exchange fetch:", error);
-            throw error; // Re-throw to be caught by the caller
+    function loadTokenFromStorage() {
+        const storedToken = sessionStorage.getItem("mie_access_token");
+        const storedExpiry = sessionStorage.getItem("mie_token_expires");
+        
+        if (storedToken && storedExpiry) {
+            accessToken = storedToken;
+            tokenExpiresAt = parseInt(storedExpiry);
         }
     }
 
+    /**
+     * Check if current token is expired
+     */
+    function isTokenExpired() {
+        if (!tokenExpiresAt) return true;
+        // Add 5 minute buffer
+        return Date.now() >= (tokenExpiresAt - 300000);
+    }
+
+    /**
+     * Refresh the access token using refresh token
+     */
+    async function refreshAccessToken() {
+        const refreshToken = sessionStorage.getItem("mie_refresh_token");
+        
+        if (!refreshToken) {
+            console.log("No refresh token available");
+            return false;
+        }
+
+        try {
+            console.log("Refreshing access token...");
+            const response = await fetch(TOKEN_REFRESH_ENDPOINT + "?action=refreshToken", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    refresh_token: refreshToken
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                accessToken = data.access_token;
+                tokenExpiresAt = Date.now() + (data.expires_in * 1000);
+                
+                sessionStorage.setItem("mie_access_token", accessToken);
+                sessionStorage.setItem("mie_token_expires", tokenExpiresAt);
+                
+                console.log("Token refreshed successfully");
+                return true;
+            } else {
+                console.error("Token refresh failed:", response.status);
+                const errorText = await response.text();
+                console.error("Error details:", errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error("Error refreshing token:", error);
+            return false;
+        }
+    }
+
+    /**
+     * Ensure we have a valid token before API calls
+     */
+    async function ensureValidToken() {
+        if (isTokenExpired()) {
+            const refreshed = await refreshAccessToken();
+            if (refreshed && !isTokenExpired()) {
+                gapi.client.setToken({ access_token: accessToken });
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
 
     /**
      * Initialize gapi client discovery docs (Calendar + Gmail)
-     * (Unchanged)
      */
     async function initGapiClient() {
         return new Promise((resolve) => {
@@ -496,7 +574,7 @@
         });
     }
 
-    // ======== UI STATE MGMT (Unchanged) =========
+    // ======== UI STATE MGMT =========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -529,33 +607,27 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== AUTH SUCCESS HANDLER (Mostly Unchanged) =========
+    // ======== AUTH SUCCESS HANDLER =========
     async function handleAuthSuccess() {
-        // This function is now called *after* the token has been
-        // fetched from our backend and set in gapi.
-        
-        if (!gapi_loaded || !gapi.client.getToken()) { // <-- Modified check
+        if (!gapi_loaded || !accessToken) {
             console.error("Auth success path hit without gapi/token");
             showAccessDenied();
             return;
         }
 
-        // UI is already showing "Verifying Access..."
-        // showAccessCheck(); // This was already called
+        showAccessCheck();
 
         try {
-            // 1. Resolve the user's email
             userEmail = await getUserEmail();
             console.log("User email:", userEmail);
 
-            // 2. Check allowlist
             const hasAccess = await checkUserAccess(userEmail);
 
             if (hasAccess) {
                 userHasAccess = true;
                 welcomeMessage.textContent = `Welcome, ${userEmail}`;
                 showDashboard();
-                displayMonthlyCalendar(); // <-- This will now work
+                displayMonthlyCalendar();
             } else {
                 userHasAccess = false;
                 showAccessDenied();
@@ -566,13 +638,13 @@
         }
     }
 
-    // ======== USER EMAIL RESOLUTION (Unchanged) =========
+    // ======== USER EMAIL RESOLUTION =========
     async function getUserEmail() {
         try {
+            await ensureValidToken();
             const token = gapi.client.getToken();
             if (!token || !token.access_token) throw new Error("No token in gapi client");
 
-            // Try userinfo endpoint first
             const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
                 headers: { Authorization: `Bearer ${token.access_token}` }
             });
@@ -584,7 +656,6 @@
                 }
             }
 
-            // Fallback via Gmail profile
             const gmailResp = await gapi.client.gmail.users.getProfile({
                 userId: "me"
             });
@@ -595,7 +666,7 @@
         }
     }
 
-    // ======== ACCESS CONTROL (Unchanged) =========
+    // ======== ACCESS CONTROL (ALLOWLIST CHECK) =========
     async function checkUserAccess(email) {
         try {
             console.log("Checking access for:", email);
@@ -623,266 +694,4 @@
         }
     }
 
-    // ======== SIGN OUT (Unchanged, but note on refresh token) =========
-    function handleSignOut() {
-        // NOTE: This revokes the access_token. 
-        // For full sign-out, you should ALSO revoke the refresh_token
-        // This requires *another* backend call. For simplicity,
-        // we are just revoking the client-side token.
-        // The refresh token will remain stored in your Apps Script.
-
-        const tokenObj = gapi.client.getToken();
-        const tokenToRevoke = tokenObj && tokenObj.access_token;
-
-        if (tokenToRevoke) {
-            fetch(
-                "https://oauth2.googleapis.com/revoke?token=" +
-                    encodeURIComponent(tokenToRevoke),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-type": "application/x-www-form-urlencoded"
-                    }
-                }
-            ).catch((err) => {
-                console.warn("Token revoke failed (non-blocking):", err);
-            });
-        }
-
-        // Clear local app state
-        gapi.client.setToken(null);
-        sessionAccessToken = null; // <-- Use new variable name
-        userEmail = null;
-        userHasAccess = false;
-
-        showAuthArea();
-    }
-
-    // ======== FILE ATTACHMENT / MESSAGE UI (Unchanged) =========
-    function handleFileSelect(e) {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith("image/")) {
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e2) => {
-                previewImage.src = e2.target.result;
-                filePreview.classList.remove("hidden");
-                updateSendButton();
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function removeFile() {
-        selectedFile = null;
-        filePreview.classList.add("hidden");
-        fileInput.value = "";
-        updateSendButton();
-    }
-
-    function updateSendButton() {
-        const canSend =
-            messageInput.value.trim() !== "" || selectedFile !== null;
-        sendButton.disabled = !canSend;
-    }
-
-    // ======== EMAIL SEND VIA GMAIL API (Unchanged) =========
-    async function sendEmail() {
-        if (!userEmail || !userHasAccess) {
-            logMessage("Error: Access denied or not signed in.", "error");
-            return;
-        }
-        if (!messageInput.value.trim() && !selectedFile) return;
-
-        logMessage(`Sending email...`, "info");
-        sendButton.disabled = true;
-
-        const boundary = "----boundary_" + Date.now();
-        const headers = [
-            `To: ${RECIPIENT_EMAIL}`,
-            `From: ${userEmail}`,
-            `Subject: Message from ${userEmail}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`
-        ];
-
-        let emailContent = headers.join("\r\n") + "\r\n\r\n";
-
-        if (messageInput.value.trim()) {
-            emailContent +=
-                `--${boundary}\r\n` +
-                `Content-Type: text/plain; charset=utf-8\r\n\r\n` +
-                `${messageInput.value.trim()}\r\n\r\n`;
-        }
-
-        if (selectedFile) {
-            const fileData = await fileToBase64(selectedFile);
-            emailContent +=
-                `--${boundary}\r\n` +
-                `Content-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\n` +
-                `Content-Disposition: attachment; filename="${selectedFile.name}"\r\n` +
-                `Content-Transfer-Encoding: base64\r\n\r\n` +
-                `${fileData.split(",")[1]}\r\n\r\n`;
-        }
-
-        emailContent += `--${boundary}--`;
-
-        // Base64URL encode per Gmail API spec
-        const base64Encoded = btoa(unescape(encodeURIComponent(emailContent)))
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=+$/, "");
-
-        try {
-            await gapi.client.gmail.users.messages.send({
-                userId: "me",
-                resource: { raw: base64Encoded }
-            });
-            logMessage("Message sent", "success");
-            messageInput.value = "";
-            removeFile();
-        } catch (err) {
-            logMessage(
-                `Failed to send email: ${
-                    err.result?.error?.message || "Unknown error"
-                }`,
-                "error"
-            );
-        } finally {
-            updateSendButton();
-        }
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (err) => reject(err);
-        });
-    }
-
-    function logMessage(msg, type) {
-        // Clear placeholder
-        if (messageLog.children.length === 1 && messageLog.children[0].textContent.includes("...")) {
-            messageLog.innerHTML = "";
-        }
-        
-        const div = document.createElement("div");
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        div.className = `text-sm mb-1 ${
-            type === "error"
-                ? "text-red-600"
-                : type === "success"
-                ? "text-green-600"
-                : "text-gray-700"
-        }`;
-        messageLog.appendChild(div);
-        messageLog.scrollTop = messageLog.scrollHeight;
-    }
-
-    // ======== CALENDAR DISPLAY (Unchanged) =========
-    function displayMonthlyCalendar() {
-        if (!gapi_loaded || !userHasAccess) return;
-
-        const calendarEl = document.getElementById("calendar-container");
-
-        calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: "dayGridMonth",
-            headerToolbar: {
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek"
-            },
-            navLinks: true,
-            editable: false, // Set to true if you want drag-and-drop (requires write scope)
-            dayMaxEvents: true,
-            events: fetchGoogleCalendarEvents,
-            eventClick: handleEventClick,
-            height: "100%",
-            eventTimeFormat: {
-                hour: 'numeric',
-                minute: '2-digit',
-                meridiem: 'short'
-            }
-        });
-
-        calendar.render();
-    }
-
-    async function fetchGoogleCalendarEvents(fetchInfo, successCallback, failureCallback) {
-        try {
-            const response = await gapi.client.calendar.events.list({
-                calendarId: "primary",
-                timeMin: fetchInfo.start.toISOString(),
-                timeMax: fetchInfo.end.toISOString(),
-                showDeleted: false,
-                singleEvents: true,
-                maxResults: 250,
-                orderBy: "startTime"
-            });
-
-            const events = response.result.items.map((event) => ({
-                id: event.id,
-                title: event.summary || "No Title",
-                start: event.start.dateTime || event.start.date,
-                end: event.end.dateTime || event.end.date,
-                allDay: !!event.start.date,
-                url: event.htmlLink,
-                description: event.description,
-                location: event.location,
-            }));
-            successCallback(events);
-        } catch (err) {
-            logMessage(`Failed to fetch calendar events: ${err.result?.error?.message}`, "error");
-            failureCallback(err);
-        }
-    }
-
-    function handleEventClick(clickInfo) {
-        eventTitle.textContent = clickInfo.event.title;
-        
-        const start = clickInfo.event.start;
-        const end = clickInfo.event.end;
-        let timeString = "";
-        
-        if (clickInfo.event.allDay) {
-            timeString = "All-day";
-            // FullCalendar all-day events end date is exclusive, so subtract one day for display
-            if (end) {
-                const endDate = new Date(end);
-                endDate.setDate(endDate.getDate() - 1);
-                if (endDate.getTime() > start.getTime()) {
-                     timeString = `All-day, ${start.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
-                } else {
-                     timeString = `All-day, ${start.toLocaleDateString()}`;
-                }
-            } else {
-                 timeString = `All-day, ${start.toLocaleDateString()}`;
-            }
-        } else {
-             timeString = start.toLocaleString(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-            });
-            if (end) {
-                timeString += ` - ${end.toLocaleTimeString(undefined, { timeStyle: 'short' })}`;
-            }
-        }
-
-        eventTime.textContent = timeString;
-        
-        eventDescription.textContent = clickInfo.event.extendedProps.description || "No description provided.";
-        eventDescription.style.display = clickInfo.event.extendedProps.description ? "block" : "none";
-
-        eventLocation.textContent = clickInfo.event.extendedProps.location || "No location provided.";
-        eventLocation.style.display = clickInfo.event.extendedProps.location ? "block" : "none";
-        
-        eventLink.href = clickInfo.event.url;
-        eventModal.classList.remove("hidden");
-    }
-})();
-</script>
-
-</body>
-</html>
+    // ========
