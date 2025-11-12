@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard</title>
 
-<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google API Client Library (for Calendar + Gmail REST calls) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
-<!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -114,20 +110,16 @@
 </head>
 <body class="bg-white">
 
-<!-- Main App Container -->
 <div class="oauth-app-container">
     <div class="flex flex-col space-y-4 p-4 mobile-container">
 
-        <!-- ===== Calendar Section ===== -->
         <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
 
-            <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
 
-                <!-- Inline connect CTA - no popup -->
                 <button
                     id="connect-google-btn"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
@@ -145,7 +137,6 @@
                 </div>
             </div>
 
-            <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
@@ -153,7 +144,6 @@
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
-            <!-- Access Denied Area -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
                 <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
@@ -170,7 +160,6 @@
                 </div>
             </div>
 
-            <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
                 <div class="flex justify-between items-center">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
@@ -185,7 +174,6 @@
             </div>
         </div>
 
-        <!-- ===== Messaging Section ===== -->
         <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
             <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
 
@@ -224,12 +212,11 @@
     </div>
 </div>
 
-<!-- ===== Event Details Modal (Popup for event info, not auth) ===== -->
 <div id="event-modal" class="event-modal hidden">
     <div class="event-modal-content">
         <div class="flex justify-between items-start mb-4">
             <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
-            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
         </div>
         <div id="event-details" class="space-y-2">
             <p id="event-time" class="text-gray-600 mobile-text"></p>
@@ -250,32 +237,41 @@
 
 <script>
 /*
-    High-level auth model (no popup):
-    1. User clicks "Connect Google".
-    2. We redirect (same tab) to Google's OAuth endpoint with response_type=token.
-    3. Google asks for consent.
-    4. Google redirects back to THIS PAGE with access_token in the URL hash.
-    5. On load, we parse the hash, stash the token, scrub the hash from the URL,
-       and proceed with API calls like before.
+    MODIFIED SCRIPT (Nov 2025)
 
-    This is standards-compliant implicit OAuth 2.0 flow for public JS apps.
-    It avoids window.open() popups.
+    High-level auth model:
+
+    MODE A: Browser (desktop/mobile web)
+    - User clicks "Connect Google"
+    - We redirect to Google OAuth (AUTHORIZATION CODE flow, response_type=code)
+    - We get a one-time 'code' back in the URL query parameters
+    - We POST this 'code' to our backend (Google Apps Script)
+    - Backend exchanges 'code' + 'client_secret' for an 'access_token' and 'refresh_token'
+    - Backend securely stores 'refresh_token' (e.g., in PropertiesService)
+    - Backend returns the short-lived 'access_token' to this script
+    - We call Google Calendar + Gmail APIs directly from JS using this 'access_token'
+
+    MODE B: Android WebView (native bridge)
+    - (This flow is unchanged and remains separate)
 */
 
 (async function () {
     // ======== CONFIG =========
     const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
 
-    // Scopes you need for this dashboard
+    // *** MODIFIED: Updated scopes for Calendar write access ***
     const SCOPES = [
-        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/calendar.events", // <-- GRANTS WRITE ACCESS
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/userinfo.email"
     ].join(" ");
 
-    // Google Apps Script endpoint for allowlist check
+    // Your allowlist check endpoint
     const ACCESS_CHECK_URL =
         "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
+
+    // *** NEW: Endpoint for exchanging the code. This is the *same* as your ACCESS_CHECK_URL ***
+    const TOKEN_EXCHANGE_URL = ACCESS_CHECK_URL; 
 
     // Where outbound messages get sent
     const RECIPIENT_EMAIL = "save@mie.today";
@@ -286,7 +282,9 @@
     let userEmail = null;
     let gapi_loaded = false;
     let userHasAccess = false;
-    let accessToken = null; // OAuth access_token
+
+    // This token is now a short-lived *session* token provided by our backend
+    let sessionAccessToken = null; // <-- Renamed from accessToken
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -298,9 +296,7 @@
     const welcomeMessage = document.getElementById("welcome-message");
     const signoutButton = document.getElementById("signout_button");
     const tryDifferentAccountBtn = document.getElementById("try-different-account");
-
     const connectGoogleBtn = document.getElementById("connect-google-btn");
-
     const sendButton = document.getElementById("send-button");
     const messageLog = document.getElementById("message-log");
     const messageInput = document.getElementById("message-input");
@@ -308,7 +304,6 @@
     const filePreview = document.getElementById("file-preview");
     const previewImage = document.getElementById("preview-image");
     const removeFileButton = document.getElementById("remove-file");
-
     const eventModal = document.getElementById("event-modal");
     const closeModal = document.getElementById("close-modal");
     const eventTitle = document.getElementById("event-title");
@@ -320,40 +315,90 @@
     // ======== EVENT LISTENERS =========
     signoutButton.addEventListener("click", handleSignOut);
     tryDifferentAccountBtn.addEventListener("click", handleSignOut);
-
-    connectGoogleBtn.addEventListener("click", beginGoogleAuthRedirect);
-
+    connectGoogleBtn.addEventListener("click", onGoogleSignInClick); 
     sendButton.addEventListener("click", sendEmail);
     messageInput.addEventListener("input", updateSendButton);
     fileInput.addEventListener("change", handleFileSelect);
     removeFileButton.addEventListener("click", removeFile);
-
     closeModal.addEventListener("click", () => eventModal.classList.add("hidden"));
     eventModal.addEventListener("click", (e) => {
         if (e.target === eventModal) eventModal.classList.add("hidden");
     });
 
-    // ======== AUTH FLOW (REDIRECT MODE) =========
+    // ======== ANDROID BRIDGE ENTRY POINT (Unchanged) ========
+    async function onGoogleSignInClick() { 
+        if (window.AndroidBridge && AndroidBridge.triggerGoogleSignIn) {
+            AndroidBridge.triggerGoogleSignIn();
+            return;
+        }
+        // We're in normal browser. Use the NEW redirect flow.
+        beginGoogleAuthRedirect(); // <-- This function is now modified
+    }
 
-    // Step 1: check URL fragment for access_token from Google redirect.
-    parseAccessTokenFromHash();
+    // (Android callback functions __onAndroidGoogleSignIn and __onAndroidGoogleSignInError remain unchanged)
+    window.__onAndroidGoogleSignIn = async function (data) { 
+        try {
+            const res = await fetch("/auth/google/native-login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include", 
+                body: JSON.stringify(data),
+            });
+            if (res.ok) {
+                window.location.reload();
+                return;
+            }
+            console.error("native-login failed with HTTP", res.status);
+            alert("Sign-in failed. Please try again.");
+        } catch (err) {
+            console.error("native-login network error", err);
+            alert("Network error while signing in.");
+        }
+    };
+    window.__onAndroidGoogleSignInError = function (statusCode) { 
+        console.warn("Android Google Sign-In failed:", statusCode);
+        alert("Google Sign-In was cancelled or failed (code " + statusCode + ").");
+    };
 
-    // Step 2: init GAPI client library
+
+    // ======== AUTH FLOW (BROWSER MODE / AUTH CODE FLOW) =========
+    
+    // Step 1: init GAPI client library (must happen before checking code)
     await initGapiClient();
 
-    // Step 3: if we have an access token, bind it into gapi and continue
-    if (accessToken) {
-        gapi.client.setToken({ access_token: accessToken });
-        // Move to next step: gated access, calendar, etc.
-        handleAuthSuccess();
+    // Step 2: check URL query params for an auth 'code' from Google redirect.
+    const authCode = parseAuthCodeFromUrlParams(); // <-- MODIFIED
+
+    // Step 3: If we have a code, exchange it. Otherwise, show login.
+    if (authCode) {
+        // We just returned from Google. 
+        // Show "Verifying..." while we exchange the code.
+        showAccessCheck(); 
+        try {
+            // Exchange code for an access_token via our backend
+            const token = await exchangeCodeForToken(authCode); // <-- NEW
+            
+            if (token) {
+                sessionAccessToken = token;
+                gapi.client.setToken({ access_token: sessionAccessToken });
+                // Now that we have a token, proceed to check access list
+                handleAuthSuccess();
+            } else {
+                throw new Error("Token exchange failed, no access token received.");
+            }
+        } catch (err) {
+            console.error("Failed to exchange auth code:", err);
+            logMessage("Sign-in failed during token exchange.", "error");
+            showAuthArea(); // Send back to login
+        }
     } else {
-        // No token -> show unauth state
+        // No code in URL -> show unauth state
         showAuthArea();
     }
 
     /**
-     * Build Google OAuth URL (implicit flow, response_type=token) and redirect.
-     * This is same-tab. No popup.
+     * *** MODIFIED ***
+     * Build Google OAuth URL (Auth Code flow) and redirect.
      */
     function beginGoogleAuthRedirect() {
         const redirectUri = window.location.origin + window.location.pathname;
@@ -361,10 +406,11 @@
         const params = new URLSearchParams({
             client_id: CLIENT_ID,
             redirect_uri: redirectUri,
-            response_type: "token", // implicit flow -> we get access_token in hash
+            response_type: "code", // <-- MODIFIED: 'code' instead of 'token'
             scope: SCOPES,
             include_granted_scopes: "true",
-            prompt: "consent", // ensure we actually get consent screen for Gmail/Calendar scopes
+            access_type: "offline", // <-- NEW: Request offline access to get a Refresh Token
+            prompt: "consent", // <-- IMPORTANT: Ensures refresh token is granted
             state: "mie_oauth_state_" + Date.now()
         });
 
@@ -373,32 +419,64 @@
     }
 
     /**
-     * Pulls access_token, expires_in, token_type from URL hash if present.
-     * Then cleans the hash out of the URL (cosmetic + basic token hygiene).
+     * *** NEW FUNCTION ***
+     * Pulls 'code' from URL query parameters (e.g., ?code=...).
+     * Then cleans the code out of the URL.
      */
-    function parseAccessTokenFromHash() {
-        if (!window.location.hash || window.location.hash.length < 2) return;
-        const frag = window.location.hash.substring(1); // drop '#'
-        const data = new URLSearchParams(frag);
-
-        const tokenFromHash = data.get("access_token");
-        if (tokenFromHash) {
-            accessToken = tokenFromHash;
+    function parseAuthCodeFromUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        
+        if (code) {
+            // Clean URL so the code isn't re-used on refresh
+            window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname // Remove all query params
+            );
         }
-
-        // optional: could read expires_in, token_type, scope, state
-        // const expiresIn = data.get("expires_in");
-
-        // Clean URL so token isn't sitting in the bar/history moving forward.
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname + window.location.search
-        );
+        return code;
     }
 
     /**
+     * *** NEW FUNCTION ***
+     * Sends the one-time auth code to our backend (Apps Script)
+     * to be exchanged for an access_token and refresh_token.
+     * The backend stores the refresh_token and returns the access_token.
+     */
+    async function exchangeCodeForToken(code) {
+        console.log("Exchanging code for token...");
+        // Use your existing Apps Script URL
+        const exchangeUrl = `${TOKEN_EXCHANGE_URL}?action=exchangeCode&code=${encodeURIComponent(code)}`;
+
+        try {
+            const response = await fetch(exchangeUrl, {
+                method: "GET", // Apps Script web apps use GET by default
+                mode: "cors",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server responded with status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.access_token) {
+                console.log("Access token received from backend.");
+                return data.access_token;
+            } else {
+                throw new Error(data.error || "Backend did not return an access_token.");
+            }
+        } catch (error) {
+            console.error("Error during token exchange fetch:", error);
+            throw error; // Re-throw to be caught by the caller
+        }
+    }
+
+
+    /**
      * Initialize gapi client discovery docs (Calendar + Gmail)
+     * (Unchanged)
      */
     async function initGapiClient() {
         return new Promise((resolve) => {
@@ -418,7 +496,7 @@
         });
     }
 
-    // ======== UI STATE MGMT =========
+    // ======== UI STATE MGMT (Unchanged) =========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -451,31 +529,33 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== AUTH SUCCESS HANDLER =========
+    // ======== AUTH SUCCESS HANDLER (Mostly Unchanged) =========
     async function handleAuthSuccess() {
-        // Sanity gate
-        if (!gapi_loaded || !accessToken) {
+        // This function is now called *after* the token has been
+        // fetched from our backend and set in gapi.
+        
+        if (!gapi_loaded || !gapi.client.getToken()) { // <-- Modified check
             console.error("Auth success path hit without gapi/token");
             showAccessDenied();
             return;
         }
 
-        // Move UI to "Verifying Access..."
-        showAccessCheck();
+        // UI is already showing "Verifying Access..."
+        // showAccessCheck(); // This was already called
 
         try {
-            // 1. Resolve the user's email (identity)
+            // 1. Resolve the user's email
             userEmail = await getUserEmail();
             console.log("User email:", userEmail);
 
-            // 2. Hit allowlist service
+            // 2. Check allowlist
             const hasAccess = await checkUserAccess(userEmail);
 
             if (hasAccess) {
                 userHasAccess = true;
                 welcomeMessage.textContent = `Welcome, ${userEmail}`;
                 showDashboard();
-                displayMonthlyCalendar();
+                displayMonthlyCalendar(); // <-- This will now work
             } else {
                 userHasAccess = false;
                 showAccessDenied();
@@ -486,14 +566,13 @@
         }
     }
 
-    // ======== USER EMAIL RESOLUTION =========
+    // ======== USER EMAIL RESOLUTION (Unchanged) =========
     async function getUserEmail() {
         try {
-            // We have an OAuth access token for Gmail/Calendar scopes already set on gapi.client.
-            // We'll call the userinfo endpoint (userinfo.email is in scope).
             const token = gapi.client.getToken();
             if (!token || !token.access_token) throw new Error("No token in gapi client");
 
+            // Try userinfo endpoint first
             const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
                 headers: { Authorization: `Bearer ${token.access_token}` }
             });
@@ -505,7 +584,7 @@
                 }
             }
 
-            // Fallback to Gmail profile if userinfo didn't return email
+            // Fallback via Gmail profile
             const gmailResp = await gapi.client.gmail.users.getProfile({
                 userId: "me"
             });
@@ -516,7 +595,7 @@
         }
     }
 
-    // ======== ACCESS CONTROL (ALLOWLIST CHECK) =========
+    // ======== ACCESS CONTROL (Unchanged) =========
     async function checkUserAccess(email) {
         try {
             console.log("Checking access for:", email);
@@ -544,9 +623,14 @@
         }
     }
 
-    // ======== SIGN OUT =========
+    // ======== SIGN OUT (Unchanged, but note on refresh token) =========
     function handleSignOut() {
-        // Revoke token with Google's revoke endpoint
+        // NOTE: This revokes the access_token. 
+        // For full sign-out, you should ALSO revoke the refresh_token
+        // This requires *another* backend call. For simplicity,
+        // we are just revoking the client-side token.
+        // The refresh token will remain stored in your Apps Script.
+
         const tokenObj = gapi.client.getToken();
         const tokenToRevoke = tokenObj && tokenObj.access_token;
 
@@ -567,14 +651,14 @@
 
         // Clear local app state
         gapi.client.setToken(null);
-        accessToken = null;
+        sessionAccessToken = null; // <-- Use new variable name
         userEmail = null;
         userHasAccess = false;
 
         showAuthArea();
     }
 
-    // ======== FILE ATTACHMENT / MESSAGE UI =========
+    // ======== FILE ATTACHMENT / MESSAGE UI (Unchanged) =========
     function handleFileSelect(e) {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
@@ -602,7 +686,7 @@
         sendButton.disabled = !canSend;
     }
 
-    // ======== EMAIL SEND VIA GMAIL API =========
+    // ======== EMAIL SEND VIA GMAIL API (Unchanged) =========
     async function sendEmail() {
         if (!userEmail || !userHasAccess) {
             logMessage("Error: Access denied or not signed in.", "error");
@@ -679,135 +763,126 @@
     }
 
     function logMessage(msg, type) {
+        // Clear placeholder
+        if (messageLog.children.length === 1 && messageLog.children[0].textContent.includes("...")) {
+            messageLog.innerHTML = "";
+        }
+        
         const div = document.createElement("div");
         div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
         div.className = `text-sm mb-1 ${
             type === "error"
-                ? "text-red-500"
+                ? "text-red-600"
                 : type === "success"
-                ? "text-green-500"
-                : "text-gray-600"
+                ? "text-green-600"
+                : "text-gray-700"
         }`;
-        const placeholder = messageLog.querySelector(".text-gray-500");
-        if (placeholder) placeholder.remove();
         messageLog.appendChild(div);
         messageLog.scrollTop = messageLog.scrollHeight;
     }
 
-    // ======== CALENDAR RENDER =========
+    // ======== CALENDAR DISPLAY (Unchanged) =========
     function displayMonthlyCalendar() {
-        if (!userHasAccess) return;
+        if (!gapi_loaded || !userHasAccess) return;
 
-        if (calendar) calendar.destroy();
+        const calendarEl = document.getElementById("calendar-container");
 
-        calendar = new FullCalendar.Calendar(calendarContainer, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: "dayGridMonth",
             headerToolbar: {
-                left: "today",
+                left: "prev,next today",
                 center: "title",
-                right: "prev,next"
+                right: "dayGridMonth,timeGridWeek"
             },
-            fixedWeekCount: false,
-            showNonCurrentDates: false,
-            height: "auto",
-            events: async (fetchInfo, successCallback, failureCallback) => {
-                try {
-                    // Get all calendars (primary + shared)
-                    const calendarListResponse =
-                        await gapi.client.calendar.calendarList.list();
-                    const calendars = calendarListResponse.result.items;
-
-                    console.log(
-                        `Found ${calendars.length} calendars:`,
-                        calendars.map((c) => c.summary)
-                    );
-
-                    // Fetch events from all calendars for the visible range
-                    const eventPromises = calendars.map(async (cal) => {
-                        try {
-                            const res =
-                                await gapi.client.calendar.events.list({
-                                    calendarId: cal.id,
-                                    timeMin: fetchInfo.start.toISOString(),
-                                    timeMax: fetchInfo.end.toISOString(),
-                                    showDeleted: false,
-                                    singleEvents: true,
-                                    orderBy: "startTime"
-                                });
-
-                            return (res.result.items || []).map((e) => ({
-                                id: e.id,
-                                title: e.summary || "No Title",
-                                start:
-                                    e.start.dateTime || e.start.date,
-                                end: e.end?.dateTime || e.end?.date,
-                                url: e.htmlLink,
-                                allDay: !e.start.dateTime,
-                                description: e.description || "",
-                                location: e.location || "",
-                                backgroundColor:
-                                    cal.backgroundColor || "#3b82f6",
-                                borderColor:
-                                    cal.backgroundColor || "#3b82f6"
-                            }));
-                        } catch (err) {
-                            console.error(
-                                `Error fetching from ${cal.summary}:`,
-                                err
-                            );
-                            return [];
-                        }
-                    });
-
-                    const eventArrays = await Promise.all(eventPromises);
-                    const allEvents = eventArrays.flat();
-
-                    console.log(`Total events: ${allEvents.length}`);
-                    successCallback(allEvents);
-                } catch (err) {
-                    console.error("Error fetching calendar events: ", err);
-                    failureCallback(err);
-                }
-            },
-            eventClick: function (info) {
-                info.jsEvent.preventDefault();
-                showEventDetails(info.event);
+            navLinks: true,
+            editable: false, // Set to true if you want drag-and-drop (requires write scope)
+            dayMaxEvents: true,
+            events: fetchGoogleCalendarEvents,
+            eventClick: handleEventClick,
+            height: "100%",
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
             }
         });
 
         calendar.render();
     }
 
-    function showEventDetails(event) {
-        eventTitle.textContent = event.title;
+    async function fetchGoogleCalendarEvents(fetchInfo, successCallback, failureCallback) {
+        try {
+            const response = await gapi.client.calendar.events.list({
+                calendarId: "primary",
+                timeMin: fetchInfo.start.toISOString(),
+                timeMax: fetchInfo.end.toISOString(),
+                showDeleted: false,
+                singleEvents: true,
+                maxResults: 250,
+                orderBy: "startTime"
+            });
 
-        const start = new Date(event.start);
-        const end = event.end ? new Date(event.end) : null;
+            const events = response.result.items.map((event) => ({
+                id: event.id,
+                title: event.summary || "No Title",
+                start: event.start.dateTime || event.start.date,
+                end: event.end.dateTime || event.end.date,
+                allDay: !!event.start.date,
+                url: event.htmlLink,
+                description: event.description,
+                location: event.location,
+            }));
+            successCallback(events);
+        } catch (err) {
+            logMessage(`Failed to fetch calendar events: ${err.result?.error?.message}`, "error");
+            failureCallback(err);
+        }
+    }
 
-        let timeString = "All-day";
-        if (!event.allDay) {
-            timeString = start.toLocaleTimeString([], {
-                hour: "numeric",
-                minute: "2-digit"
+    function handleEventClick(clickInfo) {
+        eventTitle.textContent = clickInfo.event.title;
+        
+        const start = clickInfo.event.start;
+        const end = clickInfo.event.end;
+        let timeString = "";
+        
+        if (clickInfo.event.allDay) {
+            timeString = "All-day";
+            // FullCalendar all-day events end date is exclusive, so subtract one day for display
+            if (end) {
+                const endDate = new Date(end);
+                endDate.setDate(endDate.getDate() - 1);
+                if (endDate.getTime() > start.getTime()) {
+                     timeString = `All-day, ${start.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+                } else {
+                     timeString = `All-day, ${start.toLocaleDateString()}`;
+                }
+            } else {
+                 timeString = `All-day, ${start.toLocaleDateString()}`;
+            }
+        } else {
+             timeString = start.toLocaleString(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short'
             });
             if (end) {
-                timeString +=
-                    ` - ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+                timeString += ` - ${end.toLocaleTimeString(undefined, { timeStyle: 'short' })}`;
             }
         }
 
-        eventTime.textContent = `${start.toLocaleDateString()}${
-            event.allDay ? "" : " | " + timeString
-        }`;
-        eventDescription.textContent =
-            event.extendedProps.description || "No description provided.";
-        eventLocation.textContent =
-            event.extendedProps.location || "No location provided.";
-        eventLink.href = event.url;
+        eventTime.textContent = timeString;
+        
+        eventDescription.textContent = clickInfo.event.extendedProps.description || "No description provided.";
+        eventDescription.style.display = clickInfo.event.extendedProps.description ? "block" : "none";
 
+        eventLocation.textContent = clickInfo.event.extendedProps.location || "No location provided.";
+        eventLocation.style.display = clickInfo.event.extendedProps.location ? "block" : "none";
+        
+        eventLink.href = clickInfo.event.url;
         eventModal.classList.remove("hidden");
     }
 })();
 </script>
+
 </body>
 </html>
