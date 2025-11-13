@@ -611,6 +611,7 @@
     }
   }
 
+  // *** UPDATED: open Google auth in the SAME TAB ***
   async function startAuthFlow() {
     showAccessCheckArea();
     try {
@@ -620,30 +621,8 @@
         showAuthArea();
         return;
       }
-
-      window.open(data.url, '_blank');
-
-      let attempts = 0;
-      const maxAttempts = 20;
-      const poll = setInterval(async () => {
-        attempts++;
-        try {
-          const status = await backendGet('status');
-          if (status.hasAccess) {
-            clearInterval(poll);
-            await onConnected();
-          } else if (attempts >= maxAttempts) {
-            clearInterval(poll);
-            showAccessDeniedArea();
-          }
-        } catch (err) {
-          console.error('Polling status failed', err);
-          if (attempts >= maxAttempts) {
-            clearInterval(poll);
-            showAccessDeniedArea();
-          }
-        }
-      }, 3000);
+      // Same-tab navigation to Google consent
+      window.location.href = data.url;
     } catch (err) {
       console.error('Failed to start auth flow', err);
       showAuthArea();
