@@ -1,697 +1,311 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard</title>
+/**
+ * Google Apps Script OAuth Backend for Mie Dashboard
+ * 
+ * This script handles:
+ * 1. Exchanging authorization codes for tokens (with refresh token)
+ * 2. Refreshing access tokens when they expire
+ * 3. Securely storing refresh tokens
+ * 
+ * DEPLOYMENT INFO:
+ * - Deployment ID: AKfycbzgECqrcoTeijkWFgbUwRjGMYGoJOorx9zCs_dvJbVrhrj-FvTogYsfjKvmdAbwAf7y
+ * - Web App URL: https://script.google.com/macros/s/AKfycbzgECqrcoTeijkWFgbUwRjGMYGoJOorx9zCs_dvJbVrhrj-FvTogYsfjKvmdAbwAf7y/exec
+ * 
+ * REQUIRED SCRIPT PROPERTIES (Settings → Script Properties):
+ * - CLIENT_ID: 514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com
+ * - CLIENT_SECRET: [YOU NEED TO ADD THIS - Get it from Google Cloud Console]
+ * 
+ * TO ADD CLIENT_SECRET:
+ * 1. Click the gear icon (Project Settings) in the left sidebar
+ * 2. Scroll down to "Script Properties"
+ * 3. Click "Add script property"
+ * 4. Property: CLIENT_SECRET
+ * 5. Value: [Paste your client secret from Google Cloud Console]
+ * 6. Click "Save script properties"
+ */
 
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com"></script>
+// Get credentials from Script Properties (secure storage)
+const CLIENT_ID = PropertiesService.getScriptProperties().getProperty('CLIENT_ID');
+const CLIENT_SECRET = PropertiesService.getScriptProperties().getProperty('CLIENT_SECRET');
 
-<!-- Google API Client Library (for Calendar + Gmail REST calls) -->
-<script src="https://apis.google.com/js/api.js"></script>
-
-<!-- FullCalendar -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
-
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap"
-  rel="stylesheet"
-/>
-
-<style>
-    /* --- General Body and Layout --- */
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: #ffffff;
-        color: #1f2937;
-        margin: 0;
-        padding: 0;
-    }
-
-    /* Custom font classes */
-    .font-montserrat { font-family: 'Montserrat', sans-serif; }
-    .font-lato { font-family: 'Lato', sans-serif; }
-
-    /* --- Scrollbar Styling --- */
-    .oauth-app-container #message-log::-webkit-scrollbar,
-    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-track,
-    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
-    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
-
-    /* Utility class for disabled elements */
-    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* Main container for the entire application */
-    .oauth-app-container { max-width: 100%; margin: 0 auto; }
-
-    /* --- Responsive Styles for Mobile (up to 480px wide) --- */
-    @media (max-width: 480px) {
-        .oauth-app-container {
-            width: 100% !important;
-        }
-        .mobile-container {
-            padding: 4px !important;
-            gap: 4px !important;
-        }
-        .calendar-section, .messaging-section {
-            width: 100% !important;
-            height: auto !important;
-            padding: 8px !important;
-        }
-        .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
-        .mobile-text { font-size: 14px !important; line-height: 1.1 !important; }
-        .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
-        .mobile-text-btn { font-size: 16px !important; }
-        .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
-        .fc .fc-toolbar-title { font-size: 20px !important; }
-        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
-        .fc .fc-col-header-cell { font-size: 12px !important; }
-        .fc .fc-daygrid-day-number { font-size: 12px !important; }
-        .fc .fc-event { font-size: 10px !important; }
-    }
-
-    /* --- Responsive Styles for Tablet (481px to 768px) --- */
-    @media (min-width: 481px) and (max-width: 768px) {
-        .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 632px; }
-        .messaging-section { width: 481px; height: 316px; }
-    }
-
-    /* --- Responsive Styles for Desktop (769px and wider) --- */
-    @media (min-width: 769px) {
-        .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 860px; }
-        .messaging-section { width: 800px; height: 360px; }
-    }
-
-    /* --- FullCalendar Light Mode Customization --- */
-    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
-    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
-    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
-    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
-    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
-    .fc .fc-daygrid-day-frame { background-color: white !important; }
-    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
-    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
-    .fc .fc-toolbar-title { color: #1f2937 !important; }
-    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
-
-    /* --- Event Modal Styling --- */
-    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
-    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
-
-    /* --- Access Denied Styling --- */
-    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
-</style>
-</head>
-<body class="bg-white">
-
-<!-- Main App Container -->
-<div class="oauth-app-container">
-    <div class="flex flex-col space-y-4 p-4 mobile-container">
-
-        <!-- ===== Calendar Section ===== -->
-        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
-
-            <!-- Authentication Area (signed out / pre-consent) -->
-            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
-                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
-
-                <!-- Inline connect CTA - no popup -->
-                <button
-                    id="connect-google-btn"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
-                    style="min-width:200px; justify-content:center;"
-                >
-                    Connect Google
-                </button>
-
-                <div class="mt-6 text-sm text-gray-500">
-                    or
-                    <a href="signup.html"
-                       class="font-semibold text-green-600 hover:text-green-700 hover:underline">
-                    Create an account
-                    </a>
-                </div>
-            </div>
-
-            <!-- Access Verification Area -->
-            <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
-            </div>
-
-            <!-- Access Denied Area -->
-            <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
-                <div class="access-denied text-center max-w-md">
-                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
-                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
-                    <div class="space-y-3">
-                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
-                        <br />
-                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">
-                            Try a Different Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calendar Content (signed in + approved) -->
-            <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center">
-                    <span id="welcome-message" class="text-sm text-gray-600"></span>
-                    <button
-                        id="signout_button"
-                        class="bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
-                    >
-                        Sign Out
-                    </button>
-                </div>
-                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
-            </div>
-        </div>
-
-        <!-- ===== Messaging Section ===== -->
-        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
-            <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
-
-            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
-                <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
-            </div>
-
-            <textarea
-                id="message-input"
-                placeholder="Type your message..."
-                class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"
-            ></textarea>
-
-            <div class="flex items-center space-x-2 mt-2">
-                <label
-                    for="file-input"
-                    class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text"
-                >
-                    Attachment
-                </label>
-                <input id="file-input" type="file" class="hidden" accept="image/*" />
-                <div id="file-preview" class="hidden flex items-center space-x-2">
-                    <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview" />
-                    <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
-                </div>
-            </div>
-
-            <button
-                id="send-button"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn"
-                disabled
-            >
-                Send
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ===== Event Details Modal (Popup for event info, not auth) ===== -->
-<div id="event-modal" class="event-modal hidden">
-    <div class="event-modal-content">
-        <div class="flex justify-between items-start mb-4">
-            <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
-            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-        </div>
-        <div id="event-details" class="space-y-2">
-            <p id="event-time" class="text-gray-600 mobile-text"></p>
-            <p id="event-description" class="text-gray-700 mobile-text"></p>
-            <p id="event-location" class="text-gray-600 mobile-text"></p>
-        </div>
-        <div class="mt-4 flex justify-end">
-            <a
-                id="event-link"
-                target="_blank"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-btn"
-            >
-                Open in Google Calendar
-            </a>
-        </div>
-    </div>
-</div>
-
-<script>
-(async function () {
-    // ======== CONFIG =========
-    const CLIENT_ID = "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com";
-
-    // UPDATED SCOPES: Added calendar write and kept Gmail send
-    const SCOPES = [
-        "https://www.googleapis.com/auth/calendar",  // Full calendar access (read/write)
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/userinfo.email"
-    ].join(" ");
-
-    // Your backend OAuth callback endpoint
-    const OAUTH_CALLBACK_ENDPOINT = "https://script.google.com/macros/s/AKfycbzhXov8noDHtO-aNZTbzsuzuf_QdRuRAs9_yjzFMjhEvK9qw5XVS_ROILyibzGw2w5F/exec";
+/**
+ * Main entry point for all POST requests
+ */
+function doPost(e) {
+  try {
+    // Log incoming request for debugging
+    Logger.log('Received POST request');
+    Logger.log('Action: ' + e.parameter.action);
     
-    // Token refresh endpoint (same as callback)
-    const TOKEN_REFRESH_ENDPOINT = "https://script.google.com/macros/s/AKfycbzhXov8noDHtO-aNZTbzsuzuf_QdRuRAs9_yjzFMjhEvK9qw5XVS_ROILyibzGw2w5F/exec";
-
-    // Your allowlist check endpoint
-    const ACCESS_CHECK_URL =
-        "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
-
-    // Where outbound messages get sent
-    const RECIPIENT_EMAIL = "save@mie.today";
-
-    // ======== STATE =========
-    let calendar = null;
-    let selectedFile = null;
-    let userEmail = null;
-    let gapi_loaded = false;
-    let userHasAccess = false;
-    let accessToken = null;
-    let tokenExpiresAt = null;
-
-    // ======== DOM HOOKS =========
-    const authArea = document.getElementById("auth-area");
-    const accessCheckArea = document.getElementById("access-check-area");
-    const accessDeniedArea = document.getElementById("access-denied-area");
-    const calendarContent = document.getElementById("calendar-content");
-    const calendarContainer = document.getElementById("calendar-container");
-    const messagingSection = document.getElementById("messaging-section");
-    const welcomeMessage = document.getElementById("welcome-message");
-    const signoutButton = document.getElementById("signout_button");
-    const tryDifferentAccountBtn = document.getElementById("try-different-account");
-    const connectGoogleBtn = document.getElementById("connect-google-btn");
-
-    const sendButton = document.getElementById("send-button");
-    const messageLog = document.getElementById("message-log");
-    const messageInput = document.getElementById("message-input");
-    const fileInput = document.getElementById("file-input");
-    const filePreview = document.getElementById("file-preview");
-    const previewImage = document.getElementById("preview-image");
-    const removeFileButton = document.getElementById("remove-file");
-
-    const eventModal = document.getElementById("event-modal");
-    const closeModal = document.getElementById("close-modal");
-    const eventTitle = document.getElementById("event-title");
-    const eventTime = document.getElementById("event-time");
-    const eventDescription = document.getElementById("event-description");
-    const eventLocation = document.getElementById("event-location");
-    const eventLink = document.getElementById("event-link");
-
-    // ======== EVENT LISTENERS =========
-    signoutButton.addEventListener("click", handleSignOut);
-    tryDifferentAccountBtn.addEventListener("click", handleSignOut);
-    connectGoogleBtn.addEventListener("click", onGoogleSignInClick);
-
-    sendButton.addEventListener("click", sendEmail);
-    messageInput.addEventListener("input", updateSendButton);
-    fileInput.addEventListener("change", handleFileSelect);
-    removeFileButton.addEventListener("click", removeFile);
-
-    closeModal.addEventListener("click", () => eventModal.classList.add("hidden"));
-    eventModal.addEventListener("click", (e) => {
-        if (e.target === eventModal) eventModal.classList.add("hidden");
-    });
-
-    // ======== ANDROID BRIDGE ENTRY POINT ========
-    async function onGoogleSignInClick() {
-        if (window.AndroidBridge && AndroidBridge.triggerGoogleSignIn) {
-            AndroidBridge.triggerGoogleSignIn();
-            return;
-        }
-        beginGoogleAuthRedirect();
-    }
-
-    window.__onAndroidGoogleSignIn = async function (data) {
-        try {
-            const res = await fetch("/auth/google/native-login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include",
-                body: JSON.stringify(data),
-            });
-
-            if (res.ok) {
-                window.location.reload();
-                return;
-            }
-
-            console.error("native-login failed with HTTP", res.status);
-            alert("Sign-in failed. Please try again.");
-        } catch (err) {
-            console.error("native-login network error", err);
-            alert("Network error while signing in.");
-        }
-    };
-
-    window.__onAndroidGoogleSignInError = function (statusCode) {
-        console.warn("Android Google Sign-In failed:", statusCode);
-        alert("Google Sign-In was cancelled or failed (code " + statusCode + ").");
-    };
-
-    // ======== AUTH FLOW (AUTHORIZATION CODE FLOW) =========
+    const params = JSON.parse(e.postData.contents);
+    const action = e.parameter.action;
     
-    // Step 1: Check if we're returning from OAuth with a code
-    parseAuthCodeFromUrl();
-
-    // Step 2: Initialize GAPI client library
-    await initGapiClient();
-
-    // Step 3: Check if we have a valid token in session storage
-    loadTokenFromStorage();
-
-    // Step 4: If we have a token, proceed
-    if (accessToken && !isTokenExpired()) {
-        gapi.client.setToken({ access_token: accessToken });
-        handleAuthSuccess();
-    } else if (accessToken && isTokenExpired()) {
-        // Try to refresh the token
-        await refreshAccessToken();
-        if (accessToken && !isTokenExpired()) {
-            gapi.client.setToken({ access_token: accessToken });
-            handleAuthSuccess();
-        } else {
-            showAuthArea();
-        }
-    } else {
-        showAuthArea();
+    // Verify CLIENT_SECRET is configured
+    if (!CLIENT_SECRET) {
+      Logger.log('ERROR: CLIENT_SECRET not configured in Script Properties!');
+      return createErrorResponse('Server configuration error: CLIENT_SECRET not set');
     }
-
-    /**
-     * Build Google OAuth URL (authorization code flow) and redirect
-     */
-    function beginGoogleAuthRedirect() {
-        const redirectUri = window.location.origin + window.location.pathname;
-
-        const params = new URLSearchParams({
-            client_id: CLIENT_ID,
-            redirect_uri: redirectUri,
-            response_type: "code",  // Authorization code flow
-            scope: SCOPES,
-            access_type: "offline",  // Request refresh token
-            prompt: "consent",  // Force consent to ensure refresh token
-            state: "mie_oauth_state_" + Date.now()
-        });
-
-        const oauthUrl = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
-        window.location = oauthUrl;
+    
+    if (action === 'exchangeCode') {
+      return exchangeCodeForTokens(params);
+    } else if (action === 'refreshToken') {
+      return refreshAccessToken(params);
     }
+    
+    return createErrorResponse('Invalid action: ' + action);
+  } catch (error) {
+    Logger.log('Error in doPost: ' + error.toString());
+    Logger.log('Stack trace: ' + error.stack);
+    return createErrorResponse(error.toString());
+  }
+}
 
-    /**
-     * Parse authorization code from URL and exchange for tokens
-     */
-    async function parseAuthCodeFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get("code");
+/**
+ * Handle GET requests (for testing and CORS preflight)
+ */
+function doGet(e) {
+  const action = e.parameter.action;
+  
+  if (action === 'test') {
+    // Test endpoint to verify configuration
+    const hasClientId = !!CLIENT_ID;
+    const hasClientSecret = !!CLIENT_SECRET;
+    
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'OAuth Backend Server Running',
+      deployment_id: 'AKfycbzgECqrcoTeijkWFgbUwRjGMYGoJOorx9zCs_dvJbVrhrj-FvTogYsfjKvmdAbwAf7y',
+      client_id_configured: hasClientId,
+      client_secret_configured: hasClientSecret,
+      client_id: hasClientId ? CLIENT_ID.substring(0, 20) + '...' : 'NOT SET',
+      warning: !hasClientSecret ? 'CLIENT_SECRET not configured in Script Properties!' : null
+    }, null, 2))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  return ContentService.createTextOutput('Mie OAuth Backend Server - Running\nDeployment ID: AKfycbzgECqrcoTeijkWFgbUwRjGMYGoJOorx9zCs_dvJbVrhrj-FvTogYsfjKvmdAbwAf7y')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
 
-        if (code) {
-            console.log("Authorization code received, exchanging for tokens...");
-            
-            try {
-                // Exchange code for tokens via your backend
-                const response = await fetch(OAUTH_CALLBACK_ENDPOINT + "?action=exchangeCode", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        code: code,
-                        redirect_uri: window.location.origin + window.location.pathname
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // Store tokens
-                    accessToken = data.access_token;
-                    tokenExpiresAt = Date.now() + (data.expires_in * 1000);
-                    
-                    // Store refresh token securely
-                    if (data.refresh_token) {
-                        sessionStorage.setItem("mie_refresh_token", data.refresh_token);
-                    }
-                    
-                    sessionStorage.setItem("mie_access_token", accessToken);
-                    sessionStorage.setItem("mie_token_expires", tokenExpiresAt);
-                    
-                    // Clean URL
-                    window.history.replaceState(
-                        {},
-                        document.title,
-                        window.location.pathname
-                    );
-                    
-                    console.log("Tokens stored successfully");
-                } else {
-                    console.error("Token exchange failed:", response.status);
-                    const errorText = await response.text();
-                    console.error("Error details:", errorText);
-                    alert("Authentication failed. Please try again.");
-                }
-            } catch (error) {
-                console.error("Error exchanging code for tokens:", error);
-                alert("Authentication error. Please try again.");
-            }
-        }
+/**
+ * Exchange authorization code for access token and refresh token
+ */
+function exchangeCodeForTokens(params) {
+  try {
+    Logger.log('Starting token exchange...');
+    
+    const code = params.code;
+    const redirectUri = params.redirect_uri;
+    
+    if (!code || !redirectUri) {
+      Logger.log('Missing required parameters');
+      return createErrorResponse('Missing code or redirect_uri');
     }
-
-    /**
-     * Load token from session storage
-     */
-    function loadTokenFromStorage() {
-        const storedToken = sessionStorage.getItem("mie_access_token");
-        const storedExpiry = sessionStorage.getItem("mie_token_expires");
-        
-        if (storedToken && storedExpiry) {
-            accessToken = storedToken;
-            tokenExpiresAt = parseInt(storedExpiry);
-        }
+    
+    Logger.log('Code received: ' + code.substring(0, 20) + '...');
+    Logger.log('Redirect URI: ' + redirectUri);
+    
+    // Exchange code for tokens
+    const tokenUrl = 'https://oauth2.googleapis.com/token';
+    const payload = {
+      code: code,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code'
+    };
+    
+    const options = {
+      method: 'post',
+      contentType: 'application/x-www-form-urlencoded',
+      payload: payload,
+      muteHttpExceptions: true
+    };
+    
+    Logger.log('Sending token exchange request to Google...');
+    const response = UrlFetchApp.fetch(tokenUrl, options);
+    const responseCode = response.getResponseCode();
+    const responseData = JSON.parse(response.getContentText());
+    
+    Logger.log('Response code: ' + responseCode);
+    
+    if (responseCode !== 200) {
+      Logger.log('Token exchange failed: ' + JSON.stringify(responseData));
+      return createErrorResponse('Token exchange failed: ' + (responseData.error_description || responseData.error));
     }
-
-    /**
-     * Check if current token is expired
-     */
-    function isTokenExpired() {
-        if (!tokenExpiresAt) return true;
-        // Add 5 minute buffer
-        return Date.now() >= (tokenExpiresAt - 300000);
+    
+    Logger.log('Token exchange successful!');
+    Logger.log('Access token received: ' + (responseData.access_token ? 'YES' : 'NO'));
+    Logger.log('Refresh token received: ' + (responseData.refresh_token ? 'YES' : 'NO'));
+    
+    // Store refresh token securely (using user's email as key)
+    if (responseData.refresh_token) {
+      const userEmail = getUserEmailFromToken(responseData.access_token);
+      if (userEmail) {
+        storeRefreshToken(userEmail, responseData.refresh_token);
+        Logger.log('Refresh token stored for user: ' + userEmail);
+      } else {
+        Logger.log('Warning: Could not get user email, refresh token not stored');
+      }
     }
+    
+    return createSuccessResponse(responseData);
+    
+  } catch (error) {
+    Logger.log('Error exchanging code: ' + error.toString());
+    Logger.log('Stack trace: ' + error.stack);
+    return createErrorResponse(error.toString());
+  }
+}
 
-    /**
-     * Refresh the access token using refresh token
-     */
-    async function refreshAccessToken() {
-        const refreshToken = sessionStorage.getItem("mie_refresh_token");
-        
-        if (!refreshToken) {
-            console.log("No refresh token available");
-            return false;
-        }
-
-        try {
-            console.log("Refreshing access token...");
-            const response = await fetch(TOKEN_REFRESH_ENDPOINT + "?action=refreshToken", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    refresh_token: refreshToken
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                
-                accessToken = data.access_token;
-                tokenExpiresAt = Date.now() + (data.expires_in * 1000);
-                
-                sessionStorage.setItem("mie_access_token", accessToken);
-                sessionStorage.setItem("mie_token_expires", tokenExpiresAt);
-                
-                console.log("Token refreshed successfully");
-                return true;
-            } else {
-                console.error("Token refresh failed:", response.status);
-                const errorText = await response.text();
-                console.error("Error details:", errorText);
-                return false;
-            }
-        } catch (error) {
-            console.error("Error refreshing token:", error);
-            return false;
-        }
+/**
+ * Refresh an expired access token using refresh token
+ */
+function refreshAccessToken(params) {
+  try {
+    Logger.log('Starting token refresh...');
+    
+    const refreshToken = params.refresh_token;
+    
+    if (!refreshToken) {
+      Logger.log('Missing refresh token');
+      return createErrorResponse('Missing refresh_token');
     }
-
-    /**
-     * Ensure we have a valid token before API calls
-     */
-    async function ensureValidToken() {
-        if (isTokenExpired()) {
-            const refreshed = await refreshAccessToken();
-            if (refreshed && !isTokenExpired()) {
-                gapi.client.setToken({ access_token: accessToken });
-                return true;
-            }
-            return false;
-        }
-        return true;
+    
+    Logger.log('Refresh token received: ' + refreshToken.substring(0, 20) + '...');
+    
+    const tokenUrl = 'https://oauth2.googleapis.com/token';
+    const payload = {
+      refresh_token: refreshToken,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      grant_type: 'refresh_token'
+    };
+    
+    const options = {
+      method: 'post',
+      contentType: 'application/x-www-form-urlencoded',
+      payload: payload,
+      muteHttpExceptions: true
+    };
+    
+    Logger.log('Sending refresh request to Google...');
+    const response = UrlFetchApp.fetch(tokenUrl, options);
+    const responseCode = response.getResponseCode();
+    const responseData = JSON.parse(response.getContentText());
+    
+    Logger.log('Response code: ' + responseCode);
+    
+    if (responseCode !== 200) {
+      Logger.log('Token refresh failed: ' + JSON.stringify(responseData));
+      return createErrorResponse('Token refresh failed: ' + (responseData.error_description || responseData.error));
     }
+    
+    Logger.log('Token refresh successful!');
+    Logger.log('New access token received: ' + (responseData.access_token ? 'YES' : 'NO'));
+    
+    return createSuccessResponse(responseData);
+    
+  } catch (error) {
+    Logger.log('Error refreshing token: ' + error.toString());
+    Logger.log('Stack trace: ' + error.stack);
+    return createErrorResponse(error.toString());
+  }
+}
 
-    /**
-     * Initialize gapi client discovery docs (Calendar + Gmail)
-     */
-    async function initGapiClient() {
-        return new Promise((resolve) => {
-            gapi.load("client", () => {
-                gapi.client
-                    .init({
-                        discoveryDocs: [
-                            "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-                            "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"
-                        ]
-                    })
-                    .then(() => {
-                        gapi_loaded = true;
-                        resolve();
-                    });
-            });
-        });
+/**
+ * Store refresh token in Script Properties (encrypted storage)
+ */
+function storeRefreshToken(userEmail, refreshToken) {
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const key = 'refresh_token_' + Utilities.base64Encode(userEmail);
+    userProperties.setProperty(key, refreshToken);
+    Logger.log('Stored refresh token for: ' + userEmail);
+  } catch (error) {
+    Logger.log('Error storing refresh token: ' + error.toString());
+  }
+}
+
+/**
+ * Retrieve refresh token from storage
+ */
+function getRefreshToken(userEmail) {
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const key = 'refresh_token_' + Utilities.base64Encode(userEmail);
+    return userProperties.getProperty(key);
+  } catch (error) {
+    Logger.log('Error retrieving refresh token: ' + error.toString());
+    return null;
+  }
+}
+
+/**
+ * Get user email from access token
+ */
+function getUserEmailFromToken(accessToken) {
+  try {
+    const options = {
+      headers: {
+        'Authorization': 'Bearer ' + accessToken
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch('https://www.googleapis.com/oauth2/v2/userinfo', options);
+    
+    if (response.getResponseCode() === 200) {
+      const data = JSON.parse(response.getContentText());
+      return data.email;
     }
+    
+    return null;
+  } catch (error) {
+    Logger.log('Error getting user email: ' + error.toString());
+    return null;
+  }
+}
 
-    // ======== UI STATE MGMT =========
-    function showAuthArea() {
-        authArea.classList.remove("hidden");
-        accessCheckArea.classList.add("hidden");
-        accessDeniedArea.classList.add("hidden");
-        calendarContent.classList.add("hidden");
-        messagingSection.classList.add("hidden");
-    }
+/**
+ * Create success JSON response with CORS headers
+ */
+function createSuccessResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
 
-    function showAccessCheck() {
-        authArea.classList.add("hidden");
-        accessCheckArea.classList.remove("hidden");
-        accessDeniedArea.classList.add("hidden");
-        calendarContent.classList.add("hidden");
-        messagingSection.classList.add("hidden");
-    }
+/**
+ * Create error JSON response with CORS headers
+ */
+function createErrorResponse(message) {
+  const errorResponse = {
+    error: true,
+    message: message
+  };
+  
+  Logger.log('Returning error response: ' + message);
+  
+  return ContentService
+    .createTextOutput(JSON.stringify(errorResponse))
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
 
-    function showAccessDenied() {
-        authArea.classList.add("hidden");
-        accessCheckArea.classList.add("hidden");
-        accessDeniedArea.classList.remove("hidden");
-        calendarContent.classList.add("hidden");
-        messagingSection.classList.add("hidden");
-    }
-
-    function showDashboard() {
-        authArea.classList.add("hidden");
-        accessCheckArea.classList.add("hidden");
-        accessDeniedArea.classList.add("hidden");
-        calendarContent.classList.remove("hidden");
-        messagingSection.classList.remove("hidden");
-    }
-
-    // ======== AUTH SUCCESS HANDLER =========
-    async function handleAuthSuccess() {
-        if (!gapi_loaded || !accessToken) {
-            console.error("Auth success path hit without gapi/token");
-            showAccessDenied();
-            return;
-        }
-
-        showAccessCheck();
-
-        try {
-            userEmail = await getUserEmail();
-            console.log("User email:", userEmail);
-
-            const hasAccess = await checkUserAccess(userEmail);
-
-            if (hasAccess) {
-                userHasAccess = true;
-                welcomeMessage.textContent = `Welcome, ${userEmail}`;
-                showDashboard();
-                displayMonthlyCalendar();
-            } else {
-                userHasAccess = false;
-                showAccessDenied();
-            }
-        } catch (e) {
-            console.error("Error during auth process:", e);
-            showAccessDenied();
-        }
-    }
-
-    // ======== USER EMAIL RESOLUTION =========
-    async function getUserEmail() {
-        try {
-            await ensureValidToken();
-            const token = gapi.client.getToken();
-            if (!token || !token.access_token) throw new Error("No token in gapi client");
-
-            const resp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-                headers: { Authorization: `Bearer ${token.access_token}` }
-            });
-
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.email) {
-                    return data.email;
-                }
-            }
-
-            const gmailResp = await gapi.client.gmail.users.getProfile({
-                userId: "me"
-            });
-            return gmailResp.result.emailAddress;
-        } catch (e) {
-            console.error("Error getting user email:", e);
-            throw e;
-        }
-    }
-
-    // ======== ACCESS CONTROL (ALLOWLIST CHECK) =========
-    async function checkUserAccess(email) {
-        try {
-            console.log("Checking access for:", email);
-
-            const response = await fetch(
-                `${ACCESS_CHECK_URL}?action=checkAccess&email=${encodeURIComponent(email)}`,
-                {
-                    method: "GET",
-                    mode: "cors"
-                }
-            );
-
-            if (!response.ok) {
-                console.error("Access check request failed:", response.status);
-                return false;
-            }
-
-            const data = await response.json();
-            console.log("Access check response:", data);
-
-            return data.hasAccess === true;
-        } catch (error) {
-            console.error("Error checking user access:", error);
-            return false;
-        }
-    }
-
-    // ========
+/**
+ * Handle OPTIONS requests for CORS preflight
+ */
+function doOptions(e) {
+  return ContentService
+    .createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    .setHeader('Access-Control-Max-Age', '86400');
+}
