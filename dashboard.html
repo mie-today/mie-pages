@@ -8,7 +8,7 @@
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google API Client Library (no longer used for auth; safe to keep) -->
+<!-- Google API Client Library (not used for auth; safe to keep) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
 <!-- FullCalendar -->
@@ -99,7 +99,11 @@
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
+    /* IMPORTANT: no forced colors here – JS will set per-event colors */
+    .fc .fc-event {
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
     .fc .fc-toolbar-title { color: #1f2937 !important; }
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
@@ -124,10 +128,10 @@
             <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img
-    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
-    alt="Mie Logo"
-    class="rounded-full mb-4"
-/>
+                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                />
 
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
@@ -145,14 +149,18 @@
                     or
                     <a href="signup.html"
                        class="font-semibold text-green-600 hover:text-green-700 hover:underline">
-                    Create an account
+                        Create an account
                     </a>
                 </div>
             </div>
 
             <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <img
+                    src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                >
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
@@ -160,7 +168,11 @@
 
             <!-- Access Denied Area (currently unused, kept for future allowlist logic) -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <img
+                    src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                >
                 <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
                 <div class="access-denied text-center max-w-md">
                     <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
@@ -177,9 +189,8 @@
 
             <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mb-2">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
-                    <!-- No top sign-out; sign-out is at bottom of messaging section -->
                 </div>
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
@@ -261,7 +272,6 @@
 <script>
 (function () {
     // ======== CONFIG =========
-    // Use the working Cloud Run URL here.
     const BACKEND_BASE_URL = "https://mie-backend-514922143683.us-central1.run.app";
 
     // ======== STATE =========
@@ -379,14 +389,16 @@
 
             if (data.connected) {
                 userHasAccess = true;
-                userEmail = data.userEmail || (data.user && (data.user.email || data.user.primaryEmail)) || "";
+                userEmail =
+                    data.userEmail ||
+                    (data.user && (data.user.email || data.user.primaryEmail)) ||
+                    "";
                 if (userEmail && welcomeMessage) {
                     welcomeMessage.textContent = "Welcome, " + userEmail;
                 }
                 showDashboard();
                 displayMonthlyCalendar();
             } else {
-                // Not connected yet → show connect CTA
                 showAuthArea();
             }
         } catch (err) {
@@ -495,25 +507,7 @@
             const data = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
 
-            const events = items.map((e) => {
-                const start = (e.start && (e.start.dateTime || e.start.date)) || null;
-                const end = (e.end && (e.end.dateTime || e.end.date)) || null;
-                const allDay = !!(e.start && e.start.date && !e.start.dateTime);
-
-                return {
-                    id: e.id,
-                    title: e.summary || "No Title",
-                    start,
-                    end,
-                    allDay,
-                    url: e.htmlLink || "",
-                    extendedProps: {
-                        description: e.description || "",
-                        location: e.location || "",
-                    },
-                };
-            });
-
+            const events = items.map(transformEventForCalendar);
             successCallback(events);
         } catch (err) {
             console.error("Error fetching events:", err);
@@ -521,27 +515,87 @@
         }
     }
 
+    // Map backend event -> FullCalendar event, with styling:
+    // - All-day: filled background in calendar color
+    // - Timed: white background, colored border, black text
+    function transformEventForCalendar(e) {
+        const start =
+            (e.start && (e.start.dateTime || e.start.date)) || null;
+        const end =
+            (e.end && (e.end.dateTime || e.end.date)) || null;
+        const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+
+        const calColor = e._calendarColor || "#3b82f6";
+        const calFg = e._calendarFgColor || "#ffffff";
+
+        const base = {
+            id: e.id,
+            title: e.summary || "No Title",
+            start,
+            end,
+            allDay,
+            url: e.htmlLink || "",
+            extendedProps: {
+                description: e.description || "",
+                location: e.location || "",
+                calendarId: e._calendarId || "primary",
+                calendarSummary: e._calendarSummary || "",
+                calendarColor: calColor,
+            },
+        };
+
+        if (allDay) {
+            // All-day: solid block in calendar color
+            base.backgroundColor = calColor;
+            base.borderColor = calColor;
+            base.textColor = calFg;
+        } else {
+            // Timed: white with colored outline
+            base.backgroundColor = "#ffffff";
+            base.borderColor = calColor;
+            base.textColor = "#111827";
+        }
+
+        return base;
+    }
+
     function showEventDetails(event) {
         eventTitle.textContent = event.title || "No Title";
 
-        const startDate = event.start instanceof Date ? event.start : new Date(event.start);
-        const endDate = event.end ? (event.end instanceof Date ? event.end : new Date(event.end)) : null;
+        const startDate =
+            event.start instanceof Date ? event.start : new Date(event.start);
+        const endDate = event.end
+            ? event.end instanceof Date
+                ? event.end
+                : new Date(event.end)
+            : null;
 
         let timeString = "All-day";
         if (!event.allDay && startDate instanceof Date) {
-            timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            timeString = startDate.toLocaleTimeString([], {
+                hour: "numeric",
+                minute: "2-digit",
+            });
             if (endDate) {
-                timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                timeString +=
+                    " - " +
+                    endDate.toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                    });
             }
         }
 
         eventTime.textContent =
-            startDate.toLocaleDateString() + (event.allDay ? "" : " | " + timeString);
+            startDate.toLocaleDateString() +
+            (event.allDay ? "" : " | " + timeString);
 
         eventDescription.textContent =
-            (event.extendedProps && event.extendedProps.description) || "No description provided.";
+            (event.extendedProps && event.extendedProps.description) ||
+            "No description provided.";
         eventLocation.textContent =
-            (event.extendedProps && event.extendedProps.location) || "No location provided.";
+            (event.extendedProps && event.extendedProps.location) ||
+            "No location provided.";
 
         if (event.url) {
             eventLink.href = event.url;
@@ -564,10 +618,13 @@
         const text = messageInput ? messageInput.value.trim() : "";
         if (!text && !selectedFile) return;
 
-        // Backend only accepts text now. If user attached a file, we note it in the message.
         let payloadText = text;
         if (selectedFile) {
-            payloadText += (payloadText ? "\n\n" : "") + "[Attachment selected in UI: " + selectedFile.name + "]";
+            payloadText +=
+                (payloadText ? "\n\n" : "") +
+                "[Attachment selected in UI: " +
+                selectedFile.name +
+                "]";
         }
 
         logMessage("Sending message...", "info");
@@ -628,7 +685,9 @@
 
     function updateSendButton() {
         if (!sendButton) return;
-        const canSend = (messageInput && messageInput.value.trim() !== "") || selectedFile !== null;
+        const canSend =
+            (messageInput && messageInput.value.trim() !== "") ||
+            selectedFile !== null;
         sendButton.disabled = !canSend;
     }
 
@@ -658,4 +717,3 @@
 </script>
 </body>
 </html>
-
