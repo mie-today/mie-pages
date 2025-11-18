@@ -8,53 +8,47 @@
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google API Client Library (no longer used for auth; safe to leave) -->
+<!-- Google API Client Library (no longer used for auth; safe to keep) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
 <!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap"
+  rel="stylesheet"
+/>
+
 <style>
+    /* --- General Body and Layout --- */
     body {
+        font-family: 'Inter', sans-serif;
+        background-color: #ffffff;
+        color: #1f2937;
         margin: 0;
         padding: 0;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-            Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
     }
 
-    .oauth-app-container {
-        max-width: 800px;
-        margin: 24px auto;
-        padding: 16px;
-    }
+    /* Custom font classes */
+    .font-montserrat { font-family: 'Montserrat', sans-serif; }
+    .font-lato { font-family: 'Lato', sans-serif; }
 
-    .calendar-section {
-        width: 100%;
-        height: 860px;
-    }
+    /* --- Scrollbar Styling --- */
+    .oauth-app-container #message-log::-webkit-scrollbar,
+    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-track,
+    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
 
-    .messaging-section {
-        width: 100%;
-        height: 360px;
-    }
+    /* Utility class for disabled elements */
+    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .gradient-border {
-        border-radius: 16px;
-        padding: 1px;
-        background: linear-gradient(135deg, #3b82f6, #22c55e);
-    }
-
-    .inner-card {
-        border-radius: 16px;
-        background: #f9fafb;
-    }
-
-    .monospace-log {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-            "Liberation Mono", "Courier New", monospace;
-        font-size: 11px;
-    }
+    /* Main container for the entire application */
+    .oauth-app-container { max-width: 100%; margin: 0 auto; }
 
     /* --- Responsive Styles for Mobile (up to 480px wide) --- */
     @media (max-width: 480px) {
@@ -65,277 +59,111 @@
             padding: 4px !important;
             gap: 4px !important;
         }
-        .calendar-section,
-        .messaging-section {
+        .calendar-section, .messaging-section {
             width: 100% !important;
             height: auto !important;
             padding: 8px !important;
         }
-        .mobile-heading {
-            font-size: 20px !important;
-            line-height: 1.2 !important;
-        }
-        .mobile-text {
-            font-size: 14px !important;
-            line-height: 1.25 !important;
-        }
-        .mobile-small-text {
-            font-size: 11px !important;
-        }
-        .mobile-button {
-            padding: 8px 12px !important;
-            font-size: 14px !important;
-        }
-        .mobile-small-btn {
-            padding: 4px 8px !important;
-            font-size: 11px !important;
-        }
-        .fc-toolbar.fc-header-toolbar {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-        }
-        .fc-toolbar-title {
-            font-size: 16px !important;
-        }
-        .fc-button {
-            font-size: 10px !important;
-            padding: 2px 6px !important;
-        }
-        .fc-daygrid-day-number {
-            font-size: 11px !important;
-        }
-        .fc .fc-event {
-            font-size: 10px !important;
-        }
+        .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
+        .mobile-text { font-size: 14px !important; line-height: 1.1 !important; }
+        .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
+        .mobile-text-btn { font-size: 16px !important; }
+        .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
+        .fc .fc-toolbar-title { font-size: 20px !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
+        .fc .fc-col-header-cell { font-size: 12px !important; }
+        .fc .fc-daygrid-day-number { font-size: 12px !important; }
+        .fc .fc-event { font-size: 10px !important; }
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
-        .oauth-app-container {
-            width: 481px;
-        }
-        .calendar-section {
-            width: 481px;
-            height: 632px;
-        }
-        .messaging-section {
-            width: 481px;
-            height: 316px;
-        }
+        .oauth-app-container { width: 481px; }
+        .calendar-section { width: 481px; height: 632px; }
+        .messaging-section { width: 481px; height: 316px; }
     }
 
     /* --- Responsive Styles for Desktop (769px and wider) --- */
     @media (min-width: 769px) {
-        .oauth-app-container {
-            width: 800px;
-        }
-        .calendar-section {
-            width: 800px;
-            height: 860px;
-        }
-        .messaging-section {
-            width: 800px;
-            height: 360px;
-        }
+        .oauth-app-container { width: 800px; }
+        .calendar-section { width: 800px; height: 860px; }
+        .messaging-section { width: 800px; height: 360px; }
     }
 
     /* --- FullCalendar Light Mode Customization --- */
-    .fc {
-        color: #1f2937 !important;
-        background-color: #ffffff !important;
-    }
-    .fc .fc-button-primary {
-        background-color: #3b82f6 !important;
-        border-color: #2563eb !important;
-        color: white !important;
-    }
-    .fc .fc-button-primary:hover {
-        background-color: #2563eb !important;
-    }
-    .fc .fc-button-primary:disabled {
-        background-color: #9ca3af !important;
-        border-color: #6b7280 !important;
-    }
-    .fc-daygrid-day.fc-day-today {
-        background-color: rgba(59, 130, 246, 0.1) !important;
-    }
-    .fc .fc-daygrid-day-frame {
-        background-color: white !important;
-    }
-    .fc .fc-col-header-cell {
-        background-color: #f8fafc !important;
-        color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day-number {
-        color: #1f2937 !important;
-    }
-    .fc .fc-event {
-        border-color: #3b82f6 !important;
-        background-color: #3b82f6 !important;
-        color: white !important;
-    }
-    .fc .fc-toolbar-title {
-        color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day.fc-day-other {
-        display: none !important;
-    }
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
+    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
     /* --- Event Modal Styling --- */
-    .event-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(15, 23, 42, 0.4);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-    .event-modal:not(.hidden) {
-        display: flex;
-    }
-    .event-modal-content {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        max-width: 480px;
-        width: 100%;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        color: #1f2937;
-    }
-    @media (max-width: 480px) {
-        .event-modal-content {
-            max-width: 320px !important;
-            padding: 16px !important;
-        }
-    }
+    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
+    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
 
     /* --- Access Denied Styling --- */
-    .access-denied {
-        border-radius: 12px;
-        border: 1px solid #fecaca;
-        background-color: #fef2f2;
-        padding: 16px;
-        color: #7f1d1d;
-    }
+    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
 </style>
 </head>
+<body class="bg-white">
 
-<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
+<!-- Main App Container -->
 <div class="oauth-app-container">
-    <div class="gradient-border shadow-xl">
-        <div class="inner-card mobile-container bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col gap-4">
-            <!-- Top Header -->
-            <div class="flex items-center justify-between mb-2">
-                <div>
-                    <h1 class="mobile-heading text-2xl font-semibold text-gray-800">Mie</h1>
-                    <p class="mobile-text text-sm text-gray-500">Remember your life</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs text-gray-400 mobile-small-text">
-                        Connected with Google Calendar
-                    </p>
-                    <a
-                        href="https://calendar.google.com"
-                        target="_blank"
-                        class="text-xs text-blue-600 hover:text-blue-700 underline mobile-small-text"
-                    >
-                        Open Google Calendar
+    <div class="flex flex-col space-y-4 p-4 mobile-container">
+
+        <!-- ===== Calendar Section ===== -->
+        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
+
+            <!-- Authentication Area (signed out / pre-consent) -->
+            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
+                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
+
+                <!-- Connect CTA -->
+                <button
+                    id="connect-google-btn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
+                    style="min-width:200px; justify-content:center;"
+                >
+                    Connect Google
+                </button>
+
+                <div class="mt-6 text-sm text-gray-500">
+                    or
+                    <a href="signup.html"
+                       class="font-semibold text-green-600 hover:text-green-700 hover:underline">
+                    Create an account
                     </a>
                 </div>
             </div>
 
-            <!-- Authentication Area (signed out / pre-consent) -->
-            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
-                <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
-                    alt="Mie Logo"
-                    class="rounded-full mb-4"
-                />
-                <h1
-                    class="font-montserrat text-2xl font-semibold text-gray-800"
-                    style="font-size: 18pt;"
-                >
-                    Mie
-                </h1>
-                <p
-                    class="font-lato text-base text-gray-600 mt-1 mb-6"
-                    style="font-size: 12pt;"
-                >
-                    Remember your life
-                </p>
-
-                <!-- Inline connect CTA - now uses Cloud Run backend -->
-                <button
-                    id="connect-google-btn"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-sm mobile-button"
-                >
-                    Connect to Google
-                </button>
-
-                <p class="text-xs text-gray-500 mt-4 max-w-xs text-center mobile-small-text">
-                    Mie will ask for permission to view your calendar and send notes to your
-                    save@mie.today account.
-                </p>
-            </div>
-
             <!-- Access Verification Area -->
-            <div
-                id="access-check-area"
-                class="hidden flex flex-col items-center justify-start h-full p-4"
-            >
-                <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
-                    alt="Mie Logo"
-                    class="rounded-full mb-4"
-                />
-                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">
-                    Verifying Access...
-                </h2>
-                <div
-                    class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-                ></div>
-                <p class="text-sm text-gray-600 mt-4">
-                    Checking if your account has access to Mie dashboard
-                </p>
+            <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
-            <!-- Access Denied Area -->
-            <div
-                id="access-denied-area"
-                class="hidden flex flex-col items-center justify-start h-full p-4"
-            >
-                <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
-                    alt="Mie Logo"
-                    class="rounded-full mb-4"
-                />
-                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">
-                    Access Denied
-                </h2>
+            <!-- Access Denied Area (currently unused, kept for future allowlist logic) -->
+            <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
+                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
                 <div class="access-denied text-center max-w-md">
-                    <p class="mb-3">
-                        Your Gmail account doesn't have access to the Mie dashboard.
-                    </p>
-                    <p class="mb-4">
-                        To get access, please sign up with the correct PIN code.
-                    </p>
+                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
+                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
                     <div class="space-y-3">
-                        <a
-                            href="signup.html"
-                            class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold"
-                        >
-                            Sign Up for Access
-                        </a>
+                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
                         <br />
-                        <button
-                            id="try-different-account"
-                            class="text-blue-600 hover:text-blue-700 underline text-sm"
-                        >
+                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">
                             Try a Different Account
                         </button>
                     </div>
@@ -344,159 +172,95 @@
 
             <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center mb-2">
-                    <h2
-                        class="mobile-heading text-xl font-semibold text-gray-800"
-                    >
-                        Calendar
-                    </h2>
-                    <div class="flex items-center">
-                        <span
-                            id="welcome-message"
-                            class="text-sm text-gray-600"
-                        ></span>
-                    </div>
-                </div>
-                <div
-                    id="calendar-container"
-                    class="calendar-section bg-white rounded-xl shadow-inner border border-gray-200"
-                ></div>
-            </div>
-
-            <!-- Messaging Section -->
-            <div
-                id="messaging-section"
-                class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden"
-            >
-                <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">
-                    Send a Message
-                </h2>
-                <p class="text-sm text-gray-500 mb-3 mobile-text">
-                    Type a note and send it to your Mie inbox (save@mie.today).
-                </p>
-
-                <textarea
-                    id="message-input"
-                    class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
-                    rows="3"
-                    placeholder="What do you want to remember?"
-                ></textarea>
-
-                <!-- Attachment area -->
-                <div class="mb-3">
-                    <label
-                        for="file-input"
-                        class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50 cursor-pointer mobile-small-btn"
-                    >
-                        Attach image
-                    </label>
-                    <input
-                        id="file-input"
-                        type="file"
-                        class="hidden"
-                        accept="image/*"
-                    />
-                    <div
-                        id="file-preview"
-                        class="hidden flex items-center space-x-2 mt-2"
-                    >
-                        <img
-                            id="preview-image"
-                            class="w-12 h-12 object-cover rounded border"
-                            alt="Preview"
-                        />
-                        <button
-                            id="remove-file"
-                            class="text-red-500 text-sm mobile-text"
-                        >
-                            Remove
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between mb-2">
-                    <button
-                        id="send-button"
-                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed mobile-button"
-                        disabled
-                    >
-                        Send
-                    </button>
-                </div>
-
-                <!-- Message Log -->
-                <div
-                    id="message-log"
-                    class="monospace-log border border-gray-200 rounded-lg p-2 h-24 overflow-y-auto bg-gray-50 text-gray-700"
-                ></div>
-
-                <!-- Sign Out centered at bottom -->
-                <div class="mt-4 flex justify-center">
+                <div class="flex justify-between items-center">
+                    <span id="welcome-message" class="text-sm text-gray-600"></span>
                     <button
                         id="signout_button"
-                        class="text-gray-500 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
+                        class="bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
                     >
                         Sign Out
                     </button>
                 </div>
+                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
+            </div>
+        </div>
+
+        <!-- ===== Messaging Section ===== -->
+        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
+            <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
+
+            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
+                <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
             </div>
 
-            <!-- Event Modal -->
-            <div id="event-modal" class="event-modal hidden">
-                <div class="event-modal-content">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3
-                            id="event-title"
-                            class="text-lg font-semibold text-gray-800"
-                        >
-                            Event Title
-                        </h3>
-                        <button
-                            id="close-event-modal"
-                            class="text-gray-500 hover:text-gray-700"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <p
-                        id="event-time"
-                        class="text-sm text-gray-500 mb-1"
-                    ></p>
-                    <p
-                        id="event-location"
-                        class="text-sm text-gray-500 mb-2"
-                    ></p>
-                    <p
-                        id="event-description"
-                        class="text-sm text-gray-700 mb-4"
-                    ></p>
-                    <div class="flex justify-end">
-                        <a
-                            id="event-link"
-                            target="_blank"
-                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg"
-                        >
-                            Open in Google Calendar
-                        </a>
-                    </div>
+            <textarea
+                id="message-input"
+                placeholder="Type your message..."
+                class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"
+            ></textarea>
+
+            <div class="flex items-center space-x-2 mt-2">
+                <label
+                    for="file-input"
+                    class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text"
+                >
+                    Attachment
+                </label>
+                <input id="file-input" type="file" class="hidden" accept="image/*" />
+                <div id="file-preview" class="hidden flex items-center space-x-2">
+                    <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview" />
+                    <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
                 </div>
             </div>
+
+            <button
+                id="send-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn"
+                disabled
+            >
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Event Details Modal ===== -->
+<div id="event-modal" class="event-modal hidden">
+    <div class="event-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="event-details" class="space-y-2">
+            <p id="event-time" class="text-gray-600 mobile-text"></p>
+            <p id="event-description" class="text-gray-700 mobile-text"></p>
+            <p id="event-location" class="text-gray-600 mobile-text"></p>
+        </div>
+        <div class="mt-4 flex justify-end">
+            <a
+                id="event-link"
+                target="_blank"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-btn"
+            >
+                Open in Google Calendar
+            </a>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    // ======== CONFIG ========
-    const BACKEND_BASE_URL = "https://mie-backend-514922143683.us-central1.run.app";
+(function () {
+    // ======== CONFIG =========
+    // Point this to your backend. When you move to api.mie.today, change it there.
+    const BACKEND_BASE_URL = "https://api.mie.today";
 
-    // ======== STATE ========
+    // ======== STATE =========
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
 
-    // ======== DOM HOOKS ========
+    // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
     const accessCheckArea = document.getElementById("access-check-area");
     const accessDeniedArea = document.getElementById("access-denied-area");
@@ -506,7 +270,6 @@
     const welcomeMessage = document.getElementById("welcome-message");
     const signoutButton = document.getElementById("signout_button");
     const tryDifferentAccountBtn = document.getElementById("try-different-account");
-
     const connectGoogleBtn = document.getElementById("connect-google-btn");
 
     const sendButton = document.getElementById("send-button");
@@ -515,15 +278,15 @@
     const fileInput = document.getElementById("file-input");
     const filePreview = document.getElementById("file-preview");
     const previewImage = document.getElementById("preview-image");
-    const removeFileBtn = document.getElementById("remove-file");
+    const removeFileButton = document.getElementById("remove-file");
 
     const eventModal = document.getElementById("event-modal");
+    const closeModal = document.getElementById("close-modal");
     const eventTitle = document.getElementById("event-title");
     const eventTime = document.getElementById("event-time");
     const eventDescription = document.getElementById("event-description");
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
-    const eventModalCloseBtn = document.getElementById("close-event-modal");
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
@@ -534,13 +297,12 @@
     function bindEventHandlers() {
         if (connectGoogleBtn) {
             connectGoogleBtn.addEventListener("click", () => {
-                // Hand off OAuth to Cloud Run backend
                 window.location.href = BACKEND_BASE_URL + "/auth/google";
             });
         }
 
         if (signoutButton) {
-            signoutButton.addEventListener("click", handleSignOut);
+            signoutButton.addEventListener("click", () => handleSignOut(false));
         }
 
         if (tryDifferentAccountBtn) {
@@ -550,35 +312,37 @@
             });
         }
 
+        if (sendButton) {
+            sendButton.addEventListener("click", (e) => {
+                e.preventDefault();
+                sendMessage();
+            });
+        }
+
         if (messageInput) {
             messageInput.addEventListener("input", updateSendButton);
         }
 
         if (fileInput) {
-            fileInput.addEventListener("change", handleFileChange);
+            fileInput.addEventListener("change", handleFileSelect);
         }
 
-        if (removeFileBtn) {
-            removeFileBtn.addEventListener("click", (e) => {
+        if (removeFileButton) {
+            removeFileButton.addEventListener("click", (e) => {
                 e.preventDefault();
                 clearSelectedFile();
             });
         }
 
-        if (sendButton) {
-            sendButton.addEventListener("click", (e) => {
-                e.preventDefault();
-                sendEmail();
+        if (closeModal) {
+            closeModal.addEventListener("click", () => {
+                eventModal.classList.add("hidden");
             });
-        }
-
-        if (eventModalCloseBtn) {
-            eventModalCloseBtn.addEventListener("click", hideEventModal);
         }
         if (eventModal) {
             eventModal.addEventListener("click", (e) => {
                 if (e.target === eventModal) {
-                    hideEventModal();
+                    eventModal.classList.add("hidden");
                 }
             });
         }
@@ -592,26 +356,27 @@
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/status", {
                 method: "GET",
-                credentials: "include"
+                credentials: "include",
             });
+
             if (!resp.ok) {
                 console.warn("Status check failed with HTTP", resp.status);
                 showAuthArea();
                 return;
             }
+
             const data = await resp.json();
+
             if (data.connected) {
                 userHasAccess = true;
-                userEmail =
-                    data.userEmail ||
-                    (data.user && (data.user.email || data.user.primaryEmail)) ||
-                    "";
+                userEmail = data.userEmail || (data.user && (data.user.email || data.user.primaryEmail)) || "";
                 if (userEmail && welcomeMessage) {
                     welcomeMessage.textContent = "Welcome, " + userEmail;
                 }
                 showDashboard();
                 displayMonthlyCalendar();
             } else {
+                // Not connected yet → show connect CTA
                 showAuthArea();
             }
         } catch (err) {
@@ -620,62 +385,58 @@
         }
     }
 
-    // ======== UI STATE HELPERS ========
+    // ======== UI STATE ========
     function showAuthArea() {
-        if (authArea) authArea.classList.remove("hidden");
-        if (accessCheckArea) accessCheckArea.classList.add("hidden");
-        if (accessDeniedArea) accessDeniedArea.classList.add("hidden");
-        if (calendarContent) calendarContent.classList.add("hidden");
-        if (messagingSection) messagingSection.classList.add("hidden");
+        authArea.classList.remove("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
     }
 
     function showAccessCheck() {
-        if (authArea) authArea.classList.add("hidden");
-        if (accessCheckArea) accessCheckArea.classList.remove("hidden");
-        if (accessDeniedArea) accessDeniedArea.classList.add("hidden");
-        if (calendarContent) calendarContent.classList.add("hidden");
-        if (messagingSection) messagingSection.classList.add("hidden");
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.remove("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
     }
 
     function showAccessDenied() {
-        if (authArea) authArea.classList.add("hidden");
-        if (accessCheckArea) accessCheckArea.classList.add("hidden");
-        if (accessDeniedArea) accessDeniedArea.classList.remove("hidden");
-        if (calendarContent) calendarContent.classList.add("hidden");
-        if (messagingSection) messagingSection.classList.add("hidden");
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.remove("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
     }
 
     function showDashboard() {
-        if (authArea) authArea.classList.add("hidden");
-        if (accessCheckArea) accessCheckArea.classList.add("hidden");
-        if (accessDeniedArea) accessDeniedArea.classList.add("hidden");
-        if (calendarContent) calendarContent.classList.remove("hidden");
-        if (messagingSection) messagingSection.classList.remove("hidden");
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.remove("hidden");
+        messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT ========
+    // ======== SIGN OUT (BACKEND SESSION) ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
                 method: "POST",
-                credentials: "include"
+                credentials: "include",
             });
         } catch (err) {
             console.error("Error during logout:", err);
         }
+
         if (!silent) {
-            // Hard reset to dashboard for a clean state
-            window.location.href = "https://mie.today/dashboard";
+            window.location.href = "/dashboard";
         }
     }
 
-    // ======== CALENDAR RENDERING ========
+    // ======== CALENDAR ========
     function displayMonthlyCalendar() {
-        if (!calendarContainer) {
-            console.error("Calendar container not found");
-            return;
-        }
-
+        if (!calendarContainer) return;
         if (calendar) {
             calendar.destroy();
             calendar = null;
@@ -684,16 +445,18 @@
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: "dayGridMonth",
             headerToolbar: {
-                left: "prev,next today",
+                left: "today",
                 center: "title",
-                right: "dayGridMonth,timeGridWeek,timeGridDay"
+                right: "prev,next",
             },
-            height: "100%",
+            fixedWeekCount: false,
+            showNonCurrentDates: false,
+            height: "auto",
             events: fetchCalendarEvents,
-            eventClick: (info) => {
+            eventClick: function(info) {
                 info.jsEvent.preventDefault();
-                showEventModal(info.event);
-            }
+                showEventDetails(info.event);
+            },
         });
 
         calendar.render();
@@ -703,16 +466,44 @@
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/events", {
                 method: "GET",
-                credentials: "include"
+                credentials: "include",
             });
+
+            if (resp.status === 401) {
+                console.warn("Not connected when fetching events");
+                showAuthArea();
+                if (failureCallback) failureCallback(new Error("NOT_CONNECTED"));
+                return;
+            }
+
             if (!resp.ok) {
-                console.error("Events fetch failed with HTTP", resp.status);
+                console.error("Events fetch failed HTTP", resp.status);
                 if (failureCallback) failureCallback(new Error("HTTP " + resp.status));
                 return;
             }
+
             const data = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
-            const events = items.map(transformEventForCalendar);
+
+            const events = items.map((e) => {
+                const start = (e.start && (e.start.dateTime || e.start.date)) || null;
+                const end = (e.end && (e.end.dateTime || e.end.date)) || null;
+                const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+
+                return {
+                    id: e.id,
+                    title: e.summary || "No Title",
+                    start,
+                    end,
+                    allDay,
+                    url: e.htmlLink || "",
+                    extendedProps: {
+                        description: e.description || "",
+                        location: e.location || "",
+                    },
+                };
+            });
+
             successCallback(events);
         } catch (err) {
             console.error("Error fetching events:", err);
@@ -720,63 +511,27 @@
         }
     }
 
-    function transformEventForCalendar(e) {
-        const start = (e.start && (e.start.dateTime || e.start.date)) || null;
-        const end = (e.end && (e.end.dateTime || e.end.date)) || null;
-        const allDay = !!(e.start && e.start.date && !e.start.dateTime);
-
-        return {
-            id: e.id,
-            title: e.summary || "No Title",
-            start,
-            end,
-            allDay,
-            url: e.htmlLink || "",
-            extendedProps: {
-                description: e.description || "",
-                location: e.location || "",
-                hangoutLink:
-                    e.hangoutLink ||
-                    (e.conferenceData &&
-                        Array.isArray(e.conferenceData.entryPoints) &&
-                        e.conferenceData.entryPoints.length > 0
-                        ? e.conferenceData.entryPoints[0].uri
-                        : "")
-            }
-        };
-    }
-
-    // ======== EVENT MODAL ========
-    function showEventModal(event) {
-        if (!eventModal) return;
-
+    function showEventDetails(event) {
         eventTitle.textContent = event.title || "No Title";
 
-        const startDate = event.start;
-        let timeString = "";
+        const startDate = event.start instanceof Date ? event.start : new Date(event.start);
+        const endDate = event.end ? (event.end instanceof Date ? event.end : new Date(event.end)) : null;
+
+        let timeString = "All-day";
         if (!event.allDay && startDate instanceof Date) {
-            timeString = startDate.toLocaleTimeString([], {
-                hour: "numeric",
-                minute: "2-digit"
-            });
+            timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            if (endDate) {
+                timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            }
         }
 
-        if (startDate instanceof Date) {
-            eventTime.textContent =
-                startDate.toLocaleDateString() + (event.allDay ? "" : " | " + timeString);
-        } else {
-            eventTime.textContent = "";
-        }
+        eventTime.textContent =
+            startDate.toLocaleDateString() + (event.allDay ? "" : " | " + timeString);
 
         eventDescription.textContent =
-            event.extendedProps && event.extendedProps.description
-                ? event.extendedProps.description
-                : "No description provided.";
-
+            (event.extendedProps && event.extendedProps.description) || "No description provided.";
         eventLocation.textContent =
-            event.extendedProps && event.extendedProps.location
-                ? event.extendedProps.location
-                : "No location provided.";
+            (event.extendedProps && event.extendedProps.location) || "No location provided.";
 
         if (event.url) {
             eventLink.href = event.url;
@@ -789,41 +544,35 @@
         eventModal.classList.remove("hidden");
     }
 
-    function hideEventModal() {
-        if (eventModal) {
-            eventModal.classList.add("hidden");
-        }
-    }
-
     // ======== MESSAGING ========
-    async function sendEmail() {
+    async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
             return;
         }
 
-        const text = (messageInput && messageInput.value) ? messageInput.value.trim() : "";
-        if (!text && !selectedFile) {
-            return;
+        const text = messageInput ? messageInput.value.trim() : "";
+        if (!text && !selectedFile) return;
+
+        // Backend only accepts text now. If user attached a file, we note it in the message.
+        let payloadText = text;
+        if (selectedFile) {
+            payloadText += (payloadText ? "\n\n" : "") + "[Attachment selected in UI: " + selectedFile.name + "]";
         }
 
         logMessage("Sending message...", "info");
-        if (sendButton) sendButton.disabled = true;
+        sendButton.disabled = true;
 
         try {
-            // NOTE: Backend currently expects JSON text only.
-            // Attachments are previewed in the UI but not yet sent.
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/message", {
                 method: "POST",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ text })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: payloadText }),
             });
 
             if (!resp.ok) {
-                console.error("Send message failed with HTTP", resp.status);
+                console.error("Send message failed HTTP", resp.status);
                 logMessage("Failed to send message. Please try again.", "error");
                 return;
             }
@@ -839,12 +588,13 @@
         }
     }
 
-    function handleFileChange(e) {
+    function handleFileSelect(e) {
         const file = e.target.files && e.target.files[0];
         if (!file) {
             clearSelectedFile();
             return;
         }
+
         selectedFile = file;
 
         if (filePreview && previewImage) {
@@ -861,38 +611,38 @@
 
     function clearSelectedFile() {
         selectedFile = null;
-        if (fileInput) {
-            fileInput.value = "";
-        }
-        if (filePreview) {
-            filePreview.classList.add("hidden");
-        }
+        if (fileInput) fileInput.value = "";
+        if (filePreview) filePreview.classList.add("hidden");
         updateSendButton();
+    }
+
+    function updateSendButton() {
+        if (!sendButton) return;
+        const canSend = (messageInput && messageInput.value.trim() !== "") || selectedFile !== null;
+        sendButton.disabled = !canSend;
     }
 
     function logMessage(msg, type) {
         if (!messageLog) return;
         const entry = document.createElement("div");
-        entry.className = "text-xs mb-1";
+        entry.className = "text-sm mb-1";
 
         if (type === "error") {
-            entry.classList.add("text-red-600");
+            entry.classList.add("text-red-500");
         } else if (type === "success") {
-            entry.classList.add("text-green-600");
+            entry.classList.add("text-green-500");
         } else {
             entry.classList.add("text-gray-600");
         }
 
         const timestamp = new Date().toLocaleTimeString();
         entry.textContent = "[" + timestamp + "] " + msg;
-        messageLog.prepend(entry);
-    }
 
-    function updateSendButton() {
-        if (!sendButton) return;
-        const canSend =
-            (messageInput && messageInput.value.trim() !== "") || selectedFile !== null;
-        sendButton.disabled = !canSend;
+        const placeholder = messageLog.querySelector(".text-gray-500");
+        if (placeholder) placeholder.remove();
+
+        messageLog.appendChild(entry);
+        messageLog.scrollTop = messageLog.scrollHeight;
     }
 })();
 </script>
