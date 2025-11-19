@@ -91,47 +91,20 @@
     }
 
     /* --- FullCalendar Light Mode Customization --- */
-    .fc {
-        color: #111827 !important;
-        background-color: #ffffff !important;
-    }
-    .fc .fc-button-primary {
-        background-color: #3b82f6 !important;
-        border-color: #2563eb !important;
-        color: white !important;
-    }
-    .fc .fc-button-primary:hover {
-        background-color: #2563eb !important;
-    }
-    .fc .fc-button-primary:disabled {
-        background-color: #9ca3af !important;
-        border-color: #6b7280 !important;
-    }
-    .fc-daygrid-day.fc-day-today {
-        background-color: rgba(59,130,246,0.1) !important;
-    }
-    .fc .fc-daygrid-day-frame {
-        background-color: white !important;
-    }
-    .fc .fc-col-header-cell {
-        background-color: #f8fafc !important;
-        color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day-number {
-        color: #1f2937 !important;
-    }
-    /* default event look (timed events) – white background, grey border, black text */
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+    /* Remove hard-coded blue/white so JS can set per-event colors */
     .fc .fc-event {
-        background-color: #ffffff !important;
-        color: #111827 !important;
-        border-color: #d1d5db !important;
+        font-size: 0.75rem;
     }
-    .fc .fc-toolbar-title {
-        color: #1f2937 !important;
-    }
-    .fc .fc-daygrid-day.fc-day-other {
-        display: none !important;
-    }
+    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
     /* --- Event Modal Styling --- */
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -154,7 +127,7 @@
             <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -182,7 +155,7 @@
             <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -194,7 +167,7 @@
             <!-- Access Denied Area (currently unused, kept for future allowlist logic) -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -214,9 +187,9 @@
 
             <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mb-1">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
-                    <!-- No top sign-out; sign-out is at bottom of messaging section -->
+                    <!-- No top sign-out; sign out is at bottom of messaging section -->
                 </div>
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
@@ -258,8 +231,8 @@
                 Send
             </button>
 
-            <!-- Sign Out: right bottom with a bit of spacing -->
-            <div class="mt-4 flex justify-end">
+            <!-- Sign Out bottom-right, with extra spacing -->
+            <div class="mt-6 flex justify-end pr-1">
                 <button
                     id="signout_button"
                     class="text-gray-500 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
@@ -334,7 +307,7 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    // ======== INIT =========
+    // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
@@ -396,7 +369,7 @@
         updateSendButton();
     }
 
-    // ======== HIGH-LEVEL FLOW =========
+    // ======== HIGH-LEVEL FLOW ========
     async function initializeDashboard() {
         showAccessCheck();
         try {
@@ -416,25 +389,20 @@
             if (data.connected) {
                 userHasAccess = true;
 
-                const user = data.user || {};
-                userEmail =
-                    data.userEmail ||
-                    user.email ||
-                    user.primaryEmail ||
+                const u = data.user || {};
+                const email = data.userEmail || u.email || u.primaryEmail || "";
+                const firstName =
+                    (u.given_name && u.given_name.trim()) ||
+                    (u.name && u.name.trim().split(" ")[0]) ||
                     "";
 
-                const firstName =
-                    user.given_name ||
-                    user.givenName ||
-                    (user.name ? user.name.split(" ")[0] : "");
+                userEmail = email;
 
                 if (welcomeMessage) {
-                    if (firstName && userEmail) {
-                        welcomeMessage.textContent = `Welcome, ${firstName} <${userEmail}>`;
-                    } else if (userEmail) {
-                        welcomeMessage.textContent = `Welcome, ${userEmail}`;
-                    } else if (firstName) {
-                        welcomeMessage.textContent = `Welcome, ${firstName}`;
+                    if (firstName && email) {
+                        welcomeMessage.textContent = `Welcome, ${firstName} <${email}>`;
+                    } else if (email) {
+                        welcomeMessage.textContent = `Welcome, ${email}`;
                     } else {
                         welcomeMessage.textContent = "Welcome";
                     }
@@ -451,7 +419,7 @@
         }
     }
 
-    // ======== UI STATE =========
+    // ======== UI STATE ========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -484,7 +452,7 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT =========
+    // ======== SIGN OUT (BACKEND SESSION) ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -500,7 +468,7 @@
         }
     }
 
-    // ======== CALENDAR =========
+    // ======== CALENDAR ========
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
@@ -524,31 +492,25 @@
                 showEventDetails(info.event);
             },
             eventDidMount: function(info) {
-                const event = info.event;
-                const el = info.el;
-                const isAllDay = event.allDay;
+                // Custom styling per event based on all-day vs timed
+                const isAllDay = info.event.extendedProps.isAllDay;
+                const calColor = info.event.extendedProps.calendarColor || "#3b82f6";
 
-                const color =
-                    (event.extendedProps && event.extendedProps.color) ||
-                    "#3b82f6";
-
-                // Timed events: white background, grey border, black text
-                if (!isAllDay) {
-                    el.style.backgroundColor = "#ffffff";
-                    el.style.borderColor = "#d1d5db";
-                    el.style.color = "#111827";
+                if (isAllDay) {
+                    // Solid block for all-day events
+                    info.el.style.backgroundColor = calColor;
+                    info.el.style.borderColor = calColor;
+                    info.el.style.color = "#ffffff";
                 } else {
-                    // All-day events: filled with calendar color
-                    el.style.backgroundColor = color;
-                    el.style.borderColor = color;
-                    el.style.color = "#ffffff";
-                }
+                    // Timed events: white background, black text, colored dot
+                    info.el.style.backgroundColor = "#ffffff";
+                    info.el.style.borderColor = "transparent";
+                    info.el.style.color = "#111827";
 
-                // Bullet/dot color (for dot-style events)
-                const dot = el.querySelector(".fc-daygrid-event-dot");
-                if (dot) {
-                    dot.style.borderColor = color;
-                    dot.style.backgroundColor = color;
+                    const dot = info.el.querySelector(".fc-daygrid-event-dot");
+                    if (dot) {
+                        dot.style.borderColor = calColor;
+                    }
                 }
             }
         });
@@ -583,6 +545,7 @@
                 const start = (e.start && (e.start.dateTime || e.start.date)) || null;
                 const end = (e.end && (e.end.dateTime || e.end.date)) || null;
                 const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+                const calendarColor = e.calendarColor || "#3b82f6";
 
                 return {
                     id: e.id,
@@ -594,8 +557,8 @@
                     extendedProps: {
                         description: e.description || "",
                         location: e.location || "",
-                        color: e.color || "#3b82f6",
-                        calendarName: e.calendarSummary || ""
+                        calendarColor,
+                        isAllDay: allDay
                     },
                 };
             });
@@ -640,7 +603,7 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING =========
+    // ======== MESSAGING ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
