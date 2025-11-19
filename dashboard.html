@@ -36,6 +36,14 @@
     .font-montserrat { font-family: 'Montserrat', sans-serif; }
     .font-lato { font-family: 'Lato', sans-serif; }
 
+    /* Logo sizing */
+    .mie-logo {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        display: block;
+    }
+
     /* --- Scrollbar Styling --- */
     .oauth-app-container #message-log::-webkit-scrollbar,
     .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -124,9 +132,9 @@
             <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://github.com/mie-today/mie-pages/blob/main/logo_white_70x70.png?raw=true"
                     alt="Mie Logo"
-                    class="rounded-full mb-4"
+                    class="mie-logo rounded-full mb-4"
                 />
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
@@ -154,19 +162,19 @@
                 <img
                     src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
                     alt="Mie Logo"
-                    class="rounded-full mb-4"
+                    class="mie-logo rounded-full mb-4"
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
-            <!-- Access Denied Area (currently unused, kept for future allowlist logic) -->
+            <!-- Access Denied Area -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
                     src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
                     alt="Mie Logo"
-                    class="rounded-full mb-4"
+                    class="mie-logo rounded-full mb-4"
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
                 <div class="access-denied text-center max-w-md">
@@ -492,20 +500,20 @@
                 const calColor = info.event.extendedProps.calendarColor || "#3b82f6";
 
                 if (isAllDay) {
-                    // Solid block for all-day events
-                    info.el.style.backgroundColor = calColor;
-                    info.el.style.borderColor = calColor;
-                    info.el.style.color = "#ffffff";
+                    // All-day: solid block in calendar color
+                    info.el.style.setProperty('--fc-event-bg-color', calColor);
+                    info.el.style.setProperty('--fc-event-border-color', calColor);
+                    info.el.style.setProperty('--fc-event-text-color', '#ffffff');
                 } else {
-                    // Timed events: white background, black text, colored dot
-                    info.el.style.backgroundColor = "#ffffff";
-                    info.el.style.borderColor = "transparent";
-                    info.el.style.color = "#111827";
+                    // Timed: white background, black text, coloured dot
+                    info.el.style.setProperty('--fc-event-bg-color', '#ffffff');
+                    info.el.style.setProperty('--fc-event-border-color', 'transparent');
+                    info.el.style.setProperty('--fc-event-text-color', '#111827');
 
-                    const dot = info.el.querySelector(".fc-daygrid-event-dot");
+                    const dot = info.el.querySelector('.fc-daygrid-event-dot');
                     if (dot) {
                         dot.style.borderColor = calColor;
-                        dot.style.backgroundColor = calColor;  // ensure the bullet matches the calendar color
+                        dot.style.backgroundColor = calColor;
                     }
                 }
             }
