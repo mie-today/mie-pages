@@ -8,7 +8,7 @@
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google API Client Library (no longer used for auth; safe to keep) -->
+<!-- Google API Client Library (not used for auth now; safe to keep) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
 <!-- FullCalendar -->
@@ -35,14 +35,6 @@
     /* Custom font classes */
     .font-montserrat { font-family: 'Montserrat', sans-serif; }
     .font-lato { font-family: 'Lato', sans-serif; }
-
-    /* Logo sizing */
-    .mie-logo {
-        width: 70px;
-        height: 70px;
-        object-fit: cover;
-        display: block;
-    }
 
     /* --- Scrollbar Styling --- */
     .oauth-app-container #message-log::-webkit-scrollbar,
@@ -107,7 +99,7 @@
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    .fc .fc-event { font-size: 0.75rem; }
+    /* IMPORTANT: do NOT force background color here; we style via JS per event */
     .fc .fc-toolbar-title { color: #1f2937 !important; }
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
@@ -132,9 +124,9 @@
             <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/mie-today/mie-pages/blob/main/logo_white_70x70.png?raw=true"
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
                     alt="Mie Logo"
-                    class="mie-logo rounded-full mb-4"
+                    class="rounded-full mb-4"
                 />
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
@@ -160,21 +152,21 @@
             <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
                     alt="Mie Logo"
-                    class="mie-logo rounded-full mb-4"
+                    class="rounded-full mb-4"
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
-            <!-- Access Denied Area -->
+            <!-- Access Denied Area (kept for future allowlist logic) -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
                     alt="Mie Logo"
-                    class="mie-logo rounded-full mb-4"
+                    class="rounded-full mb-4"
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
                 <div class="access-denied text-center max-w-md">
@@ -235,8 +227,8 @@
                 Send
             </button>
 
-            <!-- Sign Out bottom-right, with extra spacing -->
-            <div class="mt-6 flex justify-end pr-1">
+            <!-- Sign Out right-bottom with spacing -->
+            <div class="mt-6 flex justify-end">
                 <button
                     id="signout_button"
                     class="text-gray-500 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
@@ -311,7 +303,7 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    // ======== INIT ========
+    // ======== INIT =========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
@@ -373,7 +365,7 @@
         updateSendButton();
     }
 
-    // ======== HIGH-LEVEL FLOW ========
+    // ======== HIGH-LEVEL FLOW =========
     async function initializeDashboard() {
         showAccessCheck();
         try {
@@ -392,21 +384,20 @@
 
             if (data.connected) {
                 userHasAccess = true;
-
-                const u = data.user || {};
-                const email = data.userEmail || u.email || u.primaryEmail || "";
-                const firstName =
-                    (u.given_name && u.given_name.trim()) ||
-                    (u.name && u.name.trim().split(" ")[0]) ||
+                userEmail =
+                    data.userEmail ||
+                    (data.user && (data.user.email || data.user.primaryEmail)) ||
                     "";
 
-                userEmail = email;
+                const rawName =
+                    (data.user && (data.user.given_name || data.user.name)) || "";
+                const firstName = rawName ? rawName.split(" ")[0] : "";
 
                 if (welcomeMessage) {
-                    if (firstName && email) {
-                        welcomeMessage.textContent = `Welcome, ${firstName} <${email}>`;
-                    } else if (email) {
-                        welcomeMessage.textContent = `Welcome, ${email}`;
+                    if (firstName && userEmail) {
+                        welcomeMessage.textContent = `Welcome, ${firstName} <${userEmail}>`;
+                    } else if (userEmail) {
+                        welcomeMessage.textContent = `Welcome, ${userEmail}`;
                     } else {
                         welcomeMessage.textContent = "Welcome";
                     }
@@ -423,7 +414,7 @@
         }
     }
 
-    // ======== UI STATE ========
+    // ======== UI STATE =========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -456,7 +447,7 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT (BACKEND SESSION) ========
+    // ======== SIGN OUT =========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -472,7 +463,7 @@
         }
     }
 
-    // ======== CALENDAR ========
+    // ======== CALENDAR =========
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
@@ -495,28 +486,31 @@
                 info.jsEvent.preventDefault();
                 showEventDetails(info.event);
             },
+            // Styling per event
             eventDidMount: function(info) {
-                const isAllDay = info.event.extendedProps.isAllDay;
-                const calColor = info.event.extendedProps.calendarColor || "#3b82f6";
+                const calColor =
+                    info.event.extendedProps.calendarColor || "#3b82f6";
 
-                if (isAllDay) {
-                    // All-day: solid block in calendar color
-                    info.el.style.setProperty('--fc-event-bg-color', calColor);
-                    info.el.style.setProperty('--fc-event-border-color', calColor);
-                    info.el.style.setProperty('--fc-event-text-color', '#ffffff');
+                if (info.event.allDay) {
+                    // All-day: solid block in calendar colour, white text
+                    info.el.style.backgroundColor = calColor;
+                    info.el.style.borderColor = calColor;
+                    info.el.style.color = "#ffffff";
                 } else {
-                    // Timed: white background, black text, coloured dot
-                    info.el.style.setProperty('--fc-event-bg-color', '#ffffff');
-                    info.el.style.setProperty('--fc-event-border-color', 'transparent');
-                    info.el.style.setProperty('--fc-event-text-color', '#111827');
+                    // Timed events: white background, black text, coloured dot
+                    info.el.style.backgroundColor = "";
+                    info.el.style.borderColor = "transparent";
 
-                    const dot = info.el.querySelector('.fc-daygrid-event-dot');
+                    const dot = info.el.querySelector(".fc-daygrid-event-dot");
                     if (dot) {
                         dot.style.borderColor = calColor;
-                        dot.style.backgroundColor = calColor;
                     }
+                    const timeEl = info.el.querySelector(".fc-event-time");
+                    const titleEl = info.el.querySelector(".fc-event-title");
+                    if (timeEl) timeEl.style.color = "#111827";
+                    if (titleEl) titleEl.style.color = "#111827";
                 }
-            }
+            },
         });
 
         calendar.render();
@@ -549,7 +543,13 @@
                 const start = (e.start && (e.start.dateTime || e.start.date)) || null;
                 const end = (e.end && (e.end.dateTime || e.end.date)) || null;
                 const allDay = !!(e.start && e.start.date && !e.start.dateTime);
-                const calendarColor = e.calendarColor || "#3b82f6";
+
+                // Calendar colour from backend (fall back to blue)
+                const calColor =
+                    e.calendarBackgroundColor ||
+                    e.calendarColor ||
+                    e.backgroundColor ||
+                    "#3b82f6";
 
                 return {
                     id: e.id,
@@ -558,11 +558,12 @@
                     end,
                     allDay,
                     url: e.htmlLink || "",
+                    // This drives the dot colour in dayGrid
+                    color: calColor,
                     extendedProps: {
                         description: e.description || "",
                         location: e.location || "",
-                        calendarColor,
-                        isAllDay: allDay
+                        calendarColor: calColor,
                     },
                 };
             });
@@ -607,7 +608,7 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING ========
+    // ======== MESSAGING =========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
