@@ -99,10 +99,7 @@
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    /* Remove hard-coded blue/white so JS can set per-event colors */
-    .fc .fc-event {
-        font-size: 0.75rem;
-    }
+    .fc .fc-event { font-size: 0.75rem; }
     .fc .fc-toolbar-title { color: #1f2937 !important; }
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
@@ -127,7 +124,7 @@
             <!-- Authentication Area (signed out / pre-consent) -->
             <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
+                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -155,7 +152,7 @@
             <!-- Access Verification Area -->
             <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
+                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -167,7 +164,7 @@
             <!-- Access Denied Area (currently unused, kept for future allowlist logic) -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
-                    src="https://github.com/rylhong/mie-pages/raw/main/miemono_white_70x70.png"
+                    src="https://github.com/rylhong/mie-pages/blob/main/miemono_white_70x70.png?raw=true"
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
@@ -189,7 +186,6 @@
             <div id="calendar-content" class="hidden flex flex-col h-full">
                 <div class="flex justify-between items-center mb-1">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
-                    <!-- No top sign-out; sign out is at bottom of messaging section -->
                 </div>
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
@@ -492,7 +488,6 @@
                 showEventDetails(info.event);
             },
             eventDidMount: function(info) {
-                // Custom styling per event based on all-day vs timed
                 const isAllDay = info.event.extendedProps.isAllDay;
                 const calColor = info.event.extendedProps.calendarColor || "#3b82f6";
 
@@ -510,6 +505,7 @@
                     const dot = info.el.querySelector(".fc-daygrid-event-dot");
                     if (dot) {
                         dot.style.borderColor = calColor;
+                        dot.style.backgroundColor = calColor;  // ensure the bullet matches the calendar color
                     }
                 }
             }
