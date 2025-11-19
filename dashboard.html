@@ -8,7 +8,7 @@
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google API Client Library (not used for auth now; safe to keep) -->
+<!-- Google API Client Library (no longer used for auth; safe to keep) -->
 <script src="https://apis.google.com/js/api.js"></script>
 
 <!-- FullCalendar -->
@@ -99,9 +99,27 @@
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    /* IMPORTANT: do NOT force background color here; we style via JS per event */
+
+    /* IMPORTANT: do NOT force one color for all events */
+    .fc .fc-event {
+        /* let JS set colors per calendar */
+        border-color: transparent;
+        background-color: transparent;
+        color: inherit;
+    }
+
     .fc .fc-toolbar-title { color: #1f2937 !important; }
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
+
+    /* Bullet dot in timed events */
+    .mie-event-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 9999px;
+        margin-right: 4px;
+        flex-shrink: 0;
+    }
 
     /* --- Event Modal Styling --- */
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -128,6 +146,7 @@
                     alt="Mie Logo"
                     class="rounded-full mb-4"
                 />
+
                 <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
                 <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
 
@@ -161,7 +180,7 @@
                 <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
-            <!-- Access Denied Area (kept for future allowlist logic) -->
+            <!-- Access Denied Area -->
             <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
                 <img
                     src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
@@ -184,7 +203,7 @@
 
             <!-- Calendar Content (signed in + approved) -->
             <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center mb-1">
+                <div class="flex justify-between items-center mb-2">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
                 </div>
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
@@ -227,7 +246,7 @@
                 Send
             </button>
 
-            <!-- Sign Out right-bottom with spacing -->
+            <!-- Sign Out bottom-right with spacing -->
             <div class="mt-6 flex justify-end">
                 <button
                     id="signout_button"
@@ -303,7 +322,7 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    // ======== INIT =========
+    // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
@@ -365,7 +384,7 @@
         updateSendButton();
     }
 
-    // ======== HIGH-LEVEL FLOW =========
+    // ======== HIGH-LEVEL FLOW ========
     async function initializeDashboard() {
         showAccessCheck();
         try {
@@ -384,23 +403,27 @@
 
             if (data.connected) {
                 userHasAccess = true;
-                userEmail =
-                    data.userEmail ||
-                    (data.user && (data.user.email || data.user.primaryEmail)) ||
-                    "";
+                userEmail = data.userEmail || (data.user && (data.user.email || data.user.primaryEmail)) || "";
 
-                const rawName =
-                    (data.user && (data.user.given_name || data.user.name)) || "";
-                const firstName = rawName ? rawName.split(" ")[0] : "";
-
+                // Build friendly welcome: "Welcome, Jane <xyz@gmail.com>"
                 if (welcomeMessage) {
-                    if (firstName && userEmail) {
-                        welcomeMessage.textContent = `Welcome, ${firstName} <${userEmail}>`;
-                    } else if (userEmail) {
-                        welcomeMessage.textContent = `Welcome, ${userEmail}`;
-                    } else {
-                        welcomeMessage.textContent = "Welcome";
+                    const user = data.user || {};
+                    let firstName = "";
+                    if (user.given_name) {
+                        firstName = user.given_name;
+                    } else if (user.name) {
+                        firstName = user.name.split(" ")[0];
                     }
+
+                    const email = userEmail || "";
+                    let label = "Welcome";
+                    if (firstName || email) {
+                        label += ", ";
+                        if (firstName) label += firstName;
+                        if (firstName && email) label += " ";
+                        if (email) label += "&lt;" + email + "&gt;";
+                    }
+                    welcomeMessage.innerHTML = label;
                 }
 
                 showDashboard();
@@ -414,7 +437,7 @@
         }
     }
 
-    // ======== UI STATE =========
+    // ======== UI STATE ========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -447,7 +470,7 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT =========
+    // ======== SIGN OUT (BACKEND SESSION) ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -463,7 +486,7 @@
         }
     }
 
-    // ======== CALENDAR =========
+    // ======== CALENDAR ========
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
@@ -486,31 +509,38 @@
                 info.jsEvent.preventDefault();
                 showEventDetails(info.event);
             },
-            // Styling per event
             eventDidMount: function(info) {
-                const calColor =
-                    info.event.extendedProps.calendarColor || "#3b82f6";
+                // Per-calendar coloring
+                const color =
+                    (info.event.extendedProps && info.event.extendedProps.calendarColor) ||
+                    "#2563eb";
+                const el = info.el;
 
                 if (info.event.allDay) {
-                    // All-day: solid block in calendar colour, white text
-                    info.el.style.backgroundColor = calColor;
-                    info.el.style.borderColor = calColor;
-                    info.el.style.color = "#ffffff";
+                    // All-day events = solid block
+                    el.style.backgroundColor = color;
+                    el.style.borderColor = color;
+                    el.style.color = "#ffffff";
                 } else {
-                    // Timed events: white background, black text, coloured dot
-                    info.el.style.backgroundColor = "";
-                    info.el.style.borderColor = "transparent";
+                    // Timed events = white bg, black text, colored bullet
+                    el.style.backgroundColor = "#ffffff";
+                    el.style.border = "1px solid #e5e7eb";
+                    el.style.color = "#111827";
 
-                    const dot = info.el.querySelector(".fc-daygrid-event-dot");
-                    if (dot) {
-                        dot.style.borderColor = calColor;
+                    let dot = el.querySelector(".mie-event-dot");
+                    if (!dot) {
+                        dot = document.createElement("span");
+                        dot.className = "mie-event-dot";
+                        const titleEl = el.querySelector(".fc-event-title");
+                        if (titleEl) {
+                            titleEl.prepend(dot);
+                        } else {
+                            el.prepend(dot);
+                        }
                     }
-                    const timeEl = info.el.querySelector(".fc-event-time");
-                    const titleEl = info.el.querySelector(".fc-event-title");
-                    if (timeEl) timeEl.style.color = "#111827";
-                    if (titleEl) titleEl.style.color = "#111827";
+                    dot.style.backgroundColor = color;
                 }
-            },
+            }
         });
 
         calendar.render();
@@ -544,12 +574,10 @@
                 const end = (e.end && (e.end.dateTime || e.end.date)) || null;
                 const allDay = !!(e.start && e.start.date && !e.start.dateTime);
 
-                // Calendar colour from backend (fall back to blue)
                 const calColor =
-                    e.calendarBackgroundColor ||
-                    e.calendarColor ||
-                    e.backgroundColor ||
-                    "#3b82f6";
+                    e.mieCalendarColor ||
+                    e._mieCalendarColor ||
+                    "#2563eb";
 
                 return {
                     id: e.id,
@@ -558,12 +586,13 @@
                     end,
                     allDay,
                     url: e.htmlLink || "",
-                    // This drives the dot colour in dayGrid
-                    color: calColor,
+                    backgroundColor: allDay ? calColor : "#ffffff",
+                    borderColor: allDay ? calColor : "#e5e7eb",
+                    textColor: allDay ? "#ffffff" : "#111827",
                     extendedProps: {
                         description: e.description || "",
                         location: e.location || "",
-                        calendarColor: calColor,
+                        calendarColor: calColor
                     },
                 };
             });
@@ -608,7 +637,7 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING =========
+    // ======== MESSAGING ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
