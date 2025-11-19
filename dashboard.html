@@ -90,42 +90,46 @@
         .messaging-section { width: 800px; height: 360px; }
     }
 
-   /* --- FullCalendar Light Mode Customization --- */
-.fc { color: #1f2937 !important; background-color: #ffffff !important; }
-.fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
-.fc .fc-button-primary:hover { background-color: #2563eb !important; }
-.fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
-.fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
-.fc .fc-daygrid-day-frame { background-color: white !important; }
-.fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
-.fc .fc-daygrid-day-number { color: #1f2937 !important; }
+    /* --- FullCalendar Light Mode Customization --- */
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
 
-/* Let JS handle background/border per calendar, but force text to black */
-.fc .fc-event {
-  border-color: transparent;
-  background-color: transparent;
-  color: #000000 !important;
-}
+    /* Hide FullCalendar's built-in dot so we only show our custom one */
+    .fc-daygrid-event-dot {
+        display: none !important;
+    }
 
-/* Also force inner text wrappers to black, to override any defaults */
-.fc .fc-event .fc-event-main,
-.fc .fc-event .fc-event-title {
-  color: #000000 !important;
-}
+    /* Let JS handle background/border per calendar, but force text to black */
+    .fc .fc-event {
+      border-color: transparent;
+      background-color: transparent;
+      color: #000000 !important;
+    }
 
-.fc .fc-toolbar-title { color: #1f2937 !important; }
-.fc .fc-daygrid-day.fc-day-other { display: none !important; }
+    /* Also force inner text wrappers to black, to override any defaults */
+    .fc .fc-event .fc-event-main,
+    .fc .fc-event .fc-event-title {
+      color: #000000 !important;
+    }
 
-/* Bullet dot in timed events */
-.mie-event-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  margin-right: 4px;
-  flex-shrink: 0;
-}
+    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
+    /* Bullet dot in timed events */
+    .mie-event-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
 
     /* --- Event Modal Styling --- */
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -510,43 +514,62 @@
             fixedWeekCount: false,
             showNonCurrentDates: false,
             height: "auto",
+
+            // Fetch events from backend
             events: fetchCalendarEvents,
+
+            // Custom rendering: one coloured dot, bold time, normal title
+            eventContent: function(arg) {
+                const event = arg.event;
+                const isAllDay = event.allDay;
+
+                const color =
+                    (event.extendedProps && event.extendedProps.calendarColor) ||
+                    arg.backgroundColor ||
+                    arg.borderColor ||
+                    "#3b82f6";
+
+                const container = document.createElement("div");
+                container.className = "flex items-center";
+
+                if (isAllDay) {
+                    // All-day: coloured pill with black text
+                    container.textContent = event.title || "";
+                    container.style.backgroundColor = color;
+                    container.style.borderRadius = "4px";
+                    container.style.padding = "0 4px";
+                    container.style.display = "inline-block";
+                    container.style.color = "#000000";
+                    return { domNodes: [container] };
+                }
+
+                // Timed event: one coloured dot + bold time + normal title
+
+                // Dot
+                const dot = document.createElement("span");
+                dot.className = "mie-event-dot";
+                dot.style.backgroundColor = color;
+                container.appendChild(dot);
+
+                // Time (bold)
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "mie-event-time font-semibold mr-1";
+                timeSpan.textContent = arg.timeText || "";
+                container.appendChild(timeSpan);
+
+                // Title (normal)
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "mie-event-title";
+                titleSpan.textContent = event.title || "";
+                container.appendChild(titleSpan);
+
+                return { domNodes: [container] };
+            },
+
             eventClick: function(info) {
                 info.jsEvent.preventDefault();
                 showEventDetails(info.event);
             },
-            eventDidMount: function(info) {
-                // Per-calendar coloring
-                const color =
-                    (info.event.extendedProps && info.event.extendedProps.calendarColor) ||
-                    "#2563eb";
-                const el = info.el;
-
-                if (info.event.allDay) {
-                    // All-day events = solid block
-                    el.style.backgroundColor = color;
-                    el.style.borderColor = color;
-                    el.style.color = "#ffffff";
-                } else {
-                    // Timed events = white bg, black text, colored bullet
-                    el.style.backgroundColor = "#ffffff";
-                    el.style.border = "1px solid #e5e7eb";
-                    el.style.color = "#111827";
-
-                    let dot = el.querySelector(".mie-event-dot");
-                    if (!dot) {
-                        dot = document.createElement("span");
-                        dot.className = "mie-event-dot";
-                        const titleEl = el.querySelector(".fc-event-title");
-                        if (titleEl) {
-                            titleEl.prepend(dot);
-                        } else {
-                            el.prepend(dot);
-                        }
-                    }
-                    dot.style.backgroundColor = color;
-                }
-            }
         });
 
         calendar.render();
@@ -592,9 +615,6 @@
                     end,
                     allDay,
                     url: e.htmlLink || "",
-                    backgroundColor: allDay ? calColor : "#ffffff",
-                    borderColor: allDay ? calColor : "#e5e7eb",
-                    textColor: allDay ? "#ffffff" : "#111827",
                     extendedProps: {
                         description: e.description || "",
                         location: e.location || "",
@@ -746,4 +766,3 @@
 </script>
 </body>
 </html>
-
