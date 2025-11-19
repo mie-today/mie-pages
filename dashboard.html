@@ -532,16 +532,21 @@
                 const container = document.createElement("div");
                 container.className = "flex items-center";
 
-                if (isAllDay) {
-                    // All-day: coloured pill with black text
-                    container.textContent = event.title || "";
-                    container.style.backgroundColor = color;
-                    container.style.borderRadius = "4px";
-                    container.style.padding = "0 4px";
-                    container.style.display = "inline-block";
-                    container.style.color = "#000000";
-                    return { domNodes: [container] };
-                }
+                  if (isAllDay) {
+        // All-day: coloured pill with black text, constrained to the cell
+        container.textContent = event.title || "";
+        container.style.backgroundColor = color;
+        container.style.borderRadius = "4px";
+        container.style.padding = "0 4px";
+        container.style.display = "block";
+        container.style.maxWidth = "100%";
+        container.style.boxSizing = "border-box";
+        container.style.whiteSpace = "nowrap";
+        container.style.overflow = "hidden";
+        container.style.textOverflow = "ellipsis";
+        container.style.color = "#000000";
+        return { domNodes: [container] };
+    }
 
                 // Timed event: one coloured dot + bold time + normal title
 
@@ -766,3 +771,4 @@
 </script>
 </body>
 </html>
+
