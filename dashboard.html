@@ -69,30 +69,26 @@
         .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
         .mobile-text-btn { font-size: 16px !important; }
         .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
-        .fc .fc-toolbar-title { font-size: 18px !important; }
-        .fc .fc-button-primary { font-size: 11px !important; padding: 3px 5px !important; }
-        .fc .fc-col-header-cell { font-size: 11px !important; }
-        .fc .fc-daygrid-day-number { font-size: 11px !important; }
-        .fc .fc-event { font-size: 9px !important; }
+        .fc .fc-toolbar-title { font-size: 20px !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
+        .fc .fc-col-header-cell { font-size: 12px !important; }
+        .fc .fc-daygrid-day-number { font-size: 12px !important; }
+        .fc .fc-event { font-size: 10px !important; }
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
         .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 460px; }  /* UPDATED smaller */
+        .calendar-section { width: 481px; height: 700px; }  /* was 632px */
         .messaging-section { width: 481px; height: 316px; }
     }
 
     /* --- Responsive Styles for Desktop (769px and wider) --- */
     @media (min-width: 769px) {
         .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 520px; }  /* UPDATED smaller */
+        .calendar-section { width: 800px; height: 930px; }  /* was 860px */
         .messaging-section { width: 800px; height: 360px; }
     }
-
-    /* Make calendar area scroll internally instead of pushing page */
-    .calendar-section { overflow: hidden !important; }
-    #calendar-container { overflow: auto !important; }
 
     /* --- FullCalendar Light Mode Customization --- */
     .fc { color: #1f2937 !important; background-color: #ffffff !important; }
@@ -108,11 +104,25 @@
     .fc-daygrid-event-dot { display: none !important; }
 
     /* Let JS handle background/border per calendar, but force text to black */
-    .fc .fc-event { border-color: transparent; background-color: transparent; color: #000000 !important; }
-    .fc .fc-event .fc-event-main,
-    .fc .fc-event .fc-event-title { color: #000000 !important; }
+    .fc .fc-event {
+      border-color: transparent;
+      background-color: transparent;
+      color: #000000 !important;
+    }
 
-    .fc .fc-toolbar-title { color: #1f2937 !important; }
+    /* Also force inner text wrappers to black */
+    .fc .fc-event .fc-event-main,
+    .fc .fc-event .fc-event-title {
+      color: #000000 !important;
+    }
+
+    /* Month/Year title +1px */
+    .fc .fc-toolbar-title {
+      color: #1f2937 !important;
+      font-size: 23px !important; /* +1px vs prior base */
+      font-weight: 600;
+    }
+
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
     /* Bullet dot in timed events */
@@ -125,42 +135,27 @@
       flex-shrink: 0;
     }
 
-    /* ===== HARD STOP horizontal spill (UPDATED stronger) ===== */
-    .fc .fc-daygrid-day,
-    .fc .fc-daygrid-day-frame,
-    .fc .fc-daygrid-day-events,
-    .fc .fc-daygrid-event-harness,
-    .fc .fc-daygrid-event-harness-abs {
-      max-width: 100% !important;
-      overflow: hidden !important;
+    /* --- REMOVE INTERNAL FULLCALENDAR SCROLLBARS --- */
+    .fc .fc-scroller,
+    .fc .fc-scroller-harness,
+    .fc .fc-scroller-liquid-absolute {
+      overflow: visible !important;
+      height: auto !important;
+    }
+    .fc .fc-view-harness,
+    .fc .fc-view-harness-active {
+      height: auto !important;
     }
 
-    .fc .fc-daygrid-event {
-      width: 100% !important;
-      max-width: 100% !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
+    /* Today + Prev/Next buttons slightly smaller */
+    .fc .fc-today-button,
+    .fc .fc-prev-button,
+    .fc .fc-next-button {
+      font-size: 12px !important;
+      padding: 3px 7px !important;
+      line-height: 1.1 !important;
+      border-radius: 6px !important;
     }
-
-    .fc .fc-event-title,
-    .fc .fc-event-time,
-    .fc .fc-event-main-frame,
-    .fc .fc-event-main {
-      min-width: 0 !important;
-      max-width: 100% !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      white-space: nowrap !important;
-    }
-
-    /* ===== Slightly smaller calendar typography + density (kept) ===== */
-    .fc .fc-toolbar-title { font-size: 1rem !important; }
-    .fc .fc-col-header-cell-cushion { font-size: 0.75rem !important; }
-    .fc .fc-daygrid-day-number { font-size: 0.75rem !important; }
-    .fc .fc-event { font-size: 0.70rem !important; line-height: 1.1 !important; }
-    .fc .fc-daygrid-day-frame { padding: 2px !important; }
-    .fc .fc-daygrid-day-events { margin-top: 2px !important; }
-    .fc .fc-daygrid-event { margin-top: 1px !important; }
 
     /* --- Event Modal Styling --- */
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -326,13 +321,16 @@
 
 <script>
 (function () {
+    // ======== CONFIG =========
     const BACKEND_BASE_URL = "https://mie-backend-514922143683.us-central1.run.app";
 
+    // ======== STATE =========
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
 
+    // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
     const accessCheckArea = document.getElementById("access-check-area");
     const accessDeniedArea = document.getElementById("access-denied-area");
@@ -360,6 +358,7 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
+    // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
@@ -421,6 +420,7 @@
         updateSendButton();
     }
 
+    // ======== HIGH-LEVEL FLOW ========
     async function initializeDashboard() {
         showAccessCheck();
         try {
@@ -444,8 +444,11 @@
                 if (welcomeMessage) {
                     const user = data.user || {};
                     let firstName = "";
-                    if (user.given_name) firstName = user.given_name;
-                    else if (user.name) firstName = user.name.split(" ")[0];
+                    if (user.given_name) {
+                        firstName = user.given_name;
+                    } else if (user.name) {
+                        firstName = user.name.split(" ")[0];
+                    }
 
                     const email = userEmail || "";
                     let label = "Welcome";
@@ -469,6 +472,7 @@
         }
     }
 
+    // ======== UI STATE ========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -516,6 +520,7 @@
         }
     }
 
+    // ======== CALENDAR ========
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
@@ -533,11 +538,10 @@
             fixedWeekCount: false,
             showNonCurrentDates: false,
 
-            height: "100%",              // UPDATED: fit inside section
-            expandRows: true,            // UPDATED: keep grid compact
-            dayMaxEvents: 3,             // UPDATED: prevents vertical push
-            dayMaxEventRows: 3,
-            eventDisplay: "block",
+            height: "auto",
+            contentHeight: "auto",
+            expandRows: true,
+            dayMaxEventRows: true, // KEEP "+ more" behavior
 
             events: fetchCalendarEvents,
 
@@ -553,12 +557,6 @@
 
                 const container = document.createElement("div");
                 container.className = "flex items-center";
-                container.style.width = "100%";
-                container.style.maxWidth = "100%";
-                container.style.overflow = "hidden";
-                container.style.textOverflow = "ellipsis";
-                container.style.whiteSpace = "nowrap";
-                container.style.boxSizing = "border-box";
 
                 if (isAllDay) {
                     container.textContent = event.title || "";
@@ -566,12 +564,22 @@
                     container.style.borderRadius = "4px";
                     container.style.padding = "0 4px";
                     container.style.display = "block";
+                    container.style.maxWidth = "100%";
+                    container.style.boxSizing = "border-box";
+                    container.style.whiteSpace = "nowrap";
+                    container.style.overflow = "hidden";
+                    container.style.textOverflow = "ellipsis";
                     container.style.color = "#000000";
                     return { domNodes: [container] };
                 }
 
                 container.style.display = "flex";
                 container.style.alignItems = "center";
+                container.style.maxWidth = "100%";
+                container.style.boxSizing = "border-box";
+                container.style.whiteSpace = "nowrap";
+                container.style.overflow = "hidden";
+                container.style.textOverflow = "ellipsis";
 
                 const dot = document.createElement("span");
                 dot.className = "mie-event-dot";
@@ -589,9 +597,6 @@
                 titleSpan.textContent = event.title || "";
                 titleSpan.style.minWidth = "0";
                 titleSpan.style.flexShrink = "1";
-                titleSpan.style.overflow = "hidden";
-                titleSpan.style.textOverflow = "ellipsis";
-                titleSpan.style.whiteSpace = "nowrap";
                 container.appendChild(titleSpan);
 
                 return { domNodes: [container] };
@@ -614,14 +619,12 @@
             });
 
             if (resp.status === 401) {
-                console.warn("Not connected when fetching events");
                 showAuthArea();
                 if (failureCallback) failureCallback(new Error("NOT_CONNECTED"));
                 return;
             }
 
             if (!resp.ok) {
-                console.error("Events fetch failed HTTP", resp.status);
                 if (failureCallback) failureCallback(new Error("HTTP " + resp.status));
                 return;
             }
@@ -656,7 +659,6 @@
 
             successCallback(events);
         } catch (err) {
-            console.error("Error fetching events:", err);
             if (failureCallback) failureCallback(err);
         }
     }
@@ -694,6 +696,7 @@
         eventModal.classList.remove("hidden");
     }
 
+    // ======== MESSAGING ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
@@ -720,7 +723,6 @@
             });
 
             if (!resp.ok) {
-                console.error("Send message failed HTTP", resp.status);
                 logMessage("Failed to send message. Please try again.", "error");
                 return;
             }
@@ -729,7 +731,6 @@
             if (messageInput) messageInput.value = "";
             clearSelectedFile();
         } catch (err) {
-            console.error("Error sending message:", err);
             logMessage("Error sending message. Please try again.", "error");
         } finally {
             updateSendButton();
@@ -775,9 +776,13 @@
         const entry = document.createElement("div");
         entry.className = "text-sm mb-1";
 
-        if (type === "error") entry.classList.add("text-red-500");
-        else if (type === "success") entry.classList.add("text-green-500");
-        else entry.classList.add("text-gray-600");
+        if (type === "error") {
+            entry.classList.add("text-red-500");
+        } else if (type === "success") {
+            entry.classList.add("text-green-500");
+        } else {
+            entry.classList.add("text-gray-600");
+        }
 
         const timestamp = new Date().toLocaleTimeString();
         entry.textContent = "[" + timestamp + "] " + msg;
