@@ -69,24 +69,27 @@
         .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
         .mobile-text-btn { font-size: 16px !important; }
         .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
-        .fc .fc-toolbar-title { font-size: 20px !important; }
-        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
+
+        .fc .fc-toolbar-title { font-size: 20px !important; line-height: 1.2 !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
+
         .fc .fc-col-header-cell { font-size: 12px !important; }
         .fc .fc-daygrid-day-number { font-size: 12px !important; }
-        .fc .fc-event { font-size: 10px !important; }
+
+        .fc .fc-event { font-size: 10px !important; } /* * <- EVENT FONT SIZE (MOBILE) */
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
         .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 700px; }  /* was 632px */
+        .calendar-section { width: 481px; height: 720px; }  /* a bit taller to avoid scroll */
         .messaging-section { width: 481px; height: 316px; }
     }
 
     /* --- Responsive Styles for Desktop (769px and wider) --- */
     @media (min-width: 769px) {
         .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 930px; }  /* was 860px */
+        .calendar-section { width: 800px; height: 820px; }  /* tuned so no right scrollbar */
         .messaging-section { width: 800px; height: 360px; }
     }
 
@@ -108,19 +111,44 @@
       border-color: transparent;
       background-color: transparent;
       color: #000000 !important;
+      font-size: 11px;          /* * <- EVENT FONT SIZE (DESKTOP/TABLET). Change this as needed. */
+      line-height: 1.2;
     }
 
-    /* Also force inner text wrappers to black */
+    /* Force ALL event text to stay inside the day cell (no spillover) */
+    .fc-daygrid-event-harness,
+    .fc-daygrid-event,
+    .fc-daygrid-event .fc-event-main,
+    .fc-daygrid-event .fc-event-title,
+    .fc-daygrid-event .fc-event-title-container,
+    .fc-daygrid-event .fc-event-main-frame {
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Also force inner text wrappers to black, to override any defaults */
     .fc .fc-event .fc-event-main,
     .fc .fc-event .fc-event-title {
       color: #000000 !important;
     }
 
-    /* Month/Year title +1px */
     .fc .fc-toolbar-title {
       color: #1f2937 !important;
-      font-size: 23px !important; /* +1px vs prior base */
+      font-size: 19px !important;  /* 1px larger per your request */
+      line-height: 1.2 !important;
       font-weight: 600;
+    }
+
+    /* Make Today + arrows match title height */
+    .fc .fc-toolbar .fc-button {
+      font-size: 19px !important;     /* match title height */
+      line-height: 1.2 !important;
+      padding: 2px 8px !important;    /* tighter button */
+      height: auto !important;
+      border-radius: 6px !important;
     }
 
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
@@ -135,28 +163,6 @@
       flex-shrink: 0;
     }
 
-    /* --- REMOVE INTERNAL FULLCALENDAR SCROLLBARS --- */
-    .fc .fc-scroller,
-    .fc .fc-scroller-harness,
-    .fc .fc-scroller-liquid-absolute {
-      overflow: visible !important;
-      height: auto !important;
-    }
-    .fc .fc-view-harness,
-    .fc .fc-view-harness-active {
-      height: auto !important;
-    }
-
-    /* Today + Prev/Next buttons slightly smaller */
-    .fc .fc-today-button,
-    .fc .fc-prev-button,
-    .fc .fc-next-button {
-      font-size: 12px !important;
-      padding: 3px 7px !important;
-      line-height: 1.1 !important;
-      border-radius: 6px !important;
-    }
-
     /* --- Event Modal Styling --- */
     .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
@@ -166,6 +172,7 @@
     .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
 </style>
 </head>
+
 <body class="bg-white">
 
 <!-- Main App Container -->
@@ -505,6 +512,7 @@
         messagingSection.classList.remove("hidden");
     }
 
+    // ======== SIGN OUT (BACKEND SESSION) ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -537,11 +545,7 @@
             },
             fixedWeekCount: false,
             showNonCurrentDates: false,
-
-            height: "auto",
-            contentHeight: "auto",
-            expandRows: true,
-            dayMaxEventRows: true, // KEEP "+ more" behavior
+            height: "100%",
 
             events: fetchCalendarEvents,
 
@@ -557,6 +561,11 @@
 
                 const container = document.createElement("div");
                 container.className = "flex items-center";
+                container.style.maxWidth = "100%";
+                container.style.overflow = "hidden";
+                container.style.textOverflow = "ellipsis";
+                container.style.whiteSpace = "nowrap";
+                container.style.boxSizing = "border-box";
 
                 if (isAllDay) {
                     container.textContent = event.title || "";
@@ -564,22 +573,9 @@
                     container.style.borderRadius = "4px";
                     container.style.padding = "0 4px";
                     container.style.display = "block";
-                    container.style.maxWidth = "100%";
-                    container.style.boxSizing = "border-box";
-                    container.style.whiteSpace = "nowrap";
-                    container.style.overflow = "hidden";
-                    container.style.textOverflow = "ellipsis";
                     container.style.color = "#000000";
                     return { domNodes: [container] };
                 }
-
-                container.style.display = "flex";
-                container.style.alignItems = "center";
-                container.style.maxWidth = "100%";
-                container.style.boxSizing = "border-box";
-                container.style.whiteSpace = "nowrap";
-                container.style.overflow = "hidden";
-                container.style.textOverflow = "ellipsis";
 
                 const dot = document.createElement("span");
                 dot.className = "mie-event-dot";
@@ -597,6 +593,9 @@
                 titleSpan.textContent = event.title || "";
                 titleSpan.style.minWidth = "0";
                 titleSpan.style.flexShrink = "1";
+                titleSpan.style.overflow = "hidden";
+                titleSpan.style.textOverflow = "ellipsis";
+                titleSpan.style.whiteSpace = "nowrap";
                 container.appendChild(titleSpan);
 
                 return { domNodes: [container] };
