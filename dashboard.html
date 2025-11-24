@@ -69,26 +69,30 @@
         .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
         .mobile-text-btn { font-size: 16px !important; }
         .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
-        .fc .fc-toolbar-title { font-size: 20px !important; }
-        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
-        .fc .fc-col-header-cell { font-size: 12px !important; }
-        .fc .fc-daygrid-day-number { font-size: 12px !important; }
-        .fc .fc-event { font-size: 10px !important; }
+        .fc .fc-toolbar-title { font-size: 18px !important; }
+        .fc .fc-button-primary { font-size: 11px !important; padding: 3px 5px !important; }
+        .fc .fc-col-header-cell { font-size: 11px !important; }
+        .fc .fc-daygrid-day-number { font-size: 11px !important; }
+        .fc .fc-event { font-size: 9px !important; }
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
         .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 520px; }  /* UPDATED: was 632px */
+        .calendar-section { width: 481px; height: 460px; }  /* UPDATED smaller */
         .messaging-section { width: 481px; height: 316px; }
     }
 
     /* --- Responsive Styles for Desktop (769px and wider) --- */
     @media (min-width: 769px) {
         .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 620px; }  /* UPDATED: was 860px */
+        .calendar-section { width: 800px; height: 520px; }  /* UPDATED smaller */
         .messaging-section { width: 800px; height: 360px; }
     }
+
+    /* Make calendar area scroll internally instead of pushing page */
+    .calendar-section { overflow: hidden !important; }
+    #calendar-container { overflow: auto !important; }
 
     /* --- FullCalendar Light Mode Customization --- */
     .fc { color: #1f2937 !important; background-color: #ffffff !important; }
@@ -101,22 +105,12 @@
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
 
     /* Hide FullCalendar's built-in dot so we only show our custom one */
-    .fc-daygrid-event-dot {
-        display: none !important;
-    }
+    .fc-daygrid-event-dot { display: none !important; }
 
     /* Let JS handle background/border per calendar, but force text to black */
-    .fc .fc-event {
-      border-color: transparent;
-      background-color: transparent;
-      color: #000000 !important;
-    }
-
-    /* Also force inner text wrappers to black, to override any defaults */
+    .fc .fc-event { border-color: transparent; background-color: transparent; color: #000000 !important; }
     .fc .fc-event .fc-event-main,
-    .fc .fc-event .fc-event-title {
-      color: #000000 !important;
-    }
+    .fc .fc-event .fc-event-title { color: #000000 !important; }
 
     .fc .fc-toolbar-title { color: #1f2937 !important; }
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
@@ -131,33 +125,39 @@
       flex-shrink: 0;
     }
 
-    /* ===== Fix horizontal spill / wrap inside day cells (NEW) ===== */
+    /* ===== HARD STOP horizontal spill (UPDATED stronger) ===== */
+    .fc .fc-daygrid-day,
     .fc .fc-daygrid-day-frame,
     .fc .fc-daygrid-day-events,
-    .fc .fc-daygrid-event-harness {
+    .fc .fc-daygrid-event-harness,
+    .fc .fc-daygrid-event-harness-abs {
+      max-width: 100% !important;
       overflow: hidden !important;
     }
 
-    .fc .fc-daygrid-event,
-    .fc .fc-daygrid-event .fc-event-main {
+    .fc .fc-daygrid-event {
+      width: 100% !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+
+    .fc .fc-event-title,
+    .fc .fc-event-time,
+    .fc .fc-event-main-frame,
+    .fc .fc-event-main {
+      min-width: 0 !important;
+      max-width: 100% !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       white-space: nowrap !important;
     }
 
-    .fc .fc-event .fc-event-main-frame,
-    .fc .fc-event .fc-event-main {
-      min-width: 0 !important;
-    }
-
-    /* ===== Make FullCalendar typography ~0.5 smaller + tighten density (NEW) ===== */
+    /* ===== Slightly smaller calendar typography + density (kept) ===== */
     .fc .fc-toolbar-title { font-size: 1rem !important; }
     .fc .fc-col-header-cell-cushion { font-size: 0.75rem !important; }
     .fc .fc-daygrid-day-number { font-size: 0.75rem !important; }
     .fc .fc-event { font-size: 0.70rem !important; line-height: 1.1 !important; }
-
     .fc .fc-daygrid-day-frame { padding: 2px !important; }
     .fc .fc-daygrid-day-events { margin-top: 2px !important; }
     .fc .fc-daygrid-event { margin-top: 1px !important; }
@@ -326,16 +326,13 @@
 
 <script>
 (function () {
-    // ======== CONFIG =========
     const BACKEND_BASE_URL = "https://mie-backend-514922143683.us-central1.run.app";
 
-    // ======== STATE =========
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
 
-    // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
     const accessCheckArea = document.getElementById("access-check-area");
     const accessDeniedArea = document.getElementById("access-denied-area");
@@ -363,7 +360,6 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
@@ -425,7 +421,6 @@
         updateSendButton();
     }
 
-    // ======== HIGH-LEVEL FLOW ========
     async function initializeDashboard() {
         showAccessCheck();
         try {
@@ -446,15 +441,11 @@
                 userHasAccess = true;
                 userEmail = data.userEmail || (data.user && (data.user.email || data.user.primaryEmail)) || "";
 
-                // Build friendly welcome: "Welcome, Jane <xyz@gmail.com>"
                 if (welcomeMessage) {
                     const user = data.user || {};
                     let firstName = "";
-                    if (user.given_name) {
-                        firstName = user.given_name;
-                    } else if (user.name) {
-                        firstName = user.name.split(" ")[0];
-                    }
+                    if (user.given_name) firstName = user.given_name;
+                    else if (user.name) firstName = user.name.split(" ")[0];
 
                     const email = userEmail || "";
                     let label = "Welcome";
@@ -478,7 +469,6 @@
         }
     }
 
-    // ======== UI STATE ========
     function showAuthArea() {
         authArea.classList.remove("hidden");
         accessCheckArea.classList.add("hidden");
@@ -511,7 +501,6 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT (BACKEND SESSION) ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -527,7 +516,6 @@
         }
     }
 
-    // ======== CALENDAR ========
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
@@ -544,15 +532,15 @@
             },
             fixedWeekCount: false,
             showNonCurrentDates: false,
-            height: "auto",
 
-            dayMaxEventRows: 3,           // NEW: cap visible rows per day
-            eventDisplay: "block",        // NEW: stable block layout
+            height: "100%",              // UPDATED: fit inside section
+            expandRows: true,            // UPDATED: keep grid compact
+            dayMaxEvents: 3,             // UPDATED: prevents vertical push
+            dayMaxEventRows: 3,
+            eventDisplay: "block",
 
-            // Fetch events from backend
             events: fetchCalendarEvents,
 
-            // Custom rendering: one coloured dot, bold time, normal title
             eventContent: function(arg) {
                 const event = arg.event;
                 const isAllDay = event.allDay;
@@ -565,52 +553,45 @@
 
                 const container = document.createElement("div");
                 container.className = "flex items-center";
+                container.style.width = "100%";
+                container.style.maxWidth = "100%";
+                container.style.overflow = "hidden";
+                container.style.textOverflow = "ellipsis";
+                container.style.whiteSpace = "nowrap";
+                container.style.boxSizing = "border-box";
 
                 if (isAllDay) {
-                    // All-day: coloured pill with black text, constrained to the cell
                     container.textContent = event.title || "";
                     container.style.backgroundColor = color;
                     container.style.borderRadius = "4px";
                     container.style.padding = "0 4px";
                     container.style.display = "block";
-                    container.style.maxWidth = "100%";
-                    container.style.boxSizing = "border-box";
-                    container.style.whiteSpace = "nowrap";
-                    container.style.overflow = "hidden";
-                    container.style.textOverflow = "ellipsis";
                     container.style.color = "#000000";
                     return { domNodes: [container] };
                 }
 
-                // Timed event: one coloured dot + bold time + normal title,
-                // constrained to stay inside the day cell
                 container.style.display = "flex";
                 container.style.alignItems = "center";
-                container.style.maxWidth = "100%";
-                container.style.boxSizing = "border-box";
-                container.style.whiteSpace = "nowrap";
-                container.style.overflow = "hidden";
-                container.style.textOverflow = "ellipsis";
 
-                // Dot
                 const dot = document.createElement("span");
                 dot.className = "mie-event-dot";
                 dot.style.backgroundColor = color;
                 container.appendChild(dot);
 
-                // Time (bold)
                 const timeSpan = document.createElement("span");
                 timeSpan.className = "mie-event-time font-semibold mr-1";
                 timeSpan.textContent = arg.timeText || "";
                 timeSpan.style.flexShrink = "0";
                 container.appendChild(timeSpan);
 
-                // Title (normal, truncates if too long)
                 const titleSpan = document.createElement("span");
                 titleSpan.className = "mie-event-title";
                 titleSpan.textContent = event.title || "";
                 titleSpan.style.minWidth = "0";
                 titleSpan.style.flexShrink = "1";
+                titleSpan.style.overflow = "hidden";
+                titleSpan.style.textOverflow = "ellipsis";
+                titleSpan.style.whiteSpace = "nowrap";
                 container.appendChild(titleSpan);
 
                 return { domNodes: [container] };
@@ -713,7 +694,6 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
@@ -795,13 +775,9 @@
         const entry = document.createElement("div");
         entry.className = "text-sm mb-1";
 
-        if (type === "error") {
-            entry.classList.add("text-red-500");
-        } else if (type === "success") {
-            entry.classList.add("text-green-500");
-        } else {
-            entry.classList.add("text-gray-600");
-        }
+        if (type === "error") entry.classList.add("text-red-500");
+        else if (type === "success") entry.classList.add("text-green-500");
+        else entry.classList.add("text-gray-600");
 
         const timestamp = new Date().toLocaleTimeString();
         entry.textContent = "[" + timestamp + "] " + msg;
