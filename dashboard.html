@@ -220,7 +220,7 @@
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
+                <p class="text-sm text-gray-600 mt-4">Checking if youryour account has access to Mie dashboard</p>
             </div>
 
             <!-- Access Denied Area -->
@@ -547,6 +547,10 @@
             showNonCurrentDates: false,
             height: "100%",
 
+            /* ✅ NEW: keeps late-night events (e.g., 11:35p–12:05a) on the start day,
+               preventing an empty “gap” at the top of the next day cell. */
+            nextDayThreshold: "01:00:00",
+
             events: fetchCalendarEvents,
 
             eventContent: function(arg) {
@@ -576,15 +580,6 @@
                     container.style.color = "#000000";
                     return { domNodes: [container] };
                 }
-
-                /* --- FIX: restore visible spacing between consecutive timed events --- */
-                /* Timed events in dayGridMonth each render as their own DOM node.
-                   By giving that node a small bottom margin, we create a consistent
-                   gap between timed events inside the same day cell (e.g., between
-                   8:42a and 3p on the 21st) without affecting all-day events or
-                   re-introducing cross-cell overflow. */
-                container.style.marginBottom = "2px";
-                /* --- END FIX --- */
 
                 const dot = document.createElement("span");
                 dot.className = "mie-event-dot";
