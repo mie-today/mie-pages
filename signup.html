@@ -47,7 +47,7 @@
       font-size: 16px;
       font-weight: normal;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 12px;
       margin: 4px 0;
@@ -55,6 +55,7 @@
       border-radius: 8px;
       box-sizing: border-box;
       font-size: 16px;
+      background: #fff;
     }
     button {
       width: 100%;
@@ -102,8 +103,22 @@
       <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required />
       <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required />
       <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required />
-      <input type="password" id="pin" placeholder="4-Digit PIN (e.g., 1234)" required />
-      <input type="password" id="confirmPin" placeholder="Confirm PIN" required />
+
+      <!-- REPLACED PIN + CONFIRM PIN WITH EVENT COLOR SELECT -->
+      <select id="eventColor" required>
+        <option value="" disabled selected>Select Calendar Event Color</option>
+        <option value="1">lavender</option>
+        <option value="2">sage</option>
+        <option value="3">grape</option>
+        <option value="4">flamingo</option>
+        <option value="5">banana</option>
+        <option value="6">tangerine</option>
+        <option value="7">peacock</option>
+        <option value="8">graphite</option>
+        <option value="9">blueberry</option>
+        <option value="10">basil</option>
+        <option value="11">tomato</option>
+      </select>
 
       <div class="message error"   id="errorMsg"></div>
       <div class="message success" id="successMsg"></div>
@@ -125,12 +140,15 @@
     const fullNameInput     = document.getElementById("fullName");
     const emailInput        = document.getElementById("emailAddress");
     const phoneInput        = document.getElementById("phoneNumber");
-    const pinInput          = document.getElementById("pin");
-    const confirmPinInput   = document.getElementById("confirmPin");
+    const eventColorSelect  = document.getElementById("eventColor");
+
     const errorMsg          = document.getElementById("errorMsg");
     const successMsg        = document.getElementById("successMsg");
     const warningMsg        = document.getElementById("warningMsg");
     const submitButton      = document.getElementById("submitButton");
+
+    // AUTO PIN (always submitted)
+    const AUTO_PIN = "4664";
 
     function hideAllMessages(){ errorMsg.style.display=successMsg.style.display=warningMsg.style.display="none"; }
     function showError(m){ hideAllMessages(); errorMsg.innerHTML=m; errorMsg.style.display="block"; }
@@ -149,13 +167,12 @@
       e.preventDefault();
       hideAllMessages();
 
-      // Client-side validation (unchanged logic)
+      // Client-side validation (PIN validation removed; Event Color added)
       const errs = [];
       if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) errs.push("Full Name must include FIRST and LAST name (letters only).");
       if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) errs.push("A valid @gmail.com address is required.");
       if (!/^1\d{10}$/.test(phoneInput.value.trim())) errs.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
-      if (!/^\d{4}$/.test(pinInput.value.trim())) errs.push("PIN must be exactly 4 digits.");
-      if (pinInput.value.trim() !== confirmPinInput.value.trim()) errs.push("PINs do not match.");
+      if (!eventColorSelect.value) errs.push("Please select a Calendar Event Color.");
       if (errs.length){ showError(errs.join("<br>")); return; }
 
       submitButton.disabled = true;
@@ -165,18 +182,17 @@
         fullName:     fullNameInput.value.trim(),
         emailAddress: emailInput.value.trim(),
         phoneNumber:  phoneInput.value.trim(),
-        pin:          pinInput.value.trim(),
+        pin:          AUTO_PIN,                 // ALWAYS 4664 (auto-input to spreadsheet)
+        eventColor:   eventColorSelect.value,   // Column O: "Event Color" (server must map it)
         timestamp:    new Date().toISOString()
       };
 
       try {
-        // Optional: bail early if health check fails (wrong deployment or restricted access)
         const okHealth = await pingHealth();
         if(!okHealth){
           throw new Error("Web app not reachable. Verify deployment URL and access: Execute as 'Me', Who has access = 'Anyone'.");
         }
 
-        // CRITICAL: no custom headers -> simple request -> no CORS preflight
         const resp = await fetch(SCRIPT_URL, {
           method: "POST",
           body: JSON.stringify(payload)
@@ -187,7 +203,6 @@
           throw new Error(`HTTP ${resp.status} ${resp.statusText}${t ? " — " + t : ""}`);
         }
 
-        // Expect JSON from Apps Script
         const data = await resp.json().catch(() => null);
         if (!data) throw new Error("Invalid JSON response from server.");
 
@@ -216,7 +231,6 @@
         showWarning("✅ Approved, but welcome email failed. We'll follow up.");
         return;
       }
-      // Approved + emailSent
       if (data.provisioned) {
         showSuccess("✅ Welcome to Mie! Your account is approved and a welcome email has been sent to your inbox.");
       } else {
