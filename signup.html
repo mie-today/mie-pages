@@ -6,9 +6,6 @@
   <title>Mie - Sign Up</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
   <style>
-    /* =========================================================================
-       UI STYLES (UNCHANGED)
-       ========================================================================= */
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
@@ -107,10 +104,7 @@
       <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required />
       <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required />
 
-      <!-- =========================================================================
-           EVENT COLOR SELECT (REPLACES PIN UI)
-           - value is the numeric id, but we send the LABEL TEXT to the backend
-           ========================================================================= -->
+      <!-- PIN removed; Event Color select -->
       <select id="eventColor" required>
         <option value="" disabled selected>Select Calendar Event Color</option>
         <option value="1">Lavender</option>
@@ -139,12 +133,9 @@
   </div>
 
   <script>
-    // =========================================================================
-    // CONFIG
-    // =========================================================================
-
-    // IMPORTANT: Use your latest deployment URL (post-deploy).
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMOyXl0ijiqQjh35ZOZYP93TKPR3BNkG79wXSUPcUWTqsyOaR9Q9Hwgz3dehJ2x_Dg/exec";
+    // IMPORTANT:
+    // After you redeploy the Apps Script web app (NEW VERSION), update this URL.
+    const SCRIPT_URL = "PASTE_YOUR_LATEST_WEB_APP_URL_HERE";
 
     const form              = document.getElementById("signupForm");
     const fullNameInput     = document.getElementById("fullName");
@@ -157,7 +148,7 @@
     const warningMsg        = document.getElementById("warningMsg");
     const submitButton      = document.getElementById("submitButton");
 
-    // AUTO PIN (always submitted) — discussed requirement
+    // AUTO PIN
     const AUTO_PIN = "4664";
 
     function hideAllMessages(){ errorMsg.style.display=successMsg.style.display=warningMsg.style.display="none"; }
@@ -165,7 +156,6 @@
     function showSuccess(m){ hideAllMessages(); successMsg.innerHTML=m; successMsg.style.display="block"; }
     function showWarning(m){ hideAllMessages(); warningMsg.innerHTML=m; warningMsg.style.display="block"; }
 
-    // Optional: quick GET health check so we fail fast if URL/permissions are wrong.
     async function pingHealth(){
       try{
         const r = await fetch(SCRIPT_URL, { method: "GET", cache: "no-store" });
@@ -177,88 +167,9 @@
       e.preventDefault();
       hideAllMessages();
 
-      // =========================================================================
-      // CLIENT-SIDE VALIDATION (PIN validation removed; Event Color required)
-      // =========================================================================
       const errs = [];
       if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) errs.push("Full Name must include FIRST and LAST name (letters only).");
       if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) errs.push("A valid @gmail.com address is required.");
       if (!/^1\d{10}$/.test(phoneInput.value.trim())) errs.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
       if (!eventColorSelect.value) errs.push("Please select a Calendar Event Color.");
-      if (errs.length){ showError(errs.join("<br>")); return; }
-
-      submitButton.disabled = true;
-      submitButton.textContent = "Signing Up...";
-
-      // =========================================================================
-      // IMPORTANT UPDATE (discussed):
-      // We send the LABEL TEXT (e.g., "Sage") to Apps Script and Tracker Column O
-      // =========================================================================
-      const eventColorName =
-        eventColorSelect.options[eventColorSelect.selectedIndex].text.trim(); // "Sage" / "Lavender" / etc.
-
-      const payload = {
-        fullName:     fullNameInput.value.trim(),
-        emailAddress: emailInput.value.trim(),
-        phoneNumber:  phoneInput.value.trim(),
-        pin:          AUTO_PIN,          // ALWAYS 4664
-        eventColor:   eventColorName,    // e.g., "Sage" (not "2")
-        timestamp:    new Date().toISOString()
-      };
-
-      try {
-        const okHealth = await pingHealth();
-        if(!okHealth){
-          throw new Error("Web app not reachable. Verify deployment URL and access: Execute as 'Me', Who has access = 'Anyone'.");
-        }
-
-        // CRITICAL: no custom headers -> simple request -> no CORS preflight
-        const resp = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-
-        if (!resp.ok) {
-          const t = await resp.text().catch(() => "");
-          throw new Error(`HTTP ${resp.status} ${resp.statusText}${t ? " — " + t : ""}`);
-        }
-
-        const data = await resp.json().catch(() => null);
-        if (!data) throw new Error("Invalid JSON response from server.");
-
-        handleResponse(data);
-        form.reset();
-
-      } catch (err) {
-        console.error(err);
-        showError("❌ Submission failed. " + (err && err.message ? err.message : "Please retry or contact support."));
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "Sign Up";
-      }
-    });
-
-    function handleResponse(data){
-      if (data.status !== "success") {
-        showError("❌ " + (data.message || "Unexpected server response."));
-        return;
-      }
-      if (!data.approved) {
-        showWarning("⚠️ PIN invalid or approval failed. Your application is pending.");
-        return;
-      }
-      if (data.approved && !data.emailSent) {
-        showWarning("✅ Approved, but welcome email failed. We'll follow up.");
-        return;
-      }
-      if (data.provisioned) {
-        showSuccess("✅ Welcome to Mie! Your account is approved and a welcome email has been sent to your inbox.");
-      } else {
-        const reason = (data.details && (data.details.error || data.details.message)) ? ` Reason: ${data.details.error || data.details.message}` : "";
-        showWarning("✅ Email sent, but provisioning hit a snag." + reason);
-      }
-    }
-  </script>
-</body>
-</html>
-
+      if (errs.length){
