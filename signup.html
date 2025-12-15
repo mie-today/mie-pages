@@ -1,175 +1,323 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mie - Sign Up</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: calc(100vh - 30px);
-      margin: 0;
-      padding: 20px 10px;
-      box-sizing: border-box;
+// ============================================================================
+// MIE SIGNUP WEB APP + INLINE PROVISIONING
+// Version: v4.8 (deployment-verifiable)
+// ============================================================================
+
+const CONFIG = {
+  VALID_PIN: "4664",
+  REQUIRE_PIN: true,
+  FROM_NAME: "Mie Team",
+  DASHBOARD_URL: "https://www.mie.today/dashboard",
+
+  SPREADSHEET_ID: "1T9qiDQa1DUwMF06V6M_TBO0Nc-36IKeTuIWkpdxh40U",
+  SHEET_NAME: "Sheet1",
+
+  TEMPLATE_SPREADSHEET_ID: "10VEAzvqwiiVtOyzDAZgQefI7-7I4F6k_wOU3SoSBwsE",
+  MASTER_FOLDER_ID: "1NHmZddWC6vSMS49VzvODhwjpiN6-nGZK",
+
+  PARENT_LABEL: "Mie_users",
+  LABEL_PREFIX: "",
+
+  // Tracker columns (1-based)
+  COL_EMAIL_SENT: 7,          // G
+  COL_LABEL_NAME: 8,          // H
+  COL_FOLDER_NAME: 9,         // I
+  COL_SPREADSHEET_LINK: 10,   // J
+  COL_FULL_LABEL_NAME: 11,    // K
+  COL_FOLDER_ID: 12,          // L
+  COL_SPREADSHEET_ID: 13,     // M
+  COL_EVENT_COLOR: 15         // O
+};
+
+const OPTIONAL_SCRIPT_HEADERS = {
+  SCRIPT_ID:   "Script ID",
+  SCRIPT_LINK: "Script Link"
+};
+
+function doGet() {
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      status: "success",
+      message: "Mie signup web app running",
+      version: "v4.8",
+      timestamp: new Date().toISOString()
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const requestId = Date.now();
+  try {
+    const data = JSON.parse(e.postData.contents || "{}");
+    if (!data.fullName || !data.emailAddress) throw new Error("Missing required fields: fullName or emailAddress");
+
+    const result = processSignup(data, requestId);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "error",
+      message: String(err && err.message ? err.message : err),
+      timestamp: new Date().toISOString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function processSignup(userData, requestId) {
+  const isApproved = validatePIN(userData.pin);
+
+  // Always write the row first (A–G) and Event Color (O).
+  const rowNumber = saveToSpreadsheet_(userData, isApproved);
+
+  let emailSent = false;
+  let provisioned = false;
+  let details = {};
+
+  if (isApproved) {
+    emailSent = sendWelcomeEmail_(userData.emailAddress, userData.fullName);
+    updateEmailStatus_(rowNumber, emailSent ? "Yes" : "Failed");
+
+    if (emailSent) {
+      try {
+        const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME);
+        const optCols = findOptionalScriptColumns_(sheet);
+
+        const res = provisionRow_(
+          rowNumber,
+          String(userData.fullName || ""),
+          String(userData.emailAddress || ""),
+          String(userData.phoneNumber || ""),
+          sheet,
+          optCols
+        );
+
+        provisioned = !!res.success;
+        details = res.success ? { message: "Provisioned" } : { error: res.error || "Provisioning failed" };
+
+      } catch (pErr) {
+        provisioned = false;
+        details = { error: String(pErr && pErr.message ? pErr.message : pErr) };
+      }
     }
-    .container {
-      background: #fff;
-      padding: 15px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
+  } else {
+    updateEmailStatus_(rowNumber, "Not approved");
+  }
+
+  return {
+    status: "success",
+    approved: isApproved,
+    emailSent,
+    provisioned,
+    details,
+    rowNumber,
+    requestId,
+    timestamp: new Date().toISOString()
+  };
+}
+
+function validatePIN(userPin) {
+  if (!CONFIG.REQUIRE_PIN) return true;
+  return String(userPin || "").trim() === String(CONFIG.VALID_PIN).trim();
+}
+
+function saveToSpreadsheet_(userData, isApproved) {
+  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME);
+  if (!sheet) throw new Error(`Sheet "${CONFIG.SHEET_NAME}" not found`);
+
+  const rowData = [
+    new Date(),                  // A Timestamp
+    userData.fullName || "",     // B
+    userData.emailAddress || "", // C
+    userData.phoneNumber || "",  // D
+    userData.pin || "",          // E
+    isApproved ? "Yes" : "No",   // F
+    ""                           // G Email Sent
+  ];
+
+  sheet.appendRow(rowData);
+  const rowNumber = sheet.getLastRow();
+
+  // Event Color -> Column O (stores readable name like "Sage")
+  const eventColor = String(userData.eventColor || "").trim();
+  sheet.getRange(rowNumber, CONFIG.COL_EVENT_COLOR).setValue(eventColor);
+
+  return rowNumber;
+}
+
+function updateEmailStatus_(rowNumber, status) {
+  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME);
+  sheet.getRange(rowNumber, CONFIG.COL_EMAIL_SENT).setValue(status);
+}
+
+function sendWelcomeEmail_(emailAddress, fullName) {
+  try {
+    const first = (String(fullName || "").trim().split(/\s+/)[0]) || "there";
+    const subject = "Welcome to Mie - Access Granted!";
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #4CAF50; color: white; padding: 20px; text-align: center;">
+          <h1>Welcome to Mie!</h1>
+        </div>
+        <div style="padding: 20px; background: #f9f9f9;">
+          <p>Hi ${first},</p>
+          <p>Welcome to Mie! Your account has been approved and you now have access to your dashboard.</p>
+          <div style="margin: 20px 0; text-align: center;">
+            <a href="${CONFIG.DASHBOARD_URL}" style="background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Access Your Dashboard</a>
+          </div>
+          <p style="color: #666; font-size: 14px;">This is an automated message from the Mie system. Please do not reply to this email.</p>
+        </div>
+      </div>`;
+    const textBody = `Hi ${first},
+
+Welcome to Mie! Your account has been approved and you now have access to your dashboard.
+
+Access your dashboard here: ${CONFIG.DASHBOARD_URL}
+
+Best regards,
+The Mie Team`;
+
+    GmailApp.sendEmail(emailAddress, subject, textBody, { htmlBody, name: CONFIG.FROM_NAME });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function provisionRow_(rowNumber, fullName, email, phone, sheet, optCols) {
+  const nameNoSpaces = String(fullName || "").replace(/\s+/g, "");
+  const last4 = String(phone || "").replace(/\D/g, "").slice(-4) || "XXXX";
+
+  const baseName = `${nameNoSpaces}_${last4}`;
+  const shortLabel = baseName;
+  const fullLabel = `${CONFIG.PARENT_LABEL}/${shortLabel}`;
+
+  try {
+    // Gmail label + filter
+    ensureLabelPath_(fullLabel);
+    createGmailFilterForUser_(email, fullLabel);
+    backfillThreads_(email, fullLabel);
+
+    // Folder
+    const userFolder = ensureUserFolder_(baseName);
+    const folderId = userFolder.getId();
+    const folderUrl = userFolder.getUrl();
+
+    // Spreadsheet copy ONLY (bound script comes with it)
+    const copied = DriveApp.getFileById(CONFIG.TEMPLATE_SPREADSHEET_ID).makeCopy(baseName, userFolder);
+    const spreadsheetId = copied.getId();
+    const spreadsheetUrl = SpreadsheetApp.openById(spreadsheetId).getUrl();
+
+    // Write tracker H–M BEFORE any optional sharing, so you don’t lose provisioning data.
+    sheet.getRange(rowNumber, CONFIG.COL_LABEL_NAME).setValue(shortLabel); // H
+    setHyperlinkFormula_(sheet, rowNumber, CONFIG.COL_FOLDER_NAME, baseName, folderUrl); // I
+    setHyperlinkFormula_(sheet, rowNumber, CONFIG.COL_SPREADSHEET_LINK, "Open Spreadsheet", spreadsheetUrl); // J
+    sheet.getRange(rowNumber, CONFIG.COL_FULL_LABEL_NAME).setValue(fullLabel); // K
+    sheet.getRange(rowNumber, CONFIG.COL_FOLDER_ID).setValue(folderId); // L
+    sheet.getRange(rowNumber, CONFIG.COL_SPREADSHEET_ID).setValue(spreadsheetId); // M
+
+    // Folder share (viewer, no notify) MUST NOT block provisioning.
+    shareFolderViewerNoNotify_SAFE_(folderId, email);
+
+    return { success: true };
+
+  } catch (err) {
+    return { success: false, error: err && err.message ? err.message : String(err) };
+  }
+}
+
+// ----- Gmail helpers -----
+
+function ensureLabelPath_(fullPath) {
+  const parts = String(fullPath).split("/").map(s => s.trim()).filter(Boolean);
+  let current = "";
+  for (let i = 0; i < parts.length; i++) {
+    current = (i === 0) ? parts[i] : current + "/" + parts[i];
+    let lbl = GmailApp.getUserLabelByName(current);
+    if (!lbl) GmailApp.createLabel(current);
+  }
+}
+
+function createGmailFilterForUser_(fromEmail, labelName) {
+  const userLabel = GmailApp.getUserLabelByName(labelName);
+  if (!userLabel) throw new Error(`Label "${labelName}" not found`);
+
+  const filter = {
+    criteria: { from: fromEmail },
+    action: { addLabelIds: [userLabel.getId()], neverSpam: true }
+  };
+
+  // Requires Advanced Gmail API enabled (Gmail)
+  return Gmail.Users.Settings.Filters.create(filter, "me");
+}
+
+function backfillThreads_(fromEmail, labelName) {
+  const label = GmailApp.getUserLabelByName(labelName);
+  if (!label) return;
+
+  const threads = GmailApp.search(`from:${fromEmail} -label:"${labelName}"`, 0, 100);
+  threads.forEach(th => {
+    th.addLabel(label);
+    if (th.isInSpam() || th.isInTrash()) th.moveToInbox();
+  });
+}
+
+// ----- Drive helpers -----
+
+function ensureUserFolder_(folderName) {
+  const master = DriveApp.getFolderById(CONFIG.MASTER_FOLDER_ID);
+  const it = master.getFoldersByName(folderName);
+  return it.hasNext() ? it.next() : master.createFolder(folderName);
+}
+
+/**
+ * This function will NEVER throw.
+ * It supports:
+ * - Drive API v2: Drive.Permissions.insert
+ * - Drive API v3: Drive.Permissions.create
+ * - Fallback: DriveApp.addViewer (may send notification depending on Google)
+ */
+function shareFolderViewerNoNotify_SAFE_(folderId, userEmail) {
+  try {
+    const email = String(userEmail || "").trim();
+    if (!folderId || !email) return;
+
+    if (typeof Drive !== "undefined" && Drive && Drive.Permissions) {
+      if (typeof Drive.Permissions.insert === "function") {
+        Drive.Permissions.insert({ role: "reader", type: "user", value: email }, folderId, { sendNotificationEmails: false });
+        return;
+      }
+      if (typeof Drive.Permissions.create === "function") {
+        Drive.Permissions.create({ role: "reader", type: "user", emailAddress: email }, folderId, { sendNotificationEmails: false });
+        return;
+      }
     }
-    .logo {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 8px;
-    }
-    .welcome {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #222;
-    }
-    h2 {
-      margin-top: 0;
-      margin-bottom: 12px;
-      color: #555;
-      font-size: 16px;
-      font-weight: normal;
-    }
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin: 4px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 16px;
-      background: #fff;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 8px;
-      font-size: 16px;
-      transition: background-color 0.3s;
-    }
-    button:hover:not(:disabled) { background: #45a049; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
 
-    .message {
-      font-size: 14px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      display: none;
-      padding: 10px;
-      border-radius: 8px;
-      text-align: left;
-    }
-    .error   { color: #D8000C; background: #FFD2D2; border: 1px solid #D8000C; }
-    .success { color: #4F8A10; background: #DFF2BF; border: 1px solid #4F8A10; }
-    .warning { color: #9F6000; background: #FEEFB3; border: 1px solid #9F6000; }
+    DriveApp.getFolderById(folderId).addViewer(email);
 
-    .link { margin-top: 12px; font-size: 14px; }
-    .link a { color: #4CAF50; text-decoration: none; font-weight: bold; }
+  } catch (e) {
+    // ignored by design
+  }
+}
 
-    @media (max-width: 480px) { body { padding: 10px 10px; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <a href="dashboard.html" class="logo-link">
-      <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="logo">
-    </a>
-    <h1 class="welcome">Hey, it's Mie.</h1>
-    <h2>Welcome</h2>
+// ----- Sheet utilities -----
 
-    <form id="signupForm">
-      <input type="text" id="fullName" placeholder="Full Name (e.g., John Doe)" required />
-      <input type="email" id="emailAddress" placeholder="Gmail Account (e.g., johndoe@gmail.com)" required />
-      <input type="tel" id="phoneNumber" placeholder="Cell Phone Number (e.g., 16509009000)" required />
+function setHyperlinkFormula_(sheet, row, col, text, url) {
+  if (!url) { sheet.getRange(row, col).setValue(text || ""); return; }
+  const safeText = String(text || "").replace(/"/g, '""');
+  const safeUrl = String(url || "").replace(/"/g, '""');
+  sheet.getRange(row, col).setFormula(`=HYPERLINK("${safeUrl}","${safeText}")`);
+}
 
-      <!-- PIN removed; Event Color select -->
-      <select id="eventColor" required>
-        <option value="" disabled selected>Select Calendar Event Color</option>
-        <option value="1">Lavender</option>
-        <option value="2">Sage</option>
-        <option value="3">Grape</option>
-        <option value="4">Flamingo</option>
-        <option value="5">Banana</option>
-        <option value="6">Tangerine</option>
-        <option value="7">Peacock</option>
-        <option value="8">Graphite</option>
-        <option value="9">Blueberry</option>
-        <option value="10">Basil</option>
-        <option value="11">Tomato</option>
-      </select>
-
-      <div class="message error"   id="errorMsg"></div>
-      <div class="message success" id="successMsg"></div>
-      <div class="message warning" id="warningMsg"></div>
-
-      <button type="submit" id="submitButton">Sign Up</button>
-    </form>
-
-    <div class="link">
-      Already have an account? <a href="dashboard.html">Sign In</a>
-    </div>
-  </div>
-
-  <script>
-    // IMPORTANT:
-    // After you redeploy the Apps Script web app (NEW VERSION), update this URL.
-    const SCRIPT_URL = "PASTE_YOUR_LATEST_WEB_APP_URL_HERE";
-
-    const form              = document.getElementById("signupForm");
-    const fullNameInput     = document.getElementById("fullName");
-    const emailInput        = document.getElementById("emailAddress");
-    const phoneInput        = document.getElementById("phoneNumber");
-    const eventColorSelect  = document.getElementById("eventColor");
-
-    const errorMsg          = document.getElementById("errorMsg");
-    const successMsg        = document.getElementById("successMsg");
-    const warningMsg        = document.getElementById("warningMsg");
-    const submitButton      = document.getElementById("submitButton");
-
-    // AUTO PIN
-    const AUTO_PIN = "4664";
-
-    function hideAllMessages(){ errorMsg.style.display=successMsg.style.display=warningMsg.style.display="none"; }
-    function showError(m){ hideAllMessages(); errorMsg.innerHTML=m; errorMsg.style.display="block"; }
-    function showSuccess(m){ hideAllMessages(); successMsg.innerHTML=m; successMsg.style.display="block"; }
-    function showWarning(m){ hideAllMessages(); warningMsg.innerHTML=m; warningMsg.style.display="block"; }
-
-    async function pingHealth(){
-      try{
-        const r = await fetch(SCRIPT_URL, { method: "GET", cache: "no-store" });
-        return r.ok;
-      }catch(_){ return false; }
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      hideAllMessages();
-
-      const errs = [];
-      if (!/^[A-Za-z]+ [A-Za-z]+$/.test(fullNameInput.value.trim())) errs.push("Full Name must include FIRST and LAST name (letters only).");
-      if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(emailInput.value.trim())) errs.push("A valid @gmail.com address is required.");
-      if (!/^1\d{10}$/.test(phoneInput.value.trim())) errs.push("Phone number must start with '1' and be 11 digits (e.g., 16509009000).");
-      if (!eventColorSelect.value) errs.push("Please select a Calendar Event Color.");
-      if (errs.length){
+function findOptionalScriptColumns_(sheet) {
+  const lastCol = sheet.getLastColumn() || 1;
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || "").trim().toLowerCase());
+  const idx = name => {
+    const i = headers.indexOf(String(name).toLowerCase());
+    return i >= 0 ? i + 1 : 0;
+  };
+  return {
+    SCRIPT_ID_COL: idx(OPTIONAL_SCRIPT_HEADERS.SCRIPT_ID),
+    SCRIPT_LINK_COL: idx(OPTIONAL_SCRIPT_HEADERS.SCRIPT_LINK)
+  };
+}
