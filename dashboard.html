@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.2 - View Switcher & Today Indicator</title>
+<title>Dashboard v2.3 - Font Size & View Fixes</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -131,6 +131,11 @@
       display: inline-block;
     }
     
+    /* Hide the placeholder button that creates the blue line */
+    .fc-customViewSwitcher-button {
+      display: none !important;
+    }
+    
     .view-switcher select {
       appearance: none;
       background-color: #3b82f6;
@@ -138,7 +143,7 @@
       border: 1px solid #2563eb;
       border-radius: 6px;
       padding: 4px 32px 4px 12px;
-      font-size: 16px;
+      font-size: 12px;  /* * <- CHANGE THIS to adjust Daily/Weekly/Monthly dropdown size */
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s ease;
@@ -200,7 +205,7 @@
 
     /* Make Today + arrows match title height */
     .fc .fc-toolbar .fc-button {
-      font-size: 19px !important;     /* match title height */
+      font-size: 12px !important;     /* * <- CHANGE THIS to adjust Today/Arrow button size */
       line-height: 1.2 !important;
       padding: 2px 8px !important;    /* tighter button */
       height: auto !important;
@@ -562,13 +567,14 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.2.0-VIEW-SWITCHER";
+    const VERSION = "2.3.0-FINAL";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
-    console.log("✅ Event limiting feature ACTIVE");
-    console.log("📅 Max visible events per day: 5");
+    console.log("✅ Event limiting feature ACTIVE (Monthly only)");
+    console.log("📅 Max visible events per day: 5 (Monthly view)");
     console.log("🔄 View switcher: Daily/Weekly/Monthly");
     console.log("🔵 Today indicator: Blue circle");
+    console.log("📏 Font size: 10px (buttons & dropdown)");
     console.log("==========================================");
     
     // ======== CONFIG =========
@@ -827,6 +833,7 @@
 
             // ========================================
             // KEY FIX: Hide events beyond limit as they mount
+            // UPDATED: Only limit events in MONTHLY view, show all in Daily/Weekly
             // ========================================
             eventDidMount: function(info) {
                 const el = info.el;
@@ -837,7 +844,17 @@
                     return;
                 }
                 
-                // Track event count per day
+                // Get current view type
+                const currentView = calendar.view.type;
+                
+                // Only limit events in month view (dayGridMonth)
+                // Show ALL events in day view (dayGridDay) and week view (dayGridWeek)
+                if (currentView !== 'dayGridMonth') {
+                    console.log(`   ✅ Showing all events in ${currentView} view`);
+                    return; // Don't hide anything in day/week view
+                }
+                
+                // Track event count per day (only in month view)
                 if (!dayCell._eventCount) {
                     dayCell._eventCount = 0;
                 }
@@ -845,7 +862,7 @@
                 const currentIndex = dayCell._eventCount;
                 dayCell._eventCount++;
                 
-                // Hide if beyond limit
+                // Hide if beyond limit (only in month view)
                 if (currentIndex >= MAX_VISIBLE_EVENTS) {
                     el.style.display = 'none';
                     console.log(`   ❌ Hidden: "${info.event.title}" (event #${currentIndex + 1})`);
@@ -980,9 +997,17 @@
 
     // ========================================
     // Add "+ X more" indicators
+    // UPDATED: Only show in monthly view
     // ========================================
     function addMoreEventsIndicators() {
         console.log("🔍 Adding more events indicators...");
+        
+        // Check current view - only add indicators in month view
+        const currentView = calendar.view.type;
+        if (currentView !== 'dayGridMonth') {
+            console.log("📅 Not in month view, skipping indicators");
+            return;
+        }
         
         // Remove old indicators
         document.querySelectorAll('.mie-more-events').forEach(el => el.remove());
