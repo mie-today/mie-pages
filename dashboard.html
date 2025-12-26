@@ -163,10 +163,164 @@
       flex-shrink: 0;
     }
 
+    /* 
+     * ========================================
+     * NEW: "+ X more events" indicator styling
+     * ========================================
+     */
+    .mie-more-events {
+      display: block;
+      padding: 2px 6px;
+      margin-top: 2px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #3b82f6;
+      background-color: #eff6ff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mie-more-events:hover {
+      background-color: #dbeafe;
+      color: #2563eb;
+    }
+
     /* --- Event Modal Styling --- */
-    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
-    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
+    .event-modal { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background-color: rgba(0,0,0,0.5); 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 1000; 
+    }
+    
+    .event-modal-content { 
+      background: white; 
+      border-radius: 12px; 
+      padding: 24px; 
+      max-width: 400px; 
+      width: 90%; 
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); 
+      color: #1f2937; 
+    }
+    
+    @media (max-width: 480px){ 
+      .event-modal-content { 
+        max-width: 320px !important; 
+        padding: 16px !important; 
+      } 
+    }
+
+    /* 
+     * ========================================
+     * NEW: Day Events Modal Styling
+     * This modal shows all events for a specific day when clicking "+ X more"
+     * ========================================
+     */
+    .day-events-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .day-events-modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      color: #1f2937;
+    }
+
+    /* Scrollbar styling for day events modal */
+    .day-events-modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .day-events-modal-content::-webkit-scrollbar-track {
+      background-color: #f3f4f6;
+      border-radius: 9999px;
+    }
+
+    .day-events-modal-content::-webkit-scrollbar-thumb {
+      background-color: #9ca3af;
+      border-radius: 9999px;
+    }
+
+    .day-events-modal-content::-webkit-scrollbar-thumb:hover {
+      background-color: #6b7280;
+    }
+
+    /* Event item in the day modal */
+    .day-event-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid #3b82f6;
+      background-color: #f9fafb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .day-event-item:hover {
+      background-color: #f3f4f6;
+      transform: translateX(2px);
+    }
+
+    .day-event-time {
+      font-weight: 600;
+      color: #374151;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .day-event-title {
+      color: #1f2937;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .day-event-location {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 480px) {
+      .day-events-modal-content {
+        max-width: 340px !important;
+        padding: 16px !important;
+      }
+
+      .day-event-item {
+        padding: 10px !important;
+      }
+
+      .day-event-time {
+        font-size: 12px !important;
+      }
+
+      .day-event-title {
+        font-size: 13px !important;
+      }
+    }
 
     /* --- Access Denied Styling --- */
     .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
@@ -326,17 +480,54 @@
     </div>
 </div>
 
+<!-- 
+  ========================================
+  NEW: Day Events Modal
+  Shows all events for a specific day when user clicks "+ X more events"
+  ========================================
+-->
+<div id="day-events-modal" class="day-events-modal hidden">
+    <div class="day-events-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 id="day-events-title" class="text-xl font-semibold mobile-heading text-gray-800"></h3>
+                <p id="day-events-subtitle" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            <button id="close-day-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="day-events-list" class="space-y-2">
+            <!-- Events will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+
 <script>
 (function () {
     // ======== CONFIG =========
     // UPDATED: Use your custom domain (matches GOOGLE_REDIRECT_URI and avoids raw Cloud Run host showing)
     const BACKEND_BASE_URL = "https://api.mie.today";
 
+    /* 
+     * ========================================
+     * NEW: Configuration for event display limiting
+     * ========================================
+     */
+    const MAX_VISIBLE_EVENTS = 5; // Show only first 5 events per day
+
     // ======== STATE =========
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
+
+    /* 
+     * ========================================
+     * NEW: Store all events by date for the day modal
+     * Key format: "YYYY-MM-DD"
+     * Value: Array of event objects
+     * ========================================
+     */
+    let eventsByDate = {};
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -365,6 +556,17 @@
     const eventDescription = document.getElementById("event-description");
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
+
+    /* 
+     * ========================================
+     * NEW: Day events modal DOM elements
+     * ========================================
+     */
+    const dayEventsModal = document.getElementById("day-events-modal");
+    const closeDayModal = document.getElementById("close-day-modal");
+    const dayEventsTitle = document.getElementById("day-events-title");
+    const dayEventsSubtitle = document.getElementById("day-events-subtitle");
+    const dayEventsList = document.getElementById("day-events-list");
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
@@ -421,6 +623,24 @@
             eventModal.addEventListener("click", (e) => {
                 if (e.target === eventModal) {
                     eventModal.classList.add("hidden");
+                }
+            });
+        }
+
+        /* 
+         * ========================================
+         * NEW: Day events modal event handlers
+         * ========================================
+         */
+        if (closeDayModal) {
+            closeDayModal.addEventListener("click", () => {
+                dayEventsModal.classList.add("hidden");
+            });
+        }
+        if (dayEventsModal) {
+            dayEventsModal.addEventListener("click", (e) => {
+                if (e.target === dayEventsModal) {
+                    dayEventsModal.classList.add("hidden");
                 }
             });
         }
@@ -550,10 +770,31 @@
             height: "100%",
 
             /* ✅ NEW: keeps late-night events (e.g., 11:35p–12:05a) on the start day,
-               preventing an empty “gap” at the top of the next day cell. */
+               preventing an empty "gap" at the top of the next day cell. */
             nextDayThreshold: "01:00:00",
 
             events: fetchCalendarEvents,
+
+            /* 
+             * ========================================
+             * UPDATED: didMount callback to add "+ X more" indicator after calendar renders
+             * This runs after FullCalendar has rendered all events
+             * ========================================
+             */
+            eventDidMount: function(info) {
+                // This function is called for each event as it's being mounted to the DOM
+                // We'll use a separate mechanism to add the "+ X more" indicator
+            },
+
+            /* 
+             * ========================================
+             * NEW: After all events are mounted, add the "+ X more" indicators
+             * We use the viewDidMount callback which fires after the view is fully rendered
+             * ========================================
+             */
+            viewDidMount: function(info) {
+                addMoreEventsIndicators();
+            },
 
             eventContent: function(arg) {
                 const event = arg.event;
@@ -616,6 +857,149 @@
         calendar.render();
     }
 
+    /* 
+     * ========================================
+     * NEW: Function to add "+ X more events" indicators to day cells
+     * This function runs after FullCalendar has rendered all events
+     * It identifies days with more than MAX_VISIBLE_EVENTS and adds the indicator
+     * ========================================
+     */
+    function addMoreEventsIndicators() {
+        // Get all day cells in the calendar
+        const dayCells = document.querySelectorAll('.fc-daygrid-day');
+        
+        dayCells.forEach(dayCell => {
+            // Get the date for this cell
+            const dateStr = dayCell.getAttribute('data-date');
+            if (!dateStr) return;
+            
+            // Check if we have events for this date
+            const eventsForDay = eventsByDate[dateStr];
+            if (!eventsForDay || eventsForDay.length <= MAX_VISIBLE_EVENTS) return;
+            
+            // Calculate how many events are hidden
+            const hiddenCount = eventsForDay.length - MAX_VISIBLE_EVENTS;
+            
+            // Find the events container within this day cell
+            const eventsContainer = dayCell.querySelector('.fc-daygrid-day-events');
+            if (!eventsContainer) return;
+            
+            // Hide events beyond the limit
+            const eventElements = eventsContainer.querySelectorAll('.fc-daygrid-event-harness');
+            eventElements.forEach((eventEl, index) => {
+                if (index >= MAX_VISIBLE_EVENTS) {
+                    eventEl.style.display = 'none';
+                }
+            });
+            
+            // Create the "+ X more events" indicator
+            const moreIndicator = document.createElement('div');
+            moreIndicator.className = 'mie-more-events';
+            moreIndicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? 's' : ''}`;
+            moreIndicator.setAttribute('data-date', dateStr);
+            
+            // Add click handler to show the day events modal
+            moreIndicator.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showDayEventsModal(dateStr, eventsForDay);
+            });
+            
+            // Append the indicator to the day cell's bottom area
+            const dayBottom = dayCell.querySelector('.fc-daygrid-day-bottom');
+            if (dayBottom) {
+                dayBottom.appendChild(moreIndicator);
+            } else {
+                // If there's no bottom area, append to the events container
+                eventsContainer.appendChild(moreIndicator);
+            }
+        });
+    }
+
+    /* 
+     * ========================================
+     * NEW: Function to show the day events modal
+     * Displays all events for a specific day when user clicks "+ X more"
+     * ========================================
+     */
+    function showDayEventsModal(dateStr, events) {
+        // Format the date for display
+        const date = new Date(dateStr + 'T12:00:00');
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        // Set modal title
+        dayEventsTitle.textContent = formattedDate;
+        dayEventsSubtitle.textContent = `${events.length} event${events.length > 1 ? 's' : ''}`;
+        
+        // Clear previous events
+        dayEventsList.innerHTML = '';
+        
+        // Sort events by start time
+        const sortedEvents = [...events].sort((a, b) => {
+            const aStart = new Date(a.start);
+            const bStart = new Date(b.start);
+            return aStart - bStart;
+        });
+        
+        // Add each event to the modal
+        sortedEvents.forEach(event => {
+            const eventItem = document.createElement('div');
+            eventItem.className = 'day-event-item';
+            
+            // Set border color from event's calendar color
+            const color = event.extendedProps?.calendarColor || '#3b82f6';
+            eventItem.style.borderLeftColor = color;
+            
+            // Format time
+            let timeString = '';
+            if (event.allDay) {
+                timeString = 'All-day';
+            } else {
+                const startDate = new Date(event.start);
+                const endDate = event.end ? new Date(event.end) : null;
+                timeString = startDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                if (endDate) {
+                    timeString += ' - ' + endDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                }
+            }
+            
+            // Create event content
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'day-event-time';
+            timeDiv.textContent = timeString;
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'day-event-title';
+            titleDiv.textContent = event.title || 'No Title';
+            
+            eventItem.appendChild(timeDiv);
+            eventItem.appendChild(titleDiv);
+            
+            // Add location if available
+            if (event.extendedProps?.location) {
+                const locationDiv = document.createElement('div');
+                locationDiv.className = 'day-event-location';
+                locationDiv.textContent = '📍 ' + event.extendedProps.location;
+                eventItem.appendChild(locationDiv);
+            }
+            
+            // Add click handler to show event details
+            eventItem.addEventListener('click', () => {
+                dayEventsModal.classList.add('hidden');
+                showEventDetails(event);
+            });
+            
+            dayEventsList.appendChild(eventItem);
+        });
+        
+        // Show the modal
+        dayEventsModal.classList.remove('hidden');
+    }
+
     async function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/events", {
@@ -637,6 +1021,14 @@
             const data = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
 
+            /* 
+             * ========================================
+             * UPDATED: Build eventsByDate map as we process events
+             * This allows us to track all events per day for the modal
+             * ========================================
+             */
+            eventsByDate = {}; // Reset the map
+
             const events = items.map((e) => {
                 const start = (e.start && (e.start.dateTime || e.start.date)) || null;
                 const end = (e.end && (e.end.dateTime || e.end.date)) || null;
@@ -647,7 +1039,7 @@
                     e._mieCalendarColor ||
                     null;
 
-                return {
+                const eventObj = {
                     id: e.id,
                     title: e.summary || "No Title",
                     start,
@@ -660,6 +1052,26 @@
                         calendarColor: calColor
                     },
                 };
+
+                // Extract date string (YYYY-MM-DD) from the start date
+                if (start) {
+                    let dateStr;
+                    if (allDay) {
+                        // For all-day events, the date is already in YYYY-MM-DD format
+                        dateStr = start;
+                    } else {
+                        // For timed events, extract the date part
+                        dateStr = start.split('T')[0];
+                    }
+                    
+                    // Add this event to the eventsByDate map
+                    if (!eventsByDate[dateStr]) {
+                        eventsByDate[dateStr] = [];
+                    }
+                    eventsByDate[dateStr].push(eventObj);
+                }
+
+                return eventObj;
             });
 
             successCallback(events);
