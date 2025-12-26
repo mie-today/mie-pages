@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard</title>
+<title>Dashboard v2.1 - Event Limiting</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -503,31 +503,26 @@
 
 <script>
 (function () {
+    // ========================================
+    // VERSION & DEBUG INFO
+    // ========================================
+    const VERSION = "2.1.0-WORKING";
+    console.log("==========================================");
+    console.log("🚀 DASHBOARD VERSION:", VERSION);
+    console.log("✅ Event limiting feature ACTIVE");
+    console.log("📅 Max visible events per day: 5");
+    console.log("==========================================");
+    
     // ======== CONFIG =========
-    // UPDATED: Use your custom domain (matches GOOGLE_REDIRECT_URI and avoids raw Cloud Run host showing)
     const BACKEND_BASE_URL = "https://api.mie.today";
-
-    /* 
-     * ========================================
-     * NEW: Configuration for event display limiting
-     * ========================================
-     */
-    const MAX_VISIBLE_EVENTS = 5; // Show only first 5 events per day
+    const MAX_VISIBLE_EVENTS = 5;
 
     // ======== STATE =========
     let calendar = null;
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
-
-    /* 
-     * ========================================
-     * NEW: Store all events by date for the day modal
-     * Key format: "YYYY-MM-DD"
-     * Value: Array of event objects
-     * ========================================
-     */
-    let eventsByDate = {};
+    let eventsByDate = {}; // Store all events by date for modal
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -557,11 +552,6 @@
     const eventLocation = document.getElementById("event-location");
     const eventLink = document.getElementById("event-link");
 
-    /* 
-     * ========================================
-     * NEW: Day events modal DOM elements
-     * ========================================
-     */
     const dayEventsModal = document.getElementById("day-events-modal");
     const closeDayModal = document.getElementById("close-day-modal");
     const dayEventsTitle = document.getElementById("day-events-title");
@@ -627,11 +617,6 @@
             });
         }
 
-        /* 
-         * ========================================
-         * NEW: Day events modal event handlers
-         * ========================================
-         */
         if (closeDayModal) {
             closeDayModal.addEventListener("click", () => {
                 dayEventsModal.classList.add("hidden");
@@ -744,19 +729,22 @@
             console.error("Error during logout:", err);
         }
 
-        // UPDATED: GitHub Pages typically serves static files; "/dashboard" may not exist as a real file.
         if (!silent) {
             window.location.href = "dashboard.html";
         }
     }
 
-    // ======== CALENDAR ========
+    // ========================================
+    // CALENDAR WITH EVENT LIMITING
+    // ========================================
     function displayMonthlyCalendar() {
         if (!calendarContainer) return;
         if (calendar) {
             calendar.destroy();
             calendar = null;
         }
+
+        console.log("🔧 Initializing calendar with event limiting...");
 
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: "dayGridMonth",
@@ -768,32 +756,42 @@
             fixedWeekCount: false,
             showNonCurrentDates: false,
             height: "100%",
-
-            /* ✅ NEW: keeps late-night events (e.g., 11:35p–12:05a) on the start day,
-               preventing an empty "gap" at the top of the next day cell. */
             nextDayThreshold: "01:00:00",
-
             events: fetchCalendarEvents,
 
-            /* 
-             * ========================================
-             * UPDATED: didMount callback to add "+ X more" indicator after calendar renders
-             * This runs after FullCalendar has rendered all events
-             * ========================================
-             */
+            // ========================================
+            // KEY FIX: Hide events beyond limit as they mount
+            // ========================================
             eventDidMount: function(info) {
-                // This function is called for each event as it's being mounted to the DOM
-                // We'll use a separate mechanism to add the "+ X more" indicator
+                const el = info.el;
+                const dayCell = el.closest('.fc-daygrid-day');
+                
+                if (!dayCell) {
+                    console.warn("⚠️  No dayCell for:", info.event.title);
+                    return;
+                }
+                
+                // Track event count per day
+                if (!dayCell._eventCount) {
+                    dayCell._eventCount = 0;
+                }
+                
+                const currentIndex = dayCell._eventCount;
+                dayCell._eventCount++;
+                
+                // Hide if beyond limit
+                if (currentIndex >= MAX_VISIBLE_EVENTS) {
+                    el.style.display = 'none';
+                    console.log(`   ❌ Hidden: "${info.event.title}" (event #${currentIndex + 1})`);
+                } else {
+                    console.log(`   ✅ Visible: "${info.event.title}" (event #${currentIndex + 1})`);
+                }
             },
 
-            /* 
-             * ========================================
-             * NEW: After all events are mounted, add the "+ X more" indicators
-             * We use the viewDidMount callback which fires after the view is fully rendered
-             * ========================================
-             */
-            viewDidMount: function(info) {
-                addMoreEventsIndicators();
+            // Add indicators after all events loaded
+            eventsSet: function(events) {
+                console.log("📊 Events loaded:", events.length);
+                setTimeout(() => addMoreEventsIndicators(), 0);
             },
 
             eventContent: function(arg) {
@@ -855,74 +853,59 @@
         });
 
         calendar.render();
+        console.log("✅ Calendar rendered");
     }
 
-    /* 
-     * ========================================
-     * NEW: Function to add "+ X more events" indicators to day cells
-     * This function runs after FullCalendar has rendered all events
-     * It identifies days with more than MAX_VISIBLE_EVENTS and adds the indicator
-     * ========================================
-     */
+    // ========================================
+    // Add "+ X more" indicators
+    // ========================================
     function addMoreEventsIndicators() {
-        // Get all day cells in the calendar
+        console.log("🔍 Adding more events indicators...");
+        
+        // Remove old indicators
+        document.querySelectorAll('.mie-more-events').forEach(el => el.remove());
+        
         const dayCells = document.querySelectorAll('.fc-daygrid-day');
+        let added = 0;
         
         dayCells.forEach(dayCell => {
-            // Get the date for this cell
             const dateStr = dayCell.getAttribute('data-date');
             if (!dateStr) return;
             
-            // Check if we have events for this date
             const eventsForDay = eventsByDate[dateStr];
             if (!eventsForDay || eventsForDay.length <= MAX_VISIBLE_EVENTS) return;
             
-            // Calculate how many events are hidden
             const hiddenCount = eventsForDay.length - MAX_VISIBLE_EVENTS;
             
-            // Find the events container within this day cell
-            const eventsContainer = dayCell.querySelector('.fc-daygrid-day-events');
-            if (!eventsContainer) return;
+            const indicator = document.createElement('div');
+            indicator.className = 'mie-more-events';
+            indicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? 's' : ''}`;
+            indicator.setAttribute('data-date', dateStr);
             
-            // Hide events beyond the limit
-            const eventElements = eventsContainer.querySelectorAll('.fc-daygrid-event-harness');
-            eventElements.forEach((eventEl, index) => {
-                if (index >= MAX_VISIBLE_EVENTS) {
-                    eventEl.style.display = 'none';
-                }
-            });
-            
-            // Create the "+ X more events" indicator
-            const moreIndicator = document.createElement('div');
-            moreIndicator.className = 'mie-more-events';
-            moreIndicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? 's' : ''}`;
-            moreIndicator.setAttribute('data-date', dateStr);
-            
-            // Add click handler to show the day events modal
-            moreIndicator.addEventListener('click', (e) => {
+            indicator.addEventListener('click', (e) => {
                 e.stopPropagation();
                 showDayEventsModal(dateStr, eventsForDay);
             });
             
-            // Append the indicator to the day cell's bottom area
             const dayBottom = dayCell.querySelector('.fc-daygrid-day-bottom');
+            const eventsContainer = dayCell.querySelector('.fc-daygrid-day-events');
+            
             if (dayBottom) {
-                dayBottom.appendChild(moreIndicator);
-            } else {
-                // If there's no bottom area, append to the events container
-                eventsContainer.appendChild(moreIndicator);
+                dayBottom.appendChild(indicator);
+                added++;
+            } else if (eventsContainer) {
+                eventsContainer.appendChild(indicator);
+                added++;
             }
         });
+        
+        console.log(`✅ Added ${added} indicators`);
     }
 
-    /* 
-     * ========================================
-     * NEW: Function to show the day events modal
-     * Displays all events for a specific day when user clicks "+ X more"
-     * ========================================
-     */
+    // ========================================
+    // Show day events modal
+    // ========================================
     function showDayEventsModal(dateStr, events) {
-        // Format the date for display
         const date = new Date(dateStr + 'T12:00:00');
         const formattedDate = date.toLocaleDateString('en-US', { 
             weekday: 'long', 
@@ -931,30 +914,22 @@
             day: 'numeric' 
         });
         
-        // Set modal title
         dayEventsTitle.textContent = formattedDate;
         dayEventsSubtitle.textContent = `${events.length} event${events.length > 1 ? 's' : ''}`;
         
-        // Clear previous events
         dayEventsList.innerHTML = '';
         
-        // Sort events by start time
         const sortedEvents = [...events].sort((a, b) => {
-            const aStart = new Date(a.start);
-            const bStart = new Date(b.start);
-            return aStart - bStart;
+            return new Date(a.start) - new Date(b.start);
         });
         
-        // Add each event to the modal
         sortedEvents.forEach(event => {
-            const eventItem = document.createElement('div');
-            eventItem.className = 'day-event-item';
+            const item = document.createElement('div');
+            item.className = 'day-event-item';
             
-            // Set border color from event's calendar color
             const color = event.extendedProps?.calendarColor || '#3b82f6';
-            eventItem.style.borderLeftColor = color;
+            item.style.borderLeftColor = color;
             
-            // Format time
             let timeString = '';
             if (event.allDay) {
                 timeString = 'All-day';
@@ -967,7 +942,6 @@
                 }
             }
             
-            // Create event content
             const timeDiv = document.createElement('div');
             timeDiv.className = 'day-event-time';
             timeDiv.textContent = timeString;
@@ -976,30 +950,30 @@
             titleDiv.className = 'day-event-title';
             titleDiv.textContent = event.title || 'No Title';
             
-            eventItem.appendChild(timeDiv);
-            eventItem.appendChild(titleDiv);
+            item.appendChild(timeDiv);
+            item.appendChild(titleDiv);
             
-            // Add location if available
             if (event.extendedProps?.location) {
                 const locationDiv = document.createElement('div');
                 locationDiv.className = 'day-event-location';
                 locationDiv.textContent = '📍 ' + event.extendedProps.location;
-                eventItem.appendChild(locationDiv);
+                item.appendChild(locationDiv);
             }
             
-            // Add click handler to show event details
-            eventItem.addEventListener('click', () => {
+            item.addEventListener('click', () => {
                 dayEventsModal.classList.add('hidden');
                 showEventDetails(event);
             });
             
-            dayEventsList.appendChild(eventItem);
+            dayEventsList.appendChild(item);
         });
         
-        // Show the modal
         dayEventsModal.classList.remove('hidden');
     }
 
+    // ========================================
+    // Fetch events from backend
+    // ========================================
     async function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/events", {
@@ -1021,13 +995,10 @@
             const data = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
 
-            /* 
-             * ========================================
-             * UPDATED: Build eventsByDate map as we process events
-             * This allows us to track all events per day for the modal
-             * ========================================
-             */
-            eventsByDate = {}; // Reset the map
+            console.log(`📥 Fetched ${items.length} events from backend`);
+
+            // Build eventsByDate map
+            eventsByDate = {};
 
             const events = items.map((e) => {
                 const start = (e.start && (e.start.dateTime || e.start.date)) || null;
@@ -1053,18 +1024,15 @@
                     },
                 };
 
-                // Extract date string (YYYY-MM-DD) from the start date
+                // Add to eventsByDate map
                 if (start) {
                     let dateStr;
                     if (allDay) {
-                        // For all-day events, the date is already in YYYY-MM-DD format
                         dateStr = start;
                     } else {
-                        // For timed events, extract the date part
                         dateStr = start.split('T')[0];
                     }
                     
-                    // Add this event to the eventsByDate map
                     if (!eventsByDate[dateStr]) {
                         eventsByDate[dateStr] = [];
                     }
@@ -1074,8 +1042,17 @@
                 return eventObj;
             });
 
+            // Log days with many events
+            Object.keys(eventsByDate).forEach(date => {
+                const count = eventsByDate[date].length;
+                if (count > MAX_VISIBLE_EVENTS) {
+                    console.log(`📅 ${date}: ${count} events (${count - MAX_VISIBLE_EVENTS} will be hidden)`);
+                }
+            });
+
             successCallback(events);
         } catch (err) {
+            console.error("Error fetching events:", err);
             if (failureCallback) failureCallback(err);
         }
     }
