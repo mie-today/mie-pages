@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.1 - Event Limiting</title>
+<title>Dashboard v2.2 - View Switcher & Today Indicator</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -98,10 +98,66 @@
     .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
     .fc .fc-button-primary:hover { background-color: #2563eb !important; }
     .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
-    .fc-daygrid-day.fc-day-today { background-color: rgba(59,130,246,0.1) !important; }
+    
+    /* 
+     * ========================================
+     * UPDATED: Today's date with blue circle indicator
+     * ========================================
+     */
+    .fc-daygrid-day.fc-day-today { background-color: transparent !important; }
+    .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+      background-color: #3b82f6 !important;
+      color: white !important;
+      border-radius: 50% !important;
+      width: 28px !important;
+      height: 28px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600 !important;
+    }
+    
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+
+    /* 
+     * ========================================
+     * NEW: Custom view dropdown styling
+     * ========================================
+     */
+    .view-switcher {
+      position: relative;
+      display: inline-block;
+    }
+    
+    .view-switcher select {
+      appearance: none;
+      background-color: #3b82f6;
+      color: white;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      padding: 4px 32px 4px 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    
+    .view-switcher select:hover {
+      background-color: #2563eb;
+    }
+    
+    .view-switcher::after {
+      content: '▼';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: white;
+      font-size: 12px;
+    }
 
     /* Hide FullCalendar's built-in dot so we only show our custom one */
     .fc-daygrid-event-dot { display: none !important; }
@@ -506,11 +562,13 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.1.0-WORKING";
+    const VERSION = "2.2.0-VIEW-SWITCHER";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
     console.log("✅ Event limiting feature ACTIVE");
     console.log("📅 Max visible events per day: 5");
+    console.log("🔄 View switcher: Daily/Weekly/Monthly");
+    console.log("🔵 Today indicator: Blue circle");
     console.log("==========================================");
     
     // ======== CONFIG =========
@@ -749,9 +807,17 @@
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: "dayGridMonth",
             headerToolbar: {
-                left: "today",
+                left: "today prev,next",
                 center: "title",
-                right: "prev,next",
+                right: "customViewSwitcher",
+            },
+            customButtons: {
+                customViewSwitcher: {
+                    text: '',
+                    click: function() {
+                        // Click handled by the select element
+                    }
+                }
             },
             fixedWeekCount: false,
             showNonCurrentDates: false,
@@ -854,6 +920,62 @@
 
         calendar.render();
         console.log("✅ Calendar rendered");
+        
+        // ========================================
+        // Create custom view switcher dropdown
+        // ========================================
+        createViewSwitcher();
+    }
+
+    // ========================================
+    // Create view switcher dropdown
+    // ========================================
+    function createViewSwitcher() {
+        // Find the custom button placeholder in the toolbar
+        const customButton = document.querySelector('.fc-customViewSwitcher-button');
+        if (!customButton) {
+            console.warn("⚠️  Custom button not found");
+            return;
+        }
+        
+        // Create the dropdown container
+        const switcherContainer = document.createElement('div');
+        switcherContainer.className = 'view-switcher';
+        
+        // Create the select element
+        const select = document.createElement('select');
+        select.id = 'view-switcher-select';
+        
+        // Add options
+        const views = [
+            { value: 'dayGridDay', label: 'Daily' },
+            { value: 'dayGridWeek', label: 'Weekly' },
+            { value: 'dayGridMonth', label: 'Monthly' }
+        ];
+        
+        views.forEach(view => {
+            const option = document.createElement('option');
+            option.value = view.value;
+            option.textContent = view.label;
+            if (view.value === 'dayGridMonth') {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+        
+        // Add change event listener
+        select.addEventListener('change', (e) => {
+            const newView = e.target.value;
+            console.log('📅 Switching to view:', newView);
+            calendar.changeView(newView);
+        });
+        
+        switcherContainer.appendChild(select);
+        
+        // Replace the button with our custom dropdown
+        customButton.parentNode.replaceChild(switcherContainer, customButton);
+        
+        console.log("✅ View switcher created");
     }
 
     // ========================================
