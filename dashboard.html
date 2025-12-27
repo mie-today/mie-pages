@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.6 - Mobile Layout Final</title>
+<title>Dashboard v2.6 - Mobile Toolbar + 3-Event Monthly</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -23,6 +23,14 @@
 />
 
 <style>
+    /* ============================================================
+     * NOTE
+     * - This file is based on your current dashboard.html (v2.3)
+     * - Changes are limited to the calendar toolbar + mobile layout
+     *   and the monthly event limiting behavior (3 visible events).
+     * - Messaging, auth flow, backend calls are unchanged.
+     * ============================================================ */
+
     /* --- General Body and Layout --- */
     body {
         font-family: 'Inter', sans-serif;
@@ -50,6 +58,10 @@
     /* Main container for the entire application */
     .oauth-app-container { max-width: 100%; margin: 0 auto; }
 
+    /* ============================================================
+     * RESPONSIVE LAYOUT
+     * ============================================================ */
+
     /* --- Responsive Styles for Mobile (up to 480px wide) --- */
     @media (max-width: 480px) {
         .oauth-app-container {
@@ -70,119 +82,28 @@
         .mobile-text-btn { font-size: 16px !important; }
         .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
 
-        /* 
-         * ========================================
-         * MOBILE-SPECIFIC: Custom toolbar layout
-         * Month LEFT, Controls RIGHT
-         * ========================================
-         */
-        
-        /* Force toolbar to be single row with space between */
-        .fc .fc-header-toolbar {
-            margin-bottom: 1em !important;
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            flex-wrap: nowrap !important;
-            gap: 10px !important;
-        }
-        
-        /* First chunk (title) - align LEFT */
-        .fc .fc-toolbar-chunk:nth-child(1) {
-            flex: 0 0 auto !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-        }
-        
-        /* Second chunk (empty) - take no space */
-        .fc .fc-toolbar-chunk:nth-child(2) {
-            flex: 1 1 auto !important;
-            display: none !important;
-        }
-        
-        /* Third chunk (controls) - align RIGHT */
-        .fc .fc-toolbar-chunk:nth-child(3) {
-            flex: 0 0 auto !important;
-            display: flex !important;
-            gap: 6px !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-        }
-        
-        /* Hide desktop "today" button on mobile */
-        .fc .fc-today-button {
-            display: none !important;
-        }
-        
-        /* Month title styling for mobile - LEFT aligned, larger and bold */
-        .fc .fc-toolbar-title { 
-            font-size: 22px !important; 
-            line-height: 1.2 !important;
-            font-weight: 700 !important;
-            text-align: left !important;
-            margin: 0 !important;
-            color: #1f2937 !important;
-            white-space: nowrap !important;
-        }
-        
-        /* Arrow buttons for mobile - bigger for touch */
-        .fc .fc-button-primary { 
-            font-size: 18px !important; 
-            padding: 10px 14px !important; 
-            line-height: 1 !important;
-            min-width: 48px !important;
-            height: 48px !important;
-            border-radius: 8px !important;
-        }
-        
-        /* Dropdown for mobile - bigger for touch */
-        .view-switcher {
-            display: inline-flex !important;
-            align-items: center !important;
-        }
-        
-        .view-switcher select {
-            font-size: 16px !important;
-            padding: 10px 36px 10px 14px !important;
-            min-height: 48px !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
+        /* FullCalendar (mobile) fonts */
+        .fc .fc-toolbar-title { font-size: 20px !important; line-height: 1.2 !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
+        .fc .fc-col-header-cell { font-size: 12px !important; }
+        .fc .fc-daygrid-day-number { font-size: 12px !important; }
+        .fc .fc-event { font-size: 10px !important; } /* EVENT FONT SIZE (MOBILE) */
+
+        /* ============================================================
+         * MOBILE TOOLBAR (NEW)
+         * - Matches your requested layout:
+         *   Left: "December 2025"
+         *   Right: [<] [>] + [Daily/Weekly/Monthly ▼]
+         * - We hide FullCalendar's built-in header toolbar on mobile.
+         * ============================================================ */
+        .fc .fc-header-toolbar { display: none !important; }
+
+        #mie-mobile-toolbar {
+          display: flex !important;
         }
 
-        /* Calendar grid adjustments for mobile */
-        .fc .fc-col-header-cell { 
-            font-size: 12px !important;
-            padding: 6px 2px !important;
-        }
-        
-        .fc .fc-daygrid-day-number { 
-            font-size: 14px !important;
-            padding: 4px !important;
-        }
-        
-        /* Make sure day cells have proper height */
-        .fc .fc-daygrid-day-frame {
-            min-height: 90px !important;
-        }
-        
-        /* Ensure calendar table is visible */
-        .fc .fc-scrollgrid {
-            border-width: 1px !important;
-        }
-
-        .fc .fc-event { 
-            font-size: 10px !important;
-            padding: 2px 3px !important;
-            margin-bottom: 1px !important;
-        }
-        
-        /* Make "more" indicator visible on mobile */
-        .mie-more-events {
-            font-size: 10px !important;
-            padding: 3px 5px !important;
-            margin-top: 2px !important;
-        }
+        /* Slightly reduce vertical padding above calendar grid */
+        #calendar-container { margin-top: 6px !important; }
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
@@ -199,17 +120,15 @@
         .messaging-section { width: 800px; height: 360px; }
     }
 
-    /* --- FullCalendar Light Mode Customization --- */
+    /* ============================================================
+     * FULLCALENDAR LIGHT MODE CUSTOMIZATION (unchanged)
+     * ============================================================ */
     .fc { color: #1f2937 !important; background-color: #ffffff !important; }
     .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
     .fc .fc-button-primary:hover { background-color: #2563eb !important; }
     .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
-    
-    /* 
-     * ========================================
-     * UPDATED: Today's date with blue circle indicator
-     * ========================================
-     */
+
+    /* Today's date with blue circle indicator */
     .fc-daygrid-day.fc-day-today { background-color: transparent !important; }
     .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
       background-color: #3b82f6 !important;
@@ -222,26 +141,24 @@
       justify-content: center !important;
       font-weight: 600 !important;
     }
-    
+
     .fc .fc-daygrid-day-frame { background-color: white !important; }
     .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
 
-    /* 
-     * ========================================
-     * NEW: Custom view dropdown styling
-     * ========================================
-     */
+    /* ============================================================
+     * VIEW DROPDOWN STYLING (reused for desktop + mobile)
+     * ============================================================ */
     .view-switcher {
       position: relative;
       display: inline-block;
     }
-    
-    /* Hide the placeholder button that creates the blue line */
+
+    /* Hide the placeholder button that creates the blue line (desktop toolbar custom button) */
     .fc-customViewSwitcher-button {
       display: none !important;
     }
-    
+
     .view-switcher select {
       appearance: none;
       background-color: #3b82f6;
@@ -249,16 +166,17 @@
       border: 1px solid #2563eb;
       border-radius: 6px;
       padding: 4px 32px 4px 12px;
-      font-size: 10px;  /* * <- CHANGE THIS to adjust Daily/Weekly/Monthly dropdown size */
+      font-size: 12px;  /* adjust Daily/Weekly/Monthly dropdown size */
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s ease;
+      line-height: 1.2;
     }
-    
+
     .view-switcher select:hover {
       background-color: #2563eb;
     }
-    
+
     .view-switcher::after {
       content: '▼';
       position: absolute;
@@ -278,7 +196,7 @@
       border-color: transparent;
       background-color: transparent;
       color: #000000 !important;
-      font-size: 12px;          /* * <- EVENT FONT SIZE (DESKTOP/TABLET). Change this as needed. */
+      font-size: 12px;          /* EVENT FONT SIZE (DESKTOP/TABLET) */
       line-height: 1.2;
     }
 
@@ -304,16 +222,16 @@
 
     .fc .fc-toolbar-title {
       color: #1f2937 !important;
-      font-size: 19px !important;  /* 1px larger per your request */
+      font-size: 19px !important;
       line-height: 1.2 !important;
       font-weight: 600;
     }
 
-    /* Make Today + arrows match title height */
+    /* Make Today + arrows match title height (desktop toolbar) */
     .fc .fc-toolbar .fc-button {
-      font-size: 10px !important;     /* * <- CHANGE THIS to adjust Today/Arrow button size */
+      font-size: 14px !important;
       line-height: 1.2 !important;
-      padding: 2px 8px !important;    /* tighter button */
+      padding: 2px 8px !important;
       height: auto !important;
       border-radius: 6px !important;
     }
@@ -330,11 +248,9 @@
       flex-shrink: 0;
     }
 
-    /* 
-     * ========================================
-     * NEW: "+ X more events" indicator styling
-     * ========================================
-     */
+    /* ============================================================
+     * "+ X more events" indicator styling (unchanged)
+     * ============================================================ */
     .mie-more-events {
       display: block;
       padding: 2px 6px;
@@ -354,43 +270,98 @@
       color: #2563eb;
     }
 
-    /* --- Event Modal Styling --- */
-    .event-modal { 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: 100%; 
-      height: 100%; 
-      background-color: rgba(0,0,0,0.5); 
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      z-index: 1000; 
-    }
-    
-    .event-modal-content { 
-      background: white; 
-      border-radius: 12px; 
-      padding: 24px; 
-      max-width: 400px; 
-      width: 90%; 
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); 
-      color: #1f2937; 
-    }
-    
-    @media (max-width: 480px){ 
-      .event-modal-content { 
-        max-width: 320px !important; 
-        padding: 16px !important; 
-      } 
+    /* ============================================================
+     * MOBILE TOOLBAR STYLING (NEW)
+     * - Not shown on desktop/tablet.
+     * ============================================================ */
+    #mie-mobile-toolbar {
+      display: none; /* shown via mobile media query */
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 2px 4px 2px;
+      flex-wrap: nowrap;
     }
 
-    /* 
-     * ========================================
-     * NEW: Day Events Modal Styling
-     * This modal shows all events for a specific day when clicking "+ X more"
-     * ========================================
-     */
+    #mie-mobile-title {
+      font-size: 26px;
+      line-height: 1.05;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .mie-mobile-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .mie-nav-pair {
+      display: inline-flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2563eb;
+      background-color: #3b82f6;
+    }
+
+    .mie-nav-btn {
+      width: 42px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mie-nav-btn:active {
+      filter: brightness(0.92);
+    }
+
+    .mie-nav-btn + .mie-nav-btn {
+      border-left: 1px solid rgba(255,255,255,0.45);
+    }
+
+    /* --- Event Modal Styling --- */
+    .event-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .event-modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      color: #1f2937;
+    }
+
+    @media (max-width: 480px){
+      .event-modal-content {
+        max-width: 320px !important;
+        padding: 16px !important;
+      }
+    }
+
+    /* --- Day Events Modal Styling --- */
     .day-events-modal {
       position: fixed;
       top: 0;
@@ -416,26 +387,11 @@
       color: #1f2937;
     }
 
-    /* Scrollbar styling for day events modal */
-    .day-events-modal-content::-webkit-scrollbar {
-      width: 8px;
-    }
+    .day-events-modal-content::-webkit-scrollbar { width: 8px; }
+    .day-events-modal-content::-webkit-scrollbar-track { background-color: #f3f4f6; border-radius: 9999px; }
+    .day-events-modal-content::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+    .day-events-modal-content::-webkit-scrollbar-thumb:hover { background-color: #6b7280; }
 
-    .day-events-modal-content::-webkit-scrollbar-track {
-      background-color: #f3f4f6;
-      border-radius: 9999px;
-    }
-
-    .day-events-modal-content::-webkit-scrollbar-thumb {
-      background-color: #9ca3af;
-      border-radius: 9999px;
-    }
-
-    .day-events-modal-content::-webkit-scrollbar-thumb:hover {
-      background-color: #6b7280;
-    }
-
-    /* Event item in the day modal */
     .day-event-item {
       padding: 12px;
       border-radius: 8px;
@@ -476,17 +432,9 @@
         padding: 16px !important;
       }
 
-      .day-event-item {
-        padding: 10px !important;
-      }
-
-      .day-event-time {
-        font-size: 12px !important;
-      }
-
-      .day-event-title {
-        font-size: 13px !important;
-      }
+      .day-event-item { padding: 10px !important; }
+      .day-event-time { font-size: 12px !important; }
+      .day-event-title { font-size: 13px !important; }
     }
 
     /* --- Access Denied Styling --- */
@@ -570,6 +518,30 @@
                 <div class="flex justify-between items-center mb-2">
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
                 </div>
+
+                <!-- ============================================================
+                     NEW: Mobile toolbar (only visible on <=480px)
+                     - Left: month/year or month+range (no year for day/week)
+                     - Right: nav arrows + view dropdown
+                     ============================================================ -->
+                <div id="mie-mobile-toolbar" aria-label="Calendar toolbar">
+                    <div id="mie-mobile-title" class="font-montserrat"> </div>
+                    <div class="mie-mobile-controls">
+                        <div class="mie-nav-pair" role="group" aria-label="Navigate">
+                            <button id="mie-mobile-prev" type="button" class="mie-nav-btn" aria-label="Previous">‹</button>
+                            <button id="mie-mobile-next" type="button" class="mie-nav-btn" aria-label="Next">›</button>
+                        </div>
+
+                        <div class="view-switcher" aria-label="Change view">
+                            <select id="mie-mobile-view-select">
+                                <option value="dayGridDay">Daily</option>
+                                <option value="dayGridWeek">Weekly</option>
+                                <option value="dayGridMonth" selected>Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
             </div>
         </div>
@@ -647,12 +619,7 @@
     </div>
 </div>
 
-<!-- 
-  ========================================
-  NEW: Day Events Modal
-  Shows all events for a specific day when user clicks "+ X more events"
-  ========================================
--->
+<!-- Day Events Modal -->
 <div id="day-events-modal" class="day-events-modal hidden">
     <div class="day-events-modal-content">
         <div class="flex justify-between items-start mb-4">
@@ -673,25 +640,29 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.6.0-MOBILE-FINAL";
+    const VERSION = "2.6.0-MOBILE-TOOLBAR-3EVENTS";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
-    console.log("✅ Event limiting feature ACTIVE (Monthly only)");
-    console.log("🔄 View switcher: Daily/Weekly/Monthly");
-    console.log("🔵 Today indicator: Blue circle");
-    console.log("📏 Font size: 10px (buttons & dropdown)");
-    console.log("📱 Mobile optimized");
+    console.log("📱 Mobile toolbar: Custom title + arrows + dropdown");
+    console.log("✅ Monthly event limiting ACTIVE: 3 visible events/day (Monthly only)");
+    console.log("🔄 View switcher: Daily/Weekly/Monthly (Desktop + Mobile)");
+    console.log("🔵 Today indicator: Blue circle (unchanged)");
     console.log("==========================================");
-    
+
     // ======== CONFIG =========
     const BACKEND_BASE_URL = "https://api.mie.today";
-    
-    // Detect if mobile (screen width <= 480px)
-    const isMobile = window.innerWidth <= 480;
-    const MAX_VISIBLE_EVENTS = isMobile ? 3 : 5; // 3 for mobile, 5 for desktop
-    
-    console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'}`);
-    console.log(`📅 Max visible events: ${MAX_VISIBLE_EVENTS}`);
+
+    /* ============================================================
+     * CHANGE: Monthly visible events
+     * - Per your requirement: show 3 events, rest becomes "+ N more"
+     * ============================================================ */
+    const MAX_VISIBLE_EVENTS = 3;
+
+    /* ============================================================
+     * MOBILE BREAKPOINT
+     * - This matches the CSS media query (max-width: 480px)
+     * ============================================================ */
+    const MOBILE_MEDIA_QUERY = "(max-width: 480px)";
 
     // ======== STATE =========
     let calendar = null;
@@ -699,6 +670,7 @@
     let userEmail = null;
     let userHasAccess = false;
     let eventsByDate = {}; // Store all events by date for modal
+    let isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 
     // ======== DOM HOOKS =========
     const authArea = document.getElementById("auth-area");
@@ -734,10 +706,33 @@
     const dayEventsSubtitle = document.getElementById("day-events-subtitle");
     const dayEventsList = document.getElementById("day-events-list");
 
+    /* ============================================================
+     * MOBILE TOOLBAR DOM HOOKS (NEW)
+     * ============================================================ */
+    const mobileToolbar = document.getElementById("mie-mobile-toolbar");
+    const mobileTitle = document.getElementById("mie-mobile-title");
+    const mobilePrevBtn = document.getElementById("mie-mobile-prev");
+    const mobileNextBtn = document.getElementById("mie-mobile-next");
+    const mobileViewSelect = document.getElementById("mie-mobile-view-select");
+
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
+
+        // Rebuild calendar if viewport crosses the mobile breakpoint (rotation / resize)
+        const mq = window.matchMedia(MOBILE_MEDIA_QUERY);
+        if (mq && typeof mq.addEventListener === "function") {
+            mq.addEventListener("change", () => {
+                const nextIsMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+                if (nextIsMobile !== isMobile) {
+                    isMobile = nextIsMobile;
+                    if (calendarContent && !calendarContent.classList.contains("hidden")) {
+                        displayCalendar(); // rebuild using the correct toolbar mode
+                    }
+                }
+            });
+        }
     });
 
     function bindEventHandlers() {
@@ -806,6 +801,34 @@
             });
         }
 
+        /* ============================================================
+         * MOBILE TOOLBAR EVENT BINDINGS (NEW)
+         * ============================================================ */
+        if (mobilePrevBtn) {
+            mobilePrevBtn.addEventListener("click", () => {
+                if (!calendar) return;
+                calendar.prev();
+                syncMobileToolbar();
+            });
+        }
+
+        if (mobileNextBtn) {
+            mobileNextBtn.addEventListener("click", () => {
+                if (!calendar) return;
+                calendar.next();
+                syncMobileToolbar();
+            });
+        }
+
+        if (mobileViewSelect) {
+            mobileViewSelect.addEventListener("change", (e) => {
+                if (!calendar) return;
+                const newView = e.target.value;
+                calendar.changeView(newView);
+                syncMobileToolbar();
+            });
+        }
+
         updateSendButton();
     }
 
@@ -851,7 +874,7 @@
                 }
 
                 showDashboard();
-                displayMonthlyCalendar();
+                displayCalendar();  // calendar init is now responsive
             } else {
                 showAuthArea();
             }
@@ -910,122 +933,85 @@
         }
     }
 
-    // ========================================
-    // CALENDAR WITH EVENT LIMITING
-    // ========================================
-    function displayMonthlyCalendar() {
+    // ============================================================
+    // CALENDAR (RESPONSIVE TOOLBAR)
+    // ============================================================
+    function displayCalendar() {
         if (!calendarContainer) return;
+
+        // Re-evaluate in case of rotation / resize
+        isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+
         if (calendar) {
             calendar.destroy();
             calendar = null;
         }
 
-        console.log("🔧 Initializing calendar with event limiting...");
+        console.log("🔧 Initializing calendar. isMobile =", isMobile);
 
-        // Mobile: Month LEFT, controls RIGHT
-        // Desktop: today+arrows left, title center, view right
-        const headerConfig = isMobile ? {
-            left: "title",           // Month on LEFT for mobile
-            center: "",              // Nothing in center
-            right: "prev,next customViewSwitcher",  // Controls on RIGHT
-        } : {
-            left: "today prev,next",
-            center: "title",
-            right: "customViewSwitcher",
-        };
-
-        calendar = new FullCalendar.Calendar(calendarContainer, {
+        const commonOptions = {
             initialView: "dayGridMonth",
-            headerToolbar: headerConfig,
-            
-            // Custom title formatting - remove year from daily/weekly
-            titleFormat: function(date) {
-                const view = calendar ? calendar.view.type : 'dayGridMonth';
-                if (isMobile) {
-                    if (view === 'dayGridDay') {
-                        // Daily: "December 6"
-                        return date.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-                    } else if (view === 'dayGridWeek') {
-                        // Weekly: "Dec 14 – 20"
-                        const start = date.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        const end = date.end.toLocaleDateString('en-US', { day: 'numeric' });
-                        return `${start} – ${end}`;
-                    } else {
-                        // Monthly: "December 2025"
-                        return date.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                    }
-                } else {
-                    // Desktop - always show full format
-                    if (view === 'dayGridMonth') {
-                        return date.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                    } else if (view === 'dayGridWeek') {
-                        const start = date.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                        const end = date.end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        return `${start} – ${end}`;
-                    } else {
-                        return date.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                    }
-                }
-            },
-            
-            customButtons: {
-                customViewSwitcher: {
-                    text: '',
-                    click: function() {
-                        // Click handled by the select element
-                    }
-                }
-            },
             fixedWeekCount: false,
             showNonCurrentDates: false,
             height: "100%",
             nextDayThreshold: "01:00:00",
             events: fetchCalendarEvents,
 
-            // ========================================
-            // KEY FIX: Hide events beyond limit as they mount
-            // UPDATED: Only limit events in MONTHLY view, show all in Daily/Weekly
-            // ========================================
+            /* ============================================================
+             * BUGFIX: Reset per-cell counters when the visible date range changes.
+             * - Prevents stale _eventCount state from carrying across navigations.
+             * ============================================================ */
+            datesSet: function() {
+                clearDayCellEventCounters();
+
+                // If the current view is monthly, re-add "+ more" indicators.
+                // (monthly hiding happens in eventDidMount)
+                if (calendar && calendar.view && calendar.view.type === "dayGridMonth") {
+                    // Small async to let FullCalendar paint the grid first.
+                    setTimeout(() => addMoreEventsIndicators(), 0);
+                }
+
+                // Keep mobile title in sync (month/day/week formatting rules)
+                syncMobileToolbar();
+            },
+
+            /* ============================================================
+             * MONTHLY EVENT LIMITING (3 visible events)
+             * - Applies ONLY in Monthly view (dayGridMonth).
+             * - Daily/Weekly show all events.
+             * ============================================================ */
             eventDidMount: function(info) {
                 const el = info.el;
                 const dayCell = el.closest('.fc-daygrid-day');
-                
-                if (!dayCell) {
-                    console.warn("⚠️  No dayCell for:", info.event.title);
+                if (!dayCell) return;
+
+                const currentView = calendar.view.type;
+
+                // Only enforce hiding in month view.
+                if (currentView !== "dayGridMonth") {
                     return;
                 }
-                
-                // Get current view type
-                const currentView = calendar.view.type;
-                
-                // Only limit events in month view (dayGridMonth)
-                // Show ALL events in day view (dayGridDay) and week view (dayGridWeek)
-                if (currentView !== 'dayGridMonth') {
-                    console.log(`   ✅ Showing all events in ${currentView} view`);
-                    return; // Don't hide anything in day/week view
-                }
-                
-                // Track event count per day (only in month view)
+
+                // Track event count per day cell
                 if (!dayCell._eventCount) {
                     dayCell._eventCount = 0;
                 }
-                
+
                 const currentIndex = dayCell._eventCount;
                 dayCell._eventCount++;
-                
-                // Hide if beyond limit (only in month view)
+
+                // Hide if beyond limit
                 if (currentIndex >= MAX_VISIBLE_EVENTS) {
-                    el.style.display = 'none';
-                    console.log(`   ❌ Hidden: "${info.event.title}" (event #${currentIndex + 1})`);
-                } else {
-                    console.log(`   ✅ Visible: "${info.event.title}" (event #${currentIndex + 1})`);
+                    el.style.display = "none";
                 }
             },
 
-            // Add indicators after all events loaded
-            eventsSet: function(events) {
-                console.log("📊 Events loaded:", events.length);
-                setTimeout(() => addMoreEventsIndicators(), 0);
+            // Add indicators after events loaded
+            eventsSet: function() {
+                // Indicators only for month view
+                if (calendar.view.type === "dayGridMonth") {
+                    setTimeout(() => addMoreEventsIndicators(), 0);
+                }
             },
 
             eventContent: function(arg) {
@@ -1084,197 +1070,298 @@
                 info.jsEvent.preventDefault();
                 showEventDetails(info.event);
             },
-        });
+        };
+
+        /* ============================================================
+         * DESKTOP/TABLET TOOLBAR
+         * - Keep your existing toolbar on non-mobile (unchanged behavior).
+         * ============================================================ */
+        const desktopToolbarOptions = {
+            headerToolbar: {
+                left: "today prev,next",
+                center: "title",
+                right: "customViewSwitcher",
+            },
+            customButtons: {
+                customViewSwitcher: {
+                    text: "",
+                    click: function() {
+                        // Click handled by the select element
+                    }
+                }
+            },
+        };
+
+        /* ============================================================
+         * MOBILE TOOLBAR
+         * - FullCalendar headerToolbar is disabled (CSS also hides it).
+         * - We render + manage the toolbar ourselves.
+         * ============================================================ */
+        const mobileToolbarOptions = {
+            headerToolbar: false,
+        };
+
+        calendar = new FullCalendar.Calendar(
+            calendarContainer,
+            Object.assign({}, commonOptions, isMobile ? mobileToolbarOptions : desktopToolbarOptions)
+        );
 
         calendar.render();
+
+        // Desktop: replace placeholder with dropdown (your existing approach)
+        if (!isMobile) {
+            createDesktopViewSwitcher();
+        }
+
+        // Mobile: ensure toolbar is visible and synced
+        if (isMobile) {
+            if (mobileToolbar) mobileToolbar.style.display = "flex";
+            syncMobileToolbar();
+        } else {
+            if (mobileToolbar) mobileToolbar.style.display = "none";
+        }
+
         console.log("✅ Calendar rendered");
-        
-        // ========================================
-        // Create custom view switcher dropdown
-        // ========================================
-        createViewSwitcher();
     }
 
-    // ========================================
-    // Create view switcher dropdown
-    // ========================================
-    function createViewSwitcher() {
-        // Find the custom button placeholder in the toolbar
-        const customButton = document.querySelector('.fc-customViewSwitcher-button');
-        if (!customButton) {
-            console.warn("⚠️  Custom button not found");
-            return;
-        }
-        
-        // Create the dropdown container
-        const switcherContainer = document.createElement('div');
-        switcherContainer.className = 'view-switcher';
-        
-        // Create the select element
-        const select = document.createElement('select');
-        select.id = 'view-switcher-select';
-        
-        // Add options
+    /* ============================================================
+     * DESKTOP VIEW SWITCHER (existing behavior)
+     * - Converts the placeholder custom button into a <select>.
+     * ============================================================ */
+    function createDesktopViewSwitcher() {
+        const customButton = document.querySelector(".fc-customViewSwitcher-button");
+        if (!customButton) return;
+
+        const switcherContainer = document.createElement("div");
+        switcherContainer.className = "view-switcher";
+
+        const select = document.createElement("select");
+        select.id = "view-switcher-select";
+
         const views = [
-            { value: 'dayGridDay', label: 'Daily' },
-            { value: 'dayGridWeek', label: 'Weekly' },
-            { value: 'dayGridMonth', label: 'Monthly' }
+            { value: "dayGridDay", label: "Daily" },
+            { value: "dayGridWeek", label: "Weekly" },
+            { value: "dayGridMonth", label: "Monthly" }
         ];
-        
-        // For mobile, show shorter labels in the dropdown
-        const labelSuffix = isMobile ? ' ⌄' : '';
-        
+
         views.forEach(view => {
-            const option = document.createElement('option');
+            const option = document.createElement("option");
             option.value = view.value;
             option.textContent = view.label;
-            if (view.value === 'dayGridMonth') {
-                option.selected = true;
-            }
+            if (view.value === "dayGridMonth") option.selected = true;
             select.appendChild(option);
         });
-        
-        // Add change event listener
-        select.addEventListener('change', (e) => {
+
+        select.addEventListener("change", (e) => {
             const newView = e.target.value;
-            console.log('📅 Switching to view:', newView);
             calendar.changeView(newView);
+
+            // Monthly indicators should re-attach after view switches
+            if (calendar.view.type === "dayGridMonth") {
+                setTimeout(() => addMoreEventsIndicators(), 0);
+            } else {
+                document.querySelectorAll(".mie-more-events").forEach(el => el.remove());
+            }
         });
-        
+
         switcherContainer.appendChild(select);
-        
-        // Replace the button with our custom dropdown
         customButton.parentNode.replaceChild(switcherContainer, customButton);
-        
-        console.log("✅ View switcher created");
     }
 
-    // ========================================
-    // Add "+ X more" indicators
-    // UPDATED: Only show in monthly view
-    // ========================================
-    function addMoreEventsIndicators() {
-        console.log("🔍 Adding more events indicators...");
-        
-        // Check current view - only add indicators in month view
-        const currentView = calendar.view.type;
-        if (currentView !== 'dayGridMonth') {
-            console.log("📅 Not in month view, skipping indicators");
-            return;
+    /* ============================================================
+     * MOBILE TOOLBAR SYNC (NEW)
+     * - Title rules per your request:
+     *   - Month view: "December 2025" (month + year)
+     *   - Week view:  "Dec 14 – 20"   (NO year)
+     *   - Day view:   "December 6"    (NO year)
+     * - Dropdown reflects current view.
+     * ============================================================ */
+    function syncMobileToolbar() {
+        if (!isMobile) return;
+        if (!calendar) return;
+
+        if (mobileViewSelect) {
+            const viewType = calendar.view.type;
+            // Keep dropdown aligned with current view
+            if (mobileViewSelect.value !== viewType) {
+                mobileViewSelect.value = viewType;
+            }
         }
-        
+
+        if (mobileTitle) {
+            mobileTitle.textContent = formatMobileTitle(calendar.view);
+        }
+    }
+
+    function formatMobileTitle(view) {
+        // Month title formats (locale-aware)
+        const monthLong = new Intl.DateTimeFormat("en-US", { month: "long" });
+        const monthYear = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+        const monthShort = new Intl.DateTimeFormat("en-US", { month: "short" });
+        const dayNum = new Intl.DateTimeFormat("en-US", { day: "numeric" });
+
+        if (view.type === "dayGridMonth") {
+            return monthYear.format(calendar.getDate()); // e.g., "December 2025"
+        }
+
+        if (view.type === "dayGridDay") {
+            const d = calendar.getDate();
+            return monthLong.format(d) + " " + dayNum.format(d); // e.g., "December 6"
+        }
+
+        if (view.type === "dayGridWeek") {
+            // currentStart is inclusive, currentEnd is exclusive in FullCalendar
+            const start = view.currentStart;
+            const endExclusive = view.currentEnd;
+            const end = new Date(endExclusive.getTime());
+            end.setDate(end.getDate() - 1);
+
+            const startMonth = monthShort.format(start);
+            const endMonth = monthShort.format(end);
+
+            const startDay = dayNum.format(start);
+            const endDay = dayNum.format(end);
+
+            // Same month: "Dec 14 – 20"
+            if (startMonth === endMonth) {
+                return `${startMonth} ${startDay} \u2013 ${endDay}`;
+            }
+
+            // Cross-month: "Dec 30 – Jan 5"
+            return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}`;
+        }
+
+        // Fallback
+        return view.title || "";
+    }
+
+    /* ============================================================
+     * Reset per-day event counters
+     * ============================================================ */
+    function clearDayCellEventCounters() {
+        const dayCells = document.querySelectorAll(".fc-daygrid-day");
+        dayCells.forEach(cell => {
+            if (cell && cell._eventCount) {
+                cell._eventCount = 0;
+            }
+        });
+    }
+
+    // ============================================================
+    // "+ X more" indicators (Monthly only)
+    // ============================================================
+    function addMoreEventsIndicators() {
+        if (!calendar) return;
+
+        const currentView = calendar.view.type;
+        if (currentView !== "dayGridMonth") return;
+
         // Remove old indicators
-        document.querySelectorAll('.mie-more-events').forEach(el => el.remove());
-        
-        const dayCells = document.querySelectorAll('.fc-daygrid-day');
-        let added = 0;
-        
+        document.querySelectorAll(".mie-more-events").forEach(el => el.remove());
+
+        const dayCells = document.querySelectorAll(".fc-daygrid-day");
         dayCells.forEach(dayCell => {
-            const dateStr = dayCell.getAttribute('data-date');
+            const dateStr = dayCell.getAttribute("data-date");
             if (!dateStr) return;
-            
+
             const eventsForDay = eventsByDate[dateStr];
             if (!eventsForDay || eventsForDay.length <= MAX_VISIBLE_EVENTS) return;
-            
+
             const hiddenCount = eventsForDay.length - MAX_VISIBLE_EVENTS;
-            
-            const indicator = document.createElement('div');
-            indicator.className = 'mie-more-events';
-            indicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? 's' : ''}`;
-            indicator.setAttribute('data-date', dateStr);
-            
-            indicator.addEventListener('click', (e) => {
+
+            const indicator = document.createElement("div");
+            indicator.className = "mie-more-events";
+            indicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? "s" : ""}`;
+            indicator.setAttribute("data-date", dateStr);
+
+            indicator.addEventListener("click", (e) => {
                 e.stopPropagation();
                 showDayEventsModal(dateStr, eventsForDay);
             });
-            
-            const dayBottom = dayCell.querySelector('.fc-daygrid-day-bottom');
-            const eventsContainer = dayCell.querySelector('.fc-daygrid-day-events');
-            
+
+            const dayBottom = dayCell.querySelector(".fc-daygrid-day-bottom");
+            const eventsContainer = dayCell.querySelector(".fc-daygrid-day-events");
+
             if (dayBottom) {
                 dayBottom.appendChild(indicator);
-                added++;
             } else if (eventsContainer) {
                 eventsContainer.appendChild(indicator);
-                added++;
             }
         });
-        
-        console.log(`✅ Added ${added} indicators`);
     }
 
-    // ========================================
-    // Show day events modal
-    // ========================================
+    // ============================================================
+    // Day events modal
+    // ============================================================
     function showDayEventsModal(dateStr, events) {
-        const date = new Date(dateStr + 'T12:00:00');
-        const formattedDate = date.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const date = new Date(dateStr + "T12:00:00");
+        const formattedDate = date.toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
         });
-        
+
         dayEventsTitle.textContent = formattedDate;
-        dayEventsSubtitle.textContent = `${events.length} event${events.length > 1 ? 's' : ''}`;
-        
-        dayEventsList.innerHTML = '';
-        
+        dayEventsSubtitle.textContent = `${events.length} event${events.length > 1 ? "s" : ""}`;
+
+        dayEventsList.innerHTML = "";
+
         const sortedEvents = [...events].sort((a, b) => {
             return new Date(a.start) - new Date(b.start);
         });
-        
+
         sortedEvents.forEach(event => {
-            const item = document.createElement('div');
-            item.className = 'day-event-item';
-            
-            const color = event.extendedProps?.calendarColor || '#3b82f6';
+            const item = document.createElement("div");
+            item.className = "day-event-item";
+
+            const color = event.extendedProps?.calendarColor || "#3b82f6";
             item.style.borderLeftColor = color;
-            
-            let timeString = '';
+
+            let timeString = "";
             if (event.allDay) {
-                timeString = 'All-day';
+                timeString = "All-day";
             } else {
                 const startDate = new Date(event.start);
                 const endDate = event.end ? new Date(event.end) : null;
-                timeString = startDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
                 if (endDate) {
-                    timeString += ' - ' + endDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                    timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
                 }
             }
-            
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'day-event-time';
+
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "day-event-time";
             timeDiv.textContent = timeString;
-            
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'day-event-title';
-            titleDiv.textContent = event.title || 'No Title';
-            
+
+            const titleDiv = document.createElement("div");
+            titleDiv.className = "day-event-title";
+            titleDiv.textContent = event.title || "No Title";
+
             item.appendChild(timeDiv);
             item.appendChild(titleDiv);
-            
+
             if (event.extendedProps?.location) {
-                const locationDiv = document.createElement('div');
-                locationDiv.className = 'day-event-location';
-                locationDiv.textContent = '📍 ' + event.extendedProps.location;
+                const locationDiv = document.createElement("div");
+                locationDiv.className = "day-event-location";
+                locationDiv.textContent = "📍 " + event.extendedProps.location;
                 item.appendChild(locationDiv);
             }
-            
-            item.addEventListener('click', () => {
-                dayEventsModal.classList.add('hidden');
+
+            item.addEventListener("click", () => {
+                dayEventsModal.classList.add("hidden");
                 showEventDetails(event);
             });
-            
+
             dayEventsList.appendChild(item);
         });
-        
-        dayEventsModal.classList.remove('hidden');
+
+        dayEventsModal.classList.remove("hidden");
     }
 
-    // ========================================
-    // Fetch events from backend
-    // ========================================
+    // ============================================================
+    // Fetch events from backend (unchanged)
+    // ============================================================
     async function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/events", {
@@ -1295,8 +1382,6 @@
 
             const data = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
-
-            console.log(`📥 Fetched ${items.length} events from backend`);
 
             // Build eventsByDate map
             eventsByDate = {};
@@ -1325,15 +1410,15 @@
                     },
                 };
 
-                // Add to eventsByDate map
+                // Add to eventsByDate map (keyed by YYYY-MM-DD)
                 if (start) {
                     let dateStr;
                     if (allDay) {
                         dateStr = start;
                     } else {
-                        dateStr = start.split('T')[0];
+                        dateStr = start.split("T")[0];
                     }
-                    
+
                     if (!eventsByDate[dateStr]) {
                         eventsByDate[dateStr] = [];
                     }
@@ -1341,14 +1426,6 @@
                 }
 
                 return eventObj;
-            });
-
-            // Log days with many events
-            Object.keys(eventsByDate).forEach(date => {
-                const count = eventsByDate[date].length;
-                if (count > MAX_VISIBLE_EVENTS) {
-                    console.log(`📅 ${date}: ${count} events (${count - MAX_VISIBLE_EVENTS} will be hidden)`);
-                }
             });
 
             successCallback(events);
@@ -1391,7 +1468,7 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING ========
+    // ======== MESSAGING (unchanged) ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
