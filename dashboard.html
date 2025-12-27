@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.7 - Mobile Height Auto Fix</title>
+<title>Dashboard v2.8 - Mobile +# More Compact</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -104,7 +104,14 @@
 
         /* Slightly reduce vertical padding above calendar grid */
         #calendar-container { margin-top: 6px !important; min-height: 520px !important; }
-    }
+    
+        /* Compact '+#' more indicator on mobile */
+        .mie-more-events {
+          font-size: 11px !important;
+          padding: 2px 6px !important;
+          line-height: 1.1 !important;
+        }
+}
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
@@ -640,7 +647,7 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.7.0-MOBILE-HEIGHT-AUTO-FIX";
+    const VERSION = "2.8.0-MOBILE-MORE-INDICATOR-COMPACT";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
     console.log("📱 Mobile toolbar: Custom title + arrows + dropdown");
@@ -1271,7 +1278,9 @@
 
             const indicator = document.createElement("div");
             indicator.className = "mie-more-events";
-            indicator.textContent = `+ ${hiddenCount} more event${hiddenCount > 1 ? "s" : ""}`;
+            indicator.textContent = isMobile
+                ? `+ ${hiddenCount}`
+                : `+ ${hiddenCount} more event${hiddenCount > 1 ? "s" : ""}`;
             indicator.setAttribute("data-date", dateStr);
 
             indicator.addEventListener("click", (e) => {
