@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.3 - Font Size & View Fixes</title>
+<title>Dashboard v2.4 - Mobile Optimized</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -70,13 +70,65 @@
         .mobile-text-btn { font-size: 16px !important; }
         .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
 
-        .fc .fc-toolbar-title { font-size: 20px !important; line-height: 1.2 !important; }
-        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
+        /* 
+         * ========================================
+         * MOBILE-SPECIFIC: Rearrange toolbar for mobile
+         * Left: Month/Year title, Right: Arrows + Dropdown
+         * ========================================
+         */
+        .fc .fc-toolbar {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+        }
+        
+        .fc .fc-toolbar-chunk {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+        
+        /* Hide desktop "today" button on mobile */
+        .fc .fc-today-button {
+            display: none !important;
+        }
+        
+        /* Month title on left side for mobile */
+        .fc .fc-toolbar-title { 
+            font-size: 18px !important; 
+            line-height: 1.2 !important;
+            font-weight: 600 !important;
+            text-align: left !important;
+            margin: 0 !important;
+        }
+        
+        /* Arrow buttons for mobile */
+        .fc .fc-button-primary { 
+            font-size: 14px !important; 
+            padding: 6px 10px !important; 
+            line-height: 1.2 !important;
+            min-width: 40px !important;
+        }
+        
+        /* Dropdown for mobile */
+        .view-switcher select {
+            font-size: 14px !important;
+            padding: 6px 28px 6px 10px !important;
+        }
 
         .fc .fc-col-header-cell { font-size: 12px !important; }
         .fc .fc-daygrid-day-number { font-size: 12px !important; }
 
         .fc .fc-event { font-size: 10px !important; } /* * <- EVENT FONT SIZE (MOBILE) */
+        
+        /* 
+         * ========================================
+         * MOBILE: Show only 3 events instead of 5
+         * ========================================
+         */
+        body.mobile-view {
+            --max-visible-events: 3;
+        }
     }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
@@ -143,7 +195,7 @@
       border: 1px solid #2563eb;
       border-radius: 6px;
       padding: 4px 32px 4px 12px;
-      font-size: 12px;  /* * <- CHANGE THIS to adjust Daily/Weekly/Monthly dropdown size */
+      font-size: 10px;  /* * <- CHANGE THIS to adjust Daily/Weekly/Monthly dropdown size */
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s ease;
@@ -205,7 +257,7 @@
 
     /* Make Today + arrows match title height */
     .fc .fc-toolbar .fc-button {
-      font-size: 14px !important;     /* * <- CHANGE THIS to adjust Today/Arrow button size */
+      font-size: 10px !important;     /* * <- CHANGE THIS to adjust Today/Arrow button size */
       line-height: 1.2 !important;
       padding: 2px 8px !important;    /* tighter button */
       height: auto !important;
@@ -567,19 +619,25 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.3.0-FINAL";
+    const VERSION = "2.4.0-MOBILE";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
     console.log("✅ Event limiting feature ACTIVE (Monthly only)");
-    console.log("📅 Max visible events per day: 5 (Monthly view)");
     console.log("🔄 View switcher: Daily/Weekly/Monthly");
     console.log("🔵 Today indicator: Blue circle");
     console.log("📏 Font size: 10px (buttons & dropdown)");
+    console.log("📱 Mobile optimized");
     console.log("==========================================");
     
     // ======== CONFIG =========
     const BACKEND_BASE_URL = "https://api.mie.today";
-    const MAX_VISIBLE_EVENTS = 5;
+    
+    // Detect if mobile (screen width <= 480px)
+    const isMobile = window.innerWidth <= 480;
+    const MAX_VISIBLE_EVENTS = isMobile ? 3 : 5; // 3 for mobile, 5 for desktop
+    
+    console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'}`);
+    console.log(`📅 Max visible events: ${MAX_VISIBLE_EVENTS}`);
 
     // ======== STATE =========
     let calendar = null;
@@ -810,13 +868,20 @@
 
         console.log("🔧 Initializing calendar with event limiting...");
 
+        // Mobile-friendly header: title on left, controls on right
+        const headerConfig = isMobile ? {
+            left: "title",
+            center: "",
+            right: "prev,next customViewSwitcher",
+        } : {
+            left: "today prev,next",
+            center: "title",
+            right: "customViewSwitcher",
+        };
+
         calendar = new FullCalendar.Calendar(calendarContainer, {
             initialView: "dayGridMonth",
-            headerToolbar: {
-                left: "today prev,next",
-                center: "title",
-                right: "customViewSwitcher",
-            },
+            headerToolbar: headerConfig,
             customButtons: {
                 customViewSwitcher: {
                     text: '',
@@ -969,6 +1034,9 @@
             { value: 'dayGridWeek', label: 'Weekly' },
             { value: 'dayGridMonth', label: 'Monthly' }
         ];
+        
+        // For mobile, show shorter labels in the dropdown
+        const labelSuffix = isMobile ? ' ⌄' : '';
         
         views.forEach(view => {
             const option = document.createElement('option');
@@ -1338,4 +1406,3 @@
 </script>
 </body>
 </html>
-
