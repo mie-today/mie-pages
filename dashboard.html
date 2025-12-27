@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.4 - Mobile Optimized</title>
+<title>Dashboard v2.5 - Mobile Fixed</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -72,20 +72,53 @@
 
         /* 
          * ========================================
-         * MOBILE-SPECIFIC: Rearrange toolbar for mobile
-         * Left: Month/Year title, Right: Arrows + Dropdown
+         * MOBILE-SPECIFIC: Custom toolbar layout
+         * Make it a single row with month centered, controls right
          * ========================================
          */
-        .fc .fc-toolbar {
+        
+        /* Override FullCalendar's default toolbar flex layout */
+        .fc .fc-header-toolbar {
+            margin-bottom: 1em !important;
             display: flex !important;
-            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+        }
+        
+        /* Center the title and make it full width on its own line */
+        .fc .fc-toolbar-chunk:nth-child(1),
+        .fc .fc-toolbar-chunk:nth-child(2),
+        .fc .fc-toolbar-chunk:nth-child(3) {
+            display: flex !important;
+            align-items: center !important;
             gap: 8px !important;
         }
         
-        .fc .fc-toolbar-chunk {
-            display: flex !important;
+        /* Make the toolbar a single-row layout */
+        .fc .fc-header-toolbar {
+            display: grid !important;
+            grid-template-columns: auto 1fr auto !important;
+            gap: 10px !important;
             align-items: center !important;
-            justify-content: space-between !important;
+        }
+        
+        /* First chunk (empty or hidden today button) - keep minimal */
+        .fc .fc-toolbar-chunk:nth-child(1) {
+            justify-self: start !important;
+        }
+        
+        /* Second chunk (title) - center it */
+        .fc .fc-toolbar-chunk:nth-child(2) {
+            justify-self: center !important;
+        }
+        
+        /* Third chunk (prev, next, view switcher) - align right */
+        .fc .fc-toolbar-chunk:nth-child(3) {
+            justify-self: end !important;
+            display: flex !important;
+            gap: 6px !important;
         }
         
         /* Hide desktop "today" button on mobile */
@@ -93,41 +126,64 @@
             display: none !important;
         }
         
-        /* Month title on left side for mobile */
+        /* Month title styling for mobile - larger and bold */
         .fc .fc-toolbar-title { 
-            font-size: 18px !important; 
+            font-size: 20px !important; 
             line-height: 1.2 !important;
-            font-weight: 600 !important;
-            text-align: left !important;
+            font-weight: 700 !important;
+            text-align: center !important;
             margin: 0 !important;
+            color: #1f2937 !important;
         }
         
-        /* Arrow buttons for mobile */
+        /* Arrow buttons for mobile - bigger for touch */
         .fc .fc-button-primary { 
-            font-size: 14px !important; 
-            padding: 6px 10px !important; 
-            line-height: 1.2 !important;
-            min-width: 40px !important;
+            font-size: 16px !important; 
+            padding: 8px 12px !important; 
+            line-height: 1 !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            border-radius: 8px !important;
         }
         
-        /* Dropdown for mobile */
+        /* Dropdown for mobile - bigger for touch */
+        .view-switcher {
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        
         .view-switcher select {
-            font-size: 14px !important;
-            padding: 6px 28px 6px 10px !important;
+            font-size: 16px !important;
+            padding: 8px 32px 8px 12px !important;
+            min-height: 44px !important;
+            border-radius: 8px !important;
         }
 
-        .fc .fc-col-header-cell { font-size: 12px !important; }
-        .fc .fc-daygrid-day-number { font-size: 12px !important; }
-
-        .fc .fc-event { font-size: 10px !important; } /* * <- EVENT FONT SIZE (MOBILE) */
+        /* Calendar grid adjustments for mobile */
+        .fc .fc-col-header-cell { 
+            font-size: 11px !important;
+            padding: 4px 2px !important;
+        }
         
-        /* 
-         * ========================================
-         * MOBILE: Show only 3 events instead of 5
-         * ========================================
-         */
-        body.mobile-view {
-            --max-visible-events: 3;
+        .fc .fc-daygrid-day-number { 
+            font-size: 13px !important;
+            padding: 2px !important;
+        }
+        
+        /* Smaller day cells for mobile */
+        .fc .fc-daygrid-day-frame {
+            min-height: 80px !important;
+        }
+
+        .fc .fc-event { 
+            font-size: 9px !important;
+            padding: 1px 2px !important;
+        }
+        
+        /* Make "more" indicator smaller on mobile */
+        .mie-more-events {
+            font-size: 9px !important;
+            padding: 2px 4px !important;
         }
     }
 
@@ -619,7 +675,7 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.4.0-MOBILE";
+    const VERSION = "2.5.0-MOBILE-FIXED";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
     console.log("✅ Event limiting feature ACTIVE (Monthly only)");
@@ -868,10 +924,12 @@
 
         console.log("🔧 Initializing calendar with event limiting...");
 
-        // Mobile-friendly header: title on left, controls on right
+        // Simple header config that works on mobile
+        // Mobile: empty left, title center, controls right
+        // Desktop: today+arrows left, title center, view right
         const headerConfig = isMobile ? {
-            left: "title",
-            center: "",
+            left: "",
+            center: "title",
             right: "prev,next customViewSwitcher",
         } : {
             left: "today prev,next",
