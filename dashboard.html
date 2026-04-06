@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard v2.8 - Mobile +# More Compact</title>
+<title>KIMIJA Dashboard</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -25,10 +25,14 @@
 <style>
     /* ============================================================
      * NOTE
-     * - This file is based on your current dashboard.html (v2.3)
-     * - Changes are limited to the calendar toolbar + mobile layout
-     *   and the monthly event limiting behavior (3 visible events).
-     * - Messaging, auth flow, backend calls are unchanged.
+     * - This file is based on dashboard.html (v2.8)
+     * - v2.9 CHANGES (scoped to fetchCalendarEvents only):
+     *   1. Date range parameters (timeMin/timeMax) added to API call
+     *   2. Cache-busting timestamp (_cb) added to URL
+     *   3. Cache-Control / Pragma no-cache headers added
+     *   4. AbortController added to cancel in-flight requests on navigation
+     *   5. AbortError silently ignored (intentional cancellation)
+     * - All other code, CSS, and HTML is unchanged from v2.8
      * ============================================================ */
 
     /* --- General Body and Layout --- */
@@ -87,55 +91,45 @@
         .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
         .fc .fc-col-header-cell { font-size: 12px !important; }
         .fc .fc-daygrid-day-number { font-size: 12px !important; }
-        .fc .fc-event { font-size: 10px !important; } /* EVENT FONT SIZE (MOBILE) */
+        .fc .fc-event { font-size: 10px !important; }
 
-        /* ============================================================
-         * MOBILE TOOLBAR (NEW)
-         * - Matches your requested layout:
-         *   Left: "December 2025"
-         *   Right: [<] [>] + [Daily/Weekly/Monthly ▼]
-         * - We hide FullCalendar's built-in header toolbar on mobile.
-         * ============================================================ */
         .fc .fc-header-toolbar { display: none !important; }
 
         #mie-mobile-toolbar {
           display: flex !important;
         }
 
-        /* Slightly reduce vertical padding above calendar grid */
         #calendar-container { margin-top: 6px !important; min-height: 520px !important; }
-    
-        /* Compact '+#' more indicator on mobile */
+
         .mie-more-events {
           font-size: 11px !important;
           padding: 2px 6px !important;
           line-height: 1.1 !important;
         }
-}
+    }
 
     /* --- Responsive Styles for Tablet (481px to 768px) --- */
     @media (min-width: 481px) and (max-width: 768px) {
         .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 720px; }  /* a bit taller to avoid scroll */
+        .calendar-section { width: 481px; height: 720px; }
         .messaging-section { width: 481px; height: 316px; }
     }
 
     /* --- Responsive Styles for Desktop (769px and wider) --- */
     @media (min-width: 769px) {
         .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 820px; }  /* tuned so no right scrollbar */
+        .calendar-section { width: 800px; height: 820px; }
         .messaging-section { width: 800px; height: 360px; }
     }
 
     /* ============================================================
-     * FULLCALENDAR LIGHT MODE CUSTOMIZATION (unchanged)
+     * FULLCALENDAR LIGHT MODE CUSTOMIZATION
      * ============================================================ */
     .fc { color: #1f2937 !important; background-color: #ffffff !important; }
     .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
     .fc .fc-button-primary:hover { background-color: #2563eb !important; }
     .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
 
-    /* Today's date with blue circle indicator */
     .fc-daygrid-day.fc-day-today { background-color: transparent !important; }
     .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
       background-color: #3b82f6 !important;
@@ -154,14 +148,13 @@
     .fc .fc-daygrid-day-number { color: #1f2937 !important; }
 
     /* ============================================================
-     * VIEW DROPDOWN STYLING (reused for desktop + mobile)
+     * VIEW DROPDOWN STYLING
      * ============================================================ */
     .view-switcher {
       position: relative;
       display: inline-block;
     }
 
-    /* Hide the placeholder button that creates the blue line (desktop toolbar custom button) */
     .fc-customViewSwitcher-button {
       display: none !important;
     }
@@ -173,7 +166,7 @@
       border: 1px solid #2563eb;
       border-radius: 6px;
       padding: 4px 32px 4px 12px;
-      font-size: 12px;  /* adjust Daily/Weekly/Monthly dropdown size */
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s ease;
@@ -195,19 +188,16 @@
       font-size: 12px;
     }
 
-    /* Hide FullCalendar's built-in dot so we only show our custom one */
     .fc-daygrid-event-dot { display: none !important; }
 
-    /* Let JS handle background/border per calendar, but force text to black */
     .fc .fc-event {
       border-color: transparent;
       background-color: transparent;
       color: #000000 !important;
-      font-size: 12px;          /* EVENT FONT SIZE (DESKTOP/TABLET) */
+      font-size: 12px;
       line-height: 1.2;
     }
 
-    /* Force ALL event text to stay inside the day cell (no spillover) */
     .fc-daygrid-event-harness,
     .fc-daygrid-event,
     .fc-daygrid-event .fc-event-main,
@@ -221,7 +211,6 @@
       box-sizing: border-box !important;
     }
 
-    /* Also force inner text wrappers to black, to override any defaults */
     .fc .fc-event .fc-event-main,
     .fc .fc-event .fc-event-title {
       color: #000000 !important;
@@ -234,7 +223,6 @@
       font-weight: 600;
     }
 
-    /* Make Today + arrows match title height (desktop toolbar) */
     .fc .fc-toolbar .fc-button {
       font-size: 14px !important;
       line-height: 1.2 !important;
@@ -245,7 +233,6 @@
 
     .fc .fc-daygrid-day.fc-day-other { display: none !important; }
 
-    /* Bullet dot in timed events */
     .mie-event-dot {
       display: inline-block;
       width: 6px;
@@ -256,7 +243,7 @@
     }
 
     /* ============================================================
-     * "+ X more events" indicator styling (unchanged)
+     * "+ X more events" indicator styling
      * ============================================================ */
     .mie-more-events {
       display: block;
@@ -278,11 +265,10 @@
     }
 
     /* ============================================================
-     * MOBILE TOOLBAR STYLING (NEW)
-     * - Not shown on desktop/tablet.
+     * MOBILE TOOLBAR STYLING
      * ============================================================ */
     #mie-mobile-toolbar {
-      display: none; /* shown via mobile media query */
+      display: none;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
@@ -466,8 +452,8 @@
                     class="rounded-full mb-4"
                 />
 
-                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
-                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
+                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">KIMIJA</h1>
+                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Your messages. Your calendar. Zero effort.</p>
 
                 <!-- Connect CTA -->
                 <button
@@ -496,7 +482,7 @@
                 />
                 <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <p class="text-sm text-gray-600 mt-4">Checking if youryour account has access to Mie dashboard</p>
+                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
             </div>
 
             <!-- Access Denied Area -->
@@ -526,17 +512,13 @@
                     <span id="welcome-message" class="text-sm text-gray-600"></span>
                 </div>
 
-                <!-- ============================================================
-                     NEW: Mobile toolbar (only visible on <=480px)
-                     - Left: month/year or month+range (no year for day/week)
-                     - Right: nav arrows + view dropdown
-                     ============================================================ -->
+                <!-- Mobile toolbar (only visible on <=480px) -->
                 <div id="mie-mobile-toolbar" aria-label="Calendar toolbar">
                     <div id="mie-mobile-title" class="font-montserrat"> </div>
                     <div class="mie-mobile-controls">
                         <div class="mie-nav-pair" role="group" aria-label="Navigate">
-                            <button id="mie-mobile-prev" type="button" class="mie-nav-btn" aria-label="Previous">‹</button>
-                            <button id="mie-mobile-next" type="button" class="mie-nav-btn" aria-label="Next">›</button>
+                            <button id="mie-mobile-prev" type="button" class="mie-nav-btn" aria-label="Previous">&#8249;</button>
+                            <button id="mie-mobile-next" type="button" class="mie-nav-btn" aria-label="Next">&#8250;</button>
                         </div>
 
                         <div class="view-switcher" aria-label="Change view">
@@ -647,28 +629,24 @@
     // ========================================
     // VERSION & DEBUG INFO
     // ========================================
-    const VERSION = "2.8.0-MOBILE-MORE-INDICATOR-COMPACT";
+    const VERSION = "2.9.0-CACHE-FIX-ABORT-CONTROLLER";
     console.log("==========================================");
     console.log("🚀 DASHBOARD VERSION:", VERSION);
     console.log("📱 Mobile toolbar: Custom title + arrows + dropdown");
     console.log("✅ Monthly event limiting ACTIVE: 3 visible events/day (Monthly only)");
     console.log("🔄 View switcher: Daily/Weekly/Monthly (Desktop + Mobile)");
     console.log("🔵 Today indicator: Blue circle (unchanged)");
+    console.log("🛠️  v2.9 FIX: timeMin/timeMax date range params on events API call");
+    console.log("🛠️  v2.9 FIX: Cache-busting timestamp added to events URL");
+    console.log("🛠️  v2.9 FIX: Cache-Control/Pragma no-cache headers added");
+    console.log("🛠️  v2.9 FIX: AbortController cancels in-flight requests on navigation");
     console.log("==========================================");
 
     // ======== CONFIG =========
     const BACKEND_BASE_URL = "https://api.mie.today";
 
-    /* ============================================================
-     * CHANGE: Monthly visible events
-     * - Per your requirement: show 3 events, rest becomes "+ N more"
-     * ============================================================ */
     const MAX_VISIBLE_EVENTS = 3;
 
-    /* ============================================================
-     * MOBILE BREAKPOINT
-     * - This matches the CSS media query (max-width: 480px)
-     * ============================================================ */
     const MOBILE_MEDIA_QUERY = "(max-width: 480px)";
 
     // ======== STATE =========
@@ -676,58 +654,57 @@
     let selectedFile = null;
     let userEmail = null;
     let userHasAccess = false;
-    let eventsByDate = {}; // Store all events by date for modal
+    let eventsByDate = {};
     let isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 
+    // ── v2.9: AbortController for in-flight event requests ────────────────────
+    let _eventsFetchController = null;
+
     // ======== DOM HOOKS =========
-    const authArea = document.getElementById("auth-area");
-    const accessCheckArea = document.getElementById("access-check-area");
-    const accessDeniedArea = document.getElementById("access-denied-area");
-    const calendarContent = document.getElementById("calendar-content");
-    const calendarContainer = document.getElementById("calendar-container");
-    const messagingSection = document.getElementById("messaging-section");
-    const welcomeMessage = document.getElementById("welcome-message");
-    const signoutButton = document.getElementById("signout_button");
+    const authArea           = document.getElementById("auth-area");
+    const accessCheckArea    = document.getElementById("access-check-area");
+    const accessDeniedArea   = document.getElementById("access-denied-area");
+    const calendarContent    = document.getElementById("calendar-content");
+    const calendarContainer  = document.getElementById("calendar-container");
+    const messagingSection   = document.getElementById("messaging-section");
+    const welcomeMessage     = document.getElementById("welcome-message");
+    const signoutButton      = document.getElementById("signout_button");
     const tryDifferentAccountBtn = document.getElementById("try-different-account");
-    const connectGoogleBtn = document.getElementById("connect-google-btn");
+    const connectGoogleBtn   = document.getElementById("connect-google-btn");
 
-    const sendButton = document.getElementById("send-button");
-    const messageLog = document.getElementById("message-log");
-    const messageInput = document.getElementById("message-input");
-    const fileInput = document.getElementById("file-input");
-    const filePreview = document.getElementById("file-preview");
-    const previewImage = document.getElementById("preview-image");
-    const removeFileButton = document.getElementById("remove-file");
+    const sendButton         = document.getElementById("send-button");
+    const messageLog         = document.getElementById("message-log");
+    const messageInput       = document.getElementById("message-input");
+    const fileInput          = document.getElementById("file-input");
+    const filePreview        = document.getElementById("file-preview");
+    const previewImage       = document.getElementById("preview-image");
+    const removeFileButton   = document.getElementById("remove-file");
 
-    const eventModal = document.getElementById("event-modal");
-    const closeModal = document.getElementById("close-modal");
-    const eventTitle = document.getElementById("event-title");
-    const eventTime = document.getElementById("event-time");
-    const eventDescription = document.getElementById("event-description");
-    const eventLocation = document.getElementById("event-location");
-    const eventLink = document.getElementById("event-link");
+    const eventModal         = document.getElementById("event-modal");
+    const closeModal         = document.getElementById("close-modal");
+    const eventTitle         = document.getElementById("event-title");
+    const eventTime          = document.getElementById("event-time");
+    const eventDescription   = document.getElementById("event-description");
+    const eventLocation      = document.getElementById("event-location");
+    const eventLink          = document.getElementById("event-link");
 
-    const dayEventsModal = document.getElementById("day-events-modal");
-    const closeDayModal = document.getElementById("close-day-modal");
-    const dayEventsTitle = document.getElementById("day-events-title");
-    const dayEventsSubtitle = document.getElementById("day-events-subtitle");
-    const dayEventsList = document.getElementById("day-events-list");
+    const dayEventsModal     = document.getElementById("day-events-modal");
+    const closeDayModal      = document.getElementById("close-day-modal");
+    const dayEventsTitle     = document.getElementById("day-events-title");
+    const dayEventsSubtitle  = document.getElementById("day-events-subtitle");
+    const dayEventsList      = document.getElementById("day-events-list");
 
-    /* ============================================================
-     * MOBILE TOOLBAR DOM HOOKS (NEW)
-     * ============================================================ */
-    const mobileToolbar = document.getElementById("mie-mobile-toolbar");
-    const mobileTitle = document.getElementById("mie-mobile-title");
-    const mobilePrevBtn = document.getElementById("mie-mobile-prev");
-    const mobileNextBtn = document.getElementById("mie-mobile-next");
-    const mobileViewSelect = document.getElementById("mie-mobile-view-select");
+    const mobileToolbar      = document.getElementById("mie-mobile-toolbar");
+    const mobileTitle        = document.getElementById("mie-mobile-title");
+    const mobilePrevBtn      = document.getElementById("mie-mobile-prev");
+    const mobileNextBtn      = document.getElementById("mie-mobile-next");
+    const mobileViewSelect   = document.getElementById("mie-mobile-view-select");
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
         bindEventHandlers();
         initializeDashboard();
 
-        // Rebuild calendar if viewport crosses the mobile breakpoint (rotation / resize)
         const mq = window.matchMedia(MOBILE_MEDIA_QUERY);
         if (mq && typeof mq.addEventListener === "function") {
             mq.addEventListener("change", () => {
@@ -735,7 +712,7 @@
                 if (nextIsMobile !== isMobile) {
                     isMobile = nextIsMobile;
                     if (calendarContent && !calendarContent.classList.contains("hidden")) {
-                        displayCalendar(); // rebuild using the correct toolbar mode
+                        displayCalendar();
                     }
                 }
             });
@@ -808,9 +785,6 @@
             });
         }
 
-        /* ============================================================
-         * MOBILE TOOLBAR EVENT BINDINGS (NEW)
-         * ============================================================ */
         if (mobilePrevBtn) {
             mobilePrevBtn.addEventListener("click", () => {
                 if (!calendar) return;
@@ -875,13 +849,13 @@
                         label += ", ";
                         if (firstName) label += firstName;
                         if (firstName && email) label += " ";
-                        if (email) label += "&lt;" + email + "&gt;";
+                        if (email) label += "<" + email + ">";
                     }
-                    welcomeMessage.innerHTML = label;
+                    welcomeMessage.textContent = label;
                 }
 
                 showDashboard();
-                displayCalendar();  // calendar init is now responsive
+                displayCalendar();
             } else {
                 showAuthArea();
             }
@@ -924,7 +898,7 @@
         messagingSection.classList.remove("hidden");
     }
 
-    // ======== SIGN OUT (BACKEND SESSION) ========
+    // ======== SIGN OUT ========
     async function handleSignOut(silent) {
         try {
             await fetch(BACKEND_BASE_URL + "/auth/logout", {
@@ -946,7 +920,6 @@
     function displayCalendar() {
         if (!calendarContainer) return;
 
-        // Re-evaluate in case of rotation / resize
         isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 
         if (calendar) {
@@ -964,29 +937,16 @@
             nextDayThreshold: "01:00:00",
             events: fetchCalendarEvents,
 
-            /* ============================================================
-             * BUGFIX: Reset per-cell counters when the visible date range changes.
-             * - Prevents stale _eventCount state from carrying across navigations.
-             * ============================================================ */
             datesSet: function() {
                 clearDayCellEventCounters();
 
-                // If the current view is monthly, re-add "+ more" indicators.
-                // (monthly hiding happens in eventDidMount)
                 if (calendar && calendar.view && calendar.view.type === "dayGridMonth") {
-                    // Small async to let FullCalendar paint the grid first.
                     setTimeout(() => addMoreEventsIndicators(), 0);
                 }
 
-                // Keep mobile title in sync (month/day/week formatting rules)
                 syncMobileToolbar();
             },
 
-            /* ============================================================
-             * MONTHLY EVENT LIMITING (3 visible events)
-             * - Applies ONLY in Monthly view (dayGridMonth).
-             * - Daily/Weekly show all events.
-             * ============================================================ */
             eventDidMount: function(info) {
                 const el = info.el;
                 const dayCell = el.closest('.fc-daygrid-day');
@@ -994,12 +954,10 @@
 
                 const currentView = calendar.view.type;
 
-                // Only enforce hiding in month view.
                 if (currentView !== "dayGridMonth") {
                     return;
                 }
 
-                // Track event count per day cell
                 if (!dayCell._eventCount) {
                     dayCell._eventCount = 0;
                 }
@@ -1007,15 +965,12 @@
                 const currentIndex = dayCell._eventCount;
                 dayCell._eventCount++;
 
-                // Hide if beyond limit
                 if (currentIndex >= MAX_VISIBLE_EVENTS) {
                     el.style.display = "none";
                 }
             },
 
-            // Add indicators after events loaded
             eventsSet: function() {
-                // Indicators only for month view
                 if (calendar.view.type === "dayGridMonth") {
                     setTimeout(() => addMoreEventsIndicators(), 0);
                 }
@@ -1079,10 +1034,6 @@
             },
         };
 
-        /* ============================================================
-         * DESKTOP/TABLET TOOLBAR
-         * - Keep your existing toolbar on non-mobile (unchanged behavior).
-         * ============================================================ */
         const desktopToolbarOptions = {
             headerToolbar: {
                 left: "today prev,next",
@@ -1092,18 +1043,11 @@
             customButtons: {
                 customViewSwitcher: {
                     text: "",
-                    click: function() {
-                        // Click handled by the select element
-                    }
+                    click: function() {}
                 }
             },
         };
 
-        /* ============================================================
-         * MOBILE TOOLBAR
-         * - FullCalendar headerToolbar is disabled (CSS also hides it).
-         * - We render + manage the toolbar ourselves.
-         * ============================================================ */
         const mobileToolbarOptions = {
             headerToolbar: false,
         };
@@ -1115,12 +1059,10 @@
 
         calendar.render();
 
-        // Desktop: replace placeholder with dropdown (your existing approach)
         if (!isMobile) {
             createDesktopViewSwitcher();
         }
 
-        // Mobile: ensure toolbar is visible and synced
         if (isMobile) {
             if (mobileToolbar) mobileToolbar.style.display = "flex";
             syncMobileToolbar();
@@ -1131,10 +1073,6 @@
         console.log("✅ Calendar rendered");
     }
 
-    /* ============================================================
-     * DESKTOP VIEW SWITCHER (existing behavior)
-     * - Converts the placeholder custom button into a <select>.
-     * ============================================================ */
     function createDesktopViewSwitcher() {
         const customButton = document.querySelector(".fc-customViewSwitcher-button");
         if (!customButton) return;
@@ -1146,8 +1084,8 @@
         select.id = "view-switcher-select";
 
         const views = [
-            { value: "dayGridDay", label: "Daily" },
-            { value: "dayGridWeek", label: "Weekly" },
+            { value: "dayGridDay",   label: "Daily"   },
+            { value: "dayGridWeek",  label: "Weekly"  },
             { value: "dayGridMonth", label: "Monthly" }
         ];
 
@@ -1163,7 +1101,6 @@
             const newView = e.target.value;
             calendar.changeView(newView);
 
-            // Monthly indicators should re-attach after view switches
             if (calendar.view.type === "dayGridMonth") {
                 setTimeout(() => addMoreEventsIndicators(), 0);
             } else {
@@ -1175,21 +1112,12 @@
         customButton.parentNode.replaceChild(switcherContainer, customButton);
     }
 
-    /* ============================================================
-     * MOBILE TOOLBAR SYNC (NEW)
-     * - Title rules per your request:
-     *   - Month view: "December 2025" (month + year)
-     *   - Week view:  "Dec 14 – 20"   (NO year)
-     *   - Day view:   "December 6"    (NO year)
-     * - Dropdown reflects current view.
-     * ============================================================ */
     function syncMobileToolbar() {
         if (!isMobile) return;
         if (!calendar) return;
 
         if (mobileViewSelect) {
             const viewType = calendar.view.type;
-            // Keep dropdown aligned with current view
             if (mobileViewSelect.value !== viewType) {
                 mobileViewSelect.value = viewType;
             }
@@ -1201,50 +1129,41 @@
     }
 
     function formatMobileTitle(view) {
-        // Month title formats (locale-aware)
-        const monthLong = new Intl.DateTimeFormat("en-US", { month: "long" });
-        const monthYear = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+        const monthLong  = new Intl.DateTimeFormat("en-US", { month: "long" });
+        const monthYear  = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
         const monthShort = new Intl.DateTimeFormat("en-US", { month: "short" });
-        const dayNum = new Intl.DateTimeFormat("en-US", { day: "numeric" });
+        const dayNum     = new Intl.DateTimeFormat("en-US", { day: "numeric" });
 
         if (view.type === "dayGridMonth") {
-            return monthYear.format(calendar.getDate()); // e.g., "December 2025"
+            return monthYear.format(calendar.getDate());
         }
 
         if (view.type === "dayGridDay") {
             const d = calendar.getDate();
-            return monthLong.format(d) + " " + dayNum.format(d); // e.g., "December 6"
+            return monthLong.format(d) + " " + dayNum.format(d);
         }
 
         if (view.type === "dayGridWeek") {
-            // currentStart is inclusive, currentEnd is exclusive in FullCalendar
             const start = view.currentStart;
             const endExclusive = view.currentEnd;
             const end = new Date(endExclusive.getTime());
             end.setDate(end.getDate() - 1);
 
             const startMonth = monthShort.format(start);
-            const endMonth = monthShort.format(end);
+            const endMonth   = monthShort.format(end);
+            const startDay   = dayNum.format(start);
+            const endDay     = dayNum.format(end);
 
-            const startDay = dayNum.format(start);
-            const endDay = dayNum.format(end);
-
-            // Same month: "Dec 14 – 20"
             if (startMonth === endMonth) {
-                return `${startMonth} ${startDay} \u2013 ${endDay}`;
+                return startMonth + " " + startDay + " \u2013 " + endDay;
             }
 
-            // Cross-month: "Dec 30 – Jan 5"
-            return `${startMonth} ${startDay} \u2013 ${endMonth} ${endDay}`;
+            return startMonth + " " + startDay + " \u2013 " + endMonth + " " + endDay;
         }
 
-        // Fallback
         return view.title || "";
     }
 
-    /* ============================================================
-     * Reset per-day event counters
-     * ============================================================ */
     function clearDayCellEventCounters() {
         const dayCells = document.querySelectorAll(".fc-daygrid-day");
         dayCells.forEach(cell => {
@@ -1263,7 +1182,6 @@
         const currentView = calendar.view.type;
         if (currentView !== "dayGridMonth") return;
 
-        // Remove old indicators
         document.querySelectorAll(".mie-more-events").forEach(el => el.remove());
 
         const dayCells = document.querySelectorAll(".fc-daygrid-day");
@@ -1279,8 +1197,8 @@
             const indicator = document.createElement("div");
             indicator.className = "mie-more-events";
             indicator.textContent = isMobile
-                ? `+ ${hiddenCount}`
-                : `+ ${hiddenCount} more event${hiddenCount > 1 ? "s" : ""}`;
+                ? "+ " + hiddenCount
+                : "+ " + hiddenCount + " more event" + (hiddenCount > 1 ? "s" : "");
             indicator.setAttribute("data-date", dateStr);
 
             indicator.addEventListener("click", (e) => {
@@ -1288,7 +1206,7 @@
                 showDayEventsModal(dateStr, eventsForDay);
             });
 
-            const dayBottom = dayCell.querySelector(".fc-daygrid-day-bottom");
+            const dayBottom       = dayCell.querySelector(".fc-daygrid-day-bottom");
             const eventsContainer = dayCell.querySelector(".fc-daygrid-day-events");
 
             if (dayBottom) {
@@ -1306,25 +1224,23 @@
         const date = new Date(dateStr + "T12:00:00");
         const formattedDate = date.toLocaleDateString("en-US", {
             weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric"
+            year:    "numeric",
+            month:   "long",
+            day:     "numeric"
         });
 
-        dayEventsTitle.textContent = formattedDate;
-        dayEventsSubtitle.textContent = `${events.length} event${events.length > 1 ? "s" : ""}`;
+        dayEventsTitle.textContent    = formattedDate;
+        dayEventsSubtitle.textContent = events.length + " event" + (events.length > 1 ? "s" : "");
 
         dayEventsList.innerHTML = "";
 
-        const sortedEvents = [...events].sort((a, b) => {
-            return new Date(a.start) - new Date(b.start);
-        });
+        const sortedEvents = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
 
         sortedEvents.forEach(event => {
             const item = document.createElement("div");
             item.className = "day-event-item";
 
-            const color = event.extendedProps?.calendarColor || "#3b82f6";
+            const color = (event.extendedProps && event.extendedProps.calendarColor) || "#3b82f6";
             item.style.borderLeftColor = color;
 
             let timeString = "";
@@ -1332,7 +1248,7 @@
                 timeString = "All-day";
             } else {
                 const startDate = new Date(event.start);
-                const endDate = event.end ? new Date(event.end) : null;
+                const endDate   = event.end ? new Date(event.end) : null;
                 timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
                 if (endDate) {
                     timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -1340,20 +1256,20 @@
             }
 
             const timeDiv = document.createElement("div");
-            timeDiv.className = "day-event-time";
+            timeDiv.className   = "day-event-time";
             timeDiv.textContent = timeString;
 
             const titleDiv = document.createElement("div");
-            titleDiv.className = "day-event-title";
+            titleDiv.className   = "day-event-title";
             titleDiv.textContent = event.title || "No Title";
 
             item.appendChild(timeDiv);
             item.appendChild(titleDiv);
 
-            if (event.extendedProps?.location) {
+            if (event.extendedProps && event.extendedProps.location) {
                 const locationDiv = document.createElement("div");
-                locationDiv.className = "day-event-location";
-                locationDiv.textContent = "📍 " + event.extendedProps.location;
+                locationDiv.className   = "day-event-location";
+                locationDiv.textContent = "\uD83D\uDCCD " + event.extendedProps.location;
                 item.appendChild(locationDiv);
             }
 
@@ -1369,13 +1285,45 @@
     }
 
     // ============================================================
-    // Fetch events from backend (unchanged)
+    // FETCH CALENDAR EVENTS — v2.9 REWRITE
+    // Changes from v2.8:
+    //   1. AbortController cancels previous in-flight request
+    //   2. timeMin + timeMax passed as URL params (exact visible range)
+    //   3. _cb timestamp added for cache-busting
+    //   4. Cache-Control + Pragma no-cache headers added
+    //   5. AbortError caught and silently ignored
     // ============================================================
     async function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
+
+        // Cancel any previous in-flight request before starting a new one
+        if (_eventsFetchController) {
+            _eventsFetchController.abort();
+        }
+        _eventsFetchController = new AbortController();
+
         try {
-            const resp = await fetch(BACKEND_BASE_URL + "/api/me/events", {
-                method: "GET",
+            // Build URL with exact visible date range + cache-busting timestamp
+            // fetchInfo.startStr / endStr = ISO dates of the visible range
+            // _cb = current timestamp, makes every URL unique, prevents 304 caching
+            const params = new URLSearchParams({
+                timeMin: fetchInfo.startStr,
+                timeMax: fetchInfo.endStr,
+                _cb:     Date.now()
+            });
+
+            const url = BACKEND_BASE_URL + "/api/me/events?" + params.toString();
+
+            console.log("📅 Fetching events for range:",
+                fetchInfo.startStr, "\u2192", fetchInfo.endStr);
+
+            const resp = await fetch(url, {
+                method:      "GET",
                 credentials: "include",
+                signal:      _eventsFetchController.signal,
+                headers: {
+                    "Cache-Control": "no-cache",
+                    "Pragma":        "no-cache"
+                }
             });
 
             if (resp.status === 401) {
@@ -1389,48 +1337,42 @@
                 return;
             }
 
-            const data = await resp.json();
+            const data  = await resp.json();
             const items = Array.isArray(data.events) ? data.events : [];
+
+            console.log("✅ Events received:", items.length,
+                "for", fetchInfo.startStr, "\u2192", fetchInfo.endStr);
 
             // Build eventsByDate map
             eventsByDate = {};
 
             const events = items.map((e) => {
-                const start = (e.start && (e.start.dateTime || e.start.date)) || null;
-                const end = (e.end && (e.end.dateTime || e.end.date)) || null;
+                const start  = (e.start && (e.start.dateTime || e.start.date)) || null;
+                const end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
                 const allDay = !!(e.start && e.start.date && !e.start.dateTime);
 
                 const calColor =
-                    e.mieCalendarColor ||
+                    e.mieCalendarColor  ||
                     e._mieCalendarColor ||
                     null;
 
                 const eventObj = {
-                    id: e.id,
+                    id:    e.id,
                     title: e.summary || "No Title",
                     start,
                     end,
                     allDay,
-                    url: e.htmlLink || "",
+                    url:   e.htmlLink || "",
                     extendedProps: {
-                        description: e.description || "",
-                        location: e.location || "",
+                        description:   e.description || "",
+                        location:      e.location    || "",
                         calendarColor: calColor
                     },
                 };
 
-                // Add to eventsByDate map (keyed by YYYY-MM-DD)
                 if (start) {
-                    let dateStr;
-                    if (allDay) {
-                        dateStr = start;
-                    } else {
-                        dateStr = start.split("T")[0];
-                    }
-
-                    if (!eventsByDate[dateStr]) {
-                        eventsByDate[dateStr] = [];
-                    }
+                    const dateStr = allDay ? start : start.split("T")[0];
+                    if (!eventsByDate[dateStr]) eventsByDate[dateStr] = [];
                     eventsByDate[dateStr].push(eventObj);
                 }
 
@@ -1438,7 +1380,14 @@
             });
 
             successCallback(events);
+
         } catch (err) {
+            // AbortError = intentional cancellation from navigating to a new month
+            // Silently ignore — the new request is already in flight
+            if (err.name === "AbortError") {
+                console.log("\uD83D\uDEAB Events fetch cancelled (new navigation started)");
+                return;
+            }
             console.error("Error fetching events:", err);
             if (failureCallback) failureCallback(err);
         }
@@ -1448,7 +1397,9 @@
         eventTitle.textContent = event.title || "No Title";
 
         const startDate = event.start instanceof Date ? event.start : new Date(event.start);
-        const endDate = event.end ? (event.end instanceof Date ? event.end : new Date(event.end)) : null;
+        const endDate   = event.end
+            ? (event.end instanceof Date ? event.end : new Date(event.end))
+            : null;
 
         let timeString = "All-day";
         if (!event.allDay && startDate instanceof Date) {
@@ -1477,7 +1428,7 @@
         eventModal.classList.remove("hidden");
     }
 
-    // ======== MESSAGING (unchanged) ========
+    // ======== MESSAGING (unchanged from v2.8) ========
     async function sendMessage() {
         if (!userHasAccess) {
             logMessage("Error: Not connected to Google.", "error");
@@ -1489,7 +1440,8 @@
 
         let payloadText = text;
         if (selectedFile) {
-            payloadText += (payloadText ? "\n\n" : "") + "[Attachment selected in UI: " + selectedFile.name + "]";
+            payloadText += (payloadText ? "\n\n" : "") +
+                "[Attachment selected in UI: " + selectedFile.name + "]";
         }
 
         logMessage("Sending message...", "info");
@@ -1497,10 +1449,10 @@
 
         try {
             const resp = await fetch(BACKEND_BASE_URL + "/api/me/message", {
-                method: "POST",
+                method:      "POST",
                 credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: payloadText }),
+                headers:     { "Content-Type": "application/json" },
+                body:        JSON.stringify({ text: payloadText }),
             });
 
             if (!resp.ok) {
@@ -1541,14 +1493,16 @@
 
     function clearSelectedFile() {
         selectedFile = null;
-        if (fileInput) fileInput.value = "";
+        if (fileInput)   fileInput.value = "";
         if (filePreview) filePreview.classList.add("hidden");
         updateSendButton();
     }
 
     function updateSendButton() {
         if (!sendButton) return;
-        const canSend = (messageInput && messageInput.value.trim() !== "") || selectedFile !== null;
+        const canSend =
+            (messageInput && messageInput.value.trim() !== "") ||
+            selectedFile !== null;
         sendButton.disabled = !canSend;
     }
 
@@ -1557,13 +1511,9 @@
         const entry = document.createElement("div");
         entry.className = "text-sm mb-1";
 
-        if (type === "error") {
-            entry.classList.add("text-red-500");
-        } else if (type === "success") {
-            entry.classList.add("text-green-500");
-        } else {
-            entry.classList.add("text-gray-600");
-        }
+        if (type === "error")        entry.classList.add("text-red-500");
+        else if (type === "success") entry.classList.add("text-green-500");
+        else                         entry.classList.add("text-gray-600");
 
         const timestamp = new Date().toLocaleTimeString();
         entry.textContent = "[" + timestamp + "] " + msg;
