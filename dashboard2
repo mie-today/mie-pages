@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MIE Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; padding: 0; color: #1f2937; }
+
+  .app { max-width: 900px; margin: 0 auto; padding: 16px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; background: #fff; border-radius: 16px; padding: 12px 20px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
+  .brand { font-size: 18px; font-weight: 700; color: #1d4ed8; }
+  .welcome { font-size: 14px; color: #6b7280; }
+  .signout-btn { font-size: 13px; color: #9ca3af; background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .signout-btn:hover { background: #f3f4f6; color: #374151; }
+
+  /* Auth screen */
+  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 40px; text-align: center; }
+  .auth-screen img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 16px; }
+  .auth-screen h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  .auth-screen p { font-size: 14px; color: #6b7280; margin: 0 0 24px; }
+  .connect-btn { background: #2563eb; color: #fff; border: none; border-radius: 24px; padding: 10px 28px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .connect-btn:hover { background: #1d4ed8; }
+
+  /* Main grid */
+  .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* Calendar card */
+  .card { background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 16px; }
+
+  /* FullCalendar tweaks */
+  .fc { font-size: 13px; }
+  .fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 3px 8px !important; }
+  .fc .fc-toolbar-title { font-size: 16px !important; font-weight: 600; }
+  .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background: #3b82f6; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .fc .fc-event { font-size: 11px; border: none; }
+  .fc .fc-daygrid-day.fc-day-other { opacity: 0.3; }
+
+  /* Right column */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Message card */
+  .msg-label { font-size: 13px; color: #6b7280; font-weight: 500; margin-bottom: 8px; }
+  .msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 80px; font-family: inherit; background: #f9fafb; box-sizing: border-box; color: #1f2937; }
+  .msg-textarea:focus { outline: none; border-color: #93c5fd; background: #fff; }
+  .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .attach-btn { font-size: 12px; color: #6b7280; background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+  .attach-btn:hover { background: #e5e7eb; }
+  .send-btn { flex: 1; background: #3b82f6; color: #fff; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .send-btn:hover { background: #2563eb; }
+  .send-btn:disabled { background: #bfdbfe; cursor: not-allowed; }
+  .send-status { font-size: 12px; text-align: center; margin-top: 6px; height: 16px; }
+
+  /* Quick buttons */
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .quick-btn { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; color: #1d4ed8; font-size: 11px; font-weight: 600; padding: 10px 4px; cursor: pointer; text-align: center; white-space: pre-line; line-height: 1.4; }
+  .quick-btn:hover { background: #dbeafe; }
+  .quick-btn.gray { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
+  .quick-btn.gray:hover { background: #f3f4f6; }
+
+  /* Event modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal-backdrop.hidden { display: none; }
+  .modal-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 380px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .modal-title { font-size: 16px; font-weight: 600; color: #111827; flex: 1; }
+  .modal-close { background: none; border: none; font-size: 20px; color: #9ca3af; cursor: pointer; padding: 0 0 0 8px; }
+  .modal-row { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
+  .modal-link { display: inline-block; margin-top: 12px; background: #3b82f6; color: #fff; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 600; text-decoration: none; }
+  .modal-link:hover { background: #2563eb; }
+
+  /* Loading */
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- Auth Screen -->
+  <div id="auth-screen" class="auth-screen">
+    <img src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png" alt="MIE" onerror="this.style.display='none'" />
+    <h1>MIE</h1>
+    <p>Your messages. Your calendar. Zero effort.</p>
+    <button class="connect-btn" id="connect-btn">Connect Google</button>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="auth-screen" style="display:none;">
+    <div class="spinner"></div>
+    <p style="margin-top:12px; color:#6b7280;">Connecting...</p>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" style="display:none;">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo">M</div>
+        <span class="brand">MIE</span>
+      </div>
+      <span class="welcome" id="welcome-msg"></span>
+      <button class="signout-btn" id="signout-btn">Sign out</button>
+    </div>
+
+    <!-- Main -->
+    <div class="main-grid">
+
+      <!-- Calendar -->
+      <div class="card">
+        <div id="calendar"></div>
+      </div>
+
+      <!-- Right column -->
+      <div class="right-col">
+
+        <!-- Send Message -->
+        <div class="card">
+          <div class="msg-label">Send to MIE</div>
+          <textarea class="msg-textarea" id="msg-input" placeholder="Type your message..."></textarea>
+          <div class="msg-footer">
+            <label class="attach-btn" for="file-input">📎 Attach</label>
+            <input type="file" id="file-input" style="display:none;" />
+            <button class="send-btn" id="send-btn" disabled>Send</button>
+          </div>
+          <div class="send-status" id="send-status"></div>
+        </div>
+
+        <!-- Quick Buttons -->
+        <div class="card">
+          <div class="btn-grid">
+            <button class="quick-btn">Daily&#10;Summary</button>
+            <button class="quick-btn">Weekly&#10;Summary</button>
+            <button class="quick-btn">Monthly&#10;Summary</button>
+            <button class="quick-btn">Trackers</button>
+            <button class="quick-btn">Lists</button>
+            <button class="quick-btn gray">Settings</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div class="modal-backdrop hidden" id="event-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-row" id="modal-time"></div>
+    <div class="modal-row" id="modal-location"></div>
+    <div class="modal-row" id="modal-desc"></div>
+    <a class="modal-link" id="modal-link" target="_blank" href="#">Open in Google Calendar</a>
+  </div>
+</div>
+
+<script>
+const BACKEND = "https://api.mie.today";
+
+const authScreen    = document.getElementById("auth-screen");
+const loadingScreen = document.getElementById("loading-screen");
+const dashboard     = document.getElementById("dashboard");
+const welcomeMsg    = document.getElementById("welcome-msg");
+const connectBtn    = document.getElementById("connect-btn");
+const signoutBtn    = document.getElementById("signout-btn");
+const msgInput      = document.getElementById("msg-input");
+const sendBtn       = document.getElementById("send-btn");
+const sendStatus    = document.getElementById("send-status");
+const fileInput     = document.getElementById("file-input");
+const eventModal    = document.getElementById("event-modal");
+const modalClose    = document.getElementById("modal-close");
+
+let calendar = null;
+let selectedFile = null;
+
+// ---- Init ----
+async function init() {
+  show(loadingScreen);
+  try {
+    const res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
+    if (!res.ok) { show(authScreen); return; }
+    const data = await res.json();
+    if (data.connected) {
+      const user = data.user || {};
+      const name = user.given_name || (user.name && user.name.split(" ")[0]) || data.userEmail || "";
+      if (name) welcomeMsg.textContent = "Welcome, " + name;
+      show(dashboard);
+      initCalendar();
+    } else {
+      show(authScreen);
+    }
+  } catch(e) {
+    show(authScreen);
+  }
+}
+
+function show(el) {
+  [authScreen, loadingScreen, dashboard].forEach(e => e.style.display = "none");
+  el.style.display = "";
+}
+
+// ---- Auth ----
+connectBtn.addEventListener("click", () => {
+  window.location.href = BACKEND + "/auth/google";
+});
+
+signoutBtn.addEventListener("click", async () => {
+  try { await fetch(BACKEND + "/auth/logout", { method: "POST", credentials: "include" }); } catch(e) {}
+  show(authScreen);
+});
+
+// ---- Calendar ----
+function initCalendar() {
+  if (calendar) { calendar.destroy(); calendar = null; }
+  calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+    initialView: "dayGridMonth",
+    fixedWeekCount: false,
+    showNonCurrentDates: false,
+    height: "auto",
+    headerToolbar: { left: "today prev,next", center: "title", right: "dayGridMonth,dayGridWeek" },
+    buttonText: { today: "Today", month: "Month", week: "Week" },
+    events: fetchEvents,
+    eventClick: function(info) {
+      info.jsEvent.preventDefault();
+      showModal(info.event);
+    },
+    eventContent: function(arg) {
+      const color = (arg.event.extendedProps && arg.event.extendedProps.calendarColor) || "#3b82f6";
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap;";
+      if (!arg.event.allDay) {
+        const dot = document.createElement("span");
+        dot.style.cssText = "width:6px;height:6px;border-radius:50%;background:" + color + ";flex-shrink:0;";
+        div.appendChild(dot);
+      }
+      const t = document.createElement("span");
+      t.style.cssText = "overflow:hidden;text-overflow:ellipsis;font-size:11px;color:#111827;";
+      t.textContent = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
+      div.appendChild(t);
+      return { domNodes: [div] };
+    }
+  });
+  calendar.render();
+}
+
+async function fetchEvents(fetchInfo, success, failure) {
+  try {
+    const params = new URLSearchParams({ timeMin: fetchInfo.startStr, timeMax: fetchInfo.endStr, _cb: Date.now() });
+    const res = await fetch(BACKEND + "/api/me/events?" + params, {
+      credentials: "include",
+      headers: { "Cache-Control": "no-cache" }
+    });
+    if (res.status === 401) { show(authScreen); failure(new Error("401")); return; }
+    if (!res.ok) { failure(new Error("HTTP " + res.status)); return; }
+    const data = await res.json();
+    const items = Array.isArray(data.events) ? data.events : [];
+    const events = items.map(e => ({
+      id:    e.id,
+      title: e.summary || "No Title",
+      start: (e.start && (e.start.dateTime || e.start.date)) || null,
+      end:   (e.end   && (e.end.dateTime   || e.end.date))   || null,
+      allDay: !!(e.start && e.start.date && !e.start.dateTime),
+      url:   e.htmlLink || "",
+      extendedProps: {
+        description:   e.description || "",
+        location:      e.location    || "",
+        calendarColor: e.mieCalendarColor || null
+      }
+    }));
+    success(events);
+  } catch(err) {
+    failure(err);
+  }
+}
+
+// ---- Modal ----
+function showModal(event) {
+  document.getElementById("modal-title").textContent = event.title || "No Title";
+  const start = new Date(event.start);
+  const end   = event.end ? new Date(event.end) : null;
+  let timeStr = start.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+  if (!event.allDay) {
+    timeStr += " · " + start.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+    if (end) timeStr += " – " + end.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+  }
+  document.getElementById("modal-time").textContent = timeStr;
+  document.getElementById("modal-location").textContent = (event.extendedProps.location ? "📍 " + event.extendedProps.location : "");
+  document.getElementById("modal-desc").textContent = event.extendedProps.description || "";
+  const link = document.getElementById("modal-link");
+  if (event.url) { link.href = event.url; link.style.opacity = "1"; link.style.pointerEvents = ""; }
+  else           { link.href = "#"; link.style.opacity = "0.4"; link.style.pointerEvents = "none"; }
+  eventModal.classList.remove("hidden");
+}
+
+modalClose.addEventListener("click", () => eventModal.classList.add("hidden"));
+eventModal.addEventListener("click", e => { if (e.target === eventModal) eventModal.classList.add("hidden"); });
+
+// ---- Messaging ----
+msgInput.addEventListener("input", updateSend);
+fileInput.addEventListener("change", () => { selectedFile = fileInput.files[0] || null; updateSend(); });
+
+function updateSend() {
+  sendBtn.disabled = !msgInput.value.trim() && !selectedFile;
+}
+
+sendBtn.addEventListener("click", async () => {
+  const text = msgInput.value.trim();
+  if (!text && !selectedFile) return;
+  sendBtn.disabled = true;
+  sendStatus.textContent = "";
+  try {
+    const res = await fetch(BACKEND + "/api/me/message", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text + (selectedFile ? "\n\n[Attachment: " + selectedFile.name + "]" : "") })
+    });
+    if (res.ok) {
+      sendStatus.textContent = "✅ Sent!";
+      sendStatus.style.color = "#16a34a";
+      msgInput.value = "";
+      selectedFile = null;
+      fileInput.value = "";
+    } else {
+      sendStatus.textContent = "❌ Failed. Try again.";
+      sendStatus.style.color = "#dc2626";
+    }
+  } catch(e) {
+    sendStatus.textContent = "❌ Error. Try again.";
+    sendStatus.style.color = "#dc2626";
+  } finally {
+    setTimeout(() => { sendStatus.textContent = ""; updateSend(); }, 3000);
+  }
+});
+
+init();
+</script>
+</body>
+</html>
