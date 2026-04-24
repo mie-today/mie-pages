@@ -4,134 +4,123 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MIE Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; min-height: 100vh; }
+body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-height: 100vh; }
 
-/* ── AUTH ── */
-.auth-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; background:#fff; }
-.auth-card { background:#fff; border:1px solid #e5e7eb; border-radius:24px; padding:48px 40px; text-align:center; max-width:400px; width:100%; }
-.auth-logo-circle { width:64px; height:64px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:24px; margin:0 auto 16px; }
-.auth-title { font-size:24px; font-weight:700; margin-bottom:6px; color:#111827; }
-.auth-sub { font-size:14px; color:#6b7280; margin-bottom:28px; }
-.connect-btn { background:#2563eb; color:#fff; border:none; border-radius:9999px; padding:11px 32px; font-size:15px; font-weight:600; cursor:pointer; }
-.connect-btn:hover { background:#1d4ed8; }
+.auth-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.auth-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 24px; padding: 48px 40px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.auth-logo { width: 64px; height: 64px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 28px; margin: 0 auto 16px; }
+.auth-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+.auth-sub { font-size: 14px; color: #6b7280; margin-bottom: 28px; }
+.connect-btn { background: #2563eb; color: #fff; border: none; border-radius: 50px; padding: 12px 36px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.connect-btn:hover { background: #1d4ed8; }
 
-/* ── SPINNER ── */
-.spin-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:12px; }
-.spinner { width:28px; height:28px; border:3px solid #e5e7eb; border-top-color:#3b82f6; border-radius:50%; animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
+.spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 12px; }
+.spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── DASHBOARD ── */
-#dashboard { display:none; flex-direction:column; min-height:100vh; background:#fff; }
+#dashboard { display: none; min-height: 100vh; flex-direction: column; }
 
-/* TOPBAR */
-.topbar { display:flex; align-items:center; justify-content:space-between; padding:10px 32px; border-bottom:1px solid #e5e7eb; background:#fff; position:sticky; top:0; z-index:50; }
-.topbar-left { display:flex; align-items:center; gap:12px; }
-.hamburger { background:none; border:none; cursor:pointer; display:flex; flex-direction:column; gap:5px; padding:4px; }
-.hamburger span { display:block; width:22px; height:2px; background:#374151; border-radius:2px; }
-.tb-brand { font-size:20px; font-weight:700; color:#2563eb; letter-spacing:-.01em; }
-.tb-welcome { font-size:18px; font-weight:700; color:#111827; }
-.signout-btn { font-size:13px; color:#9ca3af; background:none; border:1px solid #e5e7eb; border-radius:8px; padding:5px 12px; cursor:pointer; }
-.signout-btn:hover { background:#f9fafb; color:#374151; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid #f1f5f9; background: #fff; position: sticky; top: 0; z-index: 50; }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+.hamburger span { display: block; width: 22px; height: 2px; background: #374151; border-radius: 2px; }
+.tb-logo { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
+.tb-brand { font-size: 20px; font-weight: 700; color: #1d4ed8; }
+.topbar-center { font-size: 20px; font-weight: 700; color: #111827; }
+.signout-btn { font-size: 13px; color: #9ca3af; background: none; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+.signout-btn:hover { background: #f9fafb; color: #374151; }
 
-/* WEATHER BAR */
-.weather-bar { margin:12px 32px; background:#f8fafc; border:1px solid #e5e7eb; border-radius:16px; padding:10px 24px; display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; }
-.wb-date { font-size:14px; font-weight:500; color:#374151; }
-.wb-time { font-size:14px; color:#6b7280; }
-.wb-sep  { color:#d1d5db; font-size:12px; }
-.wb-icon { font-size:20px; line-height:1; }
-.wb-temp { font-size:14px; font-weight:600; color:#111827; }
-.toggle-btn { font-size:11px; color:#6b7280; background:#e5e7eb; border:none; border-radius:6px; padding:3px 8px; cursor:pointer; }
-.toggle-btn:hover { background:#d1d5db; }
+.weather-bar { margin: 12px 24px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.weather-date { font-size: 14px; font-weight: 500; color: #374151; }
+.weather-time { font-size: 14px; color: #6b7280; }
+.weather-sep { color: #d1d5db; font-size: 12px; }
+.weather-icon { font-size: 20px; }
+.weather-temp { font-size: 14px; font-weight: 600; color: #111827; }
 
-/* MAIN GRID — 6:4 */
-.main {
-  display: grid;
-  grid-template-columns: 662px 1fr;
-  gap: 20px;
-  padding: 16px 32px 32px;
-  align-items: start;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-@media (max-width: 960px)  { .main { grid-template-columns: 1fr; } }
+.main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 0 24px 28px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: 1fr; } }
 
-/* CARD */
-.card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:18px; }
-.card-label { font-size:11px; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
-
-/* CALENDAR */
-.cal-card { width:662px; }
-@media (max-width:960px) { .cal-card { width:100%; } }
-
-.cal-topbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-.cal-nav { background:#f3f4f6; border:none; border-radius:8px; padding:5px 12px; cursor:pointer; font-size:15px; color:#374151; }
-.cal-nav:hover { background:#e5e7eb; }
-.cal-today-btn { background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:5px 10px; cursor:pointer; font-size:12px; font-weight:600; color:#374151; }
-.cal-today-btn:hover { background:#e5e7eb; }
-.cal-title-txt { flex:1; text-align:center; font-size:15px; font-weight:700; color:#111827; }
-.cal-view-sel { -webkit-appearance:none; appearance:none; background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:5px 22px 5px 10px; font-size:12px; font-weight:600; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 7px center; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; }
+.card-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.right-col { display: flex; flex-direction: column; gap: 14px; }
 
 /* FullCalendar */
-.fc { font-size:13px !important; }
-.fc .fc-toolbar-title { font-size:15px !important; font-weight:700 !important; color:#111827 !important; }
-.fc .fc-button-primary { background:#3b82f6 !important; border-color:#2563eb !important; font-size:12px !important; padding:4px 10px !important; border-radius:8px !important; }
-.fc .fc-button-primary:hover { background:#2563eb !important; }
-.fc .fc-col-header-cell { background:#f8fafc !important; font-size:11px !important; font-weight:600 !important; color:#6b7280 !important; }
-.fc .fc-col-header-cell-cushion { color:#6b7280 !important; text-decoration:none !important; }
-.fc-daygrid-day.fc-day-today { background:transparent !important; }
-.fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background:#3b82f6 !important; color:#fff !important; border-radius:50% !important; width:26px !important; height:26px !important; display:flex !important; align-items:center !important; justify-content:center !important; font-weight:700 !important; }
-.fc .fc-daygrid-day-number { color:#374151 !important; font-size:12px !important; text-decoration:none !important; }
-.fc .fc-event { border:none !important; background:transparent !important; }
-.fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number { color:#d1d5db !important; }
-.fc .fc-daygrid-event-harness { overflow:hidden; }
-#calendar .fc { height:552px; }
+.fc { font-size: 13px !important; }
+.fc .fc-toolbar-title { font-size: 15px !important; font-weight: 700 !important; color: #111827 !important; }
+.fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 8px !important; }
+.fc .fc-button-primary:hover { background: #2563eb !important; }
+.fc .fc-col-header-cell { background: #f8fafc !important; font-size: 11px !important; font-weight: 600 !important; color: #6b7280 !important; }
+.fc-daygrid-day.fc-day-today { background: transparent !important; }
+.fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background: #3b82f6; color: #fff !important; border-radius: 50%; width: 24px; height: 24px; display: flex !important; align-items: center; justify-content: center; font-weight: 700; }
+.fc .fc-daygrid-day-number { color: #374151 !important; font-size: 12px !important; }
+.fc .fc-event { border: none !important; }
+.fc .fc-daygrid-more-link { display: none !important; }
+.fc .fc-daygrid-event-harness { overflow: hidden; }
 
-/* RIGHT COL */
-.right-col { display:flex; flex-direction:column; gap:14px; }
+/* custom "+N more" pill */
+.mie-more { display: block; margin: 1px 2px 0; padding: 1px 5px; font-size: 10px; font-weight: 600; color: #2563eb; background: #eff6ff; border-radius: 4px; cursor: pointer; text-align: center; }
+.mie-more:hover { background: #dbeafe; }
 
-/* MESSAGE */
-.msg-textarea { width:100%; border:1px solid #e5e7eb; border-radius:10px; padding:10px 12px; font-size:13px; resize:none; height:90px; font-family:inherit; background:#f9fafb; color:#1f2937; transition:border .15s, background .15s; }
-.msg-textarea:focus { outline:none; border-color:#93c5fd; background:#fff; }
-.msg-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
-.attach-lbl { display:flex; align-items:center; gap:4px; font-size:12px; color:#6b7280; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; cursor:pointer; white-space:nowrap; }
-.attach-lbl:hover { background:#e5e7eb; }
-.fname { font-size:11px; color:#6b7280; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.rm-btn { background:none; border:none; color:#ef4444; cursor:pointer; font-size:13px; padding:0 2px; }
-.send-btn { flex:1; background:#3b82f6; color:#fff; border:none; border-radius:10px; padding:8px; font-size:13px; font-weight:600; cursor:pointer; }
-.send-btn:hover:not(:disabled) { background:#2563eb; }
-.send-btn:disabled { background:#bfdbfe; cursor:not-allowed; }
-.send-status { font-size:12px; text-align:center; margin-top:6px; min-height:16px; }
+/* Cal toolbar */
+.cal-topbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cal-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 11px; cursor: pointer; font-size: 15px; color: #374151; }
+.cal-nav-btn:hover { background: #e5e7eb; }
+.cal-today-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #374151; }
+.cal-today-btn:hover { background: #e5e7eb; }
+.cal-title-text { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #111827; }
+.cal-view-sel { appearance: none; background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 5px 22px 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
 
-/* QUICK BTNS */
-.btns-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.q-btn { background:#eff6ff; border:1px solid #dbeafe; border-radius:12px; color:#1d4ed8; font-size:12px; font-weight:600; padding:13px 8px; cursor:pointer; text-align:center; line-height:1.4; transition:background .15s; }
-.q-btn:hover { background:#dbeafe; }
-.q-btn.neutral { background:#f9fafb; border-color:#e5e7eb; color:#6b7280; }
-.q-btn.neutral:hover { background:#f3f4f6; }
+/* Messaging */
+.msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 86px; font-family: inherit; background: #f9fafb; color: #111827; }
+.msg-textarea:focus { outline: none; border-color: #93c5fd; background: #fff; }
+.msg-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.attach-lbl { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+.attach-lbl:hover { background: #e5e7eb; }
+.fname { font-size: 11px; color: #6b7280; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 0 2px; }
+.send-btn { flex: 1; background: #3b82f6; color: #fff; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.send-btn:hover:not(:disabled) { background: #2563eb; }
+.send-btn:disabled { background: #bfdbfe; cursor: not-allowed; }
+.send-status { font-size: 12px; text-align: center; margin-top: 6px; min-height: 16px; }
 
-/* EVENT MODAL */
-.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:200; padding:16px; }
-.modal-bg.hidden { display:none; }
-.modal-box { background:#fff; border-radius:20px; padding:24px; max-width:400px; width:100%; }
-.modal-hd { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; gap:8px; }
-.modal-title { font-size:16px; font-weight:700; color:#111827; line-height:1.3; }
-.modal-x { background:none; border:none; font-size:22px; color:#9ca3af; cursor:pointer; line-height:1; flex-shrink:0; }
-.modal-row { font-size:13px; color:#6b7280; margin-bottom:6px; line-height:1.5; }
-.modal-link { display:inline-block; margin-top:14px; background:#3b82f6; color:#fff; border-radius:10px; padding:8px 18px; font-size:13px; font-weight:600; text-decoration:none; }
-.modal-link:hover { background:#2563eb; }
+/* Quick buttons */
+.btns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.q-btn { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 13px 8px; cursor: pointer; text-align: center; line-height: 1.4; }
+.q-btn:hover { background: #dbeafe; }
+.q-btn.neutral { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
+.q-btn.neutral:hover { background: #f3f4f6; }
 
-/* RESPONSIVE */
-@media (max-width:600px) {
-  .topbar { padding:10px 16px; }
-  .tb-welcome { font-size:15px; }
-  .weather-bar { margin:10px 16px; padding:8px 14px; gap:10px; }
-  .main { padding:12px 16px 24px; gap:12px; }
-  .btns-grid { grid-template-columns:1fr 1fr; }
+/* Event modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+.modal-bg.hidden { display: none; }
+.modal-box { background: #fff; border-radius: 20px; padding: 24px; max-width: 400px; width: 100%; box-shadow: 0 24px 48px rgba(0,0,0,.15); }
+.modal-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 8px; }
+.modal-title { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.3; }
+.modal-x { background: none; border: none; font-size: 22px; color: #9ca3af; cursor: pointer; line-height: 1; flex-shrink: 0; }
+.modal-row { font-size: 13px; color: #6b7280; margin-bottom: 6px; line-height: 1.5; }
+.modal-link { display: inline-block; margin-top: 14px; background: #3b82f6; color: #fff; border-radius: 10px; padding: 8px 18px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.modal-link:hover { background: #2563eb; }
+
+/* Day-events modal ("+N more" click) */
+.day-modal-box { background: #fff; border-radius: 20px; padding: 24px; max-width: 420px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.15); }
+.day-ev-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+.day-ev-item:last-child { border-bottom: none; }
+.day-ev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.day-ev-info { flex: 1; min-width: 0; }
+.day-ev-time { font-size: 11px; color: #9ca3af; margin-bottom: 2px; }
+.day-ev-title { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-ev-loc { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+@media (max-width: 600px) {
+  .topbar { padding: 10px 14px; }
+  .topbar-center { font-size: 16px; }
+  .weather-bar { margin: 10px 14px; padding: 8px 12px; gap: 8px; font-size: 13px; }
+  .main { padding: 0 14px 20px; gap: 12px; }
 }
 </style>
 </head>
@@ -140,7 +129,7 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
 <!-- AUTH -->
 <div id="auth-wrap" class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-logo-circle">M</div>
+    <div class="auth-logo">M</div>
     <div class="auth-title">MIE</div>
     <div class="auth-sub">Your messages. Your calendar. Zero effort.</div>
     <button class="connect-btn" id="connect-btn">Connect Google</button>
@@ -148,47 +137,41 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
 </div>
 
 <!-- LOADING -->
-<div id="load-wrap" class="spin-wrap" style="display:none;">
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
   <div class="spinner"></div>
-  <div style="font-size:14px;color:#6b7280;">Loading...</div>
+  <div style="font-size:14px;color:#6b7280;margin-top:4px;">Loading...</div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
-
-  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
       <button class="hamburger" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
+      <div class="tb-logo">M</div>
       <span class="tb-brand">MIE</span>
     </div>
-    <div class="tb-welcome" id="welcome-txt">Welcome</div>
+    <div class="topbar-center" id="welcome-text">Welcome</div>
     <button class="signout-btn" id="signout-btn">Sign out</button>
   </div>
 
-  <!-- Weather / Date Bar -->
   <div class="weather-bar">
-    <span class="wb-date" id="wb-date"></span>
-    <span class="wb-sep">·</span>
-    <span class="wb-time" id="wb-time"></span>
-    <span class="wb-sep">·</span>
-    <span class="wb-icon" id="wb-icon">🌡️</span>
-    <span class="wb-temp" id="wb-temp">–</span>
-    <button class="toggle-btn" id="wb-toggle">°C / °F</button>
+    <span class="weather-date" id="wb-date"></span>
+    <span class="weather-sep">·</span>
+    <span class="weather-time" id="wb-time"></span>
+    <span class="weather-sep">·</span>
+    <span class="weather-icon" id="wb-icon">🌡️</span>
+    <span class="weather-temp" id="wb-temp">–</span>
   </div>
 
-  <!-- Main 6:4 -->
   <div class="main">
-
-    <!-- Calendar (662px) -->
-    <div class="card cal-card">
+    <div class="card">
       <div class="cal-topbar">
-        <button class="cal-nav" id="cal-prev">&#8592;</button>
-        <button class="cal-nav" id="cal-next">&#8594;</button>
+        <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
+        <button class="cal-nav-btn" id="cal-next">&#8594;</button>
         <button class="cal-today-btn" id="cal-today">Today</button>
-        <span class="cal-title-txt" id="cal-title"></span>
+        <span class="cal-title-text" id="cal-title"></span>
         <select class="cal-view-sel" id="cal-view">
           <option value="dayGridMonth">Monthly</option>
           <option value="dayGridWeek">Weekly</option>
@@ -198,10 +181,7 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
       <div id="calendar"></div>
     </div>
 
-    <!-- Right col (4) -->
     <div class="right-col">
-
-      <!-- Message -->
       <div class="card">
         <div class="card-label">Send to MIE</div>
         <textarea class="msg-textarea" id="msg-input" placeholder="Type your message..."></textarea>
@@ -215,7 +195,6 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
         <div class="send-status" id="send-status"></div>
       </div>
 
-      <!-- Quick Buttons -->
       <div class="card">
         <div class="card-label">Quick Actions</div>
         <div class="btns-grid">
@@ -225,12 +204,11 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
           <button class="q-btn neutral" onclick="qa('Settings')">Settings</button>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- EVENT MODAL -->
+<!-- EVENT DETAIL MODAL -->
 <div class="modal-bg hidden" id="event-modal">
   <div class="modal-box">
     <div class="modal-hd">
@@ -244,29 +222,49 @@ body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1f2937; mi
   </div>
 </div>
 
+<!-- DAY EVENTS MODAL -->
+<div class="modal-bg hidden" id="day-modal">
+  <div class="day-modal-box">
+    <div class="modal-hd">
+      <div class="modal-title" id="day-modal-title"></div>
+      <button class="modal-x" id="day-modal-close">&times;</button>
+    </div>
+    <div id="day-modal-list"></div>
+  </div>
+</div>
+
 <script>
 const BACKEND = "https://api.mie.today";
+const MAX_VISIBLE = 3;
+
 const authWrap = document.getElementById("auth-wrap");
-const loadWrap = document.getElementById("load-wrap");
+const loadWrap = document.getElementById("loading-wrap");
 const dash     = document.getElementById("dashboard");
 
 function show(el) {
   [authWrap, loadWrap, dash].forEach(e => { e.style.display = "none"; });
-  if (el === dash) { el.style.display = "flex"; el.style.flexDirection = "column"; }
-  else el.style.display = "";
+  el.style.display = (el === dash) ? "flex" : "";
+  if (el === dash) el.style.flexDirection = "column";
 }
 
 /* ── INIT ── */
 async function init() {
   show(loadWrap);
   try {
-    const r = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
-    if (!r.ok) { show(authWrap); return; }
-    const d = await r.json();
+    const res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
+    if (!res.ok) { show(authWrap); return; }
+    const d = await res.json();
     if (d.connected) {
+      /* ── NAME: try every possible field from the profile ── */
       const u = d.user || {};
-      const n = u.given_name || (u.name && u.name.split(" ")[0]) || "";
-      document.getElementById("welcome-txt").textContent = n ? "Welcome, " + n : "Welcome";
+      const name =
+        u.given_name ||
+        u.givenName  ||
+        (u.name && u.name.split(" ")[0]) ||
+        (d.userEmail && d.userEmail.split("@")[0]) ||
+        "";
+      document.getElementById("welcome-text").textContent =
+        name ? "Welcome, " + name : "Welcome";
       show(dash);
       initCal();
       startClock();
@@ -275,12 +273,11 @@ async function init() {
   } catch(e) { show(authWrap); }
 }
 
-/* ── AUTH ── */
 document.getElementById("connect-btn").addEventListener("click", () => {
   window.location.href = BACKEND + "/auth/google";
 });
 document.getElementById("signout-btn").addEventListener("click", async () => {
-  try { await fetch(BACKEND + "/auth/logout", { method:"POST", credentials:"include" }); } catch(e) {}
+  try { await fetch(BACKEND + "/auth/logout", { method: "POST", credentials: "include" }); } catch(e) {}
   show(authWrap);
 });
 
@@ -289,129 +286,298 @@ function startClock() {
   function tick() {
     const now = new Date();
     document.getElementById("wb-date").textContent = now.toLocaleDateString("en-US", {
-      weekday:"long", year:"numeric", month:"long", day:"numeric"
+      weekday: "long", year: "numeric", month: "long", day: "numeric"
     });
-    const raw = now.toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12:true, timeZoneName:"short" });
-    const parts = raw.split(" "); const tz = parts.pop();
-    document.getElementById("wb-time").textContent = parts.join(" ") + " " + tz;
+    const full = now.toLocaleTimeString("en-US", {
+      hour: "2-digit", minute: "2-digit", hour12: true, timeZoneName: "short"
+    });
+    document.getElementById("wb-time").textContent = full;
   }
-  tick(); setInterval(tick, 30000);
+  tick();
+  setInterval(tick, 30000);
 }
 
-/* ── WEATHER ── */
-let tC = null, tF = null, usC = false;
-function wIcon(c) {
-  if(c===0) return"☀️"; if(c<=2) return"🌤️"; if(c===3) return"☁️";
-  if(c<=49) return"🌫️"; if(c<=59) return"🌦️"; if(c<=69) return"🌧️";
-  if(c<=79) return"❄️"; if(c<=82) return"🌧️"; if(c<=99) return"⛈️"; return"🌡️";
+/* ── WEATHER (both °F and °C, no toggle button) ── */
+function weatherIcon(code) {
+  if (code === 0)  return "☀️";
+  if (code <= 2)   return "🌤️";
+  if (code === 3)  return "☁️";
+  if (code <= 49)  return "🌫️";
+  if (code <= 59)  return "🌦️";
+  if (code <= 69)  return "🌧️";
+  if (code <= 79)  return "❄️";
+  if (code <= 82)  return "🌧️";
+  if (code <= 99)  return "⛈️";
+  return "🌡️";
 }
 async function loadWeather() {
   try {
-    const g = await fetch("https://ipapi.co/json/").then(r=>r.json());
-    const w = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}` +
+    const geo = await fetch("https://ipapi.co/json/").then(r => r.json());
+    const w   = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${geo.latitude}&longitude=${geo.longitude}` +
       `&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto`
-    ).then(r=>r.json());
-    tC = Math.round(w.current.temperature_2m);
-    tF = Math.round(tC * 9/5 + 32);
-    document.getElementById("wb-icon").textContent = wIcon(w.current.weathercode);
-    renderTemp();
-  } catch(e) { document.getElementById("wb-temp").textContent = "N/A"; }
+    ).then(r => r.json());
+    const c = Math.round(w.current.temperature_2m);
+    const f = Math.round(c * 9 / 5 + 32);
+    document.getElementById("wb-icon").textContent = weatherIcon(w.current.weathercode);
+    document.getElementById("wb-temp").textContent = f + "°F / " + c + "°C";
+  } catch(e) {
+    document.getElementById("wb-temp").textContent = "N/A";
+  }
 }
-function renderTemp() {
-  if (tC === null) return;
-  document.getElementById("wb-temp").textContent = usC
-    ? tC + "°C  /  " + tF + "°F"
-    : tF + "°F  /  " + tC + "°C";
-}
-document.getElementById("wb-toggle").addEventListener("click", () => { usC = !usC; renderTemp(); });
 
 /* ── CALENDAR ── */
 let cal = null;
+let eventsByDate = {};   // dateStr → [eventObj, …]
+
 function initCal() {
   if (cal) cal.destroy();
+  eventsByDate = {};
+
   cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
     initialView: "dayGridMonth",
     fixedWeekCount: false,
     showNonCurrentDates: false,
+    height: "auto",
     headerToolbar: false,
-    contentHeight: 552,
+    dayMaxEvents: false,          // we handle limiting ourselves
     events: getEvents,
-    datesSet: () => { document.getElementById("cal-title").textContent = cal.view.title || ""; },
-    eventClick: (info) => { info.jsEvent.preventDefault(); openModal(info.event); },
-    eventContent: (arg) => {
+
+    datesSet: function() {
+      document.getElementById("cal-title").textContent = cal.view.title || "";
+      /* rebuild "+N more" after view changes */
+      setTimeout(rebuildMorePills, 50);
+    },
+
+    eventDidMount: function(info) {
+      if (cal.view.type !== "dayGridMonth") return;
+      const cell = info.el.closest(".fc-daygrid-day");
+      if (!cell) return;
+      if (!cell._mieCount) cell._mieCount = 0;
+      if (cell._mieCount >= MAX_VISIBLE) {
+        info.el.style.display = "none";
+      }
+      cell._mieCount++;
+    },
+
+    eventsSet: function() {
+      setTimeout(rebuildMorePills, 80);
+    },
+
+    eventContent: function(arg) {
       const color = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
       const wrap = document.createElement("div");
-      wrap.style.cssText = "display:flex;align-items:center;gap:3px;overflow:hidden;padding:0 2px;max-width:100%;";
+      wrap.style.cssText = "display:flex;align-items:center;gap:3px;overflow:hidden;padding:0 2px;";
       if (!arg.event.allDay) {
         const dot = document.createElement("span");
-        dot.style.cssText = "width:6px;height:6px;border-radius:50%;background:"+color+";flex-shrink:0;";
+        dot.style.cssText = "width:6px;height:6px;border-radius:50%;background:" + color + ";flex-shrink:0;";
         wrap.appendChild(dot);
-      } else {
-        wrap.style.background = color;
-        wrap.style.borderRadius = "3px";
-        wrap.style.padding = "1px 4px";
       }
-      const t = document.createElement("span");
-      t.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#111827;flex:1;min-width:0;";
-      t.textContent = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
-      wrap.appendChild(t);
+      const txt = document.createElement("span");
+      txt.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#111827;";
+      txt.textContent = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
+      wrap.appendChild(txt);
       return { domNodes: [wrap] };
+    },
+
+    eventClick: function(info) {
+      info.jsEvent.preventDefault();
+      openEventModal(info.event);
     }
   });
+
   cal.render();
   document.getElementById("cal-title").textContent = cal.view.title || "";
 
   document.getElementById("cal-prev").onclick  = () => { cal.prev();  syncTitle(); };
   document.getElementById("cal-next").onclick  = () => { cal.next();  syncTitle(); };
   document.getElementById("cal-today").onclick = () => { cal.today(); syncTitle(); };
-  document.getElementById("cal-view").onchange = (e) => { cal.changeView(e.target.value); syncTitle(); };
+  document.getElementById("cal-view").onchange = e  => { cal.changeView(e.target.value); syncTitle(); };
 }
-function syncTitle() { document.getElementById("cal-title").textContent = cal.view.title || ""; }
 
+function syncTitle() {
+  document.getElementById("cal-title").textContent = cal ? (cal.view.title || "") : "";
+}
+
+/* Reset per-cell counters before each render pass */
+function resetCellCounters() {
+  document.querySelectorAll(".fc-daygrid-day").forEach(c => { c._mieCount = 0; });
+}
+
+/* Remove old pills, reset counters, add new pills */
+function rebuildMorePills() {
+  if (!cal || cal.view.type !== "dayGridMonth") return;
+
+  /* remove existing custom pills */
+  document.querySelectorAll(".mie-more").forEach(el => el.remove());
+
+  /* reset counters */
+  document.querySelectorAll(".fc-daygrid-day").forEach(c => { c._mieCount = 0; });
+
+  /* re-count visible events per cell */
+  document.querySelectorAll(".fc-daygrid-day").forEach(cell => {
+    const evEls = cell.querySelectorAll(".fc-event");
+    cell._mieCount = evEls.length;
+  });
+
+  /* add pills where needed */
+  document.querySelectorAll(".fc-daygrid-day").forEach(cell => {
+    const dateStr = cell.getAttribute("data-date");
+    if (!dateStr) return;
+    const evs = eventsByDate[dateStr];
+    if (!evs || evs.length <= MAX_VISIBLE) return;
+
+    const hidden = evs.length - MAX_VISIBLE;
+    const pill = document.createElement("div");
+    pill.className = "mie-more";
+    pill.textContent = "+ " + hidden + " more event" + (hidden > 1 ? "s" : "");
+    pill.addEventListener("click", e => {
+      e.stopPropagation();
+      openDayModal(dateStr, evs);
+    });
+
+    const bottom = cell.querySelector(".fc-daygrid-day-bottom") ||
+                   cell.querySelector(".fc-daygrid-day-events");
+    if (bottom) bottom.appendChild(pill);
+  });
+}
+
+/* ── FETCH EVENTS ── */
 async function getEvents(fi, ok, fail) {
   try {
-    const p = new URLSearchParams({ timeMin:fi.startStr, timeMax:fi.endStr, _cb:Date.now() });
+    const p = new URLSearchParams({ timeMin: fi.startStr, timeMax: fi.endStr, _cb: Date.now() });
     const r = await fetch(BACKEND + "/api/me/events?" + p, {
       credentials: "include", headers: { "Cache-Control": "no-cache" }
     });
     if (r.status === 401) { show(authWrap); fail(new Error("401")); return; }
     if (!r.ok) { fail(new Error("HTTP " + r.status)); return; }
-    const data = await r.json();
-    ok((Array.isArray(data.events) ? data.events : []).map(e => ({
-      id:    e.id,
-      title: e.summary || "No Title",
-      start: (e.start && (e.start.dateTime || e.start.date)) || null,
-      end:   (e.end   && (e.end.dateTime   || e.end.date))   || null,
-      allDay: !!(e.start && e.start.date && !e.start.dateTime),
-      url:   e.htmlLink || "",
-      extendedProps: { desc: e.description||"", loc: e.location||"", cc: e.mieCalendarColor||null }
-    })));
+    const data  = await r.json();
+    const items = Array.isArray(data.events) ? data.events : [];
+
+    eventsByDate = {};
+    const mapped = items.map(e => {
+      const start  = (e.start && (e.start.dateTime || e.start.date)) || null;
+      const end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
+      const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+      const obj = {
+        id: e.id,
+        title: e.summary || "No Title",
+        start, end, allDay,
+        url: e.htmlLink || "",
+        extendedProps: {
+          desc: e.description || "",
+          loc:  e.location    || "",
+          cc:   e.mieCalendarColor || null
+        }
+      };
+      if (start) {
+        const key = allDay ? start : start.split("T")[0];
+        if (!eventsByDate[key]) eventsByDate[key] = [];
+        eventsByDate[key].push(obj);
+      }
+      return obj;
+    });
+
+    ok(mapped);
   } catch(err) { fail(err); }
 }
 
-/* ── MODAL ── */
-function openModal(ev) {
+/* ── EVENT DETAIL MODAL ── */
+function openEventModal(ev) {
   document.getElementById("m-title").textContent = ev.title || "No Title";
-  const s = new Date(ev.start), e = ev.end ? new Date(ev.end) : null;
+  const s = new Date(ev.start);
+  const e = ev.end ? new Date(ev.end) : null;
   let t = s.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year:"numeric" });
   if (!ev.allDay) {
-    t += " · " + s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
+    t += "  ·  " + s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
     if (e) t += " – " + e.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
   }
-  document.getElementById("m-time").textContent = t;
-  document.getElementById("m-loc").textContent  = ev.extendedProps.loc  ? "📍 " + ev.extendedProps.loc  : "";
-  document.getElementById("m-desc").textContent = ev.extendedProps.desc || "";
+  document.getElementById("m-time").textContent  = t;
+  document.getElementById("m-loc").textContent   = ev.extendedProps.loc  ? "📍 " + ev.extendedProps.loc  : "";
+  document.getElementById("m-desc").textContent  = ev.extendedProps.desc || "";
   const lk = document.getElementById("m-link");
   lk.href = ev.url || "#";
   lk.style.opacity = ev.url ? "1" : "0.4";
   lk.style.pointerEvents = ev.url ? "" : "none";
   document.getElementById("event-modal").classList.remove("hidden");
 }
-document.getElementById("m-close").onclick = () => document.getElementById("event-modal").classList.add("hidden");
+document.getElementById("m-close").onclick = () =>
+  document.getElementById("event-modal").classList.add("hidden");
 document.getElementById("event-modal").onclick = e => {
   if (e.target === document.getElementById("event-modal"))
     document.getElementById("event-modal").classList.add("hidden");
+};
+
+/* ── DAY EVENTS MODAL ── */
+function openDayModal(dateStr, evs) {
+  const d = new Date(dateStr + "T12:00:00");
+  document.getElementById("day-modal-title").textContent =
+    d.toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
+
+  const list = document.getElementById("day-modal-list");
+  list.innerHTML = "";
+
+  const sorted = [...evs].sort((a, b) => {
+    if (a.allDay && !b.allDay) return -1;
+    if (!a.allDay && b.allDay) return 1;
+    return new Date(a.start) - new Date(b.start);
+  });
+
+  sorted.forEach(ev => {
+    const color = (ev.extendedProps && ev.extendedProps.cc) || "#3b82f6";
+    const item = document.createElement("div");
+    item.className = "day-ev-item";
+
+    const dot = document.createElement("div");
+    dot.className = "day-ev-dot";
+    dot.style.background = color;
+
+    const info = document.createElement("div");
+    info.className = "day-ev-info";
+
+    const timeDiv = document.createElement("div");
+    timeDiv.className = "day-ev-time";
+    if (ev.allDay) {
+      timeDiv.textContent = "All-day";
+    } else {
+      const s = new Date(ev.start);
+      const e = ev.end ? new Date(ev.end) : null;
+      timeDiv.textContent = s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) +
+        (e ? " – " + e.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) : "");
+    }
+
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "day-ev-title";
+    titleDiv.textContent = ev.title || "No Title";
+
+    info.appendChild(timeDiv);
+    info.appendChild(titleDiv);
+
+    if (ev.extendedProps && ev.extendedProps.loc) {
+      const locDiv = document.createElement("div");
+      locDiv.className = "day-ev-loc";
+      locDiv.textContent = "📍 " + ev.extendedProps.loc;
+      info.appendChild(locDiv);
+    }
+
+    item.appendChild(dot);
+    item.appendChild(info);
+
+    item.addEventListener("click", () => {
+      document.getElementById("day-modal").classList.add("hidden");
+      openEventModal(ev);
+    });
+
+    list.appendChild(item);
+  });
+
+  document.getElementById("day-modal").classList.remove("hidden");
+}
+document.getElementById("day-modal-close").onclick = () =>
+  document.getElementById("day-modal").classList.add("hidden");
+document.getElementById("day-modal").onclick = e => {
+  if (e.target === document.getElementById("day-modal"))
+    document.getElementById("day-modal").classList.add("hidden");
 };
 
 /* ── MESSAGING ── */
@@ -425,7 +591,6 @@ let selFile  = null;
 
 function upd() { sndBtn.disabled = !msgIn.value.trim() && !selFile; }
 msgIn.addEventListener("input", upd);
-
 filIn.addEventListener("change", () => {
   selFile = filIn.files[0] || null;
   if (selFile) { fnm.textContent = selFile.name; fnm.style.display = ""; rmf.style.display = ""; }
@@ -434,7 +599,8 @@ filIn.addEventListener("change", () => {
 });
 rmf.onclick = () => {
   selFile = null; filIn.value = "";
-  fnm.style.display = "none"; rmf.style.display = "none"; upd();
+  fnm.style.display = "none"; rmf.style.display = "none";
+  upd();
 };
 
 sndBtn.addEventListener("click", async () => {
@@ -444,8 +610,9 @@ sndBtn.addEventListener("click", async () => {
   try {
     const body = txt + (selFile ? "\n\n[Attachment: " + selFile.name + "]" : "");
     const r = await fetch(BACKEND + "/api/me/message", {
-      method:"POST", credentials:"include",
-      headers:{"Content-Type":"application/json"}, body:JSON.stringify({ text:body })
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: body })
     });
     if (r.ok) {
       sndSt.style.color = "#16a34a"; sndSt.textContent = "✅ Sent!";
