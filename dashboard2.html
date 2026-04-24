@@ -8,343 +8,373 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; padding: 0; color: #1f2937; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-height: 100vh; }
 
-  .app { max-width: 900px; margin: 0 auto; padding: 16px; }
+.auth-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.auth-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 24px; padding: 48px 40px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+.auth-logo { width: 64px; height: 64px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 28px; margin: 0 auto 16px; }
+.auth-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+.auth-sub { font-size: 14px; color: #6b7280; margin-bottom: 28px; }
+.connect-btn { background: #2563eb; color: #fff; border: none; border-radius: 50px; padding: 12px 36px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.connect-btn:hover { background: #1d4ed8; }
 
-  /* Header */
-  .header { display: flex; align-items: center; justify-content: space-between; background: #fff; border-radius: 16px; padding: 12px 20px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .logo { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
-  .brand { font-size: 18px; font-weight: 700; color: #1d4ed8; }
-  .welcome { font-size: 14px; color: #6b7280; }
-  .signout-btn { font-size: 13px; color: #9ca3af; background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
-  .signout-btn:hover { background: #f3f4f6; color: #374151; }
+.spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 12px; }
+.spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Auth screen */
-  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 40px; text-align: center; }
-  .auth-screen img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 16px; }
-  .auth-screen h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
-  .auth-screen p { font-size: 14px; color: #6b7280; margin: 0 0 24px; }
-  .connect-btn { background: #2563eb; color: #fff; border: none; border-radius: 24px; padding: 10px 28px; font-size: 15px; font-weight: 600; cursor: pointer; }
-  .connect-btn:hover { background: #1d4ed8; }
+#dashboard { display: none; min-height: 100vh; flex-direction: column; }
 
-  /* Main grid */
-  .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
-  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid #f1f5f9; background: #fff; position: sticky; top: 0; z-index: 50; }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+.hamburger span { display: block; width: 22px; height: 2px; background: #374151; border-radius: 2px; }
+.tb-logo { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
+.tb-brand { font-size: 20px; font-weight: 700; color: #1d4ed8; }
+.topbar-center { font-size: 20px; font-weight: 700; color: #111827; }
+.signout-btn { font-size: 13px; color: #9ca3af; background: none; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+.signout-btn:hover { background: #f9fafb; color: #374151; }
 
-  /* Calendar card */
-  .card { background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; padding: 16px; }
+.weather-bar { margin: 12px 24px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.weather-date { font-size: 14px; font-weight: 500; color: #374151; }
+.weather-time { font-size: 14px; color: #6b7280; }
+.weather-sep { color: #d1d5db; font-size: 12px; }
+.weather-icon { font-size: 20px; }
+.weather-temp { font-size: 14px; font-weight: 600; color: #111827; }
+.toggle-btn { font-size: 11px; color: #6b7280; background: #e5e7eb; border: none; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.toggle-btn:hover { background: #d1d5db; }
 
-  /* FullCalendar tweaks */
-  .fc { font-size: 13px; }
-  .fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 3px 8px !important; }
-  .fc .fc-toolbar-title { font-size: 16px !important; font-weight: 600; }
-  .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background: #3b82f6; color: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-  .fc .fc-event { font-size: 11px; border: none; }
-  .fc .fc-daygrid-day.fc-day-other { opacity: 0.3; }
+.main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 0 24px 28px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: 1fr; } }
 
-  /* Right column */
-  .right-col { display: flex; flex-direction: column; gap: 16px; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; }
+.card-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.right-col { display: flex; flex-direction: column; gap: 14px; }
 
-  /* Message card */
-  .msg-label { font-size: 13px; color: #6b7280; font-weight: 500; margin-bottom: 8px; }
-  .msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 80px; font-family: inherit; background: #f9fafb; box-sizing: border-box; color: #1f2937; }
-  .msg-textarea:focus { outline: none; border-color: #93c5fd; background: #fff; }
-  .msg-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-  .attach-btn { font-size: 12px; color: #6b7280; background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
-  .attach-btn:hover { background: #e5e7eb; }
-  .send-btn { flex: 1; background: #3b82f6; color: #fff; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .send-btn:hover { background: #2563eb; }
-  .send-btn:disabled { background: #bfdbfe; cursor: not-allowed; }
-  .send-status { font-size: 12px; text-align: center; margin-top: 6px; height: 16px; }
+.fc { font-size: 13px !important; }
+.fc .fc-toolbar-title { font-size: 15px !important; font-weight: 700 !important; color: #111827 !important; }
+.fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 8px !important; }
+.fc .fc-button-primary:hover { background: #2563eb !important; }
+.fc .fc-col-header-cell { background: #f8fafc !important; font-size: 11px !important; font-weight: 600 !important; color: #6b7280 !important; }
+.fc-daygrid-day.fc-day-today { background: transparent !important; }
+.fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background: #3b82f6; color: #fff !important; border-radius: 50%; width: 24px; height: 24px; display: flex !important; align-items: center; justify-content: center; font-weight: 700; }
+.fc .fc-daygrid-day-number { color: #374151 !important; font-size: 12px !important; }
+.fc .fc-event { border: none !important; }
 
-  /* Quick buttons */
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .quick-btn { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; color: #1d4ed8; font-size: 11px; font-weight: 600; padding: 10px 4px; cursor: pointer; text-align: center; white-space: pre-line; line-height: 1.4; }
-  .quick-btn:hover { background: #dbeafe; }
-  .quick-btn.gray { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
-  .quick-btn.gray:hover { background: #f3f4f6; }
+.cal-topbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cal-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 11px; cursor: pointer; font-size: 15px; color: #374151; }
+.cal-nav-btn:hover { background: #e5e7eb; }
+.cal-today-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #374151; }
+.cal-today-btn:hover { background: #e5e7eb; }
+.cal-title-text { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #111827; }
+.cal-view-sel { appearance: none; background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 5px 22px 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
 
-  /* Event modal */
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
-  .modal-backdrop.hidden { display: none; }
-  .modal-box { background: #fff; border-radius: 16px; padding: 24px; max-width: 380px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
-  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .modal-title { font-size: 16px; font-weight: 600; color: #111827; flex: 1; }
-  .modal-close { background: none; border: none; font-size: 20px; color: #9ca3af; cursor: pointer; padding: 0 0 0 8px; }
-  .modal-row { font-size: 13px; color: #6b7280; margin-bottom: 6px; }
-  .modal-link { display: inline-block; margin-top: 12px; background: #3b82f6; color: #fff; border-radius: 8px; padding: 7px 16px; font-size: 13px; font-weight: 600; text-decoration: none; }
-  .modal-link:hover { background: #2563eb; }
+.msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 86px; font-family: inherit; background: #f9fafb; color: #111827; }
+.msg-textarea:focus { outline: none; border-color: #93c5fd; background: #fff; }
+.msg-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.attach-lbl { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+.attach-lbl:hover { background: #e5e7eb; }
+.fname { font-size: 11px; color: #6b7280; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rm-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 0 2px; }
+.send-btn { flex: 1; background: #3b82f6; color: #fff; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.send-btn:hover:not(:disabled) { background: #2563eb; }
+.send-btn:disabled { background: #bfdbfe; cursor: not-allowed; }
+.send-status { font-size: 12px; text-align: center; margin-top: 6px; min-height: 16px; }
 
-  /* Loading */
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+.btns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.q-btn { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 13px 8px; cursor: pointer; text-align: center; line-height: 1.4; }
+.q-btn:hover { background: #dbeafe; }
+.q-btn.neutral { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
+.q-btn.neutral:hover { background: #f3f4f6; }
+
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+.modal-bg.hidden { display: none; }
+.modal-box { background: #fff; border-radius: 20px; padding: 24px; max-width: 400px; width: 100%; box-shadow: 0 24px 48px rgba(0,0,0,.15); }
+.modal-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 8px; }
+.modal-title { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.3; }
+.modal-x { background: none; border: none; font-size: 22px; color: #9ca3af; cursor: pointer; line-height: 1; flex-shrink: 0; }
+.modal-row { font-size: 13px; color: #6b7280; margin-bottom: 6px; line-height: 1.5; }
+.modal-link { display: inline-block; margin-top: 14px; background: #3b82f6; color: #fff; border-radius: 10px; padding: 8px 18px; font-size: 13px; font-weight: 600; text-decoration: none; }
+.modal-link:hover { background: #2563eb; }
+
+@media (max-width: 600px) {
+  .topbar { padding: 10px 14px; }
+  .topbar-center { font-size: 16px; }
+  .weather-bar { margin: 10px 14px; padding: 8px 12px; gap: 8px; font-size: 13px; }
+  .main { padding: 0 14px 20px; gap: 12px; }
+}
 </style>
 </head>
 <body>
 
-<div class="app" id="app">
-
-  <!-- Auth Screen -->
-  <div id="auth-screen" class="auth-screen">
-    <img src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png" alt="MIE" onerror="this.style.display='none'" />
-    <h1>MIE</h1>
-    <p>Your messages. Your calendar. Zero effort.</p>
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">M</div>
+    <div class="auth-title">MIE</div>
+    <div class="auth-sub">Your messages. Your calendar. Zero effort.</div>
     <button class="connect-btn" id="connect-btn">Connect Google</button>
   </div>
+</div>
 
-  <!-- Loading Screen -->
-  <div id="loading-screen" class="auth-screen" style="display:none;">
-    <div class="spinner"></div>
-    <p style="margin-top:12px; color:#6b7280;">Connecting...</p>
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:#6b7280;margin-top:4px;">Loading...</div>
+</div>
+
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="tb-logo">M</div>
+      <span class="tb-brand">MIE</span>
+    </div>
+    <div class="topbar-center" id="welcome-text">Welcome</div>
+    <button class="signout-btn" id="signout-btn">Sign out</button>
   </div>
 
-  <!-- Dashboard -->
-  <div id="dashboard" style="display:none;">
+  <div class="weather-bar">
+    <span class="weather-date" id="wb-date"></span>
+    <span class="weather-sep">·</span>
+    <span class="weather-time" id="wb-time"></span>
+    <span class="weather-sep">·</span>
+    <span class="weather-icon" id="wb-icon">🌡️</span>
+    <span class="weather-temp" id="wb-temp">–</span>
+    <button class="toggle-btn" id="wb-toggle">°C / °F</button>
+  </div>
 
-    <!-- Header -->
-    <div class="header">
-      <div class="header-left">
-        <div class="logo">M</div>
-        <span class="brand">MIE</span>
+  <div class="main">
+    <div class="card">
+      <div class="cal-topbar">
+        <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
+        <button class="cal-nav-btn" id="cal-next">&#8594;</button>
+        <button class="cal-today-btn" id="cal-today">Today</button>
+        <span class="cal-title-text" id="cal-title"></span>
+        <select class="cal-view-sel" id="cal-view">
+          <option value="dayGridMonth">Monthly</option>
+          <option value="dayGridWeek">Weekly</option>
+          <option value="dayGridDay">Daily</option>
+        </select>
       </div>
-      <span class="welcome" id="welcome-msg"></span>
-      <button class="signout-btn" id="signout-btn">Sign out</button>
+      <div id="calendar"></div>
     </div>
 
-    <!-- Main -->
-    <div class="main-grid">
-
-      <!-- Calendar -->
+    <div class="right-col">
       <div class="card">
-        <div id="calendar"></div>
+        <div class="card-label">Send to MIE</div>
+        <textarea class="msg-textarea" id="msg-input" placeholder="Type your message..."></textarea>
+        <div class="msg-row">
+          <label class="attach-lbl" for="file-input">📎 Attach</label>
+          <input type="file" id="file-input" style="display:none;" />
+          <span class="fname" id="fname" style="display:none;"></span>
+          <button class="rm-btn" id="rm-file" style="display:none;">✕</button>
+          <button class="send-btn" id="send-btn" disabled>Send</button>
+        </div>
+        <div class="send-status" id="send-status"></div>
       </div>
 
-      <!-- Right column -->
-      <div class="right-col">
-
-        <!-- Send Message -->
-        <div class="card">
-          <div class="msg-label">Send to MIE</div>
-          <textarea class="msg-textarea" id="msg-input" placeholder="Type your message..."></textarea>
-          <div class="msg-footer">
-            <label class="attach-btn" for="file-input">📎 Attach</label>
-            <input type="file" id="file-input" style="display:none;" />
-            <button class="send-btn" id="send-btn" disabled>Send</button>
-          </div>
-          <div class="send-status" id="send-status"></div>
+      <div class="card">
+        <div class="card-label">Quick Actions</div>
+        <div class="btns-grid">
+          <button class="q-btn" onclick="qa('D/W/M Summaries')">D/W/M<br>Summaries</button>
+          <button class="q-btn" onclick="qa('Trackers')">Trackers</button>
+          <button class="q-btn" onclick="qa('Work Playbook')">Work<br>Playbook</button>
+          <button class="q-btn neutral" onclick="qa('Settings')">Settings</button>
         </div>
-
-        <!-- Quick Buttons -->
-        <div class="card">
-          <div class="btn-grid">
-            <button class="quick-btn">Daily&#10;Summary</button>
-            <button class="quick-btn">Weekly&#10;Summary</button>
-            <button class="quick-btn">Monthly&#10;Summary</button>
-            <button class="quick-btn">Trackers</button>
-            <button class="quick-btn">Lists</button>
-            <button class="quick-btn gray">Settings</button>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
 </div>
 
-<!-- Event Modal -->
-<div class="modal-backdrop hidden" id="event-modal">
+<div class="modal-bg hidden" id="event-modal">
   <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-title"></div>
-      <button class="modal-close" id="modal-close">&times;</button>
+    <div class="modal-hd">
+      <div class="modal-title" id="m-title"></div>
+      <button class="modal-x" id="m-close">&times;</button>
     </div>
-    <div class="modal-row" id="modal-time"></div>
-    <div class="modal-row" id="modal-location"></div>
-    <div class="modal-row" id="modal-desc"></div>
-    <a class="modal-link" id="modal-link" target="_blank" href="#">Open in Google Calendar</a>
+    <div class="modal-row" id="m-time"></div>
+    <div class="modal-row" id="m-loc"></div>
+    <div class="modal-row" id="m-desc"></div>
+    <a class="modal-link" id="m-link" href="#" target="_blank">Open in Google Calendar</a>
   </div>
 </div>
 
 <script>
 const BACKEND = "https://api.mie.today";
-
-const authScreen    = document.getElementById("auth-screen");
-const loadingScreen = document.getElementById("loading-screen");
-const dashboard     = document.getElementById("dashboard");
-const welcomeMsg    = document.getElementById("welcome-msg");
-const connectBtn    = document.getElementById("connect-btn");
-const signoutBtn    = document.getElementById("signout-btn");
-const msgInput      = document.getElementById("msg-input");
-const sendBtn       = document.getElementById("send-btn");
-const sendStatus    = document.getElementById("send-status");
-const fileInput     = document.getElementById("file-input");
-const eventModal    = document.getElementById("event-modal");
-const modalClose    = document.getElementById("modal-close");
-
-let calendar = null;
-let selectedFile = null;
-
-// ---- Init ----
-async function init() {
-  show(loadingScreen);
-  try {
-    const res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
-    if (!res.ok) { show(authScreen); return; }
-    const data = await res.json();
-    if (data.connected) {
-      const user = data.user || {};
-      const name = user.given_name || (user.name && user.name.split(" ")[0]) || data.userEmail || "";
-      if (name) welcomeMsg.textContent = "Welcome, " + name;
-      show(dashboard);
-      initCalendar();
-    } else {
-      show(authScreen);
-    }
-  } catch(e) {
-    show(authScreen);
-  }
-}
+const authWrap = document.getElementById("auth-wrap");
+const loadWrap = document.getElementById("loading-wrap");
+const dash     = document.getElementById("dashboard");
 
 function show(el) {
-  [authScreen, loadingScreen, dashboard].forEach(e => e.style.display = "none");
-  el.style.display = "";
+  [authWrap, loadWrap, dash].forEach(e => { e.style.display = "none"; });
+  el.style.display = (el === dash) ? "flex" : "";
+  if (el === dash) el.style.flexDirection = "column";
 }
 
-// ---- Auth ----
-connectBtn.addEventListener("click", () => {
+async function init() {
+  show(loadWrap);
+  try {
+    const res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
+    if (!res.ok) { show(authWrap); return; }
+    const d = await res.json();
+    if (d.connected) {
+      const u = d.user || {};
+      const n = u.given_name || (u.name && u.name.split(" ")[0]) || "";
+      document.getElementById("welcome-text").textContent = n ? "Welcome, " + n : "Welcome";
+      show(dash);
+      initCal();
+      startClock();
+      loadWeather();
+    } else { show(authWrap); }
+  } catch(e) { show(authWrap); }
+}
+
+document.getElementById("connect-btn").addEventListener("click", () => {
   window.location.href = BACKEND + "/auth/google";
 });
-
-signoutBtn.addEventListener("click", async () => {
+document.getElementById("signout-btn").addEventListener("click", async () => {
   try { await fetch(BACKEND + "/auth/logout", { method: "POST", credentials: "include" }); } catch(e) {}
-  show(authScreen);
+  show(authWrap);
 });
 
-// ---- Calendar ----
-function initCalendar() {
-  if (calendar) { calendar.destroy(); calendar = null; }
-  calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+function startClock() {
+  function tick() {
+    const now = new Date();
+    document.getElementById("wb-date").textContent = now.toLocaleDateString("en-US", {
+      weekday:"long", year:"numeric", month:"long", day:"numeric"
+    });
+    const parts = now.toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit", hour12:true, timeZoneName:"short" }).split(" ");
+    const tz = parts.pop();
+    document.getElementById("wb-time").textContent = parts.join(" ") + " " + tz;
+  }
+  tick();
+  setInterval(tick, 30000);
+}
+
+let tC = null, tF = null, usC = false;
+function icon(c) {
+  if(c===0) return"☀️"; if(c<=2) return"🌤️"; if(c===3) return"☁️";
+  if(c<=49) return"🌫️"; if(c<=59) return"🌦️"; if(c<=69) return"🌧️";
+  if(c<=79) return"❄️"; if(c<=82) return"🌧️"; if(c<=99) return"⛈️"; return"🌡️";
+}
+async function loadWeather() {
+  try {
+    const g = await fetch("https://ipapi.co/json/").then(r=>r.json());
+    const w = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto`).then(r=>r.json());
+    tC = Math.round(w.current.temperature_2m);
+    tF = Math.round(tC * 9/5 + 32);
+    document.getElementById("wb-icon").textContent = icon(w.current.weathercode);
+    renderTemp();
+  } catch(e) { document.getElementById("wb-temp").textContent = "N/A"; }
+}
+function renderTemp() {
+  if (tC===null) return;
+  document.getElementById("wb-temp").textContent = usC ? tC+"°C / "+tF+"°F" : tF+"°F / "+tC+"°C";
+}
+document.getElementById("wb-toggle").addEventListener("click", () => { usC=!usC; renderTemp(); });
+
+let cal = null;
+function initCal() {
+  if (cal) { cal.destroy(); }
+  cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
     initialView: "dayGridMonth",
     fixedWeekCount: false,
     showNonCurrentDates: false,
     height: "auto",
-    headerToolbar: { left: "today prev,next", center: "title", right: "dayGridMonth,dayGridWeek" },
-    buttonText: { today: "Today", month: "Month", week: "Week" },
-    events: fetchEvents,
-    eventClick: function(info) {
-      info.jsEvent.preventDefault();
-      showModal(info.event);
-    },
-    eventContent: function(arg) {
-      const color = (arg.event.extendedProps && arg.event.extendedProps.calendarColor) || "#3b82f6";
-      const div = document.createElement("div");
-      div.style.cssText = "display:flex;align-items:center;gap:3px;overflow:hidden;white-space:nowrap;";
+    headerToolbar: false,
+    events: getEvents,
+    datesSet: () => { document.getElementById("cal-title").textContent = cal.view.title || ""; },
+    eventClick: (info) => { info.jsEvent.preventDefault(); openModal(info.event); },
+    eventContent: (arg) => {
+      const color = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
+      const w = document.createElement("div");
+      w.style.cssText = "display:flex;align-items:center;gap:3px;overflow:hidden;padding:0 2px;";
       if (!arg.event.allDay) {
-        const dot = document.createElement("span");
-        dot.style.cssText = "width:6px;height:6px;border-radius:50%;background:" + color + ";flex-shrink:0;";
-        div.appendChild(dot);
+        const d = document.createElement("span");
+        d.style.cssText = "width:6px;height:6px;border-radius:50%;background:"+color+";flex-shrink:0;";
+        w.appendChild(d);
       }
       const t = document.createElement("span");
-      t.style.cssText = "overflow:hidden;text-overflow:ellipsis;font-size:11px;color:#111827;";
-      t.textContent = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
-      div.appendChild(t);
-      return { domNodes: [div] };
+      t.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#111827;";
+      t.textContent = (arg.timeText ? arg.timeText+" " : "") + (arg.event.title||"");
+      w.appendChild(t);
+      return { domNodes: [w] };
     }
   });
-  calendar.render();
+  cal.render();
+  document.getElementById("cal-title").textContent = cal.view.title || "";
+  document.getElementById("cal-prev").onclick  = () => { cal.prev();  document.getElementById("cal-title").textContent = cal.view.title; };
+  document.getElementById("cal-next").onclick  = () => { cal.next();  document.getElementById("cal-title").textContent = cal.view.title; };
+  document.getElementById("cal-today").onclick = () => { cal.today(); document.getElementById("cal-title").textContent = cal.view.title; };
+  document.getElementById("cal-view").onchange = (e) => { cal.changeView(e.target.value); document.getElementById("cal-title").textContent = cal.view.title; };
 }
 
-async function fetchEvents(fetchInfo, success, failure) {
+async function getEvents(fi, ok, fail) {
   try {
-    const params = new URLSearchParams({ timeMin: fetchInfo.startStr, timeMax: fetchInfo.endStr, _cb: Date.now() });
-    const res = await fetch(BACKEND + "/api/me/events?" + params, {
-      credentials: "include",
-      headers: { "Cache-Control": "no-cache" }
-    });
-    if (res.status === 401) { show(authScreen); failure(new Error("401")); return; }
-    if (!res.ok) { failure(new Error("HTTP " + res.status)); return; }
-    const data = await res.json();
-    const items = Array.isArray(data.events) ? data.events : [];
-    const events = items.map(e => ({
-      id:    e.id,
-      title: e.summary || "No Title",
-      start: (e.start && (e.start.dateTime || e.start.date)) || null,
-      end:   (e.end   && (e.end.dateTime   || e.end.date))   || null,
-      allDay: !!(e.start && e.start.date && !e.start.dateTime),
-      url:   e.htmlLink || "",
-      extendedProps: {
-        description:   e.description || "",
-        location:      e.location    || "",
-        calendarColor: e.mieCalendarColor || null
-      }
-    }));
-    success(events);
-  } catch(err) {
-    failure(err);
-  }
+    const p = new URLSearchParams({ timeMin: fi.startStr, timeMax: fi.endStr, _cb: Date.now() });
+    const r = await fetch(BACKEND+"/api/me/events?"+p, { credentials:"include", headers:{"Cache-Control":"no-cache"} });
+    if (r.status===401) { show(authWrap); fail(new Error("401")); return; }
+    if (!r.ok) { fail(new Error("HTTP "+r.status)); return; }
+    const data = await r.json();
+    ok((Array.isArray(data.events)?data.events:[]).map(e=>({
+      id: e.id, title: e.summary||"No Title",
+      start: (e.start&&(e.start.dateTime||e.start.date))||null,
+      end:   (e.end&&(e.end.dateTime||e.end.date))||null,
+      allDay: !!(e.start&&e.start.date&&!e.start.dateTime),
+      url: e.htmlLink||"",
+      extendedProps: { desc: e.description||"", loc: e.location||"", cc: e.mieCalendarColor||null }
+    })));
+  } catch(err) { fail(err); }
 }
 
-// ---- Modal ----
-function showModal(event) {
-  document.getElementById("modal-title").textContent = event.title || "No Title";
-  const start = new Date(event.start);
-  const end   = event.end ? new Date(event.end) : null;
-  let timeStr = start.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-  if (!event.allDay) {
-    timeStr += " · " + start.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-    if (end) timeStr += " – " + end.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-  }
-  document.getElementById("modal-time").textContent = timeStr;
-  document.getElementById("modal-location").textContent = (event.extendedProps.location ? "📍 " + event.extendedProps.location : "");
-  document.getElementById("modal-desc").textContent = event.extendedProps.description || "";
-  const link = document.getElementById("modal-link");
-  if (event.url) { link.href = event.url; link.style.opacity = "1"; link.style.pointerEvents = ""; }
-  else           { link.href = "#"; link.style.opacity = "0.4"; link.style.pointerEvents = "none"; }
-  eventModal.classList.remove("hidden");
+function openModal(ev) {
+  document.getElementById("m-title").textContent = ev.title||"No Title";
+  const s = new Date(ev.start), e = ev.end ? new Date(ev.end) : null;
+  let t = s.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  if (!ev.allDay) { t += " · "+s.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); if(e) t+=" – "+e.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }
+  document.getElementById("m-time").textContent = t;
+  document.getElementById("m-loc").textContent  = ev.extendedProps.loc ? "📍 "+ev.extendedProps.loc : "";
+  document.getElementById("m-desc").textContent = ev.extendedProps.desc || "";
+  const lk = document.getElementById("m-link");
+  lk.href = ev.url||"#"; lk.style.opacity = ev.url?"1":"0.4"; lk.style.pointerEvents = ev.url?"":"none";
+  document.getElementById("event-modal").classList.remove("hidden");
 }
+document.getElementById("m-close").onclick = () => document.getElementById("event-modal").classList.add("hidden");
+document.getElementById("event-modal").onclick = e => { if(e.target===document.getElementById("event-modal")) document.getElementById("event-modal").classList.add("hidden"); };
 
-modalClose.addEventListener("click", () => eventModal.classList.add("hidden"));
-eventModal.addEventListener("click", e => { if (e.target === eventModal) eventModal.classList.add("hidden"); });
+const msgIn  = document.getElementById("msg-input");
+const sndBtn = document.getElementById("send-btn");
+const sndSt  = document.getElementById("send-status");
+const filIn  = document.getElementById("file-input");
+const fnm    = document.getElementById("fname");
+const rmf    = document.getElementById("rm-file");
+let selFile  = null;
 
-// ---- Messaging ----
-msgInput.addEventListener("input", updateSend);
-fileInput.addEventListener("change", () => { selectedFile = fileInput.files[0] || null; updateSend(); });
-
-function updateSend() {
-  sendBtn.disabled = !msgInput.value.trim() && !selectedFile;
-}
-
-sendBtn.addEventListener("click", async () => {
-  const text = msgInput.value.trim();
-  if (!text && !selectedFile) return;
-  sendBtn.disabled = true;
-  sendStatus.textContent = "";
-  try {
-    const res = await fetch(BACKEND + "/api/me/message", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text + (selectedFile ? "\n\n[Attachment: " + selectedFile.name + "]" : "") })
-    });
-    if (res.ok) {
-      sendStatus.textContent = "✅ Sent!";
-      sendStatus.style.color = "#16a34a";
-      msgInput.value = "";
-      selectedFile = null;
-      fileInput.value = "";
-    } else {
-      sendStatus.textContent = "❌ Failed. Try again.";
-      sendStatus.style.color = "#dc2626";
-    }
-  } catch(e) {
-    sendStatus.textContent = "❌ Error. Try again.";
-    sendStatus.style.color = "#dc2626";
-  } finally {
-    setTimeout(() => { sendStatus.textContent = ""; updateSend(); }, 3000);
-  }
+function upd() { sndBtn.disabled = !msgIn.value.trim() && !selFile; }
+msgIn.addEventListener("input", upd);
+filIn.addEventListener("change", () => {
+  selFile = filIn.files[0]||null;
+  if (selFile) { fnm.textContent=selFile.name; fnm.style.display=""; rmf.style.display=""; }
+  else { fnm.style.display="none"; rmf.style.display="none"; }
+  upd();
 });
+rmf.onclick = () => { selFile=null; filIn.value=""; fnm.style.display="none"; rmf.style.display="none"; upd(); };
+
+sndBtn.addEventListener("click", async () => {
+  const txt = msgIn.value.trim();
+  if (!txt && !selFile) return;
+  sndBtn.disabled = true; sndSt.textContent = "";
+  try {
+    const body = txt+(selFile?"\n\n[Attachment: "+selFile.name+"]":"");
+    const r = await fetch(BACKEND+"/api/me/message",{ method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body:JSON.stringify({text:body}) });
+    if (r.ok) { sndSt.style.color="#16a34a"; sndSt.textContent="✅ Sent!"; msgIn.value=""; selFile=null; filIn.value=""; fnm.style.display="none"; rmf.style.display="none"; }
+    else { sndSt.style.color="#dc2626"; sndSt.textContent="❌ Failed. Try again."; }
+  } catch(e) { sndSt.style.color="#dc2626"; sndSt.textContent="❌ Error. Try again."; }
+  finally { setTimeout(()=>{ sndSt.textContent=""; upd(); }, 3000); }
+});
+
+function qa(label) { msgIn.value = label; upd(); msgIn.focus(); }
 
 init();
 </script>
