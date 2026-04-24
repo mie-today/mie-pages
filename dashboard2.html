@@ -47,7 +47,7 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 .weather-icon { font-size: 20px; }
 .weather-temp { font-size: 14px; font-weight: 600; color: #111827; }
 
-/* ── MAIN: 663px 고정 + 1fr (6:4 비율) ── */
+/* ── MAIN LAYOUT ── */
 .main {
   display: grid;
   grid-template-columns: 663px 1fr;
@@ -65,7 +65,7 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 .card-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
 .right-col { display: flex; flex-direction: column; gap: 14px; }
 
-/* ── FULLCALENDAR ── */
+/* ── FULLCALENDAR BASE ── */
 .fc { font-size: 13px !important; }
 .fc .fc-toolbar-title { font-size: 15px !important; font-weight: 700 !important; color: #111827 !important; }
 .fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 8px !important; }
@@ -77,7 +77,10 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
   width: 24px; height: 24px; display: flex !important; align-items: center; justify-content: center; font-weight: 700;
 }
 .fc .fc-daygrid-day-number { color: #374151 !important; font-size: 12px !important; }
-.fc .fc-event { border: none !important; }
+
+/* Override FC's own event colouring so our eventContent controls everything */
+.fc .fc-event { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+.fc .fc-event-main { padding: 0 !important; }
 .fc .fc-daygrid-more-link { display: none !important; }
 
 /* "+N more" pill */
@@ -186,7 +189,6 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
   </div>
 
   <div class="main">
-    <!-- LEFT: Calendar 663px -->
     <div class="card">
       <div class="cal-topbar">
         <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
@@ -202,7 +204,6 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
       <div id="calendar"></div>
     </div>
 
-    <!-- RIGHT: Message + Quick Actions -->
     <div class="right-col">
       <div class="card">
         <div class="card-label">Send to MIE</div>
@@ -260,27 +261,34 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 const BACKEND     = "https://api.mie.today";
 const MAX_VISIBLE = 3;
 
-/* ── DOM refs ── */
 const authWrap = document.getElementById("auth-wrap");
 const loadWrap = document.getElementById("loading-wrap");
 const dash     = document.getElementById("dashboard");
 
-/* ── 배경색 밝기 → 흰색/검정 폰트 자동 선택 (WCAG) ── */
+/* ══════════════════════════════════════════
+   contrastColor — WCAG relative luminance
+   배경색이 어두우면 → #ffffff (흰색)
+   배경색이 밝으면  → #111827 (검정)
+══════════════════════════════════════════ */
 function contrastColor(hex) {
-  let h = (hex || "#3b82f6").replace("#", "");
+  if (!hex || typeof hex !== "string") return "#111827";
+  var h = hex.replace("#", "").trim();
   if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
   if (h.length !== 6) return "#111827";
-  const r = parseInt(h.slice(0,2), 16);
-  const g = parseInt(h.slice(2,4), 16);
-  const b = parseInt(h.slice(4,6), 16);
-  const lin = v => { const s = v/255; return s <= 0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4); };
-  const L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
-  return (L + 0.05) / 0.05 > (1.05) / (L + 0.05) ? "#ffffff" : "#111827";
+  var r = parseInt(h.slice(0,2), 16);
+  var g = parseInt(h.slice(2,4), 16);
+  var b = parseInt(h.slice(4,6), 16);
+  function lin(v) { var s = v/255; return s <= 0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4); }
+  var L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+  /* contrast ratio white vs black */
+  var cWhite = (1.05) / (L + 0.05);
+  var cBlack = (L + 0.05) / (0.05);
+  return cWhite >= cBlack ? "#ffffff" : "#111827";
 }
 
 /* ── show/hide screens ── */
 function show(el) {
-  [authWrap, loadWrap, dash].forEach(e => { e.style.display = "none"; });
+  [authWrap, loadWrap, dash].forEach(function(e) { e.style.display = "none"; });
   if (el === dash) {
     dash.style.display       = "flex";
     dash.style.flexDirection = "column";
@@ -289,22 +297,22 @@ function show(el) {
   }
 }
 
-/* ─────────────────────────────────────────
-   INIT — status check
-───────────────────────────────────────── */
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
 async function init() {
   show(loadWrap);
   try {
-    const res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
+    var res = await fetch(BACKEND + "/api/me/status", { credentials: "include" });
     if (!res.ok) { show(authWrap); return; }
-    const d = await res.json();
+    var d = await res.json();
     if (d.connected) {
-      const u    = d.user || {};
-      const name = u.given_name
-                || u.givenName
-                || (u.name && u.name.split(" ")[0])
-                || (d.userEmail && d.userEmail.split("@")[0])
-                || "";
+      var u    = d.user || {};
+      var name = u.given_name
+              || u.givenName
+              || (u.name && u.name.split(" ")[0])
+              || (d.userEmail && d.userEmail.split("@")[0])
+              || "";
       document.getElementById("welcome-text").textContent =
         name ? "Welcome, " + name : "Welcome";
       show(dash);
@@ -314,66 +322,57 @@ async function init() {
     } else {
       show(authWrap);
     }
-  } catch (err) {
-    console.error("Status check failed:", err);
+  } catch(err) {
+    console.error("Status check error:", err);
     show(authWrap);
   }
 }
 
-/* ── Auth buttons ── */
 document.getElementById("connect-btn").addEventListener("click", function() {
   window.location.href = BACKEND + "/auth/google";
 });
-
 document.getElementById("signout-btn").addEventListener("click", async function() {
-  try { await fetch(BACKEND + "/auth/logout", { method: "POST", credentials: "include" }); }
-  catch(e) { console.warn("Logout error:", e); }
+  try { await fetch(BACKEND + "/auth/logout", { method:"POST", credentials:"include" }); }
+  catch(e) {}
   show(authWrap);
 });
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    CLOCK
-───────────────────────────────────────── */
+══════════════════════════════════════════ */
 function startClock() {
   function tick() {
-    const now = new Date();
+    var now = new Date();
     document.getElementById("wb-date").textContent = now.toLocaleDateString("en-US", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric"
+      weekday:"long", year:"numeric", month:"long", day:"numeric"
     });
     document.getElementById("wb-time").textContent = now.toLocaleTimeString("en-US", {
-      hour: "2-digit", minute: "2-digit", hour12: true, timeZoneName: "short"
+      hour:"2-digit", minute:"2-digit", hour12:true, timeZoneName:"short"
     });
   }
   tick();
   setInterval(tick, 30000);
 }
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    WEATHER
-───────────────────────────────────────── */
-function wIcon(code) {
-  if (code === 0)  return "☀️";
-  if (code <= 2)   return "🌤️";
-  if (code === 3)  return "☁️";
-  if (code <= 49)  return "🌫️";
-  if (code <= 59)  return "🌦️";
-  if (code <= 69)  return "🌧️";
-  if (code <= 79)  return "❄️";
-  if (code <= 82)  return "🌧️";
-  if (code <= 99)  return "⛈️";
+══════════════════════════════════════════ */
+function wIcon(c) {
+  if(c===0)  return"☀️"; if(c<=2)  return"🌤️"; if(c===3)  return"☁️";
+  if(c<=49)  return"🌫️"; if(c<=59) return"🌦️"; if(c<=69) return"🌧️";
+  if(c<=79)  return"❄️";  if(c<=82) return"🌧️"; if(c<=99) return"⛈️";
   return "🌡️";
 }
-
 async function loadWeather() {
   try {
-    const geo = await fetch("https://ipapi.co/json/").then(r => r.json());
-    const w   = await fetch(
-      "https://api.open-meteo.com/v1/forecast" +
-      "?latitude=" + geo.latitude + "&longitude=" + geo.longitude +
+    var geo = await fetch("https://ipapi.co/json/").then(function(r){ return r.json(); });
+    var w   = await fetch(
+      "https://api.open-meteo.com/v1/forecast?latitude=" + geo.latitude +
+      "&longitude=" + geo.longitude +
       "&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto"
-    ).then(r => r.json());
-    const c = Math.round(w.current.temperature_2m);
-    const f = Math.round(c * 9 / 5 + 32);
+    ).then(function(r){ return r.json(); });
+    var c = Math.round(w.current.temperature_2m);
+    var f = Math.round(c * 9/5 + 32);
     document.getElementById("wb-icon").textContent = wIcon(w.current.weathercode);
     document.getElementById("wb-temp").textContent = f + "°F / " + c + "°C";
   } catch(e) {
@@ -381,24 +380,24 @@ async function loadWeather() {
   }
 }
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    CALENDAR
-───────────────────────────────────────── */
-let cal          = null;
-let eventsByDate = {};
+══════════════════════════════════════════ */
+var cal          = null;
+var eventsByDate = {};
 
 function initCal() {
   if (cal) cal.destroy();
   eventsByDate = {};
 
   cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
-    initialView:        "dayGridMonth",
-    fixedWeekCount:     false,
-    showNonCurrentDates:false,
-    height:             "auto",
-    headerToolbar:      false,
-    dayMaxEvents:       false,
-    events:             fetchEvents,
+    initialView:         "dayGridMonth",
+    fixedWeekCount:      false,
+    showNonCurrentDates: false,
+    height:              "auto",
+    headerToolbar:       false,
+    dayMaxEvents:        false,
+    events:              fetchEvents,
 
     datesSet: function() {
       document.getElementById("cal-title").textContent = cal.view.title || "";
@@ -412,50 +411,50 @@ function initCal() {
     /* hide events beyond MAX_VISIBLE in month view */
     eventDidMount: function(info) {
       if (cal.view.type !== "dayGridMonth") return;
-      const cell = info.el.closest(".fc-daygrid-day");
+      var cell = info.el.closest(".fc-daygrid-day");
       if (!cell) return;
       if (!cell._mieCount) cell._mieCount = 0;
       if (cell._mieCount >= MAX_VISIBLE) info.el.style.display = "none";
       cell._mieCount++;
     },
 
-    /* ── eventContent: auto contrast font color ── */
+    /* ── eventContent: contrastColor applied to ALL event types ── */
     eventContent: function(arg) {
-      const color    = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
-      const isAllDay = arg.event.allDay;
+      var color    = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
+      var isAllDay = arg.event.allDay;
+      var fontClr  = contrastColor(color);   /* auto white or black */
 
-      const wrap = document.createElement("div");
-      wrap.style.display    = "flex";
-      wrap.style.alignItems = "center";
-      wrap.style.gap        = "3px";
-      wrap.style.overflow   = "hidden";
-      wrap.style.padding    = "0 2px";
-      wrap.style.width      = "100%";
+      /* outer wrapper — always full-width coloured block */
+      var wrap = document.createElement("div");
+      wrap.style.display      = "flex";
+      wrap.style.alignItems   = "center";
+      wrap.style.gap          = "4px";
+      wrap.style.overflow     = "hidden";
+      wrap.style.width        = "100%";
+      wrap.style.borderRadius = "3px";
+      wrap.style.padding      = "1px 4px";
+      wrap.style.background   = color;
 
-      if (isAllDay) {
-        /* solid background for all-day events */
-        wrap.style.background   = color;
-        wrap.style.borderRadius = "3px";
-        wrap.style.padding      = "1px 4px";
-      } else {
-        /* colored dot for timed events */
-        const dot = document.createElement("span");
-        dot.style.width        = "6px";
-        dot.style.height       = "6px";
+      /* for timed events: show a slightly lighter dot for visual rhythm */
+      if (!isAllDay) {
+        var dot = document.createElement("span");
+        dot.style.width        = "5px";
+        dot.style.height       = "5px";
         dot.style.borderRadius = "50%";
-        dot.style.background   = color;
+        dot.style.background   = fontClr === "#ffffff"
+          ? "rgba(255,255,255,0.6)"
+          : "rgba(0,0,0,0.3)";
         dot.style.flexShrink   = "0";
         wrap.appendChild(dot);
       }
 
-      const txt = document.createElement("span");
+      var txt = document.createElement("span");
       txt.style.overflow     = "hidden";
       txt.style.textOverflow = "ellipsis";
       txt.style.whiteSpace   = "nowrap";
       txt.style.fontSize     = "11px";
       txt.style.fontWeight   = "500";
-      /* use contrastColor for all-day blocks; dark text for timed */
-      txt.style.color        = isAllDay ? contrastColor(color) : "#111827";
+      txt.style.color        = fontClr;   /* ← contrast-safe font colour */
       txt.textContent        = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
       wrap.appendChild(txt);
 
@@ -471,72 +470,66 @@ function initCal() {
   cal.render();
   document.getElementById("cal-title").textContent = cal.view.title || "";
 
-  document.getElementById("cal-prev").addEventListener("click",  function() { cal.prev();  syncCalTitle(); });
-  document.getElementById("cal-next").addEventListener("click",  function() { cal.next();  syncCalTitle(); });
-  document.getElementById("cal-today").addEventListener("click", function() { cal.today(); syncCalTitle(); });
-  document.getElementById("cal-view").addEventListener("change", function(e) { cal.changeView(e.target.value); syncCalTitle(); });
+  document.getElementById("cal-prev").addEventListener("click",  function(){ cal.prev();  syncCalTitle(); });
+  document.getElementById("cal-next").addEventListener("click",  function(){ cal.next();  syncCalTitle(); });
+  document.getElementById("cal-today").addEventListener("click", function(){ cal.today(); syncCalTitle(); });
+  document.getElementById("cal-view").addEventListener("change", function(e){ cal.changeView(e.target.value); syncCalTitle(); });
 }
 
 function syncCalTitle() {
   document.getElementById("cal-title").textContent = cal ? (cal.view.title || "") : "";
 }
 
-/* rebuild "+N more" pills for month view */
 function rebuildMorePills() {
   if (!cal || cal.view.type !== "dayGridMonth") return;
-  document.querySelectorAll(".mie-more").forEach(function(el) { el.remove(); });
+  document.querySelectorAll(".mie-more").forEach(function(el){ el.remove(); });
 
   document.querySelectorAll(".fc-daygrid-day").forEach(function(cell) {
-    const dateStr = cell.getAttribute("data-date");
+    var dateStr = cell.getAttribute("data-date");
     if (!dateStr) return;
-    const evs = eventsByDate[dateStr];
+    var evs = eventsByDate[dateStr];
     if (!evs || evs.length <= MAX_VISIBLE) return;
 
-    const hidden = evs.length - MAX_VISIBLE;
-    const pill   = document.createElement("div");
+    var hidden = evs.length - MAX_VISIBLE;
+    var pill   = document.createElement("div");
     pill.className   = "mie-more";
-    pill.textContent = "+ " + hidden + " more event" + (hidden > 1 ? "s" : "");
+    pill.textContent = "+ " + hidden + " more event": "");
     pill.addEventListener("click", function(e) {
       e.stopPropagation();
       openDayModal(dateStr, evs);
     });
 
-    const bottom = cell.querySelector(".fc-daygrid-day-bottom")
-                || cell.querySelector(".fc-daygrid-day-events");
+    var bottom = cell.querySelector(".fc-daygrid-day-bottom")
+              || cell.querySelector(".fc-daygrid-day-events");
     if (bottom) bottom.appendChild(pill);
   });
 }
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    FETCH EVENTS
-───────────────────────────────────────── */
+══════════════════════════════════════════ */
 async function fetchEvents(fi, ok, fail) {
   try {
-    const params = new URLSearchParams({
-      timeMin: fi.startStr,
-      timeMax: fi.endStr,
-      _cb:     Date.now()
-    });
-    const res = await fetch(BACKEND + "/api/me/events?" + params.toString(), {
+    var params = new URLSearchParams({ timeMin: fi.startStr, timeMax: fi.endStr, _cb: Date.now() });
+    var res    = await fetch(BACKEND + "/api/me/events?" + params.toString(), {
       credentials: "include",
       headers: { "Cache-Control": "no-cache" }
     });
     if (res.status === 401) { show(authWrap); fail(new Error("401")); return; }
     if (!res.ok)             { fail(new Error("HTTP " + res.status)); return; }
 
-    const data  = await res.json();
-    const items = Array.isArray(data.events) ? data.events : [];
+    var data  = await res.json();
+    var items = Array.isArray(data.events) ? data.events : [];
 
     eventsByDate = {};
-    const mapped = items.map(function(e) {
-      const start  = (e.start && (e.start.dateTime || e.start.date)) || null;
-      const end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
-      const allDay = !!(e.start && e.start.date && !e.start.dateTime);
-      const obj    = {
-        id:    e.id,
-        title: e.summary || "No Title",
-        start, end, allDay,
-        url:   e.htmlLink || "",
+    var mapped = items.map(function(e) {
+      var start  = (e.start && (e.start.dateTime || e.start.date)) || null;
+      var end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
+      var allDay = !!(e.start && e.start.date && !e.start.dateTime);
+      var obj    = {
+        id: e.id, title: e.summary || "No Title",
+        start: start, end: end, allDay: allDay,
+        url: e.htmlLink || "",
         extendedProps: {
           desc: e.description || "",
           loc:  e.location    || "",
@@ -544,7 +537,7 @@ async function fetchEvents(fi, ok, fail) {
         }
       };
       if (start) {
-        const key = allDay ? start : start.split("T")[0];
+        var key = allDay ? start : start.split("T")[0];
         if (!eventsByDate[key]) eventsByDate[key] = [];
         eventsByDate[key].push(obj);
       }
@@ -552,20 +545,17 @@ async function fetchEvents(fi, ok, fail) {
     });
 
     ok(mapped);
-  } catch(err) {
-    fail(err);
-  }
+  } catch(err) { fail(err); }
 }
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    EVENT DETAIL MODAL
-───────────────────────────────────────── */
+══════════════════════════════════════════ */
 function openEventModal(ev) {
   document.getElementById("m-title").textContent = ev.title || "No Title";
-
-  const s = new Date(ev.start);
-  const e = ev.end ? new Date(ev.end) : null;
-  let t = s.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year:"numeric" });
+  var s = new Date(ev.start);
+  var e = ev.end ? new Date(ev.end) : null;
+  var t = s.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year:"numeric" });
   if (!ev.allDay) {
     t += "  ·  " + s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
     if (e) t += " – " + e.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
@@ -573,15 +563,12 @@ function openEventModal(ev) {
   document.getElementById("m-time").textContent = t;
   document.getElementById("m-loc").textContent  = ev.extendedProps.loc  ? "📍 " + ev.extendedProps.loc  : "";
   document.getElementById("m-desc").textContent = ev.extendedProps.desc || "";
-
-  const lk = document.getElementById("m-link");
-  lk.href                = ev.url || "#";
+  var lk = document.getElementById("m-link");
+  lk.href = ev.url || "#";
   lk.style.opacity       = ev.url ? "1" : "0.4";
   lk.style.pointerEvents = ev.url ? ""  : "none";
-
   document.getElementById("event-modal").classList.remove("hidden");
 }
-
 document.getElementById("m-close").addEventListener("click", function() {
   document.getElementById("event-modal").classList.add("hidden");
 });
@@ -590,71 +577,59 @@ document.getElementById("event-modal").addEventListener("click", function(e) {
     document.getElementById("event-modal").classList.add("hidden");
 });
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    DAY EVENTS MODAL
-───────────────────────────────────────── */
+══════════════════════════════════════════ */
 function openDayModal(dateStr, evs) {
-  const d = new Date(dateStr + "T12:00:00");
+  var d = new Date(dateStr + "T12:00:00");
   document.getElementById("day-modal-title").textContent =
     d.toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
 
-  const list = document.getElementById("day-modal-list");
+  var list = document.getElementById("day-modal-list");
   list.innerHTML = "";
 
-  var sorted = evs.slice().sort(function(a, b) {
+  var sorted = evs.slice().sort(function(a,b) {
     if (a.allDay && !b.allDay) return -1;
     if (!a.allDay && b.allDay) return 1;
     return new Date(a.start) - new Date(b.start);
   });
 
   sorted.forEach(function(ev) {
-    const color = (ev.extendedProps && ev.extendedProps.cc) || "#3b82f6";
-
-    const item = document.createElement("div");
-    item.className = "day-ev-item";
-
-    const dot = document.createElement("div");
-    dot.className      = "day-ev-dot";
-    dot.style.background = color;
-
-    const info     = document.createElement("div"); info.className     = "day-ev-info";
-    const timeDiv  = document.createElement("div"); timeDiv.className  = "day-ev-time";
-    const titleDiv = document.createElement("div"); titleDiv.className = "day-ev-title";
+    var color = (ev.extendedProps && ev.extendedProps.cc) || "#3b82f6";
+    var item  = document.createElement("div"); item.className = "day-ev-item";
+    var dot   = document.createElement("div"); dot.className  = "day-ev-dot"; dot.style.background = color;
+    var info  = document.createElement("div"); info.className = "day-ev-info";
+    var tDiv  = document.createElement("div"); tDiv.className = "day-ev-time";
+    var ttDiv = document.createElement("div"); ttDiv.className = "day-ev-title";
 
     if (ev.allDay) {
-      timeDiv.textContent = "All-day";
+      tDiv.textContent = "All-day";
     } else {
-      const s  = new Date(ev.start);
-      const e2 = ev.end ? new Date(ev.end) : null;
-      timeDiv.textContent =
-        s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) +
+      var s  = new Date(ev.start);
+      var e2 = ev.end ? new Date(ev.end) : null;
+      tDiv.textContent = s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) +
         (e2 ? " – " + e2.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) : "");
     }
-    titleDiv.textContent = ev.title || "No Title";
-
-    info.appendChild(timeDiv);
-    info.appendChild(titleDiv);
+    ttDiv.textContent = ev.title || "No Title";
+    info.appendChild(tDiv);
+    info.appendChild(ttDiv);
 
     if (ev.extendedProps && ev.extendedProps.loc) {
-      const locDiv = document.createElement("div");
-      locDiv.className   = "day-ev-loc";
-      locDiv.textContent = "📍 " + ev.extendedProps.loc;
-      info.appendChild(locDiv);
+      var lDiv = document.createElement("div"); lDiv.className = "day-ev-loc";
+      lDiv.textContent = "📍 " + ev.extendedProps.loc;
+      info.appendChild(lDiv);
     }
 
-    item.appendChild(dot);
-    item.appendChild(info);
+    item.appendChild(dot); item.appendChild(info);
     item.addEventListener("click", function() {
       document.getElementById("day-modal").classList.add("hidden");
       openEventModal(ev);
     });
-
     list.appendChild(item);
   });
 
   document.getElementById("day-modal").classList.remove("hidden");
 }
-
 document.getElementById("day-modal-close").addEventListener("click", function() {
   document.getElementById("day-modal").classList.add("hidden");
 });
@@ -663,74 +638,54 @@ document.getElementById("day-modal").addEventListener("click", function(e) {
     document.getElementById("day-modal").classList.add("hidden");
 });
 
-/* ─────────────────────────────────────────
+/* ══════════════════════════════════════════
    MESSAGING
-───────────────────────────────────────── */
-const msgIn  = document.getElementById("msg-input");
-const sndBtn = document.getElementById("send-btn");
-const sndSt  = document.getElementById("send-status");
-const filIn  = document.getElementById("file-input");
-const fnm    = document.getElementById("fname");
-const rmf    = document.getElementById("rm-file");
-let selFile  = null;
+══════════════════════════════════════════ */
+var msgIn  = document.getElementById("msg-input");
+var sndBtn = document.getElementById("send-btn");
+var sndSt  = document.getElementById("send-status");
+var filIn  = document.getElementById("file-input");
+var fnm    = document.getElementById("fname");
+var rmf    = document.getElementById("rm-file");
+var selFile = null;
 
-function updateSendBtn() {
-  sndBtn.disabled = !msgIn.value.trim() && !selFile;
-}
-
+function updateSendBtn() { sndBtn.disabled = !msgIn.value.trim() && !selFile; }
 msgIn.addEventListener("input", updateSendBtn);
 
 filIn.addEventListener("change", function() {
   selFile = filIn.files[0] || null;
-  if (selFile) {
-    fnm.textContent  = selFile.name;
-    fnm.style.display  = "";
-    rmf.style.display  = "";
-  } else {
-    fnm.style.display  = "none";
-    rmf.style.display  = "none";
-  }
+  if (selFile) { fnm.textContent = selFile.name; fnm.style.display = ""; rmf.style.display = ""; }
+  else         { fnm.style.display = "none"; rmf.style.display = "none"; }
   updateSendBtn();
 });
-
 rmf.addEventListener("click", function() {
-  selFile = null;
-  filIn.value        = "";
-  fnm.style.display  = "none";
-  rmf.style.display  = "none";
+  selFile = null; filIn.value = "";
+  fnm.style.display = "none"; rmf.style.display = "none";
   updateSendBtn();
 });
 
 sndBtn.addEventListener("click", async function() {
-  const txt = msgIn.value.trim();
+  var txt = msgIn.value.trim();
   if (!txt && !selFile) return;
-  sndBtn.disabled    = true;
-  sndSt.textContent  = "";
+  sndBtn.disabled = true; sndSt.textContent = "";
   try {
-    const body = txt + (selFile ? "\n\n[Attachment: " + selFile.name + "]" : "");
-    const res  = await fetch(BACKEND + "/api/me/message", {
-      method:  "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ text: body })
+    var body = txt + (selFile ? "\n\n[Attachment: " + selFile.name + "]" : "");
+    var res  = await fetch(BACKEND + "/api/me/message", {
+      method:"POST", credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ text: body })
     });
     if (res.ok) {
-      sndSt.style.color  = "#16a34a";
-      sndSt.textContent  = "✅ Sent!";
-      msgIn.value        = "";
-      selFile            = null;
-      filIn.value        = "";
-      fnm.style.display  = "none";
-      rmf.style.display  = "none";
+      sndSt.style.color = "#16a34a"; sndSt.textContent = "✅ Sent!";
+      msgIn.value = ""; selFile = null; filIn.value = "";
+      fnm.style.display = "none"; rmf.style.display = "none";
     } else {
-      sndSt.style.color  = "#dc2626";
-      sndSt.textContent  = "❌ Failed. Try again.";
+      sndSt.style.color = "#dc2626"; sndSt.textContent = "❌ Failed. Try again.";
     }
   } catch(e) {
-    sndSt.style.color  = "#dc2626";
-    sndSt.textContent  = "❌ Error. Try again.";
+    sndSt.style.color = "#dc2626"; sndSt.textContent = "❌ Error. Try again.";
   } finally {
-    setTimeout(function() { sndSt.textContent = ""; updateSendBtn(); }, 3000);
+    setTimeout(function(){ sndSt.textContent = ""; updateSendBtn(); }, 3000);
   }
 });
 
