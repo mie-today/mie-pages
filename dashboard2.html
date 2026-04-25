@@ -3,639 +3,1529 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MIE Dashboard</title>
+<title>KIMIJA Dashboard</title>
+
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Google API Client Library (no longer used for auth; safe to keep) -->
+<script src="https://apis.google.com/js/api.js"></script>
+
+<!-- FullCalendar -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap"
+  rel="stylesheet"
+/>
+
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-height: 100vh; }
+    /* ============================================================
+     * NOTE
+     * - This file is based on dashboard.html (v2.8)
+     * - v2.9 CHANGES (scoped to fetchCalendarEvents only):
+     *   1. Date range parameters (timeMin/timeMax) added to API call
+     *   2. Cache-busting timestamp (_cb) added to URL
+     *   3. Cache-Control / Pragma no-cache headers added
+     *   4. AbortController added to cancel in-flight requests on navigation
+     *   5. AbortError silently ignored (intentional cancellation)
+     * - All other code, CSS, and HTML is unchanged from v2.8
+     * ============================================================ */
 
-.auth-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
-.auth-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 24px; padding: 48px 40px; text-align: center; max-width: 400px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
-.auth-logo { width: 64px; height: 64px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 28px; margin: 0 auto 16px; }
-.auth-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-.auth-sub { font-size: 14px; color: #6b7280; margin-bottom: 28px; }
-.connect-btn { background: #2563eb; color: #fff; border: none; border-radius: 50px; padding: 12px 36px; font-size: 15px; font-weight: 600; cursor: pointer; }
-.connect-btn:hover { background: #1d4ed8; }
+    /* --- General Body and Layout --- */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #ffffff;
+        color: #1f2937;
+        margin: 0;
+        padding: 0;
+    }
 
-.spinner-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 12px; }
-.spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+    /* Custom font classes */
+    .font-montserrat { font-family: 'Montserrat', sans-serif; }
+    .font-lato { font-family: 'Lato', sans-serif; }
 
-#dashboard { display: none; min-height: 100vh; flex-direction: column; }
+    /* --- Scrollbar Styling --- */
+    .oauth-app-container #message-log::-webkit-scrollbar,
+    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-track,
+    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
+    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
+    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
 
-.topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid #f1f5f9; background: #fff; position: sticky; top: 0; z-index: 50; }
-.topbar-left { display: flex; align-items: center; gap: 12px; }
-.hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
-.hamburger span { display: block; width: 22px; height: 2px; background: #374151; border-radius: 2px; }
-.tb-logo { width: 36px; height: 36px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; }
-.tb-brand { font-size: 20px; font-weight: 700; color: #1d4ed8; }
-.topbar-center { font-size: 20px; font-weight: 700; color: #111827; }
-.signout-btn { font-size: 13px; color: #9ca3af; background: none; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 12px; cursor: pointer; }
-.signout-btn:hover { background: #f9fafb; color: #374151; }
+    /* Utility class for disabled elements */
+    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
 
-.weather-bar { margin: 12px 24px; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-.weather-date { font-size: 14px; font-weight: 500; color: #374151; }
-.weather-time { font-size: 14px; color: #6b7280; }
-.weather-sep { color: #d1d5db; font-size: 12px; }
-.weather-icon { font-size: 20px; }
-.weather-temp { font-size: 14px; font-weight: 600; color: #111827; }
+    /* Main container for the entire application */
+    .oauth-app-container { max-width: 100%; margin: 0 auto; }
 
-.main {
-  display: grid;
-  grid-template-columns: 663px 1fr;
-  gap: 16px;
-  padding: 0 24px 28px;
-  align-items: start;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-@media (max-width: 960px) { .main { grid-template-columns: 1fr; } }
+    /* ============================================================
+     * RESPONSIVE LAYOUT
+     * ============================================================ */
 
-.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 16px; }
-.card-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
-.right-col { display: flex; flex-direction: column; gap: 14px; }
+    /* --- Responsive Styles for Mobile (up to 480px wide) --- */
+    @media (max-width: 480px) {
+        .oauth-app-container {
+            width: 100% !important;
+        }
+        .mobile-container {
+            padding: 4px !important;
+            gap: 4px !important;
+        }
+        .calendar-section, .messaging-section {
+            width: 100% !important;
+            height: auto !important;
+            padding: 8px !important;
+        }
+        .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
+        .mobile-text { font-size: 14px !important; line-height: 1.1 !important; }
+        .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
+        .mobile-text-btn { font-size: 16px !important; }
+        .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
 
-.fc { font-size: 13px !important; }
-.fc .fc-toolbar-title { font-size: 15px !important; font-weight: 700 !important; color: #111827 !important; }
-.fc .fc-button-primary { background: #3b82f6 !important; border-color: #2563eb !important; font-size: 12px !important; padding: 4px 10px !important; border-radius: 8px !important; }
-.fc .fc-button-primary:hover { background: #2563eb !important; }
-.fc .fc-col-header-cell { background: #f8fafc !important; font-size: 11px !important; font-weight: 600 !important; color: #6b7280 !important; }
-.fc-daygrid-day.fc-day-today { background: transparent !important; }
-.fc-daygrid-day.fc-day-today .fc-daygrid-day-number { background: #3b82f6; color: #fff !important; border-radius: 50%; width: 24px; height: 24px; display: flex !important; align-items: center; justify-content: center; font-weight: 700; }
-.fc .fc-daygrid-day-number { color: #374151 !important; font-size: 12px !important; }
-.fc .fc-event { border: none !important; }
-.fc .fc-daygrid-more-link { display: none !important; }
+        /* FullCalendar (mobile) fonts */
+        .fc .fc-toolbar-title { font-size: 20px !important; line-height: 1.2 !important; }
+        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
+        .fc .fc-col-header-cell { font-size: 12px !important; }
+        .fc .fc-daygrid-day-number { font-size: 12px !important; }
+        .fc .fc-event { font-size: 10px !important; }
 
-.mie-more { display: block; margin: 1px 2px 0; padding: 1px 5px; font-size: 10px; font-weight: 600; color: #2563eb; background: #eff6ff; border-radius: 4px; cursor: pointer; text-align: center; }
-.mie-more:hover { background: #dbeafe; }
+        .fc .fc-header-toolbar { display: none !important; }
 
-.cal-topbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.cal-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 11px; cursor: pointer; font-size: 15px; color: #374151; }
-.cal-nav-btn:hover { background: #e5e7eb; }
-.cal-today-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #374151; }
-.cal-today-btn:hover { background: #e5e7eb; }
-.cal-title-text { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #111827; }
-.cal-view-sel { appearance: none; background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 5px 22px 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
+        #mie-mobile-toolbar {
+          display: flex !important;
+        }
 
-.msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 86px; font-family: inherit; background: #f9fafb; color: #111827; }
-.msg-textarea:focus { outline: none; border-color: #93c5fd; background: #fff; }
-.msg-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.attach-lbl { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #6b7280; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
-.attach-lbl:hover { background: #e5e7eb; }
-.fname { font-size: 11px; color: #6b7280; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rm-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px; padding: 0 2px; }
-.send-btn { flex: 1; background: #3b82f6; color: #fff; border: none; border-radius: 10px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.send-btn:hover:not(:disabled) { background: #2563eb; }
-.send-btn:disabled { background: #bfdbfe; cursor: not-allowed; }
-.send-status { font-size: 12px; text-align: center; margin-top: 6px; min-height: 16px; }
+        #calendar-container { margin-top: 6px !important; min-height: 520px !important; }
 
-.btns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.q-btn { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 13px 8px; cursor: pointer; text-align: center; line-height: 1.4; }
-.q-btn:hover { background: #dbeafe; }
-.q-btn.neutral { background: #f9fafb; border-color: #e5e7eb; color: #6b7280; }
-.q-btn.neutral:hover { background: #f3f4f6; }
+        .mie-more-events {
+          font-size: 11px !important;
+          padding: 2px 6px !important;
+          line-height: 1.1 !important;
+        }
+    }
 
-.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
-.modal-bg.hidden { display: none; }
-.modal-box { background: #fff; border-radius: 20px; padding: 24px; max-width: 400px; width: 100%; box-shadow: 0 24px 48px rgba(0,0,0,.15); }
-.day-modal-box { background: #fff; border-radius: 20px; padding: 24px; max-width: 420px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 24px 48px rgba(0,0,0,.15); }
-.modal-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 8px; }
-.modal-title { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.3; }
-.modal-x { background: none; border: none; font-size: 22px; color: #9ca3af; cursor: pointer; line-height: 1; flex-shrink: 0; }
-.modal-row { font-size: 13px; color: #6b7280; margin-bottom: 6px; line-height: 1.5; }
-.modal-link { display: inline-block; margin-top: 14px; background: #3b82f6; color: #fff; border-radius: 10px; padding: 8px 18px; font-size: 13px; font-weight: 600; text-decoration: none; }
-.modal-link:hover { background: #2563eb; }
-.day-ev-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
-.day-ev-item:last-child { border-bottom: none; }
-.day-ev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-.day-ev-info { flex: 1; min-width: 0; }
-.day-ev-time { font-size: 11px; color: #9ca3af; margin-bottom: 2px; }
-.day-ev-title { font-size: 13px; font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.day-ev-loc { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    /* --- Responsive Styles for Tablet (481px to 768px) --- */
+    @media (min-width: 481px) and (max-width: 768px) {
+        .oauth-app-container { width: 481px; }
+        .calendar-section { width: 481px; height: 720px; }
+        .messaging-section { width: 481px; height: 316px; }
+    }
 
-@media (max-width: 600px) {
-  .topbar { padding: 10px 14px; }
-  .topbar-center { font-size: 16px; }
-  .weather-bar { margin: 10px 14px; padding: 8px 12px; gap: 8px; }
-  .main { padding: 0 14px 20px; }
-}
+    /* --- Responsive Styles for Desktop (769px and wider) --- */
+    @media (min-width: 769px) {
+        .oauth-app-container { width: 800px; }
+        .calendar-section { width: 800px; height: 820px; }
+        .messaging-section { width: 800px; height: 360px; }
+    }
+
+    /* ============================================================
+     * FULLCALENDAR LIGHT MODE CUSTOMIZATION
+     * ============================================================ */
+    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
+    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
+    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
+    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
+
+    .fc-daygrid-day.fc-day-today { background-color: transparent !important; }
+    .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+      background-color: #3b82f6 !important;
+      color: white !important;
+      border-radius: 50% !important;
+      width: 28px !important;
+      height: 28px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600 !important;
+    }
+
+    .fc .fc-daygrid-day-frame { background-color: white !important; }
+    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
+    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
+
+    /* ============================================================
+     * VIEW DROPDOWN STYLING
+     * ============================================================ */
+    .view-switcher {
+      position: relative;
+      display: inline-block;
+    }
+
+    .fc-customViewSwitcher-button {
+      display: none !important;
+    }
+
+    .view-switcher select {
+      appearance: none;
+      background-color: #3b82f6;
+      color: white;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      padding: 4px 32px 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      line-height: 1.2;
+    }
+
+    .view-switcher select:hover {
+      background-color: #2563eb;
+    }
+
+    .view-switcher::after {
+      content: '▼';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: white;
+      font-size: 12px;
+    }
+
+    .fc-daygrid-event-dot { display: none !important; }
+
+    .fc .fc-event {
+      border-color: transparent;
+      background-color: transparent;
+      color: #000000 !important;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .fc-daygrid-event-harness,
+    .fc-daygrid-event,
+    .fc-daygrid-event .fc-event-main,
+    .fc-daygrid-event .fc-event-title,
+    .fc-daygrid-event .fc-event-title-container,
+    .fc-daygrid-event .fc-event-main-frame {
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      box-sizing: border-box !important;
+    }
+
+    .fc .fc-event .fc-event-main,
+    .fc .fc-event .fc-event-title {
+      color: #000000 !important;
+    }
+
+    .fc .fc-toolbar-title {
+      color: #1f2937 !important;
+      font-size: 19px !important;
+      line-height: 1.2 !important;
+      font-weight: 600;
+    }
+
+    .fc .fc-toolbar .fc-button {
+      font-size: 14px !important;
+      line-height: 1.2 !important;
+      padding: 2px 8px !important;
+      height: auto !important;
+      border-radius: 6px !important;
+    }
+
+    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
+
+    .mie-event-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+     * "+ X more events" indicator styling
+     * ============================================================ */
+    .mie-more-events {
+      display: block;
+      padding: 2px 6px;
+      margin-top: 2px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #3b82f6;
+      background-color: #eff6ff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mie-more-events:hover {
+      background-color: #dbeafe;
+      color: #2563eb;
+    }
+
+    /* ============================================================
+     * MOBILE TOOLBAR STYLING
+     * ============================================================ */
+    #mie-mobile-toolbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 2px 4px 2px;
+      flex-wrap: nowrap;
+    }
+
+    #mie-mobile-title {
+      font-size: 26px;
+      line-height: 1.05;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: -0.02em;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .mie-mobile-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .mie-nav-pair {
+      display: inline-flex;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2563eb;
+      background-color: #3b82f6;
+    }
+
+    .mie-nav-btn {
+      width: 42px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mie-nav-btn:active {
+      filter: brightness(0.92);
+    }
+
+    .mie-nav-btn + .mie-nav-btn {
+      border-left: 1px solid rgba(255,255,255,0.45);
+    }
+
+    /* --- Event Modal Styling --- */
+    .event-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .event-modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      color: #1f2937;
+    }
+
+    @media (max-width: 480px){
+      .event-modal-content {
+        max-width: 320px !important;
+        padding: 16px !important;
+      }
+    }
+
+    /* --- Day Events Modal Styling --- */
+    .day-events-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .day-events-modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      color: #1f2937;
+    }
+
+    .day-events-modal-content::-webkit-scrollbar { width: 8px; }
+    .day-events-modal-content::-webkit-scrollbar-track { background-color: #f3f4f6; border-radius: 9999px; }
+    .day-events-modal-content::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+    .day-events-modal-content::-webkit-scrollbar-thumb:hover { background-color: #6b7280; }
+
+    .day-event-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid #3b82f6;
+      background-color: #f9fafb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .day-event-item:hover {
+      background-color: #f3f4f6;
+      transform: translateX(2px);
+    }
+
+    .day-event-time {
+      font-weight: 600;
+      color: #374151;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .day-event-title {
+      color: #1f2937;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .day-event-location {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 480px) {
+      .day-events-modal-content {
+        max-width: 340px !important;
+        padding: 16px !important;
+      }
+
+      .day-event-item { padding: 10px !important; }
+      .day-event-time { font-size: 12px !important; }
+      .day-event-title { font-size: 13px !important; }
+    }
+
+    /* --- Access Denied Styling --- */
+    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
 </style>
 </head>
-<body>
 
-<div id="auth-wrap" class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">M</div>
-    <div class="auth-title">MIE</div>
-    <div class="auth-sub">Your messages. Your calendar. Zero effort.</div>
-    <button class="connect-btn" id="connect-btn">Connect Google</button>
-  </div>
-</div>
+<body class="bg-white">
 
-<div id="loading-wrap" class="spinner-wrap" style="display:none;">
-  <div class="spinner"></div>
-  <div style="font-size:14px;color:#6b7280;margin-top:4px;">Loading...</div>
-</div>
+<!-- Main App Container -->
+<div class="oauth-app-container">
+    <div class="flex flex-col space-y-4 p-4 mobile-container">
 
-<div id="dashboard">
-  <div class="topbar">
-    <div class="topbar-left">
-      <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-      <div class="tb-logo">M</div>
-      <span class="tb-brand">MIE</span>
-    </div>
-    <div class="topbar-center" id="welcome-text">Welcome</div>
-    <button class="signout-btn" id="signout-btn">Sign out</button>
-  </div>
+        <!-- ===== Calendar Section ===== -->
+        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
 
-  <div class="weather-bar">
-    <span class="weather-date" id="wb-date"></span>
-    <span class="weather-sep">·</span>
-    <span class="weather-time" id="wb-time"></span>
-    <span class="weather-sep">·</span>
-    <span class="weather-icon" id="wb-icon">🌡️</span>
-    <span class="weather-temp" id="wb-temp">–</span>
-  </div>
+            <!-- Authentication Area (signed out / pre-consent) -->
+            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
+                <img
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                />
 
-  <div class="main">
-    <div class="card">
-      <div class="cal-topbar">
-        <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
-        <button class="cal-nav-btn" id="cal-next">&#8594;</button>
-        <button class="cal-today-btn" id="cal-today">Today</button>
-        <span class="cal-title-text" id="cal-title"></span>
-        <select class="cal-view-sel" id="cal-view">
-          <option value="dayGridMonth">Monthly</option>
-          <option value="dayGridWeek">Weekly</option>
-          <option value="dayGridDay">Daily</option>
-        </select>
-      </div>
-      <div id="calendar"></div>
-    </div>
+                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">KIMIJA</h1>
+                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Your messages. Your calendar. Zero effort.</p>
 
-    <div class="right-col">
-      <div class="card">
-        <div class="card-label">Send to MIE</div>
-        <textarea class="msg-textarea" id="msg-input" placeholder="Type your message..."></textarea>
-        <div class="msg-row">
-          <label class="attach-lbl" for="file-input">📎 Attach</label>
-          <input type="file" id="file-input" style="display:none;" />
-          <span class="fname" id="fname" style="display:none;"></span>
-          <button class="rm-btn" id="rm-file" style="display:none;">✕</button>
-          <button class="send-btn" id="send-btn" disabled>Send</button>
+                <!-- Connect CTA -->
+                <button
+                    id="connect-google-btn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full px-5 py-2 text-sm flex items-center shadow"
+                    style="min-width:200px; justify-content:center;"
+                >
+                    Connect Google
+                </button>
+
+                <div class="mt-6 text-sm text-gray-500">
+                    or
+                    <a href="signup.html"
+                       class="font-semibold text-green-600 hover:text-green-700 hover:underline">
+                    Create an account
+                    </a>
+                </div>
+            </div>
+
+            <!-- Access Verification Area -->
+            <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                />
+                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
+            </div>
+
+            <!-- Access Denied Area -->
+            <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
+                <img
+                    src="https://raw.githubusercontent.com/mie-today/mie-pages/refs/heads/main/logo_white_70x70.png"
+                    alt="Mie Logo"
+                    class="rounded-full mb-4"
+                />
+                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
+                <div class="access-denied text-center max-w-md">
+                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
+                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
+                    <div class="space-y-3">
+                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
+                        <br />
+                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">
+                            Try a Different Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Content (signed in + approved) -->
+            <div id="calendar-content" class="hidden flex flex-col h-full">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="welcome-message" class="text-sm text-gray-600"></span>
+                </div>
+
+                <!-- Mobile toolbar (only visible on <=480px) -->
+                <div id="mie-mobile-toolbar" aria-label="Calendar toolbar">
+                    <div id="mie-mobile-title" class="font-montserrat"> </div>
+                    <div class="mie-mobile-controls">
+                        <div class="mie-nav-pair" role="group" aria-label="Navigate">
+                            <button id="mie-mobile-prev" type="button" class="mie-nav-btn" aria-label="Previous">&#8249;</button>
+                            <button id="mie-mobile-next" type="button" class="mie-nav-btn" aria-label="Next">&#8250;</button>
+                        </div>
+
+                        <div class="view-switcher" aria-label="Change view">
+                            <select id="mie-mobile-view-select">
+                                <option value="dayGridDay">Daily</option>
+                                <option value="dayGridWeek">Weekly</option>
+                                <option value="dayGridMonth" selected>Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
+            </div>
         </div>
-        <div class="send-status" id="send-status"></div>
-      </div>
 
-      <div class="card">
-        <div class="card-label">Quick Actions</div>
-        <div class="btns-grid">
-          <button class="q-btn" onclick="qa('D/W/M Summaries')">D/W/M<br>Summaries</button>
-          <button class="q-btn" onclick="qa('Trackers')">Trackers</button>
-          <button class="q-btn" onclick="qa('Work Playbook')">Work<br>Playbook</button>
-          <button class="q-btn neutral" onclick="qa('Settings')">Settings</button>
+        <!-- ===== Messaging Section ===== -->
+        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
+            <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
+
+            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
+                <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
+            </div>
+
+            <textarea
+                id="message-input"
+                placeholder="Type your message..."
+                class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"
+            ></textarea>
+
+            <div class="flex items-center space-x-2 mt-2">
+                <label
+                    for="file-input"
+                    class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text"
+                >
+                    Attachment
+                </label>
+                <input id="file-input" type="file" class="hidden" accept="image/*" />
+                <div id="file-preview" class="hidden flex items-center space-x-2">
+                    <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview" />
+                    <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
+                </div>
+            </div>
+
+            <button
+                id="send-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn"
+                disabled
+            >
+                Send
+            </button>
+
+            <!-- Sign Out bottom-right with spacing -->
+            <div class="mt-6 flex justify-end">
+                <button
+                    id="signout_button"
+                    class="text-gray-500 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md"
+                >
+                    Sign Out
+                </button>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
-<div class="modal-bg hidden" id="event-modal">
-  <div class="modal-box">
-    <div class="modal-hd">
-      <div class="modal-title" id="m-title"></div>
-      <button class="modal-x" id="m-close">&times;</button>
+<!-- ===== Event Details Modal ===== -->
+<div id="event-modal" class="event-modal hidden">
+    <div class="event-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="event-details" class="space-y-2">
+            <p id="event-time" class="text-gray-600 mobile-text"></p>
+            <p id="event-description" class="text-gray-700 mobile-text"></p>
+            <p id="event-location" class="text-gray-600 mobile-text"></p>
+        </div>
+        <div class="mt-4 flex justify-end">
+            <a
+                id="event-link"
+                target="_blank"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-btn"
+            >
+                Open in Google Calendar
+            </a>
+        </div>
     </div>
-    <div class="modal-row" id="m-time"></div>
-    <div class="modal-row" id="m-loc"></div>
-    <div class="modal-row" id="m-desc"></div>
-    <a class="modal-link" id="m-link" href="#" target="_blank">Open in Google Calendar</a>
-  </div>
 </div>
 
-<div class="modal-bg hidden" id="day-modal">
-  <div class="day-modal-box">
-    <div class="modal-hd">
-      <div class="modal-title" id="day-modal-title"></div>
-      <button class="modal-x" id="day-modal-close">&times;</button>
+<!-- Day Events Modal -->
+<div id="day-events-modal" class="day-events-modal hidden">
+    <div class="day-events-modal-content">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h3 id="day-events-title" class="text-xl font-semibold mobile-heading text-gray-800"></h3>
+                <p id="day-events-subtitle" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            <button id="close-day-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="day-events-list" class="space-y-2">
+            <!-- Events will be dynamically inserted here -->
+        </div>
     </div>
-    <div id="day-modal-list"></div>
-  </div>
 </div>
 
 <script>
-var BACKEND     = "https://api.mie.today";
-var MAX_VISIBLE = 3;
+(function () {
+    // ========================================
+    // VERSION & DEBUG INFO
+    // ========================================
+    const VERSION = "2.9.0-CACHE-FIX-ABORT-CONTROLLER";
+    console.log("==========================================");
+    console.log("🚀 DASHBOARD VERSION:", VERSION);
+    console.log("📱 Mobile toolbar: Custom title + arrows + dropdown");
+    console.log("✅ Monthly event limiting ACTIVE: 3 visible events/day (Monthly only)");
+    console.log("🔄 View switcher: Daily/Weekly/Monthly (Desktop + Mobile)");
+    console.log("🔵 Today indicator: Blue circle (unchanged)");
+    console.log("🛠️  v2.9 FIX: timeMin/timeMax date range params on events API call");
+    console.log("🛠️  v2.9 FIX: Cache-busting timestamp added to events URL");
+    console.log("🛠️  v2.9 FIX: Cache-Control/Pragma no-cache headers added");
+    console.log("🛠️  v2.9 FIX: AbortController cancels in-flight requests on navigation");
+    console.log("==========================================");
 
-var authWrap = document.getElementById("auth-wrap");
-var loadWrap = document.getElementById("loading-wrap");
-var dash     = document.getElementById("dashboard");
+    // ======== CONFIG =========
+    const BACKEND_BASE_URL = "https://api.mie.today";
 
-function show(el) {
-  authWrap.style.display = "none";
-  loadWrap.style.display = "none";
-  dash.style.display     = "none";
-  if (el === dash) {
-    dash.style.display       = "flex";
-    dash.style.flexDirection = "column";
-  } else {
-    el.style.display = "";
-  }
-}
+    const MAX_VISIBLE_EVENTS = 3;
 
-/* ── INIT ── */
-function init() {
-  show(loadWrap);
-  fetch(BACKEND + "/api/me/status", { credentials: "include" })
-    .then(function(res) {
-      if (!res.ok) { show(authWrap); return null; }
-      return res.json();
-    })
-    .then(function(d) {
-      if (!d) return;
-      if (d.connected) {
-        var u    = d.user || {};
-        var name = u.given_name
-                || u.givenName
-                || (u.name && u.name.split(" ")[0])
-                || (d.userEmail && d.userEmail.split("@")[0])
-                || "";
-        document.getElementById("welcome-text").textContent =
-          name ? "Welcome, " + name : "Welcome";
-        show(dash);
-        initCal();
-        startClock();
-        loadWeather();
-      } else {
-        show(authWrap);
-      }
-    })
-    .catch(function(err) {
-      console.error("Status check error:", err);
-      show(authWrap);
-    });
-}
+    const MOBILE_MEDIA_QUERY = "(max-width: 480px)";
 
-document.getElementById("connect-btn").addEventListener("click", function() {
-  window.location.href = BACKEND + "/auth/google";
-});
+    // ======== STATE =========
+    let calendar = null;
+    let selectedFile = null;
+    let userEmail = null;
+    let userHasAccess = false;
+    let eventsByDate = {};
+    let isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 
-document.getElementById("signout-btn").addEventListener("click", function() {
-  fetch(BACKEND + "/auth/logout", { method: "POST", credentials: "include" })
-    .catch(function() {})
-    .finally(function() { show(authWrap); });
-});
+    // ── v2.9: AbortController for in-flight event requests ────────────────────
+    let _eventsFetchController = null;
 
-/* ── CLOCK ── */
-function startClock() {
-  function tick() {
-    var now = new Date();
-    document.getElementById("wb-date").textContent = now.toLocaleDateString("en-US", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric"
-    });
-    document.getElementById("wb-time").textContent = now.toLocaleTimeString("en-US", {
-      hour: "2-digit", minute: "2-digit", hour12: true, timeZoneName: "short"
-    });
-  }
-  tick();
-  setInterval(tick, 30000);
-}
+    // ======== DOM HOOKS =========
+    const authArea           = document.getElementById("auth-area");
+    const accessCheckArea    = document.getElementById("access-check-area");
+    const accessDeniedArea   = document.getElementById("access-denied-area");
+    const calendarContent    = document.getElementById("calendar-content");
+    const calendarContainer  = document.getElementById("calendar-container");
+    const messagingSection   = document.getElementById("messaging-section");
+    const welcomeMessage     = document.getElementById("welcome-message");
+    const signoutButton      = document.getElementById("signout_button");
+    const tryDifferentAccountBtn = document.getElementById("try-different-account");
+    const connectGoogleBtn   = document.getElementById("connect-google-btn");
 
-/* ── WEATHER ── */
-function wIcon(c) {
-  if (c === 0)  return "☀️";
-  if (c <= 2)   return "🌤️";
-  if (c === 3)  return "☁️";
-  if (c <= 49)  return "🌫️";
-  if (c <= 59)  return "🌦️";
-  if (c <= 69)  return "🌧️";
-  if (c <= 79)  return "❄️";
-  if (c <= 82)  return "🌧️";
-  if (c <= 99)  return "⛈️";
-  return "🌡️";
-}
-function loadWeather() {
-  fetch("https://ipapi.co/json/")
-    .then(function(r) { return r.json(); })
-    .then(function(geo) {
-      return fetch(
-        "https://api.open-meteo.com/v1/forecast?latitude=" + geo.latitude +
-        "&longitude=" + geo.longitude +
-        "&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto"
-      ).then(function(r) { return r.json(); });
-    })
-    .then(function(w) {
-      var c = Math.round(w.current.temperature_2m);
-      var f = Math.round(c * 9 / 5 + 32);
-      document.getElementById("wb-icon").textContent = wIcon(w.current.weathercode);
-      document.getElementById("wb-temp").textContent = f + "°F / " + c + "°C";
-    })
-    .catch(function() {
-      document.getElementById("wb-temp").textContent = "N/A";
-    });
-}
+    const sendButton         = document.getElementById("send-button");
+    const messageLog         = document.getElementById("message-log");
+    const messageInput       = document.getElementById("message-input");
+    const fileInput          = document.getElementById("file-input");
+    const filePreview        = document.getElementById("file-preview");
+    const previewImage       = document.getElementById("preview-image");
+    const removeFileButton   = document.getElementById("remove-file");
 
-/* ── CALENDAR ── */
-var cal          = null;
-var eventsByDate = {};
+    const eventModal         = document.getElementById("event-modal");
+    const closeModal         = document.getElementById("close-modal");
+    const eventTitle         = document.getElementById("event-title");
+    const eventTime          = document.getElementById("event-time");
+    const eventDescription   = document.getElementById("event-description");
+    const eventLocation      = document.getElementById("event-location");
+    const eventLink          = document.getElementById("event-link");
 
-function initCal() {
-  if (cal) cal.destroy();
-  eventsByDate = {};
+    const dayEventsModal     = document.getElementById("day-events-modal");
+    const closeDayModal      = document.getElementById("close-day-modal");
+    const dayEventsTitle     = document.getElementById("day-events-title");
+    const dayEventsSubtitle  = document.getElementById("day-events-subtitle");
+    const dayEventsList      = document.getElementById("day-events-list");
 
-  cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
-    initialView:         "dayGridMonth",
-    fixedWeekCount:      false,
-    showNonCurrentDates: false,
-    height:              "auto",
-    headerToolbar:       false,
-    dayMaxEvents:        false,
-    events:              fetchEvents,
+    const mobileToolbar      = document.getElementById("mie-mobile-toolbar");
+    const mobileTitle        = document.getElementById("mie-mobile-title");
+    const mobilePrevBtn      = document.getElementById("mie-mobile-prev");
+    const mobileNextBtn      = document.getElementById("mie-mobile-next");
+    const mobileViewSelect   = document.getElementById("mie-mobile-view-select");
 
-    datesSet: function() {
-      document.getElementById("cal-title").textContent = cal.view.title || "";
-      setTimeout(rebuildMorePills, 60);
-    },
+    // ======== INIT ========
+    document.addEventListener("DOMContentLoaded", () => {
+        bindEventHandlers();
+        initializeDashboard();
 
-    eventsSet: function() {
-      setTimeout(rebuildMorePills, 100);
-    },
-
-    eventDidMount: function(info) {
-      if (cal.view.type !== "dayGridMonth") return;
-      var cell = info.el.closest(".fc-daygrid-day");
-      if (!cell) return;
-      if (!cell._mieCount) cell._mieCount = 0;
-      if (cell._mieCount >= MAX_VISIBLE) info.el.style.display = "none";
-      cell._mieCount++;
-    },
-
-    eventContent: function(arg) {
-      var color = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
-      var wrap  = document.createElement("div");
-      wrap.style.display    = "flex";
-      wrap.style.alignItems = "center";
-      wrap.style.gap        = "3px";
-      wrap.style.overflow   = "hidden";
-      wrap.style.padding    = "0 2px";
-      wrap.style.width      = "100%";
-
-      if (!arg.event.allDay) {
-        var dot = document.createElement("span");
-        dot.style.width        = "6px";
-        dot.style.height       = "6px";
-        dot.style.borderRadius = "50%";
-        dot.style.background   = color;
-        dot.style.flexShrink   = "0";
-        wrap.appendChild(dot);
-      } else {
-        wrap.style.background   = color;
-        wrap.style.borderRadius = "3px";
-        wrap.style.padding      = "1px 4px";
-      }
-
-      var txt = document.createElement("span");
-      txt.style.overflow     = "hidden";
-      txt.style.textOverflow = "ellipsis";
-      txt.style.whiteSpace   = "nowrap";
-      txt.style.fontSize     = "11px";
-      txt.style.fontWeight   = "500";
-      txt.style.color        = "#111827";
-      txt.textContent        = (arg.timeText ? arg.timeText + " " : "") + (arg.event.title || "");
-      wrap.appendChild(txt);
-
-      return { domNodes: [wrap] };
-    },
-
-    eventClick: function(info) {
-      info.jsEvent.preventDefault();
-      openEventModal(info.event);
-    }
-  });
-
-  cal.render();
-  document.getElementById("cal-title").textContent = cal.view.title || "";
-
-  document.getElementById("cal-prev").addEventListener("click", function() { cal.prev();  syncCalTitle(); });
-  document.getElementById("cal-next").addEventListener("click", function() { cal.next();  syncCalTitle(); });
-  document.getElementById("cal-today").addEventListener("click", function() { cal.today(); syncCalTitle(); });
-  document.getElementById("cal-view").addEventListener("change", function(e) { cal.changeView(e.target.value); syncCalTitle(); });
-}
-
-function syncCalTitle() {
-  document.getElementById("cal-title").textContent = cal ? (cal.view.title || "") : "";
-}
-
-function rebuildMorePills() {
-  if (!cal || cal.view.type !== "dayGridMonth") return;
-  document.querySelectorAll(".mie-more").forEach(function(el) { el.remove(); });
-
-  document.querySelectorAll(".fc-daygrid-day").forEach(function(cell) {
-    var dateStr = cell.getAttribute("data-date");
-    if (!dateStr) return;
-    var evs = eventsByDate[dateStr];
-    if (!evs || evs.length <= MAX_VISIBLE) return;
-
-    var hidden = evs.length - MAX_VISIBLE;
-    var pill   = document.createElement("div");
-    pill.className   = "mie-more";
-    pill.textContent = "+ " + hidden + " more");
-    pill.addEventListener("click", function(e) {
-      e.stopPropagation();
-      openDayModal(dateStr, evs);
-    });
-
-    var bottom = cell.querySelector(".fc-daygrid-day-bottom")
-              || cell.querySelector(".fc-daygrid-day-events");
-    if (bottom) bottom.appendChild(pill);
-  });
-}
-
-/* ── FETCH EVENTS ── */
-function fetchEvents(fi, ok, fail) {
-  var params = new URLSearchParams({ timeMin: fi.startStr, timeMax: fi.endStr, _cb: Date.now() });
-  fetch(BACKEND + "/api/me/events?" + params.toString(), {
-    credentials: "include",
-    headers: { "Cache-Control": "no-cache" }
-  })
-    .then(function(res) {
-      if (res.status === 401) { show(authWrap); fail(new Error("401")); return null; }
-      if (!res.ok) { fail(new Error("HTTP " + res.status)); return null; }
-      return res.json();
-    })
-    .then(function(data) {
-      if (!data) return;
-      var items = Array.isArray(data.events) ? data.events : [];
-      eventsByDate = {};
-      var mapped = items.map(function(e) {
-        var start  = (e.start && (e.start.dateTime || e.start.date)) || null;
-        var end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
-        var allDay = !!(e.start && e.start.date && !e.start.dateTime);
-        var obj    = {
-          id: e.id, title: e.summary || "No Title",
-          start: start, end: end, allDay: allDay,
-          url: e.htmlLink || "",
-          extendedProps: {
-            desc: e.description || "",
-            loc:  e.location    || "",
-            cc:   e.mieCalendarColor || null
-          }
-        };
-        if (start) {
-          var key = allDay ? start : start.split("T")[0];
-          if (!eventsByDate[key]) eventsByDate[key] = [];
-          eventsByDate[key].push(obj);
+        const mq = window.matchMedia(MOBILE_MEDIA_QUERY);
+        if (mq && typeof mq.addEventListener === "function") {
+            mq.addEventListener("change", () => {
+                const nextIsMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+                if (nextIsMobile !== isMobile) {
+                    isMobile = nextIsMobile;
+                    if (calendarContent && !calendarContent.classList.contains("hidden")) {
+                        displayCalendar();
+                    }
+                }
+            });
         }
-        return obj;
-      });
-      ok(mapped);
-    })
-    .catch(function(err) { fail(err); });
-}
-
-/* ── EVENT DETAIL MODAL ── */
-function openEventModal(ev) {
-  document.getElementById("m-title").textContent = ev.title || "No Title";
-  var s = new Date(ev.start);
-  var e = ev.end ? new Date(ev.end) : null;
-  var t = s.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year:"numeric" });
-  if (!ev.allDay) {
-    t += "  ·  " + s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-    if (e) t += " – " + e.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" });
-  }
-  document.getElementById("m-time").textContent = t;
-  document.getElementById("m-loc").textContent  = ev.extendedProps.loc  ? "📍 " + ev.extendedProps.loc  : "";
-  document.getElementById("m-desc").textContent = ev.extendedProps.desc || "";
-  var lk = document.getElementById("m-link");
-  lk.href = ev.url || "#";
-  lk.style.opacity       = ev.url ? "1" : "0.4";
-  lk.style.pointerEvents = ev.url ? ""  : "none";
-  document.getElementById("event-modal").classList.remove("hidden");
-}
-document.getElementById("m-close").addEventListener("click", function() {
-  document.getElementById("event-modal").classList.add("hidden");
-});
-document.getElementById("event-modal").addEventListener("click", function(e) {
-  if (e.target === document.getElementById("event-modal"))
-    document.getElementById("event-modal").classList.add("hidden");
-});
-
-/* ── DAY EVENTS MODAL ── */
-function openDayModal(dateStr, evs) {
-  var d = new Date(dateStr + "T12:00:00");
-  document.getElementById("day-modal-title").textContent =
-    d.toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" });
-
-  var list = document.getElementById("day-modal-list");
-  list.innerHTML = "";
-
-  var sorted = evs.slice().sort(function(a, b) {
-    if (a.allDay && !b.allDay) return -1;
-    if (!a.allDay && b.allDay) return 1;
-    return new Date(a.start) - new Date(b.start);
-  });
-
-  sorted.forEach(function(ev) {
-    var color  = (ev.extendedProps && ev.extendedProps.cc) || "#3b82f6";
-    var item   = document.createElement("div"); item.className   = "day-ev-item";
-    var dot    = document.createElement("div"); dot.className    = "day-ev-dot"; dot.style.background = color;
-    var info   = document.createElement("div"); info.className   = "day-ev-info";
-    var tDiv   = document.createElement("div"); tDiv.className   = "day-ev-time";
-    var ttDiv  = document.createElement("div"); ttDiv.className  = "day-ev-title";
-
-    if (ev.allDay) {
-      tDiv.textContent = "All-day";
-    } else {
-      var s  = new Date(ev.start);
-      var e2 = ev.end ? new Date(ev.end) : null;
-      tDiv.textContent = s.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) +
-        (e2 ? " – " + e2.toLocaleTimeString([], { hour:"numeric", minute:"2-digit" }) : "");
-    }
-    ttDiv.textContent = ev.title || "No Title";
-    info.appendChild(tDiv);
-    info.appendChild(ttDiv);
-
-    if (ev.extendedProps && ev.extendedProps.loc) {
-      var lDiv = document.createElement("div"); lDiv.className = "day-ev-loc";
-      lDiv.textContent = "📍 " + ev.extendedProps.loc;
-      info.appendChild(lDiv);
-    }
-
-    item.appendChild(dot); item.appendChild(info);
-    item.addEventListener("click", function() {
-      document.getElementById("day-modal").classList.add("hidden");
-      openEventModal(ev);
     });
-    list.appendChild(item);
-  });
 
-  document.getElementById("day-modal").classList.remove("hidden");
-}
-document.getElementById("day-modal-close").addEventListener("click", function() {
-  document.getElementById("day-modal").classList.add("hidden");
-});
-document.getElementById("day-modal").addEventListener("click", function(e) {
-  if (e.target === document.getElementById("day-modal"))
-    document.getElementById("day-modal").classList.add("hidden");
-});
+    function bindEventHandlers() {
+        if (connectGoogleBtn) {
+            connectGoogleBtn.addEventListener("click", () => {
+                window.location.href = BACKEND_BASE_URL + "/auth/google";
+            });
+        }
 
-/* ── MESSAGING ── */
-var msgIn   = document.getElementById("msg-input");
-var sndBtn  = document.getElementById("send-btn");
-var sndSt   = document.getElementById("send-status");
-var filIn   = document.getElementById("file-input");
-var fnm     = document.getElementById("fname");
-var rmf     = document.getElementById("rm-file");
-var selFile = null;
+        if (signoutButton) {
+            signoutButton.addEventListener("click", () => handleSignOut(false));
+        }
 
-function updateSendBtn() { sndBtn.disabled = !msgIn.value.trim() && !selFile; }
-msgIn.addEventListener("input", updateSendBtn);
+        if (tryDifferentAccountBtn) {
+            tryDifferentAccountBtn.addEventListener("click", async () => {
+                await handleSignOut(true);
+                window.location.href = BACKEND_BASE_URL + "/auth/google";
+            });
+        }
 
-filIn.addEventListener("change", function() {
-  selFile = filIn.files[0] || null;
-  if (selFile) { fnm.textContent = selFile.name; fnm.style.display = ""; rmf.style.display = ""; }
-  else         { fnm.style.display = "none"; rmf.style.display = "none"; }
-  updateSendBtn();
-});
-rmf.addEventListener("click", function() {
-  selFile = null; filIn.value = "";
-  fnm.style.display = "none"; rmf.style.display = "none";
-  updateSendBtn();
-});
+        if (sendButton) {
+            sendButton.addEventListener("click", (e) => {
+                e.preventDefault();
+                sendMessage();
+            });
+        }
 
-sndBtn.addEventListener("click", function() {
-  var txt = msgIn.value.trim();
-  if (!txt && !selFile) return;
-  sndBtn.disabled = true; sndSt.textContent = "";
-  var body = txt + (selFile ? "\n\n[Attachment: " + selFile.name + "]" : "");
-  fetch(BACKEND + "/api/me/message", {
-    method: "POST", credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: body })
-  })
-    .then(function(res) {
-      if (res.ok) {
-        sndSt.style.color = "#16a34a"; sndSt.textContent = "✅ Sent!";
-        msgIn.value = ""; selFile = null; filIn.value = "";
-        fnm.style.display = "none"; rmf.style.display = "none";
-      } else {
-        sndSt.style.color = "#dc2626"; sndSt.textContent = "❌ Failed. Try again.";
-      }
-    })
-    .catch(function() {
-      sndSt.style.color = "#dc2626"; sndSt.textContent = "❌ Error. Try again.";
-    })
-    .finally(function() {
-      setTimeout(function() { sndSt.textContent = ""; updateSendBtn(); }, 3000);
-    });
-});
+        if (messageInput) {
+            messageInput.addEventListener("input", updateSendButton);
+        }
 
-function qa(label) { msgIn.value = label; updateSendBtn(); msgIn.focus(); }
+        if (fileInput) {
+            fileInput.addEventListener("change", handleFileSelect);
+        }
 
-init();
+        if (removeFileButton) {
+            removeFileButton.addEventListener("click", (e) => {
+                e.preventDefault();
+                clearSelectedFile();
+            });
+        }
+
+        if (closeModal) {
+            closeModal.addEventListener("click", () => {
+                eventModal.classList.add("hidden");
+            });
+        }
+        if (eventModal) {
+            eventModal.addEventListener("click", (e) => {
+                if (e.target === eventModal) {
+                    eventModal.classList.add("hidden");
+                }
+            });
+        }
+
+        if (closeDayModal) {
+            closeDayModal.addEventListener("click", () => {
+                dayEventsModal.classList.add("hidden");
+            });
+        }
+        if (dayEventsModal) {
+            dayEventsModal.addEventListener("click", (e) => {
+                if (e.target === dayEventsModal) {
+                    dayEventsModal.classList.add("hidden");
+                }
+            });
+        }
+
+        if (mobilePrevBtn) {
+            mobilePrevBtn.addEventListener("click", () => {
+                if (!calendar) return;
+                calendar.prev();
+                syncMobileToolbar();
+            });
+        }
+
+        if (mobileNextBtn) {
+            mobileNextBtn.addEventListener("click", () => {
+                if (!calendar) return;
+                calendar.next();
+                syncMobileToolbar();
+            });
+        }
+
+        if (mobileViewSelect) {
+            mobileViewSelect.addEventListener("change", (e) => {
+                if (!calendar) return;
+                const newView = e.target.value;
+                calendar.changeView(newView);
+                syncMobileToolbar();
+            });
+        }
+
+        updateSendButton();
+    }
+
+    // ======== HIGH-LEVEL FLOW ========
+    async function initializeDashboard() {
+        showAccessCheck();
+        try {
+            const resp = await fetch(BACKEND_BASE_URL + "/api/me/status", {
+                method: "GET",
+                credentials: "include",
+            });
+
+            if (!resp.ok) {
+                console.warn("Status check failed with HTTP", resp.status);
+                showAuthArea();
+                return;
+            }
+
+            const data = await resp.json();
+
+            if (data.connected) {
+                userHasAccess = true;
+                userEmail = data.userEmail || (data.user && (data.user.email || data.user.primaryEmail)) || "";
+
+                if (welcomeMessage) {
+                    const user = data.user || {};
+                    let firstName = "";
+                    if (user.given_name) {
+                        firstName = user.given_name;
+                    } else if (user.name) {
+                        firstName = user.name.split(" ")[0];
+                    }
+
+                    const email = userEmail || "";
+                    let label = "Welcome";
+                    if (firstName || email) {
+                        label += ", ";
+                        if (firstName) label += firstName;
+                        if (firstName && email) label += " ";
+                        if (email) label += "<" + email + ">";
+                    }
+                    welcomeMessage.textContent = label;
+                }
+
+                showDashboard();
+                displayCalendar();
+            } else {
+                showAuthArea();
+            }
+        } catch (err) {
+            console.error("Error during status check:", err);
+            showAuthArea();
+        }
+    }
+
+    // ======== UI STATE ========
+    function showAuthArea() {
+        authArea.classList.remove("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showAccessCheck() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.remove("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showAccessDenied() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.remove("hidden");
+        calendarContent.classList.add("hidden");
+        messagingSection.classList.add("hidden");
+    }
+
+    function showDashboard() {
+        authArea.classList.add("hidden");
+        accessCheckArea.classList.add("hidden");
+        accessDeniedArea.classList.add("hidden");
+        calendarContent.classList.remove("hidden");
+        messagingSection.classList.remove("hidden");
+    }
+
+    // ======== SIGN OUT ========
+    async function handleSignOut(silent) {
+        try {
+            await fetch(BACKEND_BASE_URL + "/auth/logout", {
+                method: "POST",
+                credentials: "include",
+            });
+        } catch (err) {
+            console.error("Error during logout:", err);
+        }
+
+        if (!silent) {
+            window.location.href = "dashboard.html";
+        }
+    }
+
+    // ============================================================
+    // CALENDAR (RESPONSIVE TOOLBAR)
+    // ============================================================
+    function displayCalendar() {
+        if (!calendarContainer) return;
+
+        isMobile = window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+
+        if (calendar) {
+            calendar.destroy();
+            calendar = null;
+        }
+
+        console.log("🔧 Initializing calendar. isMobile =", isMobile);
+
+        const commonOptions = {
+            initialView: "dayGridMonth",
+            fixedWeekCount: false,
+            showNonCurrentDates: false,
+            height: (isMobile ? "auto" : "100%"),
+            nextDayThreshold: "01:00:00",
+            events: fetchCalendarEvents,
+
+            datesSet: function() {
+                clearDayCellEventCounters();
+
+                if (calendar && calendar.view && calendar.view.type === "dayGridMonth") {
+                    setTimeout(() => addMoreEventsIndicators(), 0);
+                }
+
+                syncMobileToolbar();
+            },
+
+            eventDidMount: function(info) {
+                const el = info.el;
+                const dayCell = el.closest('.fc-daygrid-day');
+                if (!dayCell) return;
+
+                const currentView = calendar.view.type;
+
+                if (currentView !== "dayGridMonth") {
+                    return;
+                }
+
+                if (!dayCell._eventCount) {
+                    dayCell._eventCount = 0;
+                }
+
+                const currentIndex = dayCell._eventCount;
+                dayCell._eventCount++;
+
+                if (currentIndex >= MAX_VISIBLE_EVENTS) {
+                    el.style.display = "none";
+                }
+            },
+
+            eventsSet: function() {
+                if (calendar.view.type === "dayGridMonth") {
+                    setTimeout(() => addMoreEventsIndicators(), 0);
+                }
+            },
+
+            eventContent: function(arg) {
+                const event = arg.event;
+                const isAllDay = event.allDay;
+
+                const color =
+                    (event.extendedProps && event.extendedProps.calendarColor) ||
+                    arg.backgroundColor ||
+                    arg.borderColor ||
+                    "#3b82f6";
+
+                const container = document.createElement("div");
+                container.className = "flex items-center";
+                container.style.maxWidth = "100%";
+                container.style.overflow = "hidden";
+                container.style.textOverflow = "ellipsis";
+                container.style.whiteSpace = "nowrap";
+                container.style.boxSizing = "border-box";
+
+                if (isAllDay) {
+                    container.textContent = event.title || "";
+                    container.style.backgroundColor = color;
+                    container.style.borderRadius = "4px";
+                    container.style.padding = "0 4px";
+                    container.style.display = "block";
+                    container.style.color = "#000000";
+                    return { domNodes: [container] };
+                }
+
+                const dot = document.createElement("span");
+                dot.className = "mie-event-dot";
+                dot.style.backgroundColor = color;
+                container.appendChild(dot);
+
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "mie-event-time font-semibold mr-1";
+                timeSpan.textContent = arg.timeText || "";
+                timeSpan.style.flexShrink = "0";
+                container.appendChild(timeSpan);
+
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "mie-event-title";
+                titleSpan.textContent = event.title || "";
+                titleSpan.style.minWidth = "0";
+                titleSpan.style.flexShrink = "1";
+                titleSpan.style.overflow = "hidden";
+                titleSpan.style.textOverflow = "ellipsis";
+                titleSpan.style.whiteSpace = "nowrap";
+                container.appendChild(titleSpan);
+
+                return { domNodes: [container] };
+            },
+
+            eventClick: function(info) {
+                info.jsEvent.preventDefault();
+                showEventDetails(info.event);
+            },
+        };
+
+        const desktopToolbarOptions = {
+            headerToolbar: {
+                left: "today prev,next",
+                center: "title",
+                right: "customViewSwitcher",
+            },
+            customButtons: {
+                customViewSwitcher: {
+                    text: "",
+                    click: function() {}
+                }
+            },
+        };
+
+        const mobileToolbarOptions = {
+            headerToolbar: false,
+        };
+
+        calendar = new FullCalendar.Calendar(
+            calendarContainer,
+            Object.assign({}, commonOptions, isMobile ? mobileToolbarOptions : desktopToolbarOptions)
+        );
+
+        calendar.render();
+
+        if (!isMobile) {
+            createDesktopViewSwitcher();
+        }
+
+        if (isMobile) {
+            if (mobileToolbar) mobileToolbar.style.display = "flex";
+            syncMobileToolbar();
+        } else {
+            if (mobileToolbar) mobileToolbar.style.display = "none";
+        }
+
+        console.log("✅ Calendar rendered");
+    }
+
+    function createDesktopViewSwitcher() {
+        const customButton = document.querySelector(".fc-customViewSwitcher-button");
+        if (!customButton) return;
+
+        const switcherContainer = document.createElement("div");
+        switcherContainer.className = "view-switcher";
+
+        const select = document.createElement("select");
+        select.id = "view-switcher-select";
+
+        const views = [
+            { value: "dayGridDay",   label: "Daily"   },
+            { value: "dayGridWeek",  label: "Weekly"  },
+            { value: "dayGridMonth", label: "Monthly" }
+        ];
+
+        views.forEach(view => {
+            const option = document.createElement("option");
+            option.value = view.value;
+            option.textContent = view.label;
+            if (view.value === "dayGridMonth") option.selected = true;
+            select.appendChild(option);
+        });
+
+        select.addEventListener("change", (e) => {
+            const newView = e.target.value;
+            calendar.changeView(newView);
+
+            if (calendar.view.type === "dayGridMonth") {
+                setTimeout(() => addMoreEventsIndicators(), 0);
+            } else {
+                document.querySelectorAll(".mie-more-events").forEach(el => el.remove());
+            }
+        });
+
+        switcherContainer.appendChild(select);
+        customButton.parentNode.replaceChild(switcherContainer, customButton);
+    }
+
+    function syncMobileToolbar() {
+        if (!isMobile) return;
+        if (!calendar) return;
+
+        if (mobileViewSelect) {
+            const viewType = calendar.view.type;
+            if (mobileViewSelect.value !== viewType) {
+                mobileViewSelect.value = viewType;
+            }
+        }
+
+        if (mobileTitle) {
+            mobileTitle.textContent = formatMobileTitle(calendar.view);
+        }
+    }
+
+    function formatMobileTitle(view) {
+        const monthLong  = new Intl.DateTimeFormat("en-US", { month: "long" });
+        const monthYear  = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+        const monthShort = new Intl.DateTimeFormat("en-US", { month: "short" });
+        const dayNum     = new Intl.DateTimeFormat("en-US", { day: "numeric" });
+
+        if (view.type === "dayGridMonth") {
+            return monthYear.format(calendar.getDate());
+        }
+
+        if (view.type === "dayGridDay") {
+            const d = calendar.getDate();
+            return monthLong.format(d) + " " + dayNum.format(d);
+        }
+
+        if (view.type === "dayGridWeek") {
+            const start = view.currentStart;
+            const endExclusive = view.currentEnd;
+            const end = new Date(endExclusive.getTime());
+            end.setDate(end.getDate() - 1);
+
+            const startMonth = monthShort.format(start);
+            const endMonth   = monthShort.format(end);
+            const startDay   = dayNum.format(start);
+            const endDay     = dayNum.format(end);
+
+            if (startMonth === endMonth) {
+                return startMonth + " " + startDay + " \u2013 " + endDay;
+            }
+
+            return startMonth + " " + startDay + " \u2013 " + endMonth + " " + endDay;
+        }
+
+        return view.title || "";
+    }
+
+    function clearDayCellEventCounters() {
+        const dayCells = document.querySelectorAll(".fc-daygrid-day");
+        dayCells.forEach(cell => {
+            if (cell && cell._eventCount) {
+                cell._eventCount = 0;
+            }
+        });
+    }
+
+    // ============================================================
+    // "+ X more" indicators (Monthly only)
+    // ============================================================
+    function addMoreEventsIndicators() {
+        if (!calendar) return;
+
+        const currentView = calendar.view.type;
+        if (currentView !== "dayGridMonth") return;
+
+        document.querySelectorAll(".mie-more-events").forEach(el => el.remove());
+
+        const dayCells = document.querySelectorAll(".fc-daygrid-day");
+        dayCells.forEach(dayCell => {
+            const dateStr = dayCell.getAttribute("data-date");
+            if (!dateStr) return;
+
+            const eventsForDay = eventsByDate[dateStr];
+            if (!eventsForDay || eventsForDay.length <= MAX_VISIBLE_EVENTS) return;
+
+            const hiddenCount = eventsForDay.length - MAX_VISIBLE_EVENTS;
+
+            const indicator = document.createElement("div");
+            indicator.className = "mie-more-events";
+            indicator.textContent = isMobile
+                ? "+ " + hiddenCount
+                : "+ " + hiddenCount + " more event" + (hiddenCount > 1 ? "s" : "");
+            indicator.setAttribute("data-date", dateStr);
+
+            indicator.addEventListener("click", (e) => {
+                e.stopPropagation();
+                showDayEventsModal(dateStr, eventsForDay);
+            });
+
+            const dayBottom       = dayCell.querySelector(".fc-daygrid-day-bottom");
+            const eventsContainer = dayCell.querySelector(".fc-daygrid-day-events");
+
+            if (dayBottom) {
+                dayBottom.appendChild(indicator);
+            } else if (eventsContainer) {
+                eventsContainer.appendChild(indicator);
+            }
+        });
+    }
+
+    // ============================================================
+    // Day events modal
+    // ============================================================
+    function showDayEventsModal(dateStr, events) {
+        const date = new Date(dateStr + "T12:00:00");
+        const formattedDate = date.toLocaleDateString("en-US", {
+            weekday: "long",
+            year:    "numeric",
+            month:   "long",
+            day:     "numeric"
+        });
+
+        dayEventsTitle.textContent    = formattedDate;
+        dayEventsSubtitle.textContent = events.length + " event" + (events.length > 1 ? "s" : "");
+
+        dayEventsList.innerHTML = "";
+
+        const sortedEvents = [...events].sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        sortedEvents.forEach(event => {
+            const item = document.createElement("div");
+            item.className = "day-event-item";
+
+            const color = (event.extendedProps && event.extendedProps.calendarColor) || "#3b82f6";
+            item.style.borderLeftColor = color;
+
+            let timeString = "";
+            if (event.allDay) {
+                timeString = "All-day";
+            } else {
+                const startDate = new Date(event.start);
+                const endDate   = event.end ? new Date(event.end) : null;
+                timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                if (endDate) {
+                    timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                }
+            }
+
+            const timeDiv = document.createElement("div");
+            timeDiv.className   = "day-event-time";
+            timeDiv.textContent = timeString;
+
+            const titleDiv = document.createElement("div");
+            titleDiv.className   = "day-event-title";
+            titleDiv.textContent = event.title || "No Title";
+
+            item.appendChild(timeDiv);
+            item.appendChild(titleDiv);
+
+            if (event.extendedProps && event.extendedProps.location) {
+                const locationDiv = document.createElement("div");
+                locationDiv.className   = "day-event-location";
+                locationDiv.textContent = "\uD83D\uDCCD " + event.extendedProps.location;
+                item.appendChild(locationDiv);
+            }
+
+            item.addEventListener("click", () => {
+                dayEventsModal.classList.add("hidden");
+                showEventDetails(event);
+            });
+
+            dayEventsList.appendChild(item);
+        });
+
+        dayEventsModal.classList.remove("hidden");
+    }
+
+    // ============================================================
+    // FETCH CALENDAR EVENTS — v2.9 REWRITE
+    // Changes from v2.8:
+    //   1. AbortController cancels previous in-flight request
+    //   2. timeMin + timeMax passed as URL params (exact visible range)
+    //   3. _cb timestamp added for cache-busting
+    //   4. Cache-Control + Pragma no-cache headers added
+    //   5. AbortError caught and silently ignored
+    // ============================================================
+    async function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
+
+        // Cancel any previous in-flight request before starting a new one
+        if (_eventsFetchController) {
+            _eventsFetchController.abort();
+        }
+        _eventsFetchController = new AbortController();
+
+        try {
+            // Build URL with exact visible date range + cache-busting timestamp
+            // fetchInfo.startStr / endStr = ISO dates of the visible range
+            // _cb = current timestamp, makes every URL unique, prevents 304 caching
+            const params = new URLSearchParams({
+                timeMin: fetchInfo.startStr,
+                timeMax: fetchInfo.endStr,
+                _cb:     Date.now()
+            });
+
+            const url = BACKEND_BASE_URL + "/api/me/events?" + params.toString();
+
+            console.log("📅 Fetching events for range:",
+                fetchInfo.startStr, "\u2192", fetchInfo.endStr);
+
+            const resp = await fetch(url, {
+                method:      "GET",
+                credentials: "include",
+                signal:      _eventsFetchController.signal,
+                headers: {
+                    "Cache-Control": "no-cache",
+                    "Pragma":        "no-cache"
+                }
+            });
+
+            if (resp.status === 401) {
+                showAuthArea();
+                if (failureCallback) failureCallback(new Error("NOT_CONNECTED"));
+                return;
+            }
+
+            if (!resp.ok) {
+                if (failureCallback) failureCallback(new Error("HTTP " + resp.status));
+                return;
+            }
+
+            const data  = await resp.json();
+            const items = Array.isArray(data.events) ? data.events : [];
+
+            console.log("✅ Events received:", items.length,
+                "for", fetchInfo.startStr, "\u2192", fetchInfo.endStr);
+
+            // Build eventsByDate map
+            eventsByDate = {};
+
+            const events = items.map((e) => {
+                const start  = (e.start && (e.start.dateTime || e.start.date)) || null;
+                const end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
+                const allDay = !!(e.start && e.start.date && !e.start.dateTime);
+
+                const calColor =
+                    e.mieCalendarColor  ||
+                    e._mieCalendarColor ||
+                    null;
+
+                const eventObj = {
+                    id:    e.id,
+                    title: e.summary || "No Title",
+                    start,
+                    end,
+                    allDay,
+                    url:   e.htmlLink || "",
+                    extendedProps: {
+                        description:   e.description || "",
+                        location:      e.location    || "",
+                        calendarColor: calColor
+                    },
+                };
+
+                if (start) {
+                    const dateStr = allDay ? start : start.split("T")[0];
+                    if (!eventsByDate[dateStr]) eventsByDate[dateStr] = [];
+                    eventsByDate[dateStr].push(eventObj);
+                }
+
+                return eventObj;
+            });
+
+            successCallback(events);
+
+        } catch (err) {
+            // AbortError = intentional cancellation from navigating to a new month
+            // Silently ignore — the new request is already in flight
+            if (err.name === "AbortError") {
+                console.log("\uD83D\uDEAB Events fetch cancelled (new navigation started)");
+                return;
+            }
+            console.error("Error fetching events:", err);
+            if (failureCallback) failureCallback(err);
+        }
+    }
+
+    function showEventDetails(event) {
+        eventTitle.textContent = event.title || "No Title";
+
+        const startDate = event.start instanceof Date ? event.start : new Date(event.start);
+        const endDate   = event.end
+            ? (event.end instanceof Date ? event.end : new Date(event.end))
+            : null;
+
+        let timeString = "All-day";
+        if (!event.allDay && startDate instanceof Date) {
+            timeString = startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            if (endDate) {
+                timeString += " - " + endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            }
+        }
+
+        eventTime.textContent =
+            startDate.toLocaleDateString() + (event.allDay ? "" : " | " + timeString);
+
+        eventDescription.textContent =
+            (event.extendedProps && event.extendedProps.description) || "No description provided.";
+        eventLocation.textContent =
+            (event.extendedProps && event.extendedProps.location) || "No location provided.";
+
+        if (event.url) {
+            eventLink.href = event.url;
+            eventLink.classList.remove("pointer-events-none", "opacity-50");
+        } else {
+            eventLink.href = "#";
+            eventLink.classList.add("pointer-events-none", "opacity-50");
+        }
+
+        eventModal.classList.remove("hidden");
+    }
+
+    // ======== MESSAGING (unchanged from v2.8) ========
+    async function sendMessage() {
+        if (!userHasAccess) {
+            logMessage("Error: Not connected to Google.", "error");
+            return;
+        }
+
+        const text = messageInput ? messageInput.value.trim() : "";
+        if (!text && !selectedFile) return;
+
+        let payloadText = text;
+        if (selectedFile) {
+            payloadText += (payloadText ? "\n\n" : "") +
+                "[Attachment selected in UI: " + selectedFile.name + "]";
+        }
+
+        logMessage("Sending message...", "info");
+        sendButton.disabled = true;
+
+        try {
+            const resp = await fetch(BACKEND_BASE_URL + "/api/me/message", {
+                method:      "POST",
+                credentials: "include",
+                headers:     { "Content-Type": "application/json" },
+                body:        JSON.stringify({ text: payloadText }),
+            });
+
+            if (!resp.ok) {
+                logMessage("Failed to send message. Please try again.", "error");
+                return;
+            }
+
+            logMessage("Message sent.", "success");
+            if (messageInput) messageInput.value = "";
+            clearSelectedFile();
+        } catch (err) {
+            logMessage("Error sending message. Please try again.", "error");
+        } finally {
+            updateSendButton();
+        }
+    }
+
+    function handleFileSelect(e) {
+        const file = e.target.files && e.target.files[0];
+        if (!file) {
+            clearSelectedFile();
+            return;
+        }
+
+        selectedFile = file;
+
+        if (filePreview && previewImage) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                previewImage.src = ev.target.result;
+                filePreview.classList.remove("hidden");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        updateSendButton();
+    }
+
+    function clearSelectedFile() {
+        selectedFile = null;
+        if (fileInput)   fileInput.value = "";
+        if (filePreview) filePreview.classList.add("hidden");
+        updateSendButton();
+    }
+
+    function updateSendButton() {
+        if (!sendButton) return;
+        const canSend =
+            (messageInput && messageInput.value.trim() !== "") ||
+            selectedFile !== null;
+        sendButton.disabled = !canSend;
+    }
+
+    function logMessage(msg, type) {
+        if (!messageLog) return;
+        const entry = document.createElement("div");
+        entry.className = "text-sm mb-1";
+
+        if (type === "error")        entry.classList.add("text-red-500");
+        else if (type === "success") entry.classList.add("text-green-500");
+        else                         entry.classList.add("text-gray-600");
+
+        const timestamp = new Date().toLocaleTimeString();
+        entry.textContent = "[" + timestamp + "] " + msg;
+
+        const placeholder = messageLog.querySelector(".text-gray-500");
+        if (placeholder) placeholder.remove();
+
+        messageLog.appendChild(entry);
+        messageLog.scrollTop = messageLog.scrollHeight;
+    }
+})();
 </script>
 </body>
-</html> 
+</html>
+
