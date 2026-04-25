@@ -65,24 +65,20 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 .card-label { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
 .right-col { display: flex; flex-direction: column; gap: 14px; }
 
-/* ── CALENDAR WRAPPER: sidebar + calendar ── */
-.cal-wrapper { display: flex; gap: 12px; align-items: flex-start; }
+/* ── CALENDAR CARD ── */
+/* calendar card는 relative로 팝업 기준점 */
+.cal-card { position: relative; }
 
-/* Calendar sidebar */
-.cal-sidebar { width: 160px; flex-shrink: 0; }
-.cal-sidebar-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-.cal-list { display: flex; flex-direction: column; gap: 4px; }
-.cal-item { display: flex; align-items: center; gap: 7px; padding: 5px 6px; border-radius: 8px; cursor: pointer; transition: background .15s; }
-.cal-item:hover { background: #f3f4f6; }
-.cal-item input[type="checkbox"] { width: 14px; height: 14px; accent-color: #3b82f6; cursor: pointer; flex-shrink: 0; }
-.cal-item-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.cal-item-name { font-size: 12px; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cal-item-name.primary-label { font-weight: 600; color: #111827; }
+/* Cal custom toolbar */
+.cal-topbar { display: flex; align-items: center; margin-bottom: 10px; gap: 6px; }
+.cal-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 15px; color: #374151; flex-shrink: 0; }
+.cal-nav-btn:hover { background: #e5e7eb; }
+.cal-today-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #374151; flex-shrink: 0; }
+.cal-today-btn:hover { background: #e5e7eb; }
+.cal-title-text { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #111827; }
+.cal-view-sel { appearance: none; background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 5px 22px 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
 
-/* Calendar main area */
-.cal-main { flex: 1; min-width: 0; }
-
-/* ── FULLCALENDAR ── */
+/* FullCalendar */
 .fc { font-size: 13px !important; }
 .fc .fc-col-header-cell { background: #f8fafc !important; font-size: 11px !important; font-weight: 600 !important; color: #6b7280 !important; }
 .fc-daygrid-day.fc-day-today { background: transparent !important; }
@@ -91,19 +87,47 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 .fc .fc-event { border: none !important; }
 .fc .fc-daygrid-more-link { display: none !important; }
 
-/* ── Cal custom toolbar ── */
-.cal-topbar { display: flex; align-items: center; margin-bottom: 10px; gap: 6px; }
-.cal-nav-btn { background: #f3f4f6; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 15px; color: #374151; flex-shrink: 0; }
-.cal-nav-btn:hover { background: #e5e7eb; }
-.cal-today-btn { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 600; color: #374151; flex-shrink: 0; }
-.cal-today-btn:hover { background: #e5e7eb; }
-/* ── 가운데 정렬: title이 남은 공간을 차지하고 텍스트를 center 정렬 ── */
-.cal-title-text { flex: 1; text-align: center; font-size: 15px; font-weight: 700; color: #111827; }
-.cal-view-sel { appearance: none; background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 5px 22px 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 7px center; }
-
 /* "+N more" pill */
 .mie-more { display: block; margin: 1px 2px 0; padding: 1px 5px; font-size: 10px; font-weight: 600; color: #2563eb; background: #eff6ff; border-radius: 4px; cursor: pointer; text-align: center; }
 .mie-more:hover { background: #dbeafe; }
+
+/* ── CALENDARS BUTTON (왼쪽 하단) ── */
+.cal-footer { display: flex; align-items: center; margin-top: 10px; }
+.cal-list-btn { display: flex; align-items: center; gap: 6px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; padding: 6px 12px; font-size: 12px; font-weight: 600; color: #374151; cursor: pointer; transition: background .15s; }
+.cal-list-btn:hover { background: #e5e7eb; }
+.cal-list-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ── CALENDAR POPUP ── */
+.cal-popup {
+  display: none;
+  position: absolute;
+  bottom: 52px;   /* button 위에 띄움 */
+  left: 16px;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  padding: 14px 16px;
+  min-width: 220px;
+  max-width: 280px;
+}
+.cal-popup.open { display: block; }
+.cal-popup-title { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.cal-popup-list { display: flex; flex-direction: column; gap: 2px; }
+
+/* each calendar row */
+.cal-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-radius: 8px; }
+.cal-row:hover { background: #f9fafb; }
+
+/* locked primary: just a coloured square, no checkbox */
+.cal-row-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.cal-row-lock { font-size: 12px; flex-shrink: 0; opacity: .55; }
+
+/* other calendars: checkbox */
+.cal-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: #3b82f6; cursor: pointer; flex-shrink: 0; border-radius: 3px; }
+.cal-row-name { font-size: 13px; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.cal-row-name.is-primary { font-weight: 600; }
 
 /* ── MESSAGING ── */
 .msg-textarea { width: 100%; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; font-size: 13px; resize: none; height: 86px; font-family: inherit; background: #f9fafb; color: #111827; }
@@ -149,7 +173,6 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
   .topbar-center { font-size: 16px; }
   .weather-bar { margin: 10px 14px; padding: 8px 12px; gap: 8px; }
   .main { padding: 0 14px 20px; }
-  .cal-sidebar { width: 120px; }
 }
 </style>
 </head>
@@ -194,8 +217,9 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 
   <div class="main">
     <!-- LEFT: Calendar -->
-    <div class="card">
-      <!-- Toolbar: nav buttons | centered title | view select -->
+    <div class="card cal-card">
+
+      <!-- Toolbar -->
       <div class="cal-topbar">
         <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
         <button class="cal-nav-btn" id="cal-next">&#8594;</button>
@@ -208,18 +232,27 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
         </select>
       </div>
 
-      <!-- Sidebar + Calendar -->
-      <div class="cal-wrapper">
-        <!-- Calendar list sidebar -->
-        <div class="cal-sidebar">
-          <div class="cal-sidebar-title">Calendars</div>
-          <div class="cal-list" id="cal-list">
-            <!-- populated by JS -->
-          </div>
-        </div>
-        <!-- FullCalendar mount -->
-        <div class="cal-main">
-          <div id="calendar"></div>
+      <!-- FullCalendar -->
+      <div id="calendar"></div>
+
+      <!-- Footer: Calendars button (bottom-left) -->
+      <div class="cal-footer">
+        <button class="cal-list-btn" id="cal-list-btn">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="2" width="5" height="5" rx="1"/>
+            <rect x="9" y="2" width="5" height="5" rx="1"/>
+            <rect x="2" y="9" width="5" height="5" rx="1"/>
+            <rect x="9" y="9" width="5" height="5" rx="1"/>
+          </svg>
+          Calendars
+        </button>
+      </div>
+
+      <!-- Calendars popup (appears above button) -->
+      <div class="cal-popup" id="cal-popup">
+        <div class="cal-popup-title">My Calendars</div>
+        <div class="cal-popup-list" id="cal-popup-list">
+          <!-- populated by JS -->
         </div>
       </div>
     </div>
@@ -285,295 +318,273 @@ var authWrap = document.getElementById("auth-wrap");
 var loadWrap = document.getElementById("loading-wrap");
 var dash     = document.getElementById("dashboard");
 
-/* ── contrastColor: WCAG luminance → 흰색 or 검정 ── */
+/* ── contrastColor: WCAG ── */
 function contrastColor(hex) {
   if (!hex || typeof hex !== "string") return "#111827";
-  var h = hex.replace("#", "").trim();
+  var h = hex.replace("#","").trim();
   if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
   if (h.length !== 6) return "#111827";
-  var r = parseInt(h.slice(0,2),16);
-  var g = parseInt(h.slice(2,4),16);
-  var b = parseInt(h.slice(4,6),16);
-  function lin(v) { var s=v/255; return s<=0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055,2.4); }
-  var L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
-  return ((1.05)/(L+0.05) >= (L+0.05)/(0.05)) ? "#ffffff" : "#111827";
+  var r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  function lin(v){ var s=v/255; return s<=0.03928?s/12.92:Math.pow((s+0.055)/1.055,2.4); }
+  var L=0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+  return (1.05/(L+0.05)) >= ((L+0.05)/0.05) ? "#ffffff" : "#111827";
 }
 
 function show(el) {
-  authWrap.style.display = "none";
-  loadWrap.style.display = "none";
-  dash.style.display     = "none";
-  if (el === dash) { dash.style.display = "flex"; dash.style.flexDirection = "column"; }
-  else { el.style.display = ""; }
+  authWrap.style.display="none"; loadWrap.style.display="none"; dash.style.display="none";
+  if (el===dash){ dash.style.display="flex"; dash.style.flexDirection="column"; }
+  else { el.style.display=""; }
 }
 
-/* ── calendar state ── */
+/* ── state ── */
 var cal          = null;
 var eventsByDate = {};
-var allEvents    = [];          // full list fetched from server
-var calendarMeta = [];          // [{id, summary, color, primary, enabled}]
-var primaryCalId = null;
+var allEvents    = [];
+var calendarMeta = [];   /* [{id, summary, color, primary, enabled}] */
 
-/* ── INIT ── */
+/* ══════════════════════════════
+   INIT
+══════════════════════════════ */
 function init() {
   show(loadWrap);
-  fetch(BACKEND + "/api/me/status", { credentials: "include" })
-    .then(function(res) {
-      if (!res.ok) { show(authWrap); return null; }
-      return res.json();
-    })
-    .then(function(d) {
-      if (!d) return;
-      if (d.connected) {
-        /* ── 4) 이름: given_name → name first word → email prefix ── */
-        var u    = d.user || {};
-        var name = u.given_name
-                || u.givenName
-                || (u.name && /\s/.test(u.name) ? u.name.split(" ")[0] : u.name)
-                || "";
-        /* fallback: never show raw email or username */
-        document.getElementById("welcome-text").textContent =
-          name ? "Welcome, " + name : "Welcome";
+  fetch(BACKEND+"/api/me/status",{credentials:"include"})
+    .then(function(res){ if(!res.ok){show(authWrap);return null;} return res.json(); })
+    .then(function(d){
+      if(!d) return;
+      if(d.connected){
+        var u=d.user||{};
+        var name=u.given_name||u.givenName||(u.name&&u.name.split(" ")[0])||"";
+        document.getElementById("welcome-text").textContent = name?"Welcome, "+name:"Welcome";
         show(dash);
-        loadCalendarList(function() {
-          initCal();
-        });
+        loadCalendarList(function(){ initCal(); });
         startClock();
         loadWeather();
-      } else {
-        show(authWrap);
-      }
+      } else { show(authWrap); }
     })
-    .catch(function(err) {
-      console.error("Status check error:", err);
-      show(authWrap);
-    });
+    .catch(function(err){ console.error("Status error:",err); show(authWrap); });
 }
 
-/* ── fetch calendar list from Google (via backend or direct) ── */
+/* ══════════════════════════════
+   LOAD CALENDAR LIST
+   → /api/me/calendars 로 구글 표시 이름 가져오기
+══════════════════════════════ */
 function loadCalendarList(cb) {
-  /* Try backend calendar list endpoint first */
-  fetch(BACKEND + "/api/me/calendars", { credentials: "include" })
-    .then(function(res) { return res.ok ? res.json() : null; })
-    .then(function(data) {
-      buildCalendarMeta(data);
-      cb();
-    })
-    .catch(function() {
-      buildCalendarMeta(null);
-      cb();
-    });
+  fetch(BACKEND+"/api/me/calendars",{credentials:"include"})
+    .then(function(res){ return res.ok?res.json():null; })
+    .then(function(data){ buildCalendarMeta(data); cb(); })
+    .catch(function(){ buildCalendarMeta(null); cb(); });
 }
 
 function buildCalendarMeta(data) {
   calendarMeta = [];
-  primaryCalId = null;
-
-  var items = (data && Array.isArray(data.calendars)) ? data.calendars
-            : (data && Array.isArray(data.items))     ? data.items
-            : [];
+  var items = [];
+  if (data) {
+    items = Array.isArray(data.calendars) ? data.calendars
+          : Array.isArray(data.items)     ? data.items
+          : [];
+  }
 
   items.forEach(function(c) {
-    var isPrimary = !!(c.primary || c.id === (c.accessRole && c.accessRole === "owner"));
-    if (c.primary) primaryCalId = c.id;
     calendarMeta.push({
       id:      c.id,
-      summary: c.summary || c.id,
+      summary: c.summary || c.id,          /* 구글 표시 이름 */
       color:   c.backgroundColor || "#3b82f6",
       primary: !!c.primary,
-      /* 2) default: only primary enabled */
-      enabled: !!c.primary
+      enabled: !!c.primary                 /* primary만 기본 체크 */
     });
   });
 
-  /* If no primary found, enable first */
-  if (calendarMeta.length > 0 && !calendarMeta.some(function(c){ return c.enabled; })) {
-    calendarMeta[0].enabled = true;
-    primaryCalId = calendarMeta[0].id;
+  /* fallback: no items */
+  if (calendarMeta.length === 0) {
+    calendarMeta.push({ id:"primary", summary:"My Calendar", color:"#3b82f6", primary:true, enabled:true });
   }
 
-  renderCalendarSidebar();
+  /* ensure at least one primary */
+  if (!calendarMeta.some(function(c){ return c.primary; })) {
+    calendarMeta[0].primary = true;
+    calendarMeta[0].enabled = true;
+  }
+
+  renderCalendarPopup();
 }
 
-function renderCalendarSidebar() {
-  var list = document.getElementById("cal-list");
+/* ══════════════════════════════
+   RENDER POPUP LIST
+══════════════════════════════ */
+function renderCalendarPopup() {
+  var list = document.getElementById("cal-popup-list");
   list.innerHTML = "";
 
   calendarMeta.forEach(function(c) {
-    var item = document.createElement("label");
-    item.className = "cal-item";
+    var row = document.createElement("div");
+    row.className = "cal-row";
 
-    var cb = document.createElement("input");
-    cb.type    = "checkbox";
-    cb.checked = c.enabled;
-    cb.addEventListener("change", function() {
-      c.enabled = cb.checked;
-      refreshCalendarEvents();
-    });
+    if (c.primary) {
+      /* Primary: coloured square + lock icon (not clickable) */
+      var dot = document.createElement("div");
+      dot.className = "cal-row-dot";
+      dot.style.background = c.color;
 
-    var dot = document.createElement("span");
-    dot.className = "cal-item-dot";
-    dot.style.background = c.color;
+      var lk = document.createElement("span");
+      lk.className = "cal-row-lock";
+      lk.textContent = "🔒";
 
-    var name = document.createElement("span");
-    name.className = "cal-item-name" + (c.primary ? " primary-label" : "");
-    name.textContent = c.summary;
-    name.title       = c.summary;
+      var nm = document.createElement("span");
+      nm.className = "cal-row-name is-primary";
+      nm.textContent = c.summary;
+      nm.title = c.summary;
 
-    item.appendChild(cb);
-    item.appendChild(dot);
-    item.appendChild(name);
-    list.appendChild(item);
-  });
-}
+      row.appendChild(dot);
+      row.appendChild(nm);
+      row.appendChild(lk);
+    } else {
+      /* Other calendars: checkbox + colour dot + name */
+      var cb = document.createElement("input");
+      cb.type    = "checkbox";
+      cb.checked = c.enabled;
+      (function(meta){ cb.addEventListener("change", function(){
+        meta.enabled = cb.checked;
+        applyFilter();
+      }); })(c);
 
-/* filter allEvents by enabled calendars and re-render */
-function refreshCalendarEvents() {
-  if (!cal) return;
-  var enabledIds = calendarMeta.filter(function(c){ return c.enabled; }).map(function(c){ return c.id; });
+      var dot = document.createElement("div");
+      dot.className = "cal-row-dot";
+      dot.style.background = c.color;
 
-  /* rebuild eventsByDate from allEvents filtered */
-  eventsByDate = {};
-  var filtered = allEvents.filter(function(ev) {
-    return enabledIds.indexOf(ev.extendedProps.calId) !== -1;
-  });
-  filtered.forEach(function(ev) {
-    if (ev.start) {
-      var key = ev.allDay ? ev.start : ev.start.split("T")[0];
-      if (!eventsByDate[key]) eventsByDate[key] = [];
-      eventsByDate[key].push(ev);
+      var nm = document.createElement("span");
+      nm.className = "cal-row-name";
+      nm.textContent = c.summary;
+      nm.title = c.summary;
+
+      row.appendChild(cb);
+      row.appendChild(dot);
+      row.appendChild(nm);
     }
-  });
 
-  cal.removeAllEvents();
-  cal.addEventSource(function(fi, ok, fail) {
-    /* return only filtered events within visible range */
-    ok(filtered);
+    list.appendChild(row);
   });
-  setTimeout(rebuildMorePills, 120);
 }
 
-document.getElementById("connect-btn").addEventListener("click", function() {
-  window.location.href = BACKEND + "/auth/google";
-});
-document.getElementById("signout-btn").addEventListener("click", function() {
-  fetch(BACKEND + "/auth/logout", { method:"POST", credentials:"include" })
-    .catch(function(){})
-    .finally(function(){ show(authWrap); });
+/* ══════════════════════════════
+   POPUP TOGGLE
+══════════════════════════════ */
+var calPopup  = document.getElementById("cal-popup");
+var calListBtn = document.getElementById("cal-list-btn");
+
+calListBtn.addEventListener("click", function(e) {
+  e.stopPropagation();
+  calPopup.classList.toggle("open");
 });
 
-/* ── CLOCK ── */
-function startClock() {
-  function tick() {
-    var now = new Date();
-    document.getElementById("wb-date").textContent = now.toLocaleDateString("en-US", {
-      weekday:"long", year:"numeric", month:"long", day:"numeric"
-    });
-    document.getElementById("wb-time").textContent = now.toLocaleTimeString("en-US", {
-      hour:"2-digit", minute:"2-digit", hour12:true, timeZoneName:"short"
-    });
+/* close popup on outside click */
+document.addEventListener("click", function(e) {
+  if (!calPopup.contains(e.target) && e.target !== calListBtn) {
+    calPopup.classList.remove("open");
   }
-  tick(); setInterval(tick, 30000);
+});
+
+/* ══════════════════════════════
+   AUTH BUTTONS
+══════════════════════════════ */
+document.getElementById("connect-btn").addEventListener("click", function(){
+  window.location.href = BACKEND+"/auth/google";
+});
+document.getElementById("signout-btn").addEventListener("click", function(){
+  fetch(BACKEND+"/auth/logout",{method:"POST",credentials:"include"})
+    .catch(function(){}).finally(function(){ show(authWrap); });
+});
+
+/* ══════════════════════════════
+   CLOCK
+══════════════════════════════ */
+function startClock() {
+  function tick(){
+    var now=new Date();
+    document.getElementById("wb-date").textContent=now.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+    document.getElementById("wb-time").textContent=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true,timeZoneName:"short"});
+  }
+  tick(); setInterval(tick,30000);
 }
 
-/* ── WEATHER ── */
-function wIcon(c) {
-  if(c===0) return"☀️"; if(c<=2) return"🌤️"; if(c===3) return"☁️";
-  if(c<=49) return"🌫️"; if(c<=59) return"🌦️"; if(c<=69) return"🌧️";
-  if(c<=79) return"❄️"; if(c<=82) return"🌧️"; if(c<=99) return"⛈️"; return"🌡️";
+/* ══════════════════════════════
+   WEATHER
+══════════════════════════════ */
+function wIcon(c){
+  if(c===0)return"☀️"; if(c<=2)return"🌤️"; if(c===3)return"☁️";
+  if(c<=49)return"🌫️"; if(c<=59)return"🌦️"; if(c<=69)return"🌧️";
+  if(c<=79)return"❄️"; if(c<=82)return"🌧️"; if(c<=99)return"⛈️"; return"🌡️";
 }
-function loadWeather() {
+function loadWeather(){
   fetch("https://ipapi.co/json/")
-    .then(function(r){ return r.json(); })
-    .then(function(geo) {
+    .then(function(r){return r.json();})
+    .then(function(geo){
       return fetch("https://api.open-meteo.com/v1/forecast?latitude="+geo.latitude+"&longitude="+geo.longitude+"&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto")
-        .then(function(r){ return r.json(); });
+        .then(function(r){return r.json();});
     })
-    .then(function(w) {
-      var c=Math.round(w.current.temperature_2m), f=Math.round(c*9/5+32);
-      document.getElementById("wb-icon").textContent = wIcon(w.current.weathercode);
-      document.getElementById("wb-temp").textContent = f+"°F / "+c+"°C";
+    .then(function(w){
+      var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);
+      document.getElementById("wb-icon").textContent=wIcon(w.current.weathercode);
+      document.getElementById("wb-temp").textContent=f+"°F / "+c+"°C";
     })
     .catch(function(){ document.getElementById("wb-temp").textContent="N/A"; });
 }
 
-/* ── CALENDAR ── */
-function initCal() {
-  if (cal) cal.destroy();
-  eventsByDate = {};
+/* ══════════════════════════════
+   CALENDAR
+══════════════════════════════ */
+function initCal(){
+  if(cal) cal.destroy();
+  eventsByDate={}; allEvents=[];
 
-  cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
-    initialView:         "dayGridMonth",
-    fixedWeekCount:      false,
-    showNonCurrentDates: false,
-    height:              "auto",
-    headerToolbar:       false,
-    dayMaxEvents:        false,
-    events:              fetchEvents,
+  cal=new FullCalendar.Calendar(document.getElementById("calendar"),{
+    initialView:"dayGridMonth",
+    fixedWeekCount:false,
+    showNonCurrentDates:false,
+    height:"auto",
+    headerToolbar:false,
+    dayMaxEvents:false,
+    events:fetchEvents,
 
-    datesSet: function() {
-      document.getElementById("cal-title").textContent = cal.view.title || "";
-      setTimeout(rebuildMorePills, 60);
+    datesSet:function(){
+      document.getElementById("cal-title").textContent=cal.view.title||"";
+      setTimeout(rebuildMorePills,60);
     },
-    eventsSet: function() {
-      setTimeout(rebuildMorePills, 100);
-    },
+    eventsSet:function(){ setTimeout(rebuildMorePills,100); },
 
-    eventDidMount: function(info) {
-      if (cal.view.type !== "dayGridMonth") return;
-      var cell = info.el.closest(".fc-daygrid-day");
-      if (!cell) return;
-      if (!cell._mieCount) cell._mieCount = 0;
-      if (cell._mieCount >= MAX_VISIBLE) info.el.style.display = "none";
+    eventDidMount:function(info){
+      if(cal.view.type!=="dayGridMonth") return;
+      var cell=info.el.closest(".fc-daygrid-day"); if(!cell) return;
+      if(!cell._mieCount) cell._mieCount=0;
+      if(cell._mieCount>=MAX_VISIBLE) info.el.style.display="none";
       cell._mieCount++;
     },
 
-    /* 1) contrastColor applied to all events */
-    eventContent: function(arg) {
-      var color   = (arg.event.extendedProps && arg.event.extendedProps.cc) || "#3b82f6";
-      var fgColor = contrastColor(color);
-      var isAllDay = arg.event.allDay;
+    eventContent:function(arg){
+      var color=(arg.event.extendedProps&&arg.event.extendedProps.cc)||"#3b82f6";
+      var fg=contrastColor(color);
+      var isAllDay=arg.event.allDay;
 
-      var wrap = document.createElement("div");
-      wrap.style.display      = "flex";
-      wrap.style.alignItems   = "center";
-      wrap.style.gap          = "3px";
-      wrap.style.overflow     = "hidden";
-      wrap.style.width        = "100%";
-      wrap.style.borderRadius = "3px";
-      wrap.style.padding      = "1px 4px";
-      wrap.style.background   = color;
+      var wrap=document.createElement("div");
+      wrap.style.cssText="display:flex;align-items:center;gap:3px;overflow:hidden;width:100%;border-radius:3px;padding:1px 4px;background:"+color+";";
 
-      if (!isAllDay) {
-        var dot = document.createElement("span");
-        dot.style.width        = "5px";
-        dot.style.height       = "5px";
-        dot.style.borderRadius = "50%";
-        dot.style.flexShrink   = "0";
-        dot.style.background   = fgColor === "#ffffff" ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.25)";
+      if(!isAllDay){
+        var dot=document.createElement("span");
+        dot.style.cssText="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:"+(fg==="#ffffff"?"rgba(255,255,255,0.55)":"rgba(0,0,0,0.25)")+";";
         wrap.appendChild(dot);
       }
 
-      var txt = document.createElement("span");
-      txt.style.overflow     = "hidden";
-      txt.style.textOverflow = "ellipsis";
-      txt.style.whiteSpace   = "nowrap";
-      txt.style.fontSize     = "11px";
-      txt.style.fontWeight   = "500";
-      txt.style.color        = fgColor;   /* ← auto contrast */
-      txt.textContent        = (arg.timeText ? arg.timeText+" " : "") + (arg.event.title || "");
+      var txt=document.createElement("span");
+      txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:"+fg+";";
+      txt.textContent=(arg.timeText?arg.timeText+" ":"")+(arg.event.title||"");
       wrap.appendChild(txt);
-      return { domNodes: [wrap] };
+      return {domNodes:[wrap]};
     },
 
-    eventClick: function(info) {
-      info.jsEvent.preventDefault();
-      openEventModal(info.event);
-    }
+    eventClick:function(info){ info.jsEvent.preventDefault(); openEventModal(info.event); }
   });
 
   cal.render();
-  document.getElementById("cal-title").textContent = cal.view.title || "";
+  document.getElementById("cal-title").textContent=cal.view.title||"";
 
   document.getElementById("cal-prev").addEventListener("click",  function(){ cal.prev();  syncTitle(); });
   document.getElementById("cal-next").addEventListener("click",  function(){ cal.next();  syncTitle(); });
@@ -581,174 +592,180 @@ function initCal() {
   document.getElementById("cal-view").addEventListener("change", function(e){ cal.changeView(e.target.value); syncTitle(); });
 }
 
-function syncTitle() {
-  document.getElementById("cal-title").textContent = cal ? (cal.view.title||"") : "";
+function syncTitle(){ document.getElementById("cal-title").textContent=cal?(cal.view.title||""):""; }
+
+/* ── apply filter (checkbox change) ── */
+function applyFilter(){
+  if(!cal) return;
+  var enabledIds=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});
+
+  eventsByDate={};
+  var filtered=allEvents.filter(function(ev){
+    return enabledIds.length===0 || enabledIds.indexOf(ev.extendedProps.calId)!==-1;
+  });
+  filtered.forEach(function(ev){
+    if(ev.start){
+      var key=ev.allDay?ev.start:ev.start.split("T")[0];
+      if(!eventsByDate[key]) eventsByDate[key]=[];
+      eventsByDate[key].push(ev);
+    }
+  });
+
+  cal.removeAllEvents();
+  cal.addEventSource(function(fi,ok){ ok(filtered); });
+  setTimeout(rebuildMorePills,120);
 }
 
-function rebuildMorePills() {
-  if (!cal || cal.view.type !== "dayGridMonth") return;
-  document.querySelectorAll(".mie-more").forEach(function(el){ el.remove(); });
+/* ── more pills ── */
+function rebuildMorePills(){
+  if(!cal||cal.view.type!=="dayGridMonth") return;
+  document.querySelectorAll(".mie-more").forEach(function(el){el.remove();});
 
-  document.querySelectorAll(".fc-daygrid-day").forEach(function(cell) {
-    var dateStr = cell.getAttribute("data-date");
-    if (!dateStr) return;
-    var evs = eventsByDate[dateStr];
-    if (!evs || evs.length <= MAX_VISIBLE) return;
+  document.querySelectorAll(".fc-daygrid-day").forEach(function(cell){
+    var dateStr=cell.getAttribute("data-date"); if(!dateStr) return;
+    var evs=eventsByDate[dateStr]; if(!evs||evs.length<=MAX_VISIBLE) return;
 
-    var hidden = evs.length - MAX_VISIBLE;
-    var pill   = document.createElement("div");
-    pill.className   = "mie-more";
-    pill.textContent = "+ " + hidden + " more";
-    pill.addEventListener("click", function(e) {
-      e.stopPropagation();
-      openDayModal(dateStr, evs);
-    });
-    var bottom = cell.querySelector(".fc-daygrid-day-bottom") || cell.querySelector(".fc-daygrid-day-events");
-    if (bottom) bottom.appendChild(pill);
+    var hidden=evs.length-MAX_VISIBLE;
+    var pill=document.createElement("div");
+    pill.className="mie-more";
+    pill.textContent="+ "+hidden+" more";
+    pill.addEventListener("click",function(e){ e.stopPropagation(); openDayModal(dateStr,evs); });
+    var bottom=cell.querySelector(".fc-daygrid-day-bottom")||cell.querySelector(".fc-daygrid-day-events");
+    if(bottom) bottom.appendChild(pill);
   });
 }
 
-/* ── FETCH EVENTS ── */
-function fetchEvents(fi, ok, fail) {
-  var params = new URLSearchParams({ timeMin: fi.startStr, timeMax: fi.endStr, _cb: Date.now() });
-  fetch(BACKEND + "/api/me/events?" + params.toString(), {
-    credentials: "include",
-    headers: { "Cache-Control": "no-cache" }
-  })
-    .then(function(res) {
-      if (res.status === 401) { show(authWrap); fail(new Error("401")); return null; }
-      if (!res.ok) { fail(new Error("HTTP "+res.status)); return null; }
+/* ══════════════════════════════
+   FETCH EVENTS
+══════════════════════════════ */
+function fetchEvents(fi,ok,fail){
+  var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});
+  fetch(BACKEND+"/api/me/events?"+params.toString(),{credentials:"include",headers:{"Cache-Control":"no-cache"}})
+    .then(function(res){
+      if(res.status===401){show(authWrap);fail(new Error("401"));return null;}
+      if(!res.ok){fail(new Error("HTTP "+res.status));return null;}
       return res.json();
     })
-    .then(function(data) {
-      if (!data) return;
-      var items = Array.isArray(data.events) ? data.events : [];
+    .then(function(data){
+      if(!data) return;
+      var items=Array.isArray(data.events)?data.events:[];
 
-      /* build calendarMeta from events if sidebar is empty (fallback) */
-      if (calendarMeta.length === 0) {
-        var seen = {};
-        items.forEach(function(e) {
-          var cid   = e.calendarId || (e.organizer && e.organizer.email) || "primary";
-          var color = e.mieCalendarColor || "#3b82f6";
-          if (!seen[cid]) {
-            seen[cid] = true;
-            var isPrimary = (e.primary === true) || (cid === primaryCalId) || (items.indexOf(e) === 0 && !primaryCalId);
-            calendarMeta.push({ id:cid, summary:cid, color:color, primary:isPrimary, enabled:isPrimary });
+      /* build calendarMeta fallback from events if API returned nothing */
+      if(calendarMeta.length<=1 && calendarMeta[0] && calendarMeta[0].id==="primary"){
+        var seen={};
+        items.forEach(function(e){
+          var cid=e.calendarId||(e.organizer&&e.organizer.email)||"primary";
+          if(!seen[cid]){
+            seen[cid]=true;
+            var already=calendarMeta.some(function(m){return m.id===cid;});
+            if(!already){
+              calendarMeta.push({id:cid,summary:cid,color:e.mieCalendarColor||"#3b82f6",primary:false,enabled:false});
+            }
           }
         });
-        if (calendarMeta.length > 0 && !calendarMeta.some(function(c){ return c.primary; })) {
-          calendarMeta[0].primary = true;
-          calendarMeta[0].enabled = true;
-        }
-        renderCalendarSidebar();
+        renderCalendarPopup();
       }
 
-      var enabledIds = calendarMeta.filter(function(c){ return c.enabled; }).map(function(c){ return c.id; });
+      var enabledIds=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});
 
-      eventsByDate = {};
-      allEvents    = [];
+      allEvents=[];
+      eventsByDate={};
 
-      var mapped = items.map(function(e) {
-        var start  = (e.start && (e.start.dateTime || e.start.date)) || null;
-        var end    = (e.end   && (e.end.dateTime   || e.end.date))   || null;
-        var allDay = !!(e.start && e.start.date && !e.start.dateTime);
-        var cid    = e.calendarId || (e.organizer && e.organizer.email) || "primary";
-        var obj    = {
-          id: e.id, title: e.summary || "No Title",
-          start: start, end: end, allDay: allDay,
-          url: e.htmlLink || "",
-          extendedProps: {
-            desc:  e.description || "",
-            loc:   e.location    || "",
-            cc:    e.mieCalendarColor || null,
-            calId: cid
-          }
+      var mapped=items.map(function(e){
+        var start=(e.start&&(e.start.dateTime||e.start.date))||null;
+        var end  =(e.end  &&(e.end.dateTime  ||e.end.date))  ||null;
+        var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);
+        var cid=e.calendarId||(e.organizer&&e.organizer.email)||"primary";
+        return {
+          id:e.id, title:e.summary||"No Title",
+          start:start, end:end, allDay:allDay, url:e.htmlLink||"",
+          extendedProps:{desc:e.description||"",loc:e.location||"",cc:e.mieCalendarColor||null,calId:cid}
         };
-        if (start) {
-          var key = allDay ? start : start.split("T")[0];
-          if (!eventsByDate[key]) eventsByDate[key] = [];
-          eventsByDate[key].push(obj);
-        }
-        return obj;
       });
 
-      allEvents = mapped;
+      allEvents=mapped;
 
-      /* 2) filter: only show events from enabled calendars */
-      var filtered = mapped.filter(function(ev) {
-        return enabledIds.length === 0 || enabledIds.indexOf(ev.extendedProps.calId) !== -1;
+      /* filter */
+      var filtered=mapped.filter(function(ev){
+        return enabledIds.length===0||enabledIds.indexOf(ev.extendedProps.calId)!==-1;
       });
 
-      /* rebuild eventsByDate with filtered only */
-      eventsByDate = {};
-      filtered.forEach(function(ev) {
-        if (ev.start) {
-          var key = ev.allDay ? ev.start : ev.start.split("T")[0];
-          if (!eventsByDate[key]) eventsByDate[key] = [];
+      filtered.forEach(function(ev){
+        if(ev.start){
+          var key=ev.allDay?ev.start:ev.start.split("T")[0];
+          if(!eventsByDate[key]) eventsByDate[key]=[];
           eventsByDate[key].push(ev);
         }
       });
 
       ok(filtered);
     })
-    .catch(function(err){ fail(err); });
+    .catch(function(err){fail(err);});
 }
 
-/* ── EVENT MODAL ── */
-function openEventModal(ev) {
-  document.getElementById("m-title").textContent = ev.title || "No Title";
-  var s = new Date(ev.start), e = ev.end ? new Date(ev.end) : null;
-  var t = s.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
-  if (!ev.allDay) {
-    t += "  ·  " + s.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
-    if (e) t += " – " + e.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+/* ══════════════════════════════
+   EVENT MODAL
+══════════════════════════════ */
+function openEventModal(ev){
+  document.getElementById("m-title").textContent=ev.title||"No Title";
+  var s=new Date(ev.start),e=ev.end?new Date(ev.end):null;
+  var t=s.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+  if(!ev.allDay){
+    t+="  ·  "+s.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+    if(e) t+=" – "+e.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
   }
-  document.getElementById("m-time").textContent = t;
-  document.getElementById("m-loc").textContent  = ev.extendedProps.loc  ? "📍 "+ev.extendedProps.loc  : "";
-  document.getElementById("m-desc").textContent = ev.extendedProps.desc || "";
-  var lk = document.getElementById("m-link");
-  lk.href = ev.url||"#"; lk.style.opacity=ev.url?"1":"0.4"; lk.style.pointerEvents=ev.url?"":"none";
+  document.getElementById("m-time").textContent=t;
+  document.getElementById("m-loc").textContent=ev.extendedProps.loc?"📍 "+ev.extendedProps.loc:"";
+  document.getElementById("m-desc").textContent=ev.extendedProps.desc||"";
+  var lk=document.getElementById("m-link");
+  lk.href=ev.url||"#"; lk.style.opacity=ev.url?"1":"0.4"; lk.style.pointerEvents=ev.url?"":"none";
   document.getElementById("event-modal").classList.remove("hidden");
 }
-document.getElementById("m-close").addEventListener("click", function(){ document.getElementById("event-modal").classList.add("hidden"); });
-document.getElementById("event-modal").addEventListener("click", function(e){ if(e.target===document.getElementById("event-modal")) document.getElementById("event-modal").classList.add("hidden"); });
+document.getElementById("m-close").addEventListener("click",function(){ document.getElementById("event-modal").classList.add("hidden"); });
+document.getElementById("event-modal").addEventListener("click",function(e){ if(e.target===document.getElementById("event-modal")) document.getElementById("event-modal").classList.add("hidden"); });
 
-/* ── DAY MODAL ── */
-function openDayModal(dateStr, evs) {
-  var d = new Date(dateStr+"T12:00:00");
-  document.getElementById("day-modal-title").textContent = d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
-  var list = document.getElementById("day-modal-list"); list.innerHTML = "";
-  var sorted = evs.slice().sort(function(a,b){
+/* ══════════════════════════════
+   DAY MODAL
+══════════════════════════════ */
+function openDayModal(dateStr,evs){
+  var d=new Date(dateStr+"T12:00:00");
+  document.getElementById("day-modal-title").textContent=d.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+  var list=document.getElementById("day-modal-list"); list.innerHTML="";
+  var sorted=evs.slice().sort(function(a,b){
     if(a.allDay&&!b.allDay) return -1; if(!a.allDay&&b.allDay) return 1;
     return new Date(a.start)-new Date(b.start);
   });
-  sorted.forEach(function(ev) {
-    var color=((ev.extendedProps&&ev.extendedProps.cc)||"#3b82f6");
+  sorted.forEach(function(ev){
+    var color=(ev.extendedProps&&ev.extendedProps.cc)||"#3b82f6";
     var item=document.createElement("div"); item.className="day-ev-item";
     var dot=document.createElement("div"); dot.className="day-ev-dot"; dot.style.background=color;
     var info=document.createElement("div"); info.className="day-ev-info";
     var tDiv=document.createElement("div"); tDiv.className="day-ev-time";
     var ttDiv=document.createElement("div"); ttDiv.className="day-ev-title";
     if(ev.allDay){ tDiv.textContent="All-day"; }
-    else {
-      var s=new Date(ev.start), e2=ev.end?new Date(ev.end):null;
+    else{
+      var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;
       tDiv.textContent=s.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(e2?" – "+e2.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"");
     }
     ttDiv.textContent=ev.title||"No Title"; info.appendChild(tDiv); info.appendChild(ttDiv);
-    if(ev.extendedProps&&ev.extendedProps.loc){ var lDiv=document.createElement("div"); lDiv.className="day-ev-loc"; lDiv.textContent="📍 "+ev.extendedProps.loc; info.appendChild(lDiv); }
+    if(ev.extendedProps&&ev.extendedProps.loc){
+      var lDiv=document.createElement("div"); lDiv.className="day-ev-loc"; lDiv.textContent="📍 "+ev.extendedProps.loc; info.appendChild(lDiv);
+    }
     item.appendChild(dot); item.appendChild(info);
-    item.addEventListener("click", function(){ document.getElementById("day-modal").classList.add("hidden"); openEventModal(ev); });
+    item.addEventListener("click",function(){ document.getElementById("day-modal").classList.add("hidden"); openEventModal(ev); });
     list.appendChild(item);
   });
   document.getElementById("day-modal").classList.remove("hidden");
 }
-document.getElementById("day-modal-close").addEventListener("click", function(){ document.getElementById("day-modal").classList.add("hidden"); });
-document.getElementById("day-modal").addEventListener("click", function(e){ if(e.target===document.getElementById("day-modal")) document.getElementById("day-modal").classList.add("hidden"); });
+document.getElementById("day-modal-close").addEventListener("click",function(){ document.getElementById("day-modal").classList.add("hidden"); });
+document.getElementById("day-modal").addEventListener("click",function(e){ if(e.target===document.getElementById("day-modal")) document.getElementById("day-modal").classList.add("hidden"); });
 
-/* ── MESSAGING ── */
-var msgIn=document.getElementById("msg-input"), sndBtn=document.getElementById("send-btn"),
-    sndSt=document.getElementById("send-status"), filIn=document.getElementById("file-input"),
-    fnm=document.getElementById("fname"), rmf=document.getElementById("rm-file"), selFile=null;
+/* ══════════════════════════════
+   MESSAGING
+══════════════════════════════ */
+var msgIn=document.getElementById("msg-input"),sndBtn=document.getElementById("send-btn"),
+    sndSt=document.getElementById("send-status"),filIn=document.getElementById("file-input"),
+    fnm=document.getElementById("fname"),rmf=document.getElementById("rm-file"),selFile=null;
 
 function updateSendBtn(){ sndBtn.disabled=!msgIn.value.trim()&&!selFile; }
 msgIn.addEventListener("input",updateSendBtn);
