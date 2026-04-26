@@ -514,19 +514,26 @@ function wIcon(c){
   if(c<=49)return"🌫️"; if(c<=59)return"🌦️"; if(c<=69)return"🌧️";
   if(c<=79)return"❄️"; if(c<=82)return"🌧️"; if(c<=99)return"⛈️"; return"🌡️";
 }
-function loadWeather(){
-  fetch("https://ipapi.co/json/")
-    .then(function(r){return r.json();})
-    .then(function(geo){
-      return fetch("https://api.open-meteo.com/v1/forecast?latitude="+geo.latitude+"&longitude="+geo.longitude+"&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto")
-        .then(function(r){return r.json();});
+function loadWeather() {
+  fetch("https://ip-api.com/json/?fields=lat,lon,status")
+    .then(function(r) { return r.json(); })
+    .then(function(geo) {
+      if (geo.status === "fail") throw new Error("geo failed");
+      return fetch(
+        "https://api.open-meteo.com/v1/forecast?latitude=" + geo.lat +
+        "&longitude=" + geo.lon +
+        "&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto"
+      ).then(function(r) { return r.json(); });
     })
-    .then(function(w){
-      var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);
-      document.getElementById("wb-icon").textContent=wIcon(w.current.weathercode);
-      document.getElementById("wb-temp").textContent=f+"°F / "+c+"°C";
+    .then(function(w) {
+      var c = Math.round(w.current.temperature_2m);
+      var f = Math.round(c * 9 / 5 + 32);
+      document.getElementById("wb-icon").textContent = wIcon(w.current.weathercode);
+      document.getElementById("wb-temp").textContent = f + "°F / " + c + "°C";
     })
-    .catch(function(){ document.getElementById("wb-temp").textContent="N/A"; });
+    .catch(function() {
+      document.getElementById("wb-temp").textContent = "N/A";
+    });
 }
 
 /* ══════════════════════════════
