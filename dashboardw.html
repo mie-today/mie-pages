@@ -799,8 +799,20 @@ document.getElementById("edit-save-btn").addEventListener("click", function(){
           extendedProps: Object.assign({}, ev.extendedProps, {loc: newLocation, desc: newDesc})
         });
       });
-      if(cal){ cal.refetchEvents(); }
-      setTimeout(function(){ document.getElementById("edit-modal").classList.add("hidden"); currentEditEvent=null; status.textContent=""; }, 1200);
+      // Update the live FullCalendar event directly — no refetch, instant update
+      var fcEv = cal ? cal.getEventById(currentEditEvent.id) : null;
+      if(fcEv){
+        fcEv.setProp("title", newTitle);
+        fcEv.setStart(newStart);
+        if(newEnd) fcEv.setEnd(newEnd);
+        fcEv.setExtendedProp("loc",  newLocation);
+        fcEv.setExtendedProp("desc", newDesc);
+      }
+      allEvents = allEvents.map(function(e){
+        if(e.id !== currentEditEvent.id) return e;
+        return Object.assign({}, e, { title: newTitle, start: newStart, end: newEnd||e.end, extendedProps: Object.assign({}, e.extendedProps, {loc: newLocation, desc: newDesc}) });
+      });
+      setTimeout(function(){ document.getElementById("edit-modal").classList.add("hidden"); currentEditEvent=null; status.textContent=""; rebuildMorePills(); }, 400);
     } else {
       res.json().then(function(e){ status.style.color="#ef4444"; status.textContent="❌ "+(e.message||"Save failed. Try again."); }).catch(function(){ status.style.color="#ef4444"; status.textContent="❌ Save failed."; });
     }
@@ -825,9 +837,15 @@ document.getElementById("edit-delete-btn").addEventListener("click", function(){
   .then(function(res){
     if(res.ok){
       status.style.color="#16a34a"; status.textContent="🗑 Deleted";
-      allEvents = allEvents.filter(function(ev){ return ev.id !== currentEditEvent.id; });
-      if(cal){ cal.refetchEvents(); }
-      setTimeout(function(){ document.getElementById("edit-modal").classList.add("hidden"); currentEditEvent=null; status.textContent=""; }, 900);
+      // Remove from FullCalendar directly — no refetch, instant removal
+      var fcEvDel = cal ? cal.getEventById(currentEditEvent.id) : null;
+      if(fcEvDel) fcEvDel.remove();
+      allEvents = allEvents.filter(function(e){ return e.id !== currentEditEvent.id; });
+      // Also remove from eventsByDate so date click shows correct count
+      Object.keys(eventsByDate).forEach(function(k){
+        eventsByDate[k] = eventsByDate[k].filter(function(e){ return e.id !== currentEditEvent.id; });
+      });
+      setTimeout(function(){ document.getElementById("edit-modal").classList.add("hidden"); currentEditEvent=null; status.textContent=""; rebuildMorePills(); }, 400);
     } else { status.style.color="#ef4444"; status.textContent="❌ Delete failed."; }
   })
   .catch(function(){ status.style.color="#ef4444"; status.textContent="❌ Network error."; })
