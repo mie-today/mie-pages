@@ -347,12 +347,22 @@ body { font-family: 'Inter', sans-serif; background: #fff; color: #111827; min-h
 
     <div class="edit-row-2">
       <div class="edit-field">
-        <label class="edit-label" for="edit-date">Date</label>
+        <label class="edit-label" for="edit-date">Start Date</label>
         <input class="edit-input" type="date" id="edit-date" />
       </div>
       <div class="edit-field">
-        <label class="edit-label" for="edit-time">Time</label>
-        <input class="edit-input" type="time" id="edit-time" placeholder="e.g. 10:00 AM" />
+        <label class="edit-label" for="edit-time">Start Time</label>
+        <input class="edit-input" type="time" id="edit-time" />
+      </div>
+    </div>
+    <div class="edit-row-2">
+      <div class="edit-field">
+        <label class="edit-label" for="edit-end-date">End Date</label>
+        <input class="edit-input" type="date" id="edit-end-date" />
+      </div>
+      <div class="edit-field">
+        <label class="edit-label" for="edit-end-time">End Time</label>
+        <input class="edit-input" type="time" id="edit-end-time" />
       </div>
     </div>
 
@@ -526,19 +536,20 @@ function initCal(){
       var color=(arg.event.extendedProps&&arg.event.extendedProps.cc)||"#3b82f6";
       var fg=contrastColor(color);
       var wrap=document.createElement("div");
-      wrap.style.cssText="display:flex;align-items:center;gap:3px;overflow:hidden;width:100%;border-radius:3px;padding:1px 4px;background:"+color+";";
+      // pointer-events:none so clicks pass through to FullCalendar's eventClick handler
+      wrap.style.cssText="display:flex;align-items:center;gap:3px;overflow:hidden;width:100%;border-radius:3px;padding:1px 4px;background:"+color+";pointer-events:none;cursor:pointer;";
       if(!arg.event.allDay){
         var dot=document.createElement("span");
-        dot.style.cssText="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:"+(fg==="#ffffff"?"rgba(255,255,255,0.55)":"rgba(0,0,0,0.25)")+";";
+        dot.style.cssText="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:"+(fg==="#ffffff"?"rgba(255,255,255,0.55)":"rgba(0,0,0,0.25)")+";pointer-events:none;";
         wrap.appendChild(dot);
       }
       var txt=document.createElement("span");
-      txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:"+fg+";";
+      txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:"+fg+";pointer-events:none;";
       txt.textContent=(arg.timeText?arg.timeText+" ":"")+(arg.event.title||"");
       wrap.appendChild(txt);
       return {domNodes:[wrap]};
     },
-    eventClick:function(info){ info.jsEvent.preventDefault(); openEditModal(info.event); }
+    eventClick:function(info){ info.jsEvent.preventDefault(); info.jsEvent.stopPropagation(); openEditModal(info.event); }
   });
   cal.render();
   document.getElementById("cal-title").textContent=cal.view.title||"";
@@ -688,17 +699,39 @@ function openEditModal(ev) {
   // Title
   document.getElementById("edit-title").value = ev.title || "";
 
-  // Date
-  var startDate = ev.start ? ev.start.split("T")[0] : "";
+  // ── Start date & time ──
+  // ev.start is either a FullCalendar Date object or an ISO string
+  var startStr = ev.start
+    ? (typeof ev.start === "string" ? ev.start : ev.start.toISOString())
+    : "";
+  var startDate = startStr ? startStr.slice(0, 10) : "";
   document.getElementById("edit-date").value = startDate;
 
-  // Time (only for timed events)
-  var timeVal = "";
-  if (!ev.allDay && ev.start && ev.start.includes("T")) {
-    var timePart = ev.start.split("T")[1] || "";
-    timeVal = timePart.slice(0, 5); // "HH:MM"
+  var startTime = "";
+  if (!ev.allDay && startStr && startStr.includes("T")) {
+    // Convert UTC ISO → local HH:MM so the time picker shows the local time
+    var startObj = new Date(startStr);
+    var hh = String(startObj.getHours()).padStart(2, "0");
+    var mm = String(startObj.getMinutes()).padStart(2, "0");
+    startTime = hh + ":" + mm;
   }
-  document.getElementById("edit-time").value = timeVal;
+  document.getElementById("edit-time").value = startTime;
+
+  // ── End date & time ──
+  var endStr = ev.end
+    ? (typeof ev.end === "string" ? ev.end : ev.end.toISOString())
+    : "";
+  var endDate = endStr ? endStr.slice(0, 10) : startDate; // default to same day
+  document.getElementById("edit-end-date").value = endDate;
+
+  var endTime = "";
+  if (!ev.allDay && endStr && endStr.includes("T")) {
+    var endObj = new Date(endStr);
+    var ehh = String(endObj.getHours()).padStart(2, "0");
+    var emm = String(endObj.getMinutes()).padStart(2, "0");
+    endTime = ehh + ":" + emm;
+  }
+  document.getElementById("edit-end-time").value = endTime;
 
   // Location
   document.getElementById("edit-location").value = (ev.extendedProps && ev.extendedProps.loc) || "";
@@ -715,24 +748,31 @@ document.getElementById("edit-modal").addEventListener("click", function(e){ if(
 
 document.getElementById("edit-save-btn").addEventListener("click", function(){
   if(!currentEditEvent) return;
-  var status = document.getElementById("edit-save-status");
+  var status      = document.getElementById("edit-save-status");
   var newTitle    = document.getElementById("edit-title").value.trim();
   var newDate     = document.getElementById("edit-date").value;
   var newTime     = document.getElementById("edit-time").value;
+  var newEndDate  = document.getElementById("edit-end-date").value;
+  var newEndTime  = document.getElementById("edit-end-time").value;
   var newLocation = document.getElementById("edit-location").value.trim();
   var newDesc     = document.getElementById("edit-desc").value.trim();
 
   if(!newTitle){ status.style.color="#ef4444"; status.textContent="Title is required."; return; }
-  if(!newDate){ status.style.color="#ef4444"; status.textContent="Date is required."; return; }
+  if(!newDate){  status.style.color="#ef4444"; status.textContent="Start date is required."; return; }
 
   // Build ISO start string
   var newStart = newTime ? newDate+"T"+newTime+":00" : newDate;
+
+  // Build ISO end string (only if user filled in end date)
+  var newEnd = null;
+  if(newEndDate) { newEnd = newEndTime ? newEndDate+"T"+newEndTime+":00" : newEndDate; }
 
   var payload = {
     eventId:     currentEditEvent.id,
     calendarId:  (currentEditEvent.extendedProps && currentEditEvent.extendedProps.calId) || "primary",
     title:       newTitle,
     start:       newStart,
+    end:         newEnd,
     location:    newLocation,
     description: newDesc
   };
