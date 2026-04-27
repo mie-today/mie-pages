@@ -536,17 +536,26 @@ function initCal(){
       var color=(arg.event.extendedProps&&arg.event.extendedProps.cc)||"#3b82f6";
       var fg=contrastColor(color);
       var wrap=document.createElement("div");
-      // pointer-events:none so clicks pass through to FullCalendar's eventClick handler
-      wrap.style.cssText="display:flex;align-items:center;gap:3px;overflow:hidden;width:100%;border-radius:3px;padding:1px 4px;background:"+color+";pointer-events:none;cursor:pointer;";
-      if(!arg.event.allDay){
+      wrap.style.cssText="display:flex;align-items:center;gap:3px;overflow:hidden;width:100%;border-radius:3px;padding:1px 4px;pointer-events:none;cursor:pointer;";
+
+      if(arg.event.allDay){
+        // All-day: keep coloured background pill (unchanged)
+        wrap.style.background=color;
+        var txt=document.createElement("span");
+        txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:"+fg+";pointer-events:none;";
+        txt.textContent=arg.event.title||"";
+        wrap.appendChild(txt);
+      } else {
+        // Timed: transparent background, coloured dot, dark text
+        wrap.style.background="transparent";
         var dot=document.createElement("span");
-        dot.style.cssText="width:5px;height:5px;border-radius:50%;flex-shrink:0;background:"+(fg==="#ffffff"?"rgba(255,255,255,0.55)":"rgba(0,0,0,0.25)")+";pointer-events:none;";
+        dot.style.cssText="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:"+color+";pointer-events:none;";
         wrap.appendChild(dot);
+        var txt=document.createElement("span");
+        txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:#111827;pointer-events:none;";
+        txt.textContent=(arg.timeText?arg.timeText+" ":"")+(arg.event.title||"");
+        wrap.appendChild(txt);
       }
-      var txt=document.createElement("span");
-      txt.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:"+fg+";pointer-events:none;";
-      txt.textContent=(arg.timeText?arg.timeText+" ":"")+(arg.event.title||"");
-      wrap.appendChild(txt);
       return {domNodes:[wrap]};
     },
     eventClick:function(info){ info.jsEvent.preventDefault(); info.jsEvent.stopPropagation(); openEditModal(info.event); }
