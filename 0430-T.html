@@ -135,6 +135,25 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .mc-day.mc-other-month{color:#b0b8c1;}
 .mc-day.mc-selected{background:#e8f0fe;color:#1a73e8;font-weight:600;}
 
+/* ═══ YEAR PICKER POPOVER ═══ */
+.year-picker-popover{
+  display:none;position:absolute;top:100px;left:18px;z-index:61;
+  background:#fff;border:1px solid #e0e0e0;border-radius:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;
+  width:240px;user-select:none;
+}
+.year-picker-popover.open{display:block;}
+.yp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.yp-year-lbl{font-size:15px;font-weight:700;color:#202124;cursor:pointer;}
+.yp-year-lbl:hover{color:#1a73e8;}
+.yp-nav{background:none;border:none;cursor:pointer;color:#5f6368;font-size:18px;padding:2px 8px;border-radius:4px;font-weight:700;}
+.yp-nav:hover{background:#f1f3f4;}
+.yp-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.yp-month{font-size:12px;font-weight:500;color:#3c4043;text-align:center;padding:8px 4px;border-radius:8px;cursor:pointer;border:1px solid transparent;}
+.yp-month:hover{background:#f1f3f4;}
+.yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
+.yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
+
 /* ═══════════════════════════════════════════
    FULLCALENDAR — PASTEL STYLE (screenshot 4)
 ═══════════════════════════════════════════ */
@@ -409,7 +428,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
     <!-- LEFT COLUMN -->
     <div class="col-left">
 
-      <!-- ── MINI CALENDAR POPOVER (shared, inside col-left) ── -->
+      <!-- ── MINI CALENDAR POPOVER (Week/Day view) ── -->
       <div class="mini-cal-popover" id="mini-cal-popover">
         <div class="mc-header">
           <button class="mc-nav" id="mc-prev">&#8249;</button>
@@ -417,6 +436,16 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
           <button class="mc-nav" id="mc-next">&#8250;</button>
         </div>
         <div class="mc-grid" id="mc-grid"></div>
+      </div>
+
+      <!-- ── YEAR PICKER POPOVER (Month view title click) ── -->
+      <div class="year-picker-popover" id="year-picker-popover">
+        <div class="yp-header">
+          <button class="yp-nav" id="yp-prev">&#8249;</button>
+          <span class="yp-year-lbl" id="yp-year-lbl"></span>
+          <button class="yp-nav" id="yp-next">&#8250;</button>
+        </div>
+        <div class="yp-months" id="yp-months"></div>
       </div>
 
       <!-- MODULE: CALENDAR -->
@@ -701,7 +730,21 @@ var PASTEL_MAP={
 function pastelFor(hex){
   if(!hex)return{bg:'#dce8fd',text:'#1a56b0'};
   var k=hex.toLowerCase();
-  return PASTEL_MAP[k]||{bg:'#dce8fd',text:'#1a56b0'};
+  if(PASTEL_MAP[k])return PASTEL_MAP[k];
+  var h=k.replace('#','');
+  if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if(h.length!==6)return{bg:'#dce8fd',text:'#1a56b0'};
+  var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  var pr=Math.round(r*0.25+255*0.75),pg=Math.round(g*0.25+255*0.75),pb=Math.round(b*0.25+255*0.75);
+  var tr=Math.round(r*0.6),tg=Math.round(g*0.6),tb=Math.round(b*0.6);
+  function hex2(n){return n.toString(16).padStart(2,'0');}
+  return{bg:'#'+hex2(pr)+hex2(pg)+hex2(pb),text:'#'+hex2(tr)+hex2(tg)+hex2(tb)};
+}
+function pastelForCalId(rawCc,calId){
+  if(rawCc)return pastelFor(rawCc);
+  var meta=calendarMeta.find(function(c){return c.id===calId;});
+  if(meta&&meta.color)return pastelFor(meta.color);
+  return{bg:'#dce8fd',text:'#1a56b0'};
 }
 
 /* ════════════════════════════════════════ UTILS ════ */
@@ -780,9 +823,54 @@ function fetchWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?lat
 function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){fetchWeather(p.coords.latitude,p.coords.longitude);},function(){fetchWeather(37.7749,-122.4194);},{timeout:5000});else fetchWeather(37.7749,-122.4194);}
 
 /* ════════════════════════════════════════
-   MINI CALENDAR POPOVER  (screenshot 2 & 3)
-   Shows when clicking the title in Week/Day view.
-   In Month view the title click does nothing (no popover needed).
+   YEAR PICKER POPOVER  (Month view title click)
+   Shows year + all 12 months — click a month to navigate there.
+════════════════════════════════════════ */
+var yearPickerPopover=document.getElementById('year-picker-popover');
+var yearPickerOpen=false;
+var ypYear=new Date().getFullYear();
+
+function openYearPicker(){
+  if(cal){ypYear=cal.getDate().getFullYear();}
+  renderYearPicker();
+  yearPickerPopover.classList.add('open');
+  yearPickerOpen=true;
+  document.getElementById('cal-title-arrow').classList.add('open');
+}
+function closeYearPicker(){
+  yearPickerPopover.classList.remove('open');
+  yearPickerOpen=false;
+  document.getElementById('cal-title-arrow').classList.remove('open');
+}
+function renderYearPicker(){
+  document.getElementById('yp-year-lbl').textContent=ypYear;
+  var grid=document.getElementById('yp-months');grid.innerHTML='';
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var now=new Date();
+  var curYear=cal?cal.getDate().getFullYear():now.getFullYear();
+  var curMonth=cal?cal.getDate().getMonth():now.getMonth();
+  MONTHS.forEach(function(mn,i){
+    var el=document.createElement('div');el.className='yp-month';el.textContent=mn;
+    if(ypYear===curYear&&i===curMonth)el.classList.add('yp-current');
+    else if(ypYear===now.getFullYear()&&i===now.getMonth())el.classList.add('yp-this-month');
+    el.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!cal)return;
+      cal.gotoDate(new Date(ypYear,i,1));
+      syncTitle();
+      closeYearPicker();
+    });
+    grid.appendChild(el);
+  });
+}
+document.getElementById('yp-prev').addEventListener('click',function(e){e.stopPropagation();ypYear--;renderYearPicker();});
+document.getElementById('yp-next').addEventListener('click',function(e){e.stopPropagation();ypYear++;renderYearPicker();});
+document.addEventListener('click',function(e){
+  if(yearPickerOpen&&!yearPickerPopover.contains(e.target)&&!document.getElementById('cal-title-btn').contains(e.target))closeYearPicker();
+});
+
+/* ════════════════════════════════════════
+   MINI CALENDAR POPOVER  (Week/Day view title click)
 ════════════════════════════════════════ */
 var miniCalPopover=document.getElementById('mini-cal-popover');
 var miniCalOpen=false;
@@ -806,8 +894,12 @@ function closeMiniCal(){
 function toggleMiniCal(){
   if(!cal)return;
   var vt=cal.view.type;
-  /* only show mini-cal in week and day view */
-  if(vt==='dayGridMonth'){return;}
+  if(vt==='dayGridMonth'){
+    /* Month view: toggle YEAR PICKER */
+    yearPickerOpen?closeYearPicker():openYearPicker();
+    return;
+  }
+  /* Week/Day view: toggle MINI DAY CALENDAR */
   miniCalOpen?closeMiniCal():openMiniCal();
 }
 
@@ -982,7 +1074,15 @@ function loadTasks(){
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
       if(!data){allTasks=[];taskLists=[];}
-      else{allTasks=Array.isArray(data.tasks)?data.tasks:[];taskLists=Array.isArray(data.lists)?data.lists:[];}
+      else{
+        taskLists=Array.isArray(data.lists)?data.lists:[];
+        var rawTasks=Array.isArray(data.tasks)?data.tasks:[];
+        allTasks=rawTasks.map(function(t){
+          var lid=t.listId||t.taskListId||null;
+          if(!lid&&taskLists.length===1)lid=taskLists[0].id;
+          return Object.assign({},t,{listId:lid||'@default'});
+        });
+      }
       updateOv(allTasks);
       renderTaskSidebar();
       if(currentMod==='tasks')renderTaskModule();
@@ -1159,10 +1259,8 @@ function initCal(){
       syncTitle();
       setTimeout(rebuildPills,60);
       attachDayClicks();
-      /* hide mini-cal title arrow if in month view */
-      var arrow=document.getElementById('cal-title-arrow');
-      if(cal.view.type==='dayGridMonth'){arrow.style.display='none';closeMiniCal();}
-      else{arrow.style.display='';}
+      closeMiniCal();
+      closeYearPicker();
     },
     eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},
     eventDidMount:function(info){
@@ -1172,8 +1270,9 @@ function initCal(){
     },
     /* ── PASTEL EVENT CONTENT (screenshot 4) ── */
     eventContent:function(arg){
-      var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||'#1a73e8';
-      var p=pastelFor(rawColor);
+      var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;
+      var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';
+      var p=pastelForCalId(rawColor,calId);
       var viewType=arg.view.type;
       var w=document.createElement('div');
 
@@ -1209,8 +1308,6 @@ function initCal(){
   });
   cal.render();
   syncTitle();
-  /* hide arrow initially (month view) */
-  document.getElementById('cal-title-arrow').style.display='none';
 
   document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
   document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
@@ -1220,8 +1317,8 @@ function initCal(){
 function syncTitle(){
   if(!cal)return;
   document.getElementById('cal-title').textContent=cal.view.title||'';
-  var arrow=document.getElementById('cal-title-arrow');
-  if(cal.view.type==='dayGridMonth'){arrow.style.display='none';}else{arrow.style.display='';}
+  /* Show dropdown arrow in ALL views — month uses year picker, week/day use mini-cal */
+  document.getElementById('cal-title-arrow').style.display='';
 }
 
 /* date number click → day view */
@@ -1305,8 +1402,9 @@ function openDayModal(ds,evs){
   var list=document.getElementById('day-modal-list');list.innerHTML='';
   if(!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px 0;font-size:13px;color:#9aa0a6;';e.textContent='No events on this day';list.appendChild(e);document.getElementById('day-modal').classList.remove('hidden');return;}
   evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){
-    var rawColor=(ev.extendedProps&&ev.extendedProps.cc)||'#1a73e8';
-    var p=pastelFor(rawColor);
+    var rawColor=(ev.extendedProps&&ev.extendedProps.cc)||null;
+    var calId2=(ev.extendedProps&&ev.extendedProps.calId)||'primary';
+    var p=pastelForCalId(rawColor,calId2);
     var item=document.createElement('div');item.className='day-ev-item';
     var dot=document.createElement('div');dot.className='day-ev-dot';dot.style.background=p.text;
     var info=document.createElement('div');info.className='day-ev-info';
