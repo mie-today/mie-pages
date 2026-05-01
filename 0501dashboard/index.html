@@ -605,8 +605,19 @@ function switchModule(modId){
   if(modId==='tasks')renderTaskModule();
   if(modId==='calendar'&&cal)setTimeout(function(){cal.updateSize();},60);
 }
-document.querySelectorAll('.qa-btn[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){switchModule(btn.getAttribute('data-mod'));});});
-document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){switchModule(btn.getAttribute('data-mod'));closeSidebar();});});
+/* Tasks navigates to /task — everything else switches module inline */
+document.querySelectorAll('.qa-btn[data-mod]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}
+    switchModule(btn.getAttribute('data-mod'));
+  });
+});
+document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}
+    switchModule(btn.getAttribute('data-mod'));closeSidebar();
+  });
+});
 
 var sidebarOverlay=document.getElementById('sidebar-overlay');
 function openSidebar(){sidebarOverlay.classList.add('is-open');document.getElementById('hamburger').classList.add('is-open');}
