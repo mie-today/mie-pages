@@ -58,13 +58,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .add-fab:hover{background:#1765cc;}
 
 /* ══════════════════════════ BODY LAYOUT ══════════════════════════ */
-.app-body{flex:1;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;gap:14px;max-width:1440px;width:100%;margin:0 auto;align-items:stretch;}
+/* sidebar flush left, content area padded — matches dashboard proportions */
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;padding:0;gap:0;align-items:stretch;}
+
+/* wrapper for tasks + right panel (has the padding) */
+.content-area{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;gap:14px;align-items:stretch;}
 
 /* ══════════════════════════ LEFT SIDEBAR ══════════════════════════ */
+/* flush panel — no card border, no radius, right-border only */
 .task-sidebar{
   flex:0 0 200px;min-width:0;
   display:flex;flex-direction:column;
-  background:#fff;border:1px solid #e0e0e0;border-radius:12px;
+  background:#fff;
+  border-right:1px solid #e0e0e0;
   padding:10px 8px;overflow-y:auto;gap:1px;
 }
 .task-sidebar::-webkit-scrollbar{width:3px;}
@@ -106,7 +112,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
 /* ══════════════════════════ CENTRE — TASK AREA ══════════════════════════ */
 .task-centre{
-  flex:1;min-width:0;
+  flex:0 0 60%;min-width:0;
   display:flex;flex-direction:column;
   background:#fff;border:1px solid #e0e0e0;border-radius:12px;
   overflow:hidden;
@@ -244,7 +250,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
 /* ══════════════════════════ RIGHT PANEL ══════════════════════════ */
 .right-col{
-  flex:0 0 300px;min-width:0;
+  flex:0 0 calc(40% - 14px);min-width:0;
   display:flex;flex-direction:column;gap:12px;
 }
 
@@ -343,8 +349,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 @media(max-width:640px){
   html,body{overflow:auto;}
   #app{height:auto;min-height:100vh;overflow:visible;}
-  .app-body{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 16px;}
-  .task-sidebar{flex:none;width:100%;border-radius:12px;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;}
+  .app-body{flex-direction:column;overflow:visible;height:auto;}
+  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 16px;}
+  .task-sidebar{flex:none;width:100%;border-right:none;border-bottom:1px solid #e0e0e0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;}
   .sidebar-stats{display:none;}
   .task-grid.multi{grid-template-columns:1fr;}
   .tb-meta{display:none;}
@@ -434,6 +441,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div>
     </div>
 
+    <!-- CENTRE + RIGHT wrapped in content-area for padding -->
+    <div class="content-area">
+
     <!-- CENTRE: TASKS -->
     <div class="task-centre">
       <div class="task-topbar">
@@ -500,6 +510,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div>
 
     </div><!-- /right-col -->
+
+    </div><!-- /content-area -->
   </div><!-- /app-body -->
 </div><!-- /app -->
 
