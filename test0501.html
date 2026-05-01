@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MIE Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════ RESET & BASE ══════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
+
+/* ══════════════════════════ LAYOUT ══════════════════════════ */
+.body-wrap{flex:1;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;max-width:1440px;width:100%;margin:0 auto;align-items:stretch;gap:16px;}
+.col-left{flex:0 0 60%;display:flex;flex-direction:column;min-width:0;}
+.col-right{flex:0 0 calc(40% - 16px);display:flex;flex-direction:column;min-width:0;gap:35px;} /* ISSUE 1: SPACING CHANGED TO 35px */
+
+/* ══════════════════════════ OVERVIEW PANELS ══════════════════════════ */
+.ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex-shrink:0;}
+.ov-panel{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:center;height:80px;}
+.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;}
+.ov-panel-title{font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.5px;}
+.ov-panel-count{font-size:18px;font-weight:600;color:#1a73e8;}
+
+/* ══════════════════════════ CALENDAR ══════════════════════════ */
+.cal-wrap{flex:1;background:#fff;border:1px solid #e0e0e0;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.cal-hd{padding:12px 16px;border-bottom:1px solid #f1f3f4;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.cal-month-title{font-size:17px;font-weight:500;color:#202124;}
+.cal-view-container{flex:1;min-height:0;padding:8px;}
+
+/* ISSUE 2: FONT SIZES */
+.fc{font-size:13px !important; font-family:'DM Sans',sans-serif !important;} /* Calendar Events: 13px */
+.fc .fc-col-header-cell{font-size:12px !important; font-weight: 500; color:#5f6368; padding: 8px 0 !important;} /* Sun-Sat Headers: 12px */
+.fc .fc-daygrid-day-number{font-size:11px !important; color:#5f6368; padding:4px !important;}
+.fc .fc-toolbar{display:none;}
+.fc-theme-standard td, .fc-theme-standard th{border:1px solid #f1f3f4 !important;}
+
+/* ══════════════════════════ MODALS (ISSUE 3) ══════════════════════════ */
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.3);display:none;align-items:center;justify-content:center;z-index:9000;}
+.modal-overlay.open{display:flex;}
+.modal-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.15);width:100%;max-width:340px;position:relative;animation: modalFade 0.2s ease-out;}
+@keyframes modalFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.modal-close{position:absolute;top:12px;right:12px;cursor:pointer;color:#5f6368;font-size:18px;}
+
+.modal-actions{display:flex;gap:10px;margin-top:20px;border-top:1px solid #f1f3f4;padding-top:16px;justify-content:space-around;}
+.action-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:500;color:#5f6368;background:none;border:none;transition:color 0.2s;}
+.action-btn:hover{color:#1a73e8;}
+.btn-delete:hover{color:#d93025;}
+.action-btn svg{width:18px;height:18px;}
+
+/* Sidebar and Topbar simplified for functionality */
+.msg-wrap{flex:1;background:#fff;border:1px solid #e0e0e0;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+.msg-area{flex:1;overflow-y:auto;padding:16px;background:#fdfdfd;}
+.msg-in-wrap{padding:12px 16px;border-top:1px solid #f1f3f4;}
+textarea{width:100%;border:1px solid #dadce0;border-radius:8px;padding:10px;resize:none;font-family:inherit;font-size:13px;outline:none;}
+</style>
+</head>
+<body>
+
+<div class="body-wrap" style="height:100vh;">
+  <div class="col-left">
+    <div class="msg-wrap">
+      <div class="msg-area" id="msg-list">
+        <div style="color:#9aa0a6; text-align:center; margin-top:40px;">No messages yet.</div>
+      </div>
+      <div class="msg-in-wrap">
+        <textarea placeholder="Type a message..."></textarea>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+           <button style="background:#1a73e8;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:500;">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div class="ov-panels">
+      <div class="ov-panel">
+        <div class="ov-panel-hd">
+          <div class="ov-panel-title">Tasks to Complete</div>
+          <div class="ov-panel-count">5</div>
+        </div>
+      </div>
+      <div class="ov-panel">
+        <div class="ov-panel-hd">
+          <div class="ov-panel-title">Projects</div>
+          <div class="ov-panel-count">2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cal-wrap">
+      <div class="cal-hd">
+        <div id="cal-month-title" class="cal-month-title">May 2026</div>
+      </div>
+      <div class="cal-view-container">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cal-modal" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-close" onclick="document.getElementById('cal-modal').classList.remove('open')">✕</div>
+    <div id="modal-title" style="font-weight:600;font-size:16px;margin-bottom:4px;color:#202124;">Event Title</div>
+    <div id="modal-time" style="color:#5f6368;font-size:13px;margin-bottom:12px;">10:00 AM - 11:00 AM</div>
+    
+    <div class="modal-actions">
+      <button class="action-btn" onclick="alert('Edit Clicked')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        Edit
+      </button>
+      <button class="action-btn" onclick="document.getElementById('cal-modal').classList.remove('open')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        Cancel
+      </button>
+      <button class="action-btn btn-delete" onclick="alert('Delete Clicked')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let calendar;
+document.addEventListener('DOMContentLoaded', function() {
+  const calendarEl = document.getElementById('calendar');
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    headerToolbar: false,
+    height: 'auto',
+    events: [
+      { title: 'Team Sync', start: '2026-05-05T10:00:00', color: '#1a73e8' },
+      { title: 'Project Review', start: '2026-05-12T14:30:00', color: '#34a853' },
+      { title: 'Launch Day', start: '2026-05-20', allDay: true, color: '#d93025' }
+    ],
+    eventClick: function(info) {
+      openModal(info.event);
+    }
+  });
+  calendar.render();
+  document.getElementById('cal-month-title').textContent = calendar.view.title;
+});
+
+function openModal(event) {
+  document.getElementById('modal-title').textContent = event.title;
+  let timeStr = event.allDay ? 'All Day' : event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  document.getElementById('modal-time').textContent = timeStr;
+  document.getElementById('cal-modal').classList.add('open');
+}
+
+function closeModal(e) {
+  document.getElementById('cal-modal').classList.remove('open');
+}
+</script>
+</body>
+</html>
