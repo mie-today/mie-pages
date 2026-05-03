@@ -1,607 +1,819 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard</title>
-
-<!-- Tailwind CSS for styling -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Google API Client Library -->
-<script src="https://apis.google.com/js/api.js"></script>
-<!-- Google Identity Services Library for Authentication -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<!-- FullCalendar Library for the calendar view -->
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
-
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400&family=Montserrat:wght@600&display=swap" rel="stylesheet" />
-
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MIE Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-    /* --- General Body and Layout --- */
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: #ffffff;
-        color: #1f2937;
-        margin: 0;
-        padding: 0;
-    }
-    
-    /* Custom font classes */
-    .font-montserrat { font-family: 'Montserrat', sans-serif; }
-    .font-lato { font-family: 'Lato', sans-serif; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
 
-    /* --- Scrollbar Styling --- */
-    .oauth-app-container #message-log::-webkit-scrollbar,
-    .oauth-app-container #event-list::-webkit-scrollbar { width: 8px; height: 8px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-track,
-    .oauth-app-container #event-list::-webkit-scrollbar-track { background-color: #e5e7eb; border-radius: 9999px; }
-    .oauth-app-container #message-log::-webkit-scrollbar-thumb,
-    .oauth-app-container #event-list::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 9999px; }
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
+.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
+.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
+.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
+.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.connect-btn:hover{background:#1765cc;}
 
-    /* Utility class for disabled elements */
-    .disabled, :disabled { opacity: 0.5; cursor: not-allowed; }
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
+.spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-    /* Main container for the entire application */
-    .oauth-app-container { max-width: 100%; margin: 0 auto; }
+#app{display:none;height:100vh;flex-direction:column;overflow:hidden;}
 
-    /* --- Responsive Styles for Mobile (up to 480px wide) --- */
-    @media (max-width: 480px) {
-        .oauth-app-container {
-            width: 100% !important;
-        }
-        .mobile-container {
-            padding: 4px !important;
-            gap: 4px !important;
-        }
-        .calendar-section, .messaging-section {
-            width: 100% !important;
-            height: auto !important;
-            padding: 8px !important;
-        }
-        .mobile-heading { font-size: 20px !important; line-height: 1.2 !important; }
-        .mobile-text { font-size: 14px !important; line-height: 1.1 !important; }
-        .mobile-small-btn { padding: 4px 8px !important; font-size: 12px !important; }
-        .mobile-text-btn { font-size: 16px !important; }
-        .mobile-textarea { height: 60px !important; padding: 4px 8px !important; }
-        .fc .fc-toolbar-title { font-size: 20px !important; }
-        .fc .fc-button-primary { font-size: 12px !important; padding: 4px 6px !important; }
-        .fc .fc-col-header-cell { font-size: 12px !important; }
-        .fc .fc-daygrid-day-number { font-size: 12px !important; }
-        .fc .fc-event { font-size: 10px !important; }
-    }
+.topbar{flex-shrink:0;height:46px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:10;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.back-btn{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#5f6368;font-size:13px;font-family:'DM Sans',sans-serif;padding:5px 8px;border-radius:6px;transition:background .12s;}
+.back-btn:hover{background:#f1f3f4;color:#202124;}
+.back-btn svg{width:14px;height:14px;flex-shrink:0;}
+.tb-sep-line{width:1px;height:18px;background:#e0e0e0;}
+.tb-logo{width:28px;height:28px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;}
+.tb-brand{font-size:15px;font-weight:600;color:#1a73e8;}
+.tb-slash{font-size:13px;color:#dadce0;margin:0 2px;}
+.tb-page{font-size:13px;color:#5f6368;font-weight:500;}
+.tb-right{display:flex;align-items:center;gap:14px;}
+.tb-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#5f6368;}
+.tb-sep{color:#dadce0;}
+.tb-weather{display:flex;align-items:center;gap:3px;font-size:12px;color:#202124;}
+.signout-btn{font-size:13px;color:#1a73e8;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.signout-btn:hover{text-decoration:underline;}
+.add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s,box-shadow .15s;}
+.add-fab:hover{background:#1765cc;}
 
-    /* --- Responsive Styles for Tablet (481px to 768px) --- */
-    @media (min-width: 481px) and (max-width: 768px) {
-        .oauth-app-container { width: 481px; }
-        .calendar-section { width: 481px; height: 632px; }
-        .messaging-section { width: 481px; height: 316px; }
-    }
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;padding:0;gap:0;align-items:stretch;}
 
-    /* --- Responsive Styles for Desktop (769px and wider) --- */
-    @media (min-width: 769px) {
-        .oauth-app-container { width: 800px; }
-        .calendar-section { width: 800px; height: 860px; }
-        .messaging-section { width: 800px; height: 360px; }
-    }
+/* ── FIXED: single clean declaration, no duplicates, no broken inline comments ── */
+.content-area{
+  flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;
+  padding:8px 20px 10px 16px;gap:14px;align-items:stretch;margin-right:219px;
+}
 
-    /* --- FullCalendar Light Mode Customization --- */
-    .fc { color: #1f2937 !important; background-color: #ffffff !important; }
-    .fc .fc-button-primary { background-color: #3b82f6 !important; border-color: #2563eb !important; color: white !important; }
-    .fc .fc-button-primary:hover { background-color: #2563eb !important; }
-    .fc .fc-button-primary:disabled { background-color: #9ca3af !important; border-color: #6b7280 !important; }
-    .fc-daygrid-day.fc-day-today { background-color: rgba(59, 130, 246, 0.1) !important; }
-    .fc .fc-daygrid-day-frame { background-color: white !important; }
-    .fc .fc-col-header-cell { background-color: #f8fafc !important; color: #1f2937 !important; }
-    .fc .fc-daygrid-day-number { color: #1f2937 !important; }
-    .fc .fc-event { border-color: #3b82f6 !important; background-color: #3b82f6 !important; color: white !important; }
-    .fc .fc-toolbar-title { color: #1f2937 !important; }
-    .fc .fc-daygrid-day.fc-day-other { display: none !important; }
+.task-sidebar{flex:0 0 200px;min-width:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;padding:10px 8px;overflow-y:auto;gap:1px;}
+.task-sidebar::-webkit-scrollbar{width:3px;}
+.task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
+.sidebar-sec{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 3px;}
+.tl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#3c4043;transition:background .12s;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;}
+.tl-item:hover{background:#f1f3f4;}
+.tl-item.active{background:#e8f0fe;color:#1a73e8;}
+.tl-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
+.tl-item.active svg{opacity:1;}
+.tl-count{margin-left:auto;font-size:10px;font-weight:600;background:#f1f3f4;border-radius:8px;padding:1px 6px;color:#5f6368;}
+.tl-item.active .tl-count{background:#c5d9fb;color:#1a56b0;}
+.tl-count.red-badge{background:#fce8e6 !important;color:#c5221f !important;}
+.tl-sep{height:1px;background:#f1f3f4;margin:4px 6px;}
+.tl-create{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:#5f6368;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;}
+.tl-create:hover{background:#f1f3f4;color:#202124;}
+.sidebar-stats{margin-top:auto;padding:10px 10px 4px;border-top:1px solid #f1f3f4;display:flex;flex-direction:column;gap:3px;}
+.stat-row{display:flex;justify-content:space-between;align-items:center;}
+.stat-label{font-size:11px;color:#9aa0a6;}
+.stat-val{font-size:11px;font-weight:600;color:#202124;}
+.stat-val.green{color:#1e8e3e;}
+.stat-val.red{color:#d93025;}
 
-    /* --- Event Modal Styling --- */
-    .event-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .event-modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #1f2937; }
-    @media (max-width: 480px){ .event-modal-content { max-width: 320px !important; padding: 16px !important; } }
+/* ── FIXED: flex:1 fills remaining space after right-col takes its share ── */
+.task-centre{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  background:#fff;border:1px solid #e0e0e0;border-radius:12px;
+  overflow:hidden;
+}
+.task-topbar{flex-shrink:0;padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;}
+.task-title-row{display:flex;align-items:center;gap:8px;}
+.task-page-title{font-size:20px;font-weight:500;color:#202124;}
 
-    /* --- Access Denied Styling --- */
-    .access-denied { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-top: 16px; }
+.chip-bar{display:flex;gap:6px;padding:10px 18px 10px;flex-shrink:0;border-bottom:1px solid #f1f3f4;}
+.chip{background:none;border:1px solid #dadce0;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500;color:#5f6368;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.chip:hover{background:#f1f3f4;}
+.chip.active{background:#1a73e8;color:#fff;border-color:#1a73e8;}
+
+.task-scroll{flex:1;overflow-y:auto;padding:14px 18px;}
+.task-scroll::-webkit-scrollbar{width:4px;}
+.task-scroll::-webkit-scrollbar-thumb{background:#dadce0;border-radius:4px;}
+
+.task-grid{display:grid;gap:14px;}
+.task-grid.multi{grid-template-columns:1fr 1fr;}
+.task-grid.single{grid-template-columns:1fr;max-width:640px;}
+
+.task-list-card{background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;isolation:isolate;}
+.tlc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e8eaed;}
+.tlc-name{font-size:13px;font-weight:600;color:#202124;}
+.tlc-badge{font-size:10px;font-weight:500;color:#5f6368;background:#e8eaed;border-radius:8px;padding:2px 7px;}
+
+.tlc-add{display:flex;align-items:center;gap:7px;padding:7px 4px;color:#1a73e8;cursor:pointer;font-size:12px;font-weight:500;border:none;background:none;font-family:'DM Sans',sans-serif;width:100%;text-align:left;border-radius:6px;transition:background .12s;}
+.tlc-add:hover{background:#e8f0fe;}
+.tlc-add svg{width:14px;height:14px;flex-shrink:0;}
+
+.tlc-task{display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-radius:6px;transition:background .1s;overflow:visible;position:relative;}
+.tlc-task:hover{background:#fff;}
+
+.tlc-cb{width:18px;height:18px;min-width:18px;border:1.5px solid #9aa0a6;border-radius:50%;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:border-color .15s,background .15s,transform .1s;position:relative;z-index:2;font-family:inherit;outline:none;}
+.tlc-cb:hover{border-color:#1a73e8;background:#e8f0fe;transform:scale(1.1);}
+.tlc-cb:focus-visible{outline:2px solid #1a73e8;outline-offset:2px;}
+.tlc-cb.checked{border-color:#1a73e8;background:#1a73e8;}
+.tlc-cb.checked::after{content:'✓';color:#fff;font-size:10px;font-weight:700;line-height:1;}
+.tlc-cb[disabled]{opacity:.45;cursor:wait;}
+
+.tlc-task-body{flex:1;min-width:0;}
+.tlc-task-name{font-size:13px;color:#202124;line-height:1.4;font-weight:500;}
+.tlc-task-name.done{text-decoration:line-through;color:#9aa0a6;font-weight:400;}
+.tlc-task-notes{font-size:11px;color:#9aa0a6;margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.tlc-task-meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap;}
+.tlc-due-chip{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500;}
+.tlc-due-chip.overdue{background:#fce8e6;color:#c5221f;}
+.tlc-due-chip.today{background:#fef7e0;color:#b06000;}
+.tlc-due-chip.future{background:#f1f3f4;color:#5f6368;}
+
+.comp-sep{height:1px;background:#e8eaed;margin:6px 0;}
+.tlc-completed-sec{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;color:#5f6368;font-size:11px;border-radius:6px;transition:background .12s;}
+.tlc-completed-sec:hover{background:#fff;}
+.tlc-completed-sec svg{width:12px;height:12px;transition:transform .2s;}
+.tlc-completed-sec.open svg{transform:rotate(90deg);}
+.tlc-completed-tasks{display:none;}
+.tlc-completed-tasks.show{display:block;}
+
+.empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:10px;}
+.empty-icon{font-size:40px;}
+.empty-title{font-size:14px;font-weight:500;color:#5f6368;}
+.empty-sub{font-size:12px;color:#9aa0a6;max-width:260px;line-height:1.6;}
+.skeleton{height:13px;background:linear-gradient(90deg,#f1f3f4 25%,#e8eaed 50%,#f1f3f4 75%);background-size:200% 100%;animation:shimmer 1.3s infinite;border-radius:6px;margin:6px 0;}
+@keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+/* ── FIXED: proper flex matching dashboard col-right ── */
+.right-col{
+  flex:0 0 calc(40% - 14px);
+  min-width:0;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
+.r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+
+.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;}
+.tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
+.tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
+
+.msg-ta{width:100%;min-height:68px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
+.msg-ta:focus{border-color:#1a73e8;}
+.msg-actions{display:flex;gap:8px;margin-top:8px;}
+.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:6px 12px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
+.attach-btn:hover{background:#f1f3f4;}
+.send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.send-btn:hover:not(:disabled){background:#1765cc;}
+.send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
+.send-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
+.fname{font-size:10px;color:#5f6368;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;}
+
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
+.qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
+.qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
+.qa-icon{font-size:22px;margin-bottom:6px;}
+.qa-name{font-size:14px;font-weight:500;color:#202124;}
+.qa-desc{display:none;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
+.modal-bg.hidden{display:none;}
+.modal-box{background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.16);animation:mIn .18s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
+.modal-title{font-size:15px;font-weight:600;color:#202124;margin-bottom:14px;}
+.f-field{margin-bottom:10px;}
+.f-lbl{font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12s;}
+.f-input:focus{border-color:#1a73e8;background:#fff;}
+.f-input.large{min-height:64px;resize:vertical;}
+.f-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.modal-actions{display:flex;gap:7px;margin-top:12px;}
+.btn-primary{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-primary:hover{background:#1765cc;}
+.btn-primary:disabled{background:#a8c7fa;cursor:not-allowed;}
+.btn-cancel{flex:1;background:#f1f3f4;color:#3c4043;border:1px solid #dadce0;border-radius:6px;padding:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-cancel:hover{background:#e0e0e0;}
+.modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#202124;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .25s ease,opacity .25s;opacity:0;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success{background:#1e8e3e;}
+.toast.error{background:#d93025;}
+
+@media(max-width:900px){
+  .right-col{display:none;}
+  .task-centre{flex:1;}
+}
+@media(max-width:640px){
+  html,body{overflow:auto;}
+  #app{height:auto;min-height:100vh;overflow:visible;}
+  .app-body{flex-direction:column;overflow:visible;height:auto;}
+  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 16px;}
+  .task-sidebar{flex:none;width:100%;border-right:none;border-bottom:1px solid #e0e0e0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;}
+  .sidebar-stats{display:none;}
+  .task-grid.multi{grid-template-columns:1fr;}
+  .tb-meta{display:none;}
+}
 </style>
-
-<script>
-    window.handleCredentialResponse = function(response) {
-        console.log('GIS credential received', response);
-        if (!response.credential) { console.error('No credential returned.'); return; }
-        if (!window.tokenClient) {
-            window.tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: "514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com",
-                scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        gapi.client.setToken(tokenResponse);
-                        document.dispatchEvent(new CustomEvent('gis-token-received', { detail: tokenResponse }));
-                    } else { console.error('Failed to get access token.', tokenResponse); }
-                },
-            });
-        }
-        window.tokenClient.requestAccessToken({ prompt: "" });
-    };
-</script>
 </head>
 <body>
 
-<!-- Main App Container -->
-<div class="oauth-app-container">
-    <div class="flex flex-col space-y-4 p-4 mobile-container">
-
-        <!-- ===== Calendar Section ===== -->
-        <div id="calendar-section" class="calendar-section bg-white rounded-xl shadow-lg p-4 flex flex-col">
-            
-            <!-- Authentication Area (visible when signed out) -->
-            <div id="auth-area" class="flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h1 class="font-montserrat text-2xl font-semibold text-gray-800" style="font-size: 18pt;">Mie</h1>
-                <p class="font-lato text-base text-gray-600 mt-1 mb-6" style="font-size: 12pt;">Remember your life</p>
-
-                <div id="g_id_onload"
-                     data-client_id="514922143683-ja02ef5sm7ppsv79l216l5c18tlvtmg5.apps.googleusercontent.com"
-                     data-context="signin"
-                     data-ux_mode="popup"
-                     data-callback="handleCredentialResponse"
-                     data-auto_prompt="true"></div>
-                <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
-
-                <div class="mt-6 text-sm text-gray-500">
-                    or <a href="signup.html" class="font-semibold text-green-600 hover:text-green-700 hover:underline">Create an account</a>
-                </div>
-            </div>
-
-            <!-- Access Verification Area (visible during access check) -->
-            <div id="access-check-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h2 class="font-montserrat text-xl font-semibold text-gray-800 mb-4">Verifying Access...</h2>
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <p class="text-sm text-gray-600 mt-4">Checking if your account has access to Mie dashboard</p>
-            </div>
-
-            <!-- Access Denied Area (visible when access is denied) -->
-            <div id="access-denied-area" class="hidden flex flex-col items-center justify-start h-full p-4">
-                <img src="https://github.com/rylhong/mie-pages/blob/main/logo_white_70x70.png?raw=true" alt="Mie Logo" class="rounded-full mb-4">
-                <h2 class="font-montserrat text-xl font-semibold text-red-600 mb-4">Access Denied</h2>
-                <div class="access-denied text-center max-w-md">
-                    <p class="mb-3">Your Gmail account doesn't have access to the Mie dashboard.</p>
-                    <p class="mb-4">To get access, please sign up with the correct PIN code.</p>
-                    <div class="space-y-3">
-                        <a href="signup.html" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold">Sign Up for Access</a>
-                        <br>
-                        <button id="try-different-account" class="text-blue-600 hover:text-blue-700 underline text-sm">Try a Different Account</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calendar Content (visible when signed in and approved) -->
-            <div id="calendar-content" class="hidden flex flex-col h-full">
-                <div class="flex justify-between items-center">
-                    <span id="welcome-message" class="text-sm text-gray-600"></span>
-                    <button id="signout_button" class="bg-white text-red-600 border border-red-600 hover:bg-red-50 text-xs font-semibold mobile-small-btn py-1 px-2 rounded-md">Sign Out</button>
-                </div>
-                <div id="calendar-container" class="flex-1 min-h-0 mt-1"></div>
-            </div>
-        </div>
-
-        <!-- ===== Messaging Section ===== -->
-        <div id="messaging-section" class="messaging-section bg-white rounded-xl shadow-lg p-4 flex flex-col hidden">
-            <h2 class="text-xl font-semibold mb-2 text-gray-800 mobile-heading">Send a Message</h2>
-            
-            <div id="message-log" class="bg-gray-50 p-2 rounded-lg flex-1 overflow-y-auto mb-2">
-                <div class="text-sm mobile-text text-gray-500">Your sent messages will appear here...</div>
-            </div>
-            
-            <textarea id="message-input" placeholder="Type your message..." class="rounded-xl border border-gray-300 px-3 py-2 bg-white text-gray-900 resize-none h-20 mobile-textarea"></textarea>
-            
-            <div class="flex items-center space-x-2 mt-2">
-                <label for="file-input" class="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-sm py-1 px-3 rounded-full mobile-text">Attachment</label>
-                <input id="file-input" type="file" class="hidden" accept="image/*">
-                <div id="file-preview" class="hidden flex items-center space-x-2">
-                    <img id="preview-image" class="w-12 h-12 object-cover rounded border" alt="Preview">
-                    <button id="remove-file" class="text-red-500 text-sm mobile-text">Remove</button>
-                </div>
-            </div>
-
-            <button id="send-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow disabled:bg-blue-300 w-full mt-2 mobile-text-btn" disabled>Send</button>
-        </div>
-    </div>
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">M</div>
+    <div class="auth-title">MIE Tasks</div>
+    <div class="auth-sub">Sign in to view and manage your tasks.</div>
+    <button class="connect-btn" id="connect-btn">Connect Google</button>
+  </div>
 </div>
 
-<!-- ===== Event Details Modal (Popup) ===== -->
-<div id="event-modal" class="event-modal hidden">
-    <div class="event-modal-content">
-        <div class="flex justify-between items-start mb-4">
-            <h3 id="event-title" class="text-xl font-semibold mobile-heading"></h3>
-            <button id="close-modal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-        </div>
-        <div id="event-details" class="space-y-2">
-            <p id="event-time" class="text-gray-600 mobile-text"></p>
-            <p id="event-description" class="text-gray-700 mobile-text"></p>
-            <p id="event-location" class="text-gray-600 mobile-text"></p>
-        </div>
-        <div class="mt-4 flex justify-end">
-            <a id="event-link" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg mobile-text-btn">Open in Google Calendar</a>
-        </div>
-    </div>
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+  <div class="spinner"></div>
+  <div style="font-size:12px;color:#5f6368;margin-top:4px;">Loading tasks…</div>
 </div>
+
+<div id="app">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="back-btn" id="back-btn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
+        Dashboard
+      </button>
+      <div class="tb-sep-line"></div>
+      <div class="tb-logo">M</div>
+      <span class="tb-brand">MIE</span>
+      <span class="tb-slash">/</span>
+      <span class="tb-page">Tasks</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-meta">
+        <span id="wb-date"></span>
+        <span class="tb-sep">·</span>
+        <span id="wb-time"></span>
+        <span class="tb-sep">·</span>
+        <div class="tb-weather"><span id="wb-icon" style="font-size:14px;"></span><span id="wb-temp"></span></div>
+      </div>
+      <button class="signout-btn" id="signout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+
+    <div class="task-sidebar" id="task-sidebar">
+      <div class="sidebar-sec">Views</div>
+      <button class="tl-item active" data-filter="all" id="tl-all">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        All tasks
+        <span class="tl-count" id="count-all">0</span>
+      </button>
+      <button class="tl-item" data-filter="today" id="tl-today">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
+        Due Today
+        <span class="tl-count" id="count-today">0</span>
+      </button>
+      <button class="tl-item" data-filter="overdue" id="tl-overdue">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="4.5" x2="8" y2="8.5" stroke-linecap="round"/><circle cx="8" cy="10.5" r=".7" fill="currentColor" stroke="none"/></svg>
+        Overdue
+        <span class="tl-count" id="count-overdue">0</span>
+      </button>
+      <div class="tl-sep"></div>
+      <div class="sidebar-sec">My Lists</div>
+      <div id="list-sidebar-items"></div>
+      <div class="tl-sep"></div>
+      <button class="tl-create" id="tl-create-btn">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>
+        Create new list
+      </button>
+      <div class="sidebar-stats">
+        <div class="stat-row"><span class="stat-label">Completed</span><span class="stat-val green" id="stat-done">—</span></div>
+        <div class="stat-row"><span class="stat-label">Remaining</span><span class="stat-val red" id="stat-todo">—</span></div>
+        <div class="stat-row"><span class="stat-label">Total</span><span class="stat-val" id="stat-total">—</span></div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <div class="task-centre">
+        <div class="task-topbar">
+          <div class="task-title-row">
+            <span style="font-size:18px;">✅</span>
+            <span class="task-page-title">Tasks</span>
+          </div>
+          <button class="add-fab" id="add-task-btn2">+ Add</button>
+        </div>
+        <div class="chip-bar">
+          <button class="chip active" data-chip="all">All</button>
+          <button class="chip" data-chip="active">Active</button>
+          <button class="chip" data-chip="done">Completed</button>
+        </div>
+        <div class="task-scroll">
+          <div class="task-grid single" id="task-grid">
+            <div class="task-list-card">
+              <div class="skeleton" style="width:40%;height:14px;"></div>
+              <div class="skeleton" style="width:70%;"></div>
+              <div class="skeleton" style="width:55%;"></div>
+              <div class="skeleton" style="width:65%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+
+        <div class="r-card">
+          <div class="r-label">Send to MIE</div>
+          <div class="tag-chips">
+            <button class="tag-chip" data-tag="@calendar">@calendar</button>
+            <button class="tag-chip" data-tag="@tasks">@tasks</button>
+            <button class="tag-chip" data-tag="@finance">@finance</button>
+            <button class="tag-chip" data-tag="@food">@food</button>
+          </div>
+          <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
+          <div class="msg-actions">
+            <label class="attach-btn" for="file-input">📎 Attach</label>
+            <input type="file" id="file-input" style="display:none;"/>
+            <span class="fname" id="fname" style="display:none;"></span>
+            <button class="rm-btn" id="rm-file" style="display:none;">✕</button>
+            <button class="send-btn" id="send-btn" disabled>Send</button>
+          </div>
+          <div class="send-status" id="send-status"></div>
+        </div>
+
+        <div class="r-card" style="flex:1;overflow-y:auto;">
+          <div class="r-label">Quick Actions</div>
+          <div class="qa-grid">
+            <a class="qa-btn" href="/dashboard" data-qa="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
+            <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
+            <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
+            <div class="qa-btn" data-qa="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div></div>
+            <div class="qa-btn" data-qa="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
+            <div class="qa-btn" data-qa="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
+            <div class="qa-btn" data-qa="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
+            <div class="qa-btn" data-qa="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="add-task-modal">
+  <div class="modal-box">
+    <div class="modal-title">Add Task</div>
+    <div class="f-field"><label class="f-lbl">Title *</label><input class="f-input" type="text" id="at-title" placeholder="What needs to be done?"/></div>
+    <div class="f-field"><label class="f-lbl">Notes</label><textarea class="f-input large" id="at-notes" placeholder="Optional notes…"></textarea></div>
+    <div class="f-row2">
+      <div class="f-field"><label class="f-lbl">Due Date</label><input class="f-input" type="date" id="at-due"/></div>
+      <div class="f-field"><label class="f-lbl">Task List</label><select class="f-input" id="at-list"></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="at-cancel">Cancel</button>
+      <button class="btn-primary" id="at-save">Add Task</button>
+    </div>
+    <div class="modal-status" id="at-status"></div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="new-list-modal">
+  <div class="modal-box">
+    <div class="modal-title">Create New List</div>
+    <div class="f-field"><label class="f-lbl">List Name *</label><input class="f-input" type="text" id="nl-name" placeholder="e.g. Work, Personal, Health…"/></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="nl-cancel">Cancel</button>
+      <button class="btn-primary" id="nl-save">Create</button>
+    </div>
+    <div class="modal-status" id="nl-status"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-(async function(){
-    // Configuration - Update this with your Google Apps Script URL for access checking
-    const ACCESS_CHECK_URL = "https://script.google.com/macros/s/AKfycbz6fygl_FdjiiiT0PDbn3t6j3dnULrHbX7kUrOrHnyVnAfuFNdssNuiMQzmEg-PY38/exec";
-    const RECIPIENT_EMAIL = "save@mie.today";
-    
-    let calendar = null;
-    let selectedFile = null;
-    let userEmail = null;
-    let gapi_loaded = false;
-    let userHasAccess = false;
-    
-    // DOM elements
-    const authArea = document.getElementById('auth-area');
-    const accessCheckArea = document.getElementById('access-check-area');
-    const accessDeniedArea = document.getElementById('access-denied-area');
-    const calendarContent = document.getElementById('calendar-content');
-    const calendarContainer = document.getElementById('calendar-container');
-    const messagingSection = document.getElementById('messaging-section');
-    const welcomeMessage = document.getElementById('welcome-message');
-    const signoutButton = document.getElementById('signout_button');
-    const tryDifferentAccountBtn = document.getElementById('try-different-account');
-    const sendButton = document.getElementById('send-button');
-    const messageLog = document.getElementById('message-log');
-    const messageInput = document.getElementById('message-input');
-    const fileInput = document.getElementById('file-input');
-    const filePreview = document.getElementById('file-preview');
-    const previewImage = document.getElementById('preview-image');
-    const removeFileButton = document.getElementById('remove-file');
-    const eventModal = document.getElementById('event-modal');
-    const closeModal = document.getElementById('close-modal');
-    const eventTitle = document.getElementById('event-title');
-    const eventTime = document.getElementById('event-time');
-    const eventDescription = document.getElementById('event-description');
-    const eventLocation = document.getElementById('event-location');
-    const eventLink = document.getElementById('event-link');
+'use strict';
+var BACKEND='https://api.mie.today';
+var DASHBOARD='/dashboard';
 
-    // Event listeners
-    signoutButton.addEventListener('click', handleSignOut);
-    tryDifferentAccountBtn.addEventListener('click', handleSignOut);
-    sendButton.addEventListener('click', sendEmail);
-    messageInput.addEventListener('input', updateSendButton);
-    fileInput.addEventListener('change', handleFileSelect);
-    removeFileButton.addEventListener('click', removeFile);
-    closeModal.addEventListener('click', () => eventModal.classList.add('hidden'));
-    eventModal.addEventListener('click', (e) => { if(e.target === eventModal) eventModal.classList.add('hidden'); });
+var authWrap=document.getElementById('auth-wrap');
+var loadWrap=document.getElementById('loading-wrap');
+var appEl=document.getElementById('app');
 
-    // Initialize GAPI
-    gapi.load('client', () => {
-        gapi.client.init({
-            discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest", "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"]
-        }).then(() => {
-            gapi_loaded = true;
-            console.log("GAPI client ready");
-        });
-    });
+var allTasks=[];
+var taskLists=[];
+var currentFilter='all';
+var currentChip='all';
 
-    // Listen for successful authentication
-    document.addEventListener('gis-token-received', async () => {
-        await handleAuthSuccess();
-    });
-
-    // UI state management
-    function showAuthArea() {
-        authArea.classList.remove('hidden');
-        accessCheckArea.classList.add('hidden');
-        accessDeniedArea.classList.add('hidden');
-        calendarContent.classList.add('hidden');
-        messagingSection.classList.add('hidden');
-    }
-
-    function showAccessCheck() {
-        authArea.classList.add('hidden');
-        accessCheckArea.classList.remove('hidden');
-        accessDeniedArea.classList.add('hidden');
-        calendarContent.classList.add('hidden');
-        messagingSection.classList.add('hidden');
-    }
-
-    function showAccessDenied() {
-        authArea.classList.add('hidden');
-        accessCheckArea.classList.add('hidden');
-        accessDeniedArea.classList.remove('hidden');
-        calendarContent.classList.add('hidden');
-        messagingSection.classList.add('hidden');
-    }
-
-    function showDashboard() {
-        authArea.classList.add('hidden');
-        accessCheckArea.classList.add('hidden');
-        accessDeniedArea.classList.add('hidden');
-        calendarContent.classList.remove('hidden');
-        messagingSection.classList.remove('hidden');
-    }
-
-    // Handle successful Google authentication
-    async function handleAuthSuccess(){
-        showAccessCheck();
-        
-        // Wait for GAPI to be ready
-        let attempts = 0;
-        while (!gapi_loaded && attempts < 50) {
-            await new Promise(r => setTimeout(r, 100));
-            attempts++;
-        }
-        if (!gapi_loaded) { 
-            console.error("GAPI not loaded");
-            showAccessDenied();
-            return; 
-        }
-        
-        try {
-            // Get user email
-            userEmail = await getUserEmail();
-            console.log("User email:", userEmail);
-            
-            // Check if user has access
-            const hasAccess = await checkUserAccess(userEmail);
-            
-            if (hasAccess) {
-                userHasAccess = true;
-                welcomeMessage.textContent = `Welcome, ${userEmail}`;
-                showDashboard();
-                displayMonthlyCalendar();
-            } else {
-                userHasAccess = false;
-                showAccessDenied();
-            }
-        } catch(e) {
-            console.error("Error during auth process:", e);
-            showAccessDenied();
-        }
-    }
-
-    // Get user's Gmail address
-    async function getUserEmail() {
-        try {
-            const token = gapi.client.getToken();
-            const resp = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { 
-                headers: { 'Authorization': `Bearer ${token.access_token}` } 
-            });
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data.email) {
-                    return data.email;
-                }
-            }
-            const gmailResp = await gapi.client.gmail.users.getProfile({'userId':'me'});
-            return gmailResp.result.emailAddress;
-        } catch (e) {
-            console.error("Error getting user email:", e);
-            throw e;
-        }
-    }
-
-    // Check if user has access by querying the spreadsheet
-    async function checkUserAccess(email) {
-        try {
-            console.log("Checking access for:", email);
-            
-            const response = await fetch(`${ACCESS_CHECK_URL}?action=checkAccess&email=${encodeURIComponent(email)}`, {
-                method: 'GET',
-                mode: 'cors'
-            });
-            
-            if (!response.ok) {
-                console.error("Access check request failed:", response.status);
-                return false;
-            }
-            
-            const data = await response.json();
-            console.log("Access check response:", data);
-            
-            return data.hasAccess === true;
-        } catch (error) {
-            console.error("Error checking user access:", error);
-            return false;
-        }
-    }
-
-    // Handle sign out
-    function handleSignOut(){
-        const token = gapi.client.getToken();
-        if (token) {
-            google.accounts.oauth2.revoke(token.access_token, () => {
-                gapi.client.setToken(null);
-                showAuthArea();
-            });
-        }
-        userEmail = null;
-        userHasAccess = false;
-        showAuthArea();
-    }
-
-    // File handling
-    function handleFileSelect(e){
-        const file = e.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            selectedFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                filePreview.classList.remove('hidden');
-                updateSendButton();
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
-    function removeFile() {
-        selectedFile = null;
-        filePreview.classList.add('hidden');
-        fileInput.value = '';
-        updateSendButton();
-    }
-
-    function updateSendButton() {
-        const canSend = messageInput.value.trim() !== '' || selectedFile !== null;
-        sendButton.disabled = !canSend;
-    }
-
-    // Email sending functionality
-    async function sendEmail() {
-        if (!userEmail || !userHasAccess) {
-            logMessage("Error: Access denied or not signed in.", "error");
-            return;
-        }
-        if (!messageInput.value.trim() && !selectedFile) return;
-        
-        logMessage(`Sending email...`, "info");
-        sendButton.disabled = true;
-        
-        const boundary = '----boundary_' + Date.now();
-        const headers = [
-            `To: ${RECIPIENT_EMAIL}`,
-            `From: ${userEmail}`,
-            `Subject: Message from ${userEmail}`,
-            `MIME-Version: 1.0`,
-            `Content-Type: multipart/mixed; boundary="${boundary}"`
-        ];
-        
-        let emailContent = headers.join('\r\n') + '\r\n\r\n';
-        if (messageInput.value.trim()) {
-            emailContent += `--${boundary}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${messageInput.value.trim()}\r\n\r\n`;
-        }
-        if (selectedFile) {
-            const fileData = await fileToBase64(selectedFile);
-            emailContent += `--${boundary}\r\nContent-Type: ${selectedFile.type}; name="${selectedFile.name}"\r\nContent-Disposition: attachment; filename="${selectedFile.name}"\r\nContent-Transfer-Encoding: base64\r\n\r\n${fileData.split(',')[1]}\r\n\r\n`;
-        }
-        emailContent += `--${boundary}--`;
-        
-        const base64Encoded = btoa(unescape(encodeURIComponent(emailContent))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        
-        try {
-            await gapi.client.gmail.users.messages.send({'userId': 'me', 'resource': {'raw': base64Encoded}});
-            logMessage("Message sent", "success");
-            messageInput.value = '';
-            removeFile();
-        } catch(err) {
-            logMessage(`Failed to send email: ${err.result?.error?.message || 'Unknown error'}`, "error");
-        } finally {
-            updateSendButton();
-        }
-    }
-
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = err => reject(err);
-        });
-    }
-
-    function logMessage(msg, type) {
-        const div = document.createElement('div');
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        div.className = `text-sm mb-1 ${type==='error'?'text-red-500':type==='success'?'text-green-500':'text-gray-600'}`;
-        const placeholder = messageLog.querySelector('.text-gray-500');
-        if (placeholder) placeholder.remove();
-        messageLog.appendChild(div);
-        messageLog.scrollTop = messageLog.scrollHeight;
-    }
-
-// Calendar functionality
-function displayMonthlyCalendar() {
-    if (!userHasAccess) return;
-    
-    if (calendar) calendar.destroy();
-    calendar = new FullCalendar.Calendar(calendarContainer, {
-        initialView: 'dayGridMonth',
-        headerToolbar: { left: 'today', center: 'title', right: 'prev,next' },
-        fixedWeekCount: false,
-        showNonCurrentDates: false,
-        height: 'auto',
-        events: async (fetchInfo, successCallback, failureCallback) => {
-            try {
-                // Get all calendars (primary + shared)
-                const calendarListResponse = await gapi.client.calendar.calendarList.list();
-                const calendars = calendarListResponse.result.items;
-                
-                console.log(`Found ${calendars.length} calendars:`, calendars.map(c => c.summary));
-                
-                // Fetch events from all calendars
-                const eventPromises = calendars.map(async (cal) => {
-                    try {
-                        const res = await gapi.client.calendar.events.list({
-                            'calendarId': cal.id,
-                            'timeMin': fetchInfo.start.toISOString(),
-                            'timeMax': fetchInfo.end.toISOString(),
-                            'showDeleted': false,
-                            'singleEvents': true,
-                            'orderBy': 'startTime'
-                        });
-                        return (res.result.items || []).map(e => ({
-                            id: e.id,
-                            title: e.summary || 'No Title',
-                            start: e.start.dateTime || e.start.date,
-                            end: e.end.dateTime || e.end.date,
-                            url: e.htmlLink,
-                            allDay: !e.start.dateTime,
-                            description: e.description || '',
-                            location: e.location || '',
-                            backgroundColor: cal.backgroundColor || '#3b82f6',
-                            borderColor: cal.backgroundColor || '#3b82f6',
-                        }));
-                    } catch (err) {
-                        console.error(`Error fetching from ${cal.summary}:`, err);
-                        return [];
-                    }
-                });
-                
-                const eventArrays = await Promise.all(eventPromises);
-                const allEvents = eventArrays.flat();
-                
-                console.log(`Total events: ${allEvents.length}`);
-                successCallback(allEvents);
-            } catch (err) {
-                console.error("Error fetching calendar events: ", err);
-                failureCallback(err);
-            }
-        },
-        eventClick: function(info) {
-            info.jsEvent.preventDefault();
-            showEventDetails(info.event);
-        }
-    });
-    calendar.render();
+function show(el){
+  [authWrap,loadWrap,appEl].forEach(function(e){e.style.display='none';});
+  if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';}
+  else el.style.display='';
 }
 
-    function showEventDetails(event) {
-        eventTitle.textContent = event.title;
-        const start = new Date(event.start);
-        const end = event.end ? new Date(event.end) : null;
-        
-        let timeString = 'All-day';
-        if (!event.allDay) {
-            timeString = start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            if (end) {
-                timeString += ` - ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-            }
-        }
-        eventTime.textContent = `${start.toLocaleDateString()}${event.allDay ? '' : ' | ' + timeString}`;
-        eventDescription.textContent = event.extendedProps.description || 'No description provided.';
-        eventLocation.textContent = event.extendedProps.location || 'No location provided.';
-        eventLink.href = event.url;
-        eventModal.classList.remove('hidden');
+var toastTmr=null;
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type||'');
+  setTimeout(function(){t.classList.add('show');},10);
+  if(toastTmr)clearTimeout(toastTmr);
+  toastTmr=setTimeout(function(){t.classList.remove('show');},2600);
+}
+
+function startClock(){
+  function tick(){
+    var n=new Date();
+    document.getElementById('wb-date').textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    document.getElementById('wb-time').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
+  }
+  tick();setInterval(tick,30000);
+}
+
+function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';return'⛈️';}
+function loadWeather(){
+  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});}
+  else doWeather(37.7749,-122.4194);
+}
+function doWeather(lat,lon){
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
+    .then(function(r){return r.json();})
+    .then(function(w){
+      var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);
+      document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);
+      document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';
+    }).catch(function(){});
+}
+
+function init(){
+  show(loadWrap);
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
+    .then(function(d){
+      if(!d)return;
+      if(d.connected){show(appEl);loadTasks();startClock();loadWeather();}
+      else show(authWrap);
+    }).catch(function(){show(authWrap);});
+}
+
+document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
+document.getElementById('signout-btn').addEventListener('click',function(){
+  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});
+});
+document.getElementById('back-btn').addEventListener('click',function(){window.location.href=DASHBOARD;});
+
+document.querySelectorAll('.tag-chip').forEach(function(chip){
+  chip.addEventListener('click',function(){
+    var tag=chip.getAttribute('data-tag');
+    var ta=document.getElementById('msg-input');
+    chip.classList.toggle('selected');
+    var val=ta.value;
+    if(chip.classList.contains('selected')){
+      if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}
+    }else{
+      ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();
     }
-})();
+    updateSendBtn();
+    ta.focus();
+  });
+});
+
+var msgIn=document.getElementById('msg-input');
+var sndBtn=document.getElementById('send-btn');
+var sndSt=document.getElementById('send-status');
+var filIn=document.getElementById('file-input');
+var fnm=document.getElementById('fname');
+var rmf=document.getElementById('rm-file');
+var selFile=null;
+function updateSendBtn(){sndBtn.disabled=!msgIn.value.trim()&&!selFile;}
+msgIn.addEventListener('input',updateSendBtn);
+filIn.addEventListener('change',function(){
+  selFile=filIn.files[0]||null;
+  if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}
+  else{fnm.style.display='none';rmf.style.display='none';}
+  updateSendBtn();
+});
+rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
+sndBtn.addEventListener('click',function(){
+  var txt=msgIn.value.trim();if(!txt&&!selFile)return;
+  sndBtn.disabled=true;sndSt.textContent='';
+  fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
+    .then(function(r){
+      if(r.ok){
+        sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';
+        msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
+        document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});
+      }else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}
+    })
+    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';})
+    .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
+});
+
+document.querySelectorAll('.qa-btn[data-qa]').forEach(function(btn){
+  if(btn.tagName==='A')return;
+  btn.addEventListener('click',function(){
+    var qa=btn.getAttribute('data-qa');
+    if(qa==='tasks')return;
+    window.location.href=DASHBOARD+'?mod='+qa;
+  });
+});
+
+function loadTasks(){
+  fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){allTasks=[];taskLists=[];}
+      else{
+        taskLists=Array.isArray(data.lists)?data.lists:[];
+        var raw=Array.isArray(data.tasks)?data.tasks:[];
+        allTasks=raw.map(function(t){
+          var lid=t.listId||t.taskListId||null;
+          if(!lid&&taskLists.length===1)lid=taskLists[0].id;
+          return Object.assign({},t,{listId:lid||'@default',_pending:false});
+        });
+      }
+      updateStats();renderSidebar();renderMain();
+    })
+    .catch(function(){allTasks=[];taskLists=[];updateStats();renderSidebar();renderMain();});
+}
+
+function updateStats(){
+  var done=allTasks.filter(function(t){return t.status==='completed';}).length;
+  var todo=allTasks.filter(function(t){return t.status!=='completed';}).length;
+  document.getElementById('stat-done').textContent=done;
+  document.getElementById('stat-todo').textContent=todo;
+  document.getElementById('stat-total').textContent=allTasks.length;
+  var now=new Date();now.setHours(0,0,0,0);
+  var todayCnt=allTasks.filter(function(t){
+    if(t.status==='completed'||!t.due)return false;
+    return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;
+  }).length;
+  var overdueCnt=allTasks.filter(function(t){
+    if(t.status==='completed'||!t.due)return false;
+    return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;
+  }).length;
+  var allActive=allTasks.filter(function(t){return t.status!=='completed';}).length;
+  document.getElementById('count-all').textContent=allActive;
+  document.getElementById('count-today').textContent=todayCnt;
+  var ob=document.getElementById('count-overdue');
+  ob.textContent=overdueCnt;
+  ob.className='tl-count'+(overdueCnt>0?' red-badge':'');
+}
+
+function renderSidebar(){
+  ['all','today','overdue'].forEach(function(f){
+    var el=document.getElementById('tl-'+f);
+    if(el)el.className='tl-item'+(currentFilter===f?' active':'');
+  });
+  var con=document.getElementById('list-sidebar-items');con.innerHTML='';
+  taskLists.forEach(function(l){
+    var cnt=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;
+    var btn=document.createElement('button');
+    btn.className='tl-item'+(currentFilter===l.id?' active':'');
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/></svg>'
+      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escHtml(l.title)+'</span>'
+      +'<span class="tl-count">'+cnt+'</span>';
+    btn.addEventListener('click',function(){setFilter(l.id);});
+    con.appendChild(btn);
+  });
+}
+
+function setFilter(f){currentFilter=f;renderSidebar();renderMain();}
+['all','today','overdue'].forEach(function(f){
+  var el=document.getElementById('tl-'+f);
+  if(el)el.addEventListener('click',function(){setFilter(f);});
+});
+
+document.querySelectorAll('.chip').forEach(function(c){
+  c.addEventListener('click',function(){
+    currentChip=c.getAttribute('data-chip');
+    document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
+    c.classList.add('active');
+    renderMain();
+  });
+});
+
+function renderMain(){
+  var grid=document.getElementById('task-grid');grid.innerHTML='';
+  var now=new Date();now.setHours(0,0,0,0);
+  var listsToRender=[];
+  if(currentFilter==='all'){
+    listsToRender=taskLists.length?taskLists.slice():[{id:'@default',title:'My Tasks'}];
+  }else if(currentFilter==='today'||currentFilter==='overdue'){
+    listsToRender=[{id:'__virtual__',title:currentFilter==='today'?'Due Today':'Overdue',_virtual:currentFilter}];
+  }else{
+    var found=taskLists.find(function(l){return l.id===currentFilter;});
+    listsToRender=[found||{id:currentFilter,title:'Tasks'}];
+  }
+  grid.className='task-grid '+(listsToRender.length>1?'multi':'single');
+  listsToRender.forEach(function(lst){
+    var tasks;
+    if(lst._virtual==='today'){
+      tasks=allTasks.filter(function(t){
+        if(!t.due)return false;
+        return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;
+      });
+    }else if(lst._virtual==='overdue'){
+      tasks=allTasks.filter(function(t){
+        if(!t.due||t.status==='completed')return false;
+        return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;
+      });
+    }else{
+      tasks=allTasks.filter(function(t){return t.listId===lst.id;});
+    }
+    var active=tasks.filter(function(t){return t.status!=='completed';});
+    var done=tasks.filter(function(t){return t.status==='completed';});
+    var showActive=(currentChip==='all'||currentChip==='active');
+    var showDone=(currentChip==='all'||currentChip==='done');
+    grid.appendChild(buildCard(lst,showActive?active:[],showDone?done:[]));
+  });
+  if(!grid.children.length){
+    grid.innerHTML='';
+    var emp=document.createElement('div');emp.className='task-list-card';
+    emp.innerHTML='<div class="empty-card"><div class="empty-icon">✅</div><div class="empty-title">All caught up!</div><div class="empty-sub">No tasks match this filter.</div></div>';
+    grid.appendChild(emp);
+  }
+}
+
+function buildCard(lst,active,done){
+  var card=document.createElement('div');card.className='task-list-card';
+  var hd=document.createElement('div');hd.className='tlc-header';
+  var nm=document.createElement('span');nm.className='tlc-name';nm.textContent=lst.title||'My Tasks';
+  var badge=document.createElement('span');badge.className='tlc-badge';badge.textContent=active.length+' active';
+  hd.appendChild(nm);hd.appendChild(badge);card.appendChild(hd);
+  if(!lst._virtual){
+    var addBtn=document.createElement('button');addBtn.className='tlc-add';
+    addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="#1a73e8" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Add a task';
+    addBtn.addEventListener('click',function(){openAddModal(lst.id);});
+    card.appendChild(addBtn);
+  }
+  if(active.length){
+    active.forEach(function(t){card.appendChild(buildRow(t));});
+  }else if(!done.length){
+    var e=document.createElement('div');
+    e.style.cssText='padding:10px 4px;font-size:12px;color:#9aa0a6;font-style:italic;';
+    e.textContent='No tasks here yet.';card.appendChild(e);
+  }
+  if(done.length){
+    var sep=document.createElement('div');sep.className='comp-sep';card.appendChild(sep);
+    var sec=document.createElement('div');sec.className='tlc-completed-sec';
+    sec.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="4,6 8,10 12,6"/></svg>Completed ('+done.length+')';
+    var list=document.createElement('div');list.className='tlc-completed-tasks';
+    done.forEach(function(t){list.appendChild(buildRow(t));});
+    sec.addEventListener('click',function(){sec.classList.toggle('open');list.classList.toggle('show');});
+    card.appendChild(sec);card.appendChild(list);
+  }
+  return card;
+}
+
+function buildRow(t){
+  var isDone=t.status==='completed';
+  var row=document.createElement('div');row.className='tlc-task';
+  var cb=document.createElement('button');
+  cb.type='button';
+  cb.className='tlc-cb'+(isDone?' checked':'');
+  cb.setAttribute('role','checkbox');
+  cb.setAttribute('aria-checked',isDone?'true':'false');
+  cb.setAttribute('aria-label',(isDone?'Unmark':'Mark complete')+': '+(t.title||'task'));
+  cb.addEventListener('click',function(){
+    if(t._pending)return;
+    t._pending=true;
+    cb.disabled=true;
+    toggleTask(t,cb,row,function(){t._pending=false;cb.disabled=false;});
+  });
+  var body=document.createElement('div');body.className='tlc-task-body';
+  var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';
+  body.appendChild(nm);
+  var notes=(t.notes||'').replace(/\[priority:(high|medium|low)\]/gi,'').trim();
+  if(notes){
+    var nd=document.createElement('div');nd.className='tlc-task-notes';nd.textContent=notes;
+    body.appendChild(nd);
+  }
+  if(!isDone&&t.due){
+    var df=fmtDue(t.due);
+    if(df){
+      var meta=document.createElement('div');meta.className='tlc-task-meta';
+      var chip=document.createElement('span');chip.className='tlc-due-chip '+df.cls;
+      chip.textContent='📅 '+df.label;
+      meta.appendChild(chip);body.appendChild(meta);
+    }
+  }
+  row.appendChild(cb);row.appendChild(body);
+  return row;
+}
+
+function toggleTask(t,cb,row,onDone){
+  var wasDone=t.status==='completed';
+  var newStatus=wasDone?'needsAction':'completed';
+  cb.classList.toggle('checked',!wasDone);
+  cb.setAttribute('aria-checked',(!wasDone).toString());
+  var nameEl=row.querySelector('.tlc-task-name');
+  if(nameEl)nameEl.classList.toggle('done',!wasDone);
+  t.status=newStatus;
+  updateStats();
+  function attempt(listId){
+    return fetch(BACKEND+'/api/me/tasks/update',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})
+    });
+  }
+  attempt(t.listId||'@default')
+    .then(function(r){
+      if(r.status===404&&t.listId!=='@default')return attempt('@default');
+      return r;
+    })
+    .then(function(r){
+      if(r&&r.ok){
+        toast(newStatus==='completed'?'✅ Task completed!':'↩ Task reopened.',newStatus==='completed'?'success':'');
+        renderSidebar();renderMain();updateStats();
+      }else{
+        t.status=wasDone?'completed':'needsAction';
+        cb.classList.toggle('checked',wasDone);
+        if(nameEl)nameEl.classList.toggle('done',wasDone);
+        updateStats();
+        toast('Could not update task.','error');
+      }
+      if(onDone)onDone();
+    })
+    .catch(function(){
+      t.status=wasDone?'completed':'needsAction';
+      cb.classList.toggle('checked',wasDone);
+      if(nameEl)nameEl.classList.toggle('done',wasDone);
+      updateStats();
+      if(onDone)onDone();
+    });
+}
+
+function openAddModal(preselect){
+  document.getElementById('at-title').value='';
+  document.getElementById('at-notes').value='';
+  document.getElementById('at-due').value='';
+  document.getElementById('at-status').textContent='';
+  var sel=document.getElementById('at-list');sel.innerHTML='';
+  taskLists.forEach(function(l){
+    var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;
+    if(l.id===preselect)o.selected=true;
+    sel.appendChild(o);
+  });
+  if(!taskLists.length){var o=document.createElement('option');o.value='@default';o.textContent='My Tasks';sel.appendChild(o);}
+  document.getElementById('add-task-modal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('at-title').focus();},60);
+}
+document.getElementById('add-task-btn2').addEventListener('click',function(){openAddModal(null);});
+document.getElementById('at-cancel').addEventListener('click',function(){document.getElementById('add-task-modal').classList.add('hidden');});
+document.getElementById('add-task-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+document.getElementById('at-save').addEventListener('click',function(){
+  var title=document.getElementById('at-title').value.trim();
+  var notes=document.getElementById('at-notes').value.trim();
+  var due=document.getElementById('at-due').value;
+  var listId=document.getElementById('at-list').value||'@default';
+  var st=document.getElementById('at-status');
+  if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}
+  var payload={title:title,listId:listId};
+  if(notes)payload.notes=notes;
+  if(due)payload.due=due+'T00:00:00.000Z';
+  document.getElementById('at-save').disabled=true;st.style.color='#5f6368';st.textContent='Saving…';
+  fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){
+      if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Added!';setTimeout(function(){document.getElementById('add-task-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}
+      else{st.style.color='#d93025';st.textContent='❌ Failed.';}
+    })
+    .catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';})
+    .finally(function(){document.getElementById('at-save').disabled=false;});
+});
+
+document.getElementById('tl-create-btn').addEventListener('click',function(){
+  document.getElementById('nl-name').value='';document.getElementById('nl-status').textContent='';
+  document.getElementById('new-list-modal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('nl-name').focus();},60);
+});
+document.getElementById('nl-cancel').addEventListener('click',function(){document.getElementById('new-list-modal').classList.add('hidden');});
+document.getElementById('new-list-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+document.getElementById('nl-save').addEventListener('click',function(){
+  var name=document.getElementById('nl-name').value.trim();
+  var st=document.getElementById('nl-status');
+  if(!name){st.style.color='#d93025';st.textContent='Name is required.';return;}
+  document.getElementById('nl-save').disabled=true;st.style.color='#5f6368';st.textContent='Creating…';
+  fetch(BACKEND+'/api/me/tasks/lists/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:name})})
+    .then(function(r){
+      if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Created!';setTimeout(function(){document.getElementById('new-list-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}
+      else{st.style.color='#d93025';st.textContent='❌ Failed.';}
+    })
+    .catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';})
+    .finally(function(){document.getElementById('nl-save').disabled=false;});
+});
+
+function fmtDue(d){
+  if(!d)return null;
+  var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now=new Date();now.setHours(0,0,0,0);
+  var diff=Math.round((dt-now)/86400000);
+  if(diff<0)return{label:'Overdue',cls:'overdue'};
+  if(diff===0)return{label:'Today',cls:'today'};
+  if(diff===1)return{label:'Tomorrow',cls:'future'};
+  return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};
+}
+function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+init();
 </script>
 </body>
 </html>
-
