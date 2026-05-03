@@ -58,14 +58,21 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .add-fab:hover{background:#1765cc;}
 
 /* ══════════════════════════ BODY LAYOUT ══════════════════════════ */
-/* sidebar flush left, content area padded — matches dashboard proportions */
 .app-body{flex:1;display:flex;overflow:hidden;min-height:0;padding:0;gap:0;align-items:stretch;}
 
-/* wrapper for tasks + right panel (has the padding) */
-.content-area{width:calc(100vw - 200px);flex-shrink:0;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;gap:14px;align-items:stretch;}
+/* ── KEY FIX: content-area now uses the same padding on both sides ── */
+/* Dashboard uses padding:8px 20px 10px on body-wrap (no sidebar).   */
+/* Task has a 200px sidebar flush-left, then content-area.            */
+/* Adding padding-right:20px here gives the right edge the same 20px */
+/* breathing room as the left sidebar's outer edge.                   */
+.content-area{
+  flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;
+  padding:8px 20px 10px 16px; /* left:16px (gap from sidebar), right:20px matches dashboard */
+  gap:14px; /* matches dashboard body-wrap gap */
+  align-items:stretch;
+}
 
 /* ══════════════════════════ LEFT SIDEBAR ══════════════════════════ */
-/* flush panel — no card border, no radius, right-border only */
 .task-sidebar{
   flex:0 0 200px;min-width:0;
   display:flex;flex-direction:column;
@@ -111,13 +118,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stat-val.red{color:#d93025;}
 
 /* ══════════════════════════ CENTRE — TASK AREA ══════════════════════════ */
+/* ── KEY FIX: task-centre uses flex:1 so it fills remaining space    ── */
+/* ── after right-col takes its share, matching dashboard's col-left  ── */
 .task-centre{
-  flex:0 0 60%;min-width:0;
+  flex:1;min-width:0;
   display:flex;flex-direction:column;
   background:#fff;border:1px solid #e0e0e0;border-radius:12px;
   overflow:hidden;
 }
-/* tasks top bar */
 .task-topbar{
   flex-shrink:0;padding:14px 18px 0;
   display:flex;align-items:center;justify-content:space-between;
@@ -125,7 +133,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .task-title-row{display:flex;align-items:center;gap:8px;}
 .task-page-title{font-size:20px;font-weight:500;color:#202124;}
 
-/* filter chips */
 .chip-bar{display:flex;gap:6px;padding:10px 18px 10px;flex-shrink:0;border-bottom:1px solid #f1f3f4;}
 .chip{
   background:none;border:1px solid #dadce0;border-radius:20px;
@@ -135,21 +142,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .chip:hover{background:#f1f3f4;}
 .chip.active{background:#1a73e8;color:#fff;border-color:#1a73e8;}
 
-/* scrollable task content */
 .task-scroll{flex:1;overflow-y:auto;padding:14px 18px;}
 .task-scroll::-webkit-scrollbar{width:4px;}
 .task-scroll::-webkit-scrollbar-thumb{background:#dadce0;border-radius:4px;}
 
-/* task grid */
 .task-grid{display:grid;gap:14px;}
 .task-grid.multi{grid-template-columns:1fr 1fr;}
 .task-grid.single{grid-template-columns:1fr;max-width:640px;}
 
-/* list card */
 .task-list-card{
   background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;
   padding:14px 16px;display:flex;flex-direction:column;gap:2px;
-  /* isolation: isolate ensures z-index works correctly for children */
   isolation:isolate;
 }
 .tlc-header{
@@ -159,7 +162,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-name{font-size:13px;font-weight:600;color:#202124;}
 .tlc-badge{font-size:10px;font-weight:500;color:#5f6368;background:#e8eaed;border-radius:8px;padding:2px 7px;}
 
-/* add task button inside card */
 .tlc-add{
   display:flex;align-items:center;gap:7px;padding:7px 4px;
   color:#1a73e8;cursor:pointer;font-size:12px;font-weight:500;
@@ -169,44 +171,24 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-add:hover{background:#e8f0fe;}
 .tlc-add svg{width:14px;height:14px;flex-shrink:0;}
 
-/* ══════════════════════════════════════════════════════════════════
-   TASK ROW + CHECKBOX — DEFINITIVE FIX
-   Root cause of unclickable checkbox:
-   1. task-list-card had no stacking context → z-index on cb useless
-      FIX: isolation:isolate on .task-list-card (above)
-   2. tlc-task had no overflow:visible, so border-radius could clip
-      FIX: explicit overflow:visible
-   3. The cb element itself needs to be THE topmost element in its row
-      FIX: use a real <button> element instead of a <div> for the cb.
-      A <button> is natively focusable and clickable with no extra effort.
-      No z-index games needed. No pointer-events hacks needed.
-═══════════════════════════════════════════════════════════════════ */
 .tlc-task{
   display:flex;align-items:flex-start;gap:10px;
   padding:8px 4px;border-radius:6px;
   transition:background .1s;
-  overflow:visible; /* never clip the checkbox */
-  position:relative; /* establish stacking context for z-index */
+  overflow:visible;
+  position:relative;
 }
 .tlc-task:hover{background:#fff;}
 
-/* THE CHECKBOX — now a real <button> not a <div> */
 .tlc-cb{
-  /* size + shape */
   width:18px;height:18px;min-width:18px;
   border:1.5px solid #9aa0a6;border-radius:50%;
-  /* appearance */
   background:transparent;padding:0;
-  /* CRITICAL: real button element handles all focus/click natively */
   cursor:pointer;
-  /* layout */
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;margin-top:2px;
-  /* transitions */
   transition:border-color .15s,background .15s,transform .1s;
-  /* keep it on top */
   position:relative;z-index:2;
-  /* no inherited stuff from button reset */
   font-family:inherit;
   outline:none;
 }
@@ -214,7 +196,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-cb:focus-visible{outline:2px solid #1a73e8;outline-offset:2px;}
 .tlc-cb.checked{border-color:#1a73e8;background:#1a73e8;}
 .tlc-cb.checked::after{content:'✓';color:#fff;font-size:10px;font-weight:700;line-height:1;}
-/* dim but keep pointer while pending */
 .tlc-cb[disabled]{opacity:.45;cursor:wait;}
 
 .tlc-task-body{flex:1;min-width:0;}
@@ -227,7 +208,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-due-chip.today{background:#fef7e0;color:#b06000;}
 .tlc-due-chip.future{background:#f1f3f4;color:#5f6368;}
 
-/* completed section */
 .comp-sep{height:1px;background:#e8eaed;margin:6px 0;}
 .tlc-completed-sec{
   display:flex;align-items:center;gap:6px;
@@ -240,7 +220,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-completed-tasks{display:none;}
 .tlc-completed-tasks.show{display:block;}
 
-/* empty / loading */
 .empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:10px;}
 .empty-icon{font-size:40px;}
 .empty-title{font-size:14px;font-weight:500;color:#5f6368;}
@@ -249,16 +228,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 @keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
 
 /* ══════════════════════════ RIGHT PANEL ══════════════════════════ */
+/* ── KEY FIX: right-col matches dashboard's col-right exactly ── */
+/* Dashboard col-right: flex:0 0 calc(40% - 16px)               */
+/* We use the same ratio so both panels are proportional         */
 .right-col{
-  flex:0 0 calc(40% - 16px);min-width:0;
+  flex:0 0 calc(40% - 14px); /* 40% minus the 14px gap, mirrors dashboard */
+  min-width:0;
   display:flex;flex-direction:column;gap:14px;
 }
 
-/* send-to-mie card */
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;}
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
 .r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
 
-/* @tag chips row */
 .tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .tag-chip{
   background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;
@@ -297,15 +278,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .qa-btn{
   background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;
-  padding:12px 6px;text-align:center;cursor:pointer;
+  padding:14px 6px;text-align:center;cursor:pointer;
   transition:all .15s;font-family:'DM Sans',sans-serif;
   text-decoration:none;display:block;
 }
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:20px;margin-bottom:4px;}
-.qa-name{font-size:11px;font-weight:500;color:#202124;}
-.qa-desc{font-size:10px;color:#9aa0a6;margin-top:1px;}
+.qa-icon{font-size:22px;margin-bottom:6px;}
+.qa-name{font-size:14px;font-weight:500;color:#202124;}
+.qa-desc{display:none;} /* Korean subtitles hidden */
 
 /* ══════════════════════════ MODALS ══════════════════════════ */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
@@ -315,7 +296,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .modal-title{font-size:15px;font-weight:600;color:#202124;margin-bottom:14px;}
 .f-field{margin-bottom:10px;}
 .f-lbl{font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
-.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12s;}
+.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12px;}
 .f-input:focus{border-color:#1a73e8;background:#fff;}
 .f-input.large{min-height:64px;resize:vertical;}
 .f-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -475,7 +456,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       <!-- Send to MIE -->
       <div class="r-card">
         <div class="r-label">Send to MIE</div>
-        <!-- @tag chips — clicking adds tag to textarea -->
         <div class="tag-chips">
           <button class="tag-chip" data-tag="@calendar">@calendar</button>
           <button class="tag-chip" data-tag="@tasks">@tasks</button>
@@ -497,14 +477,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       <div class="r-card" style="flex:1;overflow-y:auto;">
         <div class="r-label">Quick Actions</div>
         <div class="qa-grid">
-          <a class="qa-btn" href="/dashboard" data-qa="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div><div class="qa-desc">캘린더</div></a>
-          <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div><div class="qa-desc">할 일 관리</div></div>
-          <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div><div class="qa-desc">수입/지출</div></div>
-          <div class="qa-btn" data-qa="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div><div class="qa-desc">식단/영양</div></div>
-          <div class="qa-btn" data-qa="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div><div class="qa-desc">프로젝트</div></div>
-          <div class="qa-btn" data-qa="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div><div class="qa-desc">가이드</div></div>
-          <div class="qa-btn" data-qa="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div><div class="qa-desc">요약</div></div>
-          <div class="qa-btn" data-qa="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div><div class="qa-desc">설정</div></div>
+          <a class="qa-btn" href="/dashboard" data-qa="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
+          <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
+          <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
+          <div class="qa-btn" data-qa="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div></div>
+          <div class="qa-btn" data-qa="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
+          <div class="qa-btn" data-qa="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
+          <div class="qa-btn" data-qa="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
+          <div class="qa-btn" data-qa="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
         </div>
       </div>
 
@@ -562,14 +542,12 @@ var taskLists=[];
 var currentFilter='all';
 var currentChip='all';
 
-/* ══ SHOW/HIDE ══ */
 function show(el){
   [authWrap,loadWrap,appEl].forEach(function(e){e.style.display='none';});
   if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';}
   else el.style.display='';
 }
 
-/* ══ TOAST ══ */
 var toastTmr=null;
 function toast(msg,type){
   var t=document.getElementById('toast');
@@ -579,7 +557,6 @@ function toast(msg,type){
   toastTmr=setTimeout(function(){t.classList.remove('show');},2600);
 }
 
-/* ══ CLOCK ══ */
 function startClock(){
   function tick(){
     var n=new Date();
@@ -589,7 +566,6 @@ function startClock(){
   tick();setInterval(tick,30000);
 }
 
-/* ══ WEATHER ══ */
 function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';return'⛈️';}
 function loadWeather(){
   if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});}
@@ -605,7 +581,6 @@ function doWeather(lat,lon){
     }).catch(function(){});
 }
 
-/* ══ INIT ══ */
 function init(){
   show(loadWrap);
   fetch(BACKEND+'/api/me/status',{credentials:'include'})
@@ -623,22 +598,15 @@ document.getElementById('signout-btn').addEventListener('click',function(){
 });
 document.getElementById('back-btn').addEventListener('click',function(){window.location.href=DASHBOARD;});
 
-/* ══ @TAG CHIPS ══ */
 document.querySelectorAll('.tag-chip').forEach(function(chip){
   chip.addEventListener('click',function(){
     var tag=chip.getAttribute('data-tag');
     var ta=document.getElementById('msg-input');
-    /* toggle selected state */
     chip.classList.toggle('selected');
-    /* insert/remove tag in textarea */
     var val=ta.value;
     if(chip.classList.contains('selected')){
-      /* add tag at start if not already there */
-      if(val.indexOf(tag)===-1){
-        ta.value=(tag+' '+val).trimEnd();
-      }
+      if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}
     }else{
-      /* remove tag */
       ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();
     }
     updateSendBtn();
@@ -646,7 +614,6 @@ document.querySelectorAll('.tag-chip').forEach(function(chip){
   });
 });
 
-/* ══ MESSAGING ══ */
 var msgIn=document.getElementById('msg-input');
 var sndBtn=document.getElementById('send-btn');
 var sndSt=document.getElementById('send-status');
@@ -671,7 +638,6 @@ sndBtn.addEventListener('click',function(){
       if(r.ok){
         sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';
         msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
-        /* deselect all tag chips */
         document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});
       }else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}
     })
@@ -679,17 +645,15 @@ sndBtn.addEventListener('click',function(){
     .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
 });
 
-/* quick action navigation — non-link buttons go to dashboard with hash */
 document.querySelectorAll('.qa-btn[data-qa]').forEach(function(btn){
-  if(btn.tagName==='A')return; /* calendar already has href */
+  if(btn.tagName==='A')return;
   btn.addEventListener('click',function(){
     var qa=btn.getAttribute('data-qa');
-    if(qa==='tasks')return; /* already here */
+    if(qa==='tasks')return;
     window.location.href=DASHBOARD+'?mod='+qa;
   });
 });
 
-/* ══ LOAD TASKS ══ */
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
@@ -709,7 +673,6 @@ function loadTasks(){
     .catch(function(){allTasks=[];taskLists=[];updateStats();renderSidebar();renderMain();});
 }
 
-/* ══ STATS ══ */
 function updateStats(){
   var done=allTasks.filter(function(t){return t.status==='completed';}).length;
   var todo=allTasks.filter(function(t){return t.status!=='completed';}).length;
@@ -735,15 +698,11 @@ function updateStats(){
   ob.className='tl-count'+(overdueCnt>0?' red-badge':'');
 }
 
-/* ══ SIDEBAR ══ */
 function renderSidebar(){
-  /* update view buttons */
   ['all','today','overdue'].forEach(function(f){
     var el=document.getElementById('tl-'+f);
     if(el)el.className='tl-item'+(currentFilter===f?' active':'');
   });
-
-  /* list buttons */
   var con=document.getElementById('list-sidebar-items');con.innerHTML='';
   taskLists.forEach(function(l){
     var cnt=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;
@@ -763,7 +722,6 @@ function setFilter(f){currentFilter=f;renderSidebar();renderMain();}
   if(el)el.addEventListener('click',function(){setFilter(f);});
 });
 
-/* chip bar */
 document.querySelectorAll('.chip').forEach(function(c){
   c.addEventListener('click',function(){
     currentChip=c.getAttribute('data-chip');
@@ -773,7 +731,6 @@ document.querySelectorAll('.chip').forEach(function(c){
   });
 });
 
-/* ══ RENDER MAIN ══ */
 function renderMain(){
   var grid=document.getElementById('task-grid');grid.innerHTML='';
   var now=new Date();now.setHours(0,0,0,0);
@@ -822,7 +779,6 @@ function renderMain(){
   }
 }
 
-/* ══ BUILD CARD ══ */
 function buildCard(lst,active,done){
   var card=document.createElement('div');card.className='task-list-card';
 
@@ -831,7 +787,6 @@ function buildCard(lst,active,done){
   var badge=document.createElement('span');badge.className='tlc-badge';badge.textContent=active.length+' active';
   hd.appendChild(nm);hd.appendChild(badge);card.appendChild(hd);
 
-  /* + Add button (skip for virtual filters) */
   if(!lst._virtual){
     var addBtn=document.createElement('button');addBtn.className='tlc-add';
     addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="#1a73e8" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Add a task';
@@ -860,59 +815,37 @@ function buildCard(lst,active,done){
   return card;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   BUILD ROW — CHECKBOX FIX (DEFINITIVE)
-
-   Previous approach used a <div> with z-index tricks.
-   This never reliably works because:
-   - z-index only creates stacking context when position≠static AND
-     the parent has its own stacking context
-   - Multiple nested cards/grids meant z-index was unpredictable
-
-   THE FIX: Use a native <button> element for the checkbox.
-   Browsers treat <button> as an interactive element natively:
-   - Always receives click events regardless of z-index
-   - Naturally focusable with keyboard Tab
-   - Never blocked by sibling or parent elements
-   - No pointer-events hacks needed
-   - Works identically across Chrome, Firefox, Safari
-═══════════════════════════════════════════════════════════════════ */
 function buildRow(t){
   var isDone=t.status==='completed';
   var row=document.createElement('div');row.className='tlc-task';
 
-  /* ── CHECKBOX: native <button> not <div> ── */
   var cb=document.createElement('button');
-  cb.type='button';                          /* prevent form submit */
+  cb.type='button';
   cb.className='tlc-cb'+(isDone?' checked':'');
   cb.setAttribute('role','checkbox');
   cb.setAttribute('aria-checked',isDone?'true':'false');
   cb.setAttribute('aria-label',(isDone?'Unmark':'Mark complete')+': '+(t.title||'task'));
 
-  /* Single clean click handler — no mousedown tricks needed */
   cb.addEventListener('click',function(){
     if(t._pending)return;
     t._pending=true;
-    cb.disabled=true;                        /* native disabled blocks further clicks */
+    cb.disabled=true;
     toggleTask(t,cb,row,function(){
       t._pending=false;
       cb.disabled=false;
     });
   });
 
-  /* body */
   var body=document.createElement('div');body.className='tlc-task-body';
   var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';
   body.appendChild(nm);
 
-  /* notes — strip [priority:X] tag */
   var notes=(t.notes||'').replace(/\[priority:(high|medium|low)\]/gi,'').trim();
   if(notes){
     var nd=document.createElement('div');nd.className='tlc-task-notes';nd.textContent=notes;
     body.appendChild(nd);
   }
 
-  /* due chip */
   if(!isDone&&t.due){
     var df=fmtDue(t.due);
     if(df){
@@ -927,12 +860,10 @@ function buildRow(t){
   return row;
 }
 
-/* ══ TOGGLE ══ */
 function toggleTask(t,cb,row,onDone){
   var wasDone=t.status==='completed';
   var newStatus=wasDone?'needsAction':'completed';
 
-  /* optimistic UI */
   cb.classList.toggle('checked',!wasDone);
   cb.setAttribute('aria-checked',(!wasDone).toString());
   var nameEl=row.querySelector('.tlc-task-name');
@@ -958,7 +889,6 @@ function toggleTask(t,cb,row,onDone){
         toast(newStatus==='completed'?'✅ Task completed!':'↩ Task reopened.',newStatus==='completed'?'success':'');
         renderSidebar();renderMain();updateStats();
       }else{
-        /* revert */
         t.status=wasDone?'completed':'needsAction';
         cb.classList.toggle('checked',wasDone);
         if(nameEl)nameEl.classList.toggle('done',wasDone);
@@ -976,7 +906,6 @@ function toggleTask(t,cb,row,onDone){
     });
 }
 
-/* ══ ADD TASK MODAL ══ */
 function openAddModal(preselect){
   document.getElementById('at-title').value='';
   document.getElementById('at-notes').value='';
@@ -1015,7 +944,6 @@ document.getElementById('at-save').addEventListener('click',function(){
     .finally(function(){document.getElementById('at-save').disabled=false;});
 });
 
-/* ══ NEW LIST MODAL ══ */
 document.getElementById('tl-create-btn').addEventListener('click',function(){
   document.getElementById('nl-name').value='';document.getElementById('nl-status').textContent='';
   document.getElementById('new-list-modal').classList.remove('hidden');
@@ -1037,7 +965,6 @@ document.getElementById('nl-save').addEventListener('click',function(){
     .finally(function(){document.getElementById('nl-save').disabled=false;});
 });
 
-/* ══ HELPERS ══ */
 function fmtDue(d){
   if(!d)return null;
   var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now=new Date();now.setHours(0,0,0,0);
@@ -1053,5 +980,3 @@ init();
 </script>
 </body>
 </html>
-
-
