@@ -46,29 +46,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s;}
 .add-fab:hover{background:#1765cc;}
 
-/* ══════════════════════════════════════════════════════
-   ANSWER TO Q1 — FLUID LAYOUT MATCHING DASHBOARD
+/* ══════════════════════════════════════════════════════════
+   LAYOUT
+   - Left sidebar: fixed 200px, flush (no card border)
+   - content-area: padded wrapper, flex row
+   - task-centre: 60% fluid (matches dashboard col-left)
+   - right-col: 40% fluid, max-width capped at 219px,
+                min-width floored at 160px so it never
+                crushes — same proportions as dashboard
+══════════════════════════════════════════════════════════ */
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
 
-   Dashboard body-wrap uses percentage columns:
-     col-left:  flex:0 0 60%
-     col-right: flex:0 0 calc(40% - 16px)
-   Both shrink proportionally → fluid at all sizes.
-
-   Task.html has an extra 200px flush sidebar before
-   the content area, so we subtract that from the math.
-   The content-area itself is flex:1, so we apply the
-   same 60/40 split INSIDE content-area:
-     task-centre: flex:0 0 60%
-     right-col:   flex:0 0 calc(40% - 14px)  (14px = gap)
-   This gives the same visual proportions as dashboard
-   and scales fluidly with the window.
-══════════════════════════════════════════════════════ */
-
-.app-body{
-  flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;
-}
-
-/* Flush left sidebar — 200px fixed, matches dashboard pattern */
 .task-sidebar{
   flex:0 0 200px;flex-shrink:0;
   display:flex;flex-direction:column;
@@ -78,27 +66,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
 
-/* Padded content wrapper — same padding as dashboard body-wrap */
 .content-area{
   flex:1;min-width:0;
   display:flex;overflow:hidden;min-height:0;
-  padding:8px 20px 10px 16px;
-  gap:14px;align-items:stretch;
+  padding:8px 20px 10px 16px;gap:14px;align-items:stretch;
 }
 
-/* Task centre — 60% of content-area, matches dashboard col-left */
+/* task-centre: fluid 60%, absorbs remaining after right-col */
 .task-centre{
-  flex:0 0 60%;min-width:0;
+  flex:1 1 60%;min-width:0;
   display:flex;flex-direction:column;
   background:#fff;border:1px solid #e0e0e0;border-radius:12px;
   overflow:hidden;
 }
 
-/* Right col — calc(40% - 14px) of content-area, matches dashboard col-right */
+/* right-col: fluid 40%, capped at 219px, min 160px */
 .right-col{
-  flex:0 0 calc(40% - 14px);min-width:0;
+  flex:0 1 calc(40% - 14px);
+  min-width:160px;
+  max-width:219px;
   display:flex;flex-direction:column;gap:14px;
-  overflow:hidden;
 }
 
 /* ══ SIDEBAR ITEMS ══ */
@@ -121,19 +108,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stat-val.green{color:#1e8e3e;}
 .stat-val.red{color:#d93025;}
 
-/* ══════════════════════════════════════════════════
-   ANSWER TO Q3 — OVERVIEW PANELS
-   Match dashboard style exactly:
-   - Same grid, same padding, same font sizes
-   - Same clickable hover behaviour
-   - margin-bottom on panel-hd removed (no list below)
-══════════════════════════════════════════════════ */
+/* ══ OVERVIEW PANELS — matches dashboard exactly ══ */
 .ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px 4px;flex-shrink:0;}
 .ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;transition:background .12s,border-color .12s;}
 .ov-panel.clickable{cursor:pointer;}
 .ov-panel.clickable:hover{background:#e8f0fe;border-color:#1a73e8;}
 .ov-panel-hd{display:flex;align-items:center;justify-content:space-between;}
-/* Match dashboard font sizes exactly */
 .ov-panel-title{font-size:13px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
 .ov-panel.clickable:hover .ov-panel-title{color:#1a73e8;}
 .ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
@@ -192,30 +172,30 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .skeleton{height:13px;background:linear-gradient(90deg,#f1f3f4 25%,#e8eaed 50%,#f1f3f4 75%);background-size:200% 100%;animation:shimmer 1.3s infinite;border-radius:6px;margin:6px 0;}
 @keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
 
-/* ══ RIGHT PANEL ══ */
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
+/* ══ RIGHT PANEL CARDS ══ */
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;}
 .r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
-.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
+.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
 .tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
 .tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
-.msg-ta{width:100%;min-height:72px;border:1px solid #dadce0;border-radius:6px;padding:10px 12px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
+.msg-ta{width:100%;min-height:64px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
 .msg-ta:focus{border-color:#1a73e8;}
-.msg-actions{display:flex;gap:8px;margin-top:10px;}
-.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;}
+.msg-actions{display:flex;gap:6px;margin-top:8px;}
+.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .attach-btn:hover{background:#f1f3f4;}
-.send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .send-btn:hover:not(:disabled){background:#1765cc;}
 .send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
-.send-status{font-size:11px;text-align:center;margin-top:6px;min-height:14px;}
-.fname{font-size:10px;color:#5f6368;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;}
-.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
+.send-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
+.fname{font-size:10px;color:#5f6368;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;padding:0;}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:22px;margin-bottom:6px;}
-.qa-name{font-size:13px;font-weight:500;color:#202124;}
+.qa-icon{font-size:20px;margin-bottom:4px;}
+.qa-name{font-size:12px;font-weight:500;color:#202124;}
 .qa-desc{display:none;}
 
 /* ══ MODALS ══ */
@@ -244,42 +224,42 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .toast.success{background:#1e8e3e;}
 .toast.error{background:#d93025;}
 
-/* ══════════════════════════════════════════════════
-   ANSWER TO Q2 — MOBILE / SKEWED VIEWPORT FIX
-   Problem: at narrow widths the right-col and
-   task-centre both try to maintain their % sizes
-   and overflow or crush content.
-   Fix: at ≤900px hide right-col and let task-centre
-   fill 100%. At ≤640px reflow to single column.
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   At ≤900px: right-col stays visible but stacks below task-centre.
+   Both panels are always available — never hidden on mobile.
+   Layout mirrors dashboard.html responsive behaviour.
+══════════════════════════════════════════════════════════ */
 @media(max-width:900px){
-  .right-col{display:none;}
-  /* task-centre now gets 100% of content-area */
-  .task-centre{flex:1 1 auto;}
-}
-@media(max-width:767px){
-  .tb-meta{display:none;}
-  /* Allow content-area to reflow */
-  .content-area{padding:8px 12px 10px 12px;}
-}
-@media(max-width:640px){
   html,body{overflow:auto;}
   #app{height:auto;min-height:100vh;overflow:visible;}
   .app-body{flex-direction:column;overflow:visible;height:auto;}
-  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 16px;}
-  /* Left sidebar becomes horizontal strip */
+  .content-area{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 12px 16px;gap:12px;
+  }
+  /* sidebar becomes horizontal strip */
   .task-sidebar{
     flex:none;width:100%;
     border-right:none;border-bottom:1px solid #e0e0e0;
     flex-direction:row;flex-wrap:wrap;
-    padding:8px;gap:4px;
-    max-height:none;overflow-y:visible;
+    padding:8px;gap:4px;overflow-y:visible;
   }
   .sidebar-stats{display:none;}
+  /* both panels full width, stacked */
+  .task-centre{flex:none;width:100%;min-height:400px;}
+  .right-col{
+    flex:none;width:100%;
+    max-width:none;min-width:0;
+  }
   .task-grid.multi{grid-template-columns:1fr;}
   .tb-meta{display:none;}
-  /* Overview panels stay 2-col even on mobile */
   .ov-panels{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 12px;}
+  .content-area{padding:8px 8px 14px;}
+  .task-centre{min-height:360px;}
 }
 </style>
 </head>
@@ -300,7 +280,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 </div>
 
 <div id="app">
-
   <div class="topbar">
     <div class="tb-left">
       <button class="back-btn" id="back-btn">
@@ -355,12 +334,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div>
     </div>
 
-    <!-- Content area: 60% task-centre + 40% right-col, fluid -->
+    <!-- Content: 60% task-centre + up-to-219px right-col -->
     <div class="content-area">
 
       <div class="task-centre">
 
-        <!-- Q3: Overview panels matching dashboard style exactly -->
+        <!-- Overview panels — 📅 Events → Dashboard, 📁 Projects → Trackers -->
         <div class="ov-panels">
           <div class="ov-panel clickable" id="ov-events-panel" title="Go to Calendar">
             <div class="ov-panel-hd">
@@ -400,9 +379,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /task-centre -->
 
-      <!-- Right column — fluid 40% -->
+      <!-- Right column: max 219px, min 160px -->
       <div class="right-col">
         <div class="r-card">
           <div class="r-label">Send to MIE</div>
@@ -436,11 +415,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             <div class="qa-btn" data-qa="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
           </div>
         </div>
-      </div>
+      </div><!-- /right-col -->
 
-    </div>
-  </div>
-</div>
+    </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
 
 <!-- ADD TASK MODAL -->
 <div class="modal-bg hidden" id="add-task-modal">
@@ -495,8 +474,17 @@ function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)retur
 function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});else doWeather(37.7749,-122.4194);}
 function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';}).catch(function(){});}
 
-/* Overview panels */
-function loadEventsToday(){var now=new Date();var start=new Date(now.getFullYear(),now.getMonth(),now.getDate());var end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);var params=new URLSearchParams({timeMin:start.toISOString(),timeMax:end.toISOString(),_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){return r.ok?r.json():null;}).then(function(data){document.getElementById('ov-event-count').textContent=data&&Array.isArray(data.events)?data.events.length:'—';}).catch(function(){document.getElementById('ov-event-count').textContent='—';});}
+/* ── Overview panels ── */
+function loadEventsToday(){
+  var now=new Date();
+  var start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  var params=new URLSearchParams({timeMin:start.toISOString(),timeMax:end.toISOString(),_cb:Date.now()});
+  fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){document.getElementById('ov-event-count').textContent=data&&Array.isArray(data.events)?data.events.length:'—';})
+    .catch(function(){document.getElementById('ov-event-count').textContent='—';});
+}
 function updateOvPanels(){document.getElementById('ov-proj-count').textContent=taskLists.length||'0';}
 document.getElementById('ov-events-panel').addEventListener('click',function(){window.location.href=DASHBOARD;});
 document.getElementById('ov-proj-panel').addEventListener('click',function(){window.location.href=DASHBOARD+'?mod=trackers';});
@@ -507,10 +495,10 @@ document.getElementById('connect-btn').addEventListener('click',function(){windo
 document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
 document.getElementById('back-btn').addEventListener('click',function(){window.location.href=DASHBOARD;});
 
-/* Tag chips */
+/* ── Tag chips ── */
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1)ta.value=(tag+' '+val).trimEnd();}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}updateSendBtn();ta.focus();});});
 
-/* Messaging */
+/* ── Messaging ── */
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status');
 var filIn=document.getElementById('file-input'),fnm=document.getElementById('fname'),rmf=document.getElementById('rm-file'),selFile=null;
 function updateSendBtn(){sndBtn.disabled=!msgIn.value.trim()&&!selFile;}
@@ -519,10 +507,10 @@ filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFi
 rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile)return;sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});});
 
-/* Quick actions */
+/* ── Quick actions ── */
 document.querySelectorAll('.qa-btn[data-qa]').forEach(function(btn){btn.addEventListener('click',function(){var qa=btn.getAttribute('data-qa');if(qa==='tasks')return;window.location.href=DASHBOARD+'?mod='+qa;});});
 
-/* Load tasks */
+/* ── Load tasks ── */
 function loadTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){allTasks=[];taskLists=[];}else{taskLists=Array.isArray(data.lists)?data.lists:[];var raw=Array.isArray(data.tasks)?data.tasks:[];allTasks=raw.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default',_pending:false});});}updateStats();updateOvPanels();renderSidebar();renderMain();}).catch(function(){allTasks=[];taskLists=[];updateStats();updateOvPanels();renderSidebar();renderMain();});}
 
 function updateStats(){var done=allTasks.filter(function(t){return t.status==='completed';}).length;var todo=allTasks.filter(function(t){return t.status!=='completed';}).length;document.getElementById('stat-done').textContent=done;document.getElementById('stat-todo').textContent=todo;document.getElementById('stat-total').textContent=allTasks.length;var now=new Date();now.setHours(0,0,0,0);var todayCnt=allTasks.filter(function(t){if(t.status==='completed'||!t.due)return false;return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;}).length;var overdueCnt=allTasks.filter(function(t){if(t.status==='completed'||!t.due)return false;return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;}).length;document.getElementById('count-all').textContent=allTasks.filter(function(t){return t.status!=='completed';}).length;document.getElementById('count-today').textContent=todayCnt;var ob=document.getElementById('count-overdue');ob.textContent=overdueCnt;ob.className='tl-count'+(overdueCnt>0?' red-badge':'');}
