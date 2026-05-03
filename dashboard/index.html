@@ -66,11 +66,15 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .module-top-space{height:10px;flex-shrink:0;}
 
 /* ═══ OVERVIEW PANELS ═══ */
-.ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:4px 16px 4px;flex-shrink:0;}
-.ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;}
-.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px 4px;flex-shrink:0;}
+.ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;transition:background .12s,border-color .12s;}
+/* CHANGE 1 & 2 — clickable panels */
+.ov-panel.clickable{cursor:pointer;}
+.ov-panel.clickable:hover{background:#e8f0fe;border-color:#1a73e8;}
+.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;}
 .ov-panel-title{font-size:13px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
-.ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;}
+.ov-panel.clickable:hover .ov-panel-title{color:#1a73e8;}
+.ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
 .ov-list{display:flex;flex-direction:column;gap:3px;max-height:68px;overflow-y:auto;}
 .ov-list::-webkit-scrollbar{width:2px;}
 .ov-list::-webkit-scrollbar-thumb{background:#dadce0;}
@@ -118,14 +122,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
 .yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
 
-/* ═══════════════════════════════════════════════════════════════
-   ISSUE #1 FIX — FULLCALENDAR COLOR OVERRIDE
-   Problem: FC sets its own backgroundColor on .fc-event AND on
-   the inner .fc-daygrid-event-harness wrapper, which shows
-   BEHIND our custom eventContent div. We must nuke ALL of them.
-═══════════════════════════════════════════════════════════════ */
+/* ═══ FULLCALENDAR OVERRIDES ═══ */
 .fc{font-size:15px !important;}
-/* Force ALL fc-event elements to be transparent — our eventContent handles ALL color */
 .fc .fc-event,
 .fc .fc-event-main,
 .fc .fc-daygrid-event,
@@ -138,28 +136,20 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
   box-shadow:none !important;
   padding:0 !important;
 }
-/* Remove FC default dot for timed events in month view */
 .fc .fc-daygrid-event-dot{display:none !important;}
-/* Column headers */
 .fc .fc-col-header-cell{background:#f8f9fa !important;font-size:13px !important;font-weight:600 !important;color:#70757a !important;border-bottom:1px solid #e0e0e0 !important;}
-/* Day cells */
 .fc .fc-daygrid-day{border:1px solid #e8eaed !important;background:#fff !important;}
 .fc .fc-daygrid-day.fc-day-today{background:#f0f6ff !important;}
-/* Day numbers */
 .fc .fc-daygrid-day-number{font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;transition:background .12s;}
 .fc .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
 .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600;}
-/* Hide FC built-in +more link (we build our own) */
 .fc .fc-daygrid-more-link{display:none !important;}
-/* Our custom +more pill */
 .mie-more{display:block;margin:1px 4px;font-size:10px;color:#5f6368;cursor:pointer;font-weight:500;}
 .mie-more:hover{color:#1a73e8;}
-/* Timegrid */
 .fc .fc-timegrid-slot{height:2.2em !important;}
 .fc .fc-timegrid-axis{font-size:9px !important;color:#70757a !important;}
 .fc .fc-timegrid-axis-cushion{display:none !important;}
 .fc-timegrid-col.fc-day-today{background:#fff !important;}
-/* Cal wrap */
 .cal-wrap{flex:1;min-height:0;padding:0 18px;overflow:hidden;position:relative;}
 .cal-footer-row{padding:5px 16px 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .cal-popup{display:none;position:absolute;bottom:44px;left:18px;z-index:50;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:12px 14px;min-width:190px;}
@@ -204,47 +194,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .tlc-add{display:flex;align-items:center;gap:8px;padding:6px 4px;color:#1a73e8;cursor:pointer;font-size:13px;font-weight:500;border:none;background:none;font-family:'DM Sans',sans-serif;width:100%;text-align:left;border-radius:4px;}
 .tlc-add:hover{background:#f1f3f4;}
 .tlc-add svg{width:16px;height:16px;flex-shrink:0;}
-
-/* ═══════════════════════════════════════════════════════
-   ISSUE #3 FIX — TASK CHECKBOX
-   The spinning cursor was caused by:
-   1. cursor:wait bleeding from .tlc-cb.loading to siblings
-   2. No isolation between the clickable cb and the task body
-   Fix: strict isolation, explicit cursor:pointer, z-index wall
-═══════════════════════════════════════════════════════ */
-.tlc-task{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:7px 4px;border-radius:6px;
-  transition:background .1s;
-  /* No position:relative — prevents z-index stacking issues */
-}
+.tlc-task{display:flex;align-items:flex-start;gap:10px;padding:7px 4px;border-radius:6px;transition:background .1s;}
 .tlc-task:hover{background:#f8f9fa;}
-.tlc-cb{
-  /* The clickable circle */
-  width:18px;height:18px;
-  border:1.5px solid #9aa0a6;
-  border-radius:50%;
-  cursor:pointer !important;   /* always pointer, never wait */
-  flex-shrink:0;
-  margin-top:1px;
-  display:flex;align-items:center;justify-content:center;
-  transition:border-color .15s, background .15s;
-  /* Isolation */
-  position:relative;
-  z-index:10;
-  /* Prevent text selection interfering with click */
-  user-select:none;
-  -webkit-user-select:none;
-  /* Ensure it always intercepts its own clicks */
-  pointer-events:auto !important;
-}
+.tlc-cb{width:18px;height:18px;border:1.5px solid #9aa0a6;border-radius:50%;cursor:pointer !important;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s;position:relative;z-index:10;user-select:none;-webkit-user-select:none;pointer-events:auto !important;}
 .tlc-cb:hover{border-color:#1a73e8;background:#e8f0fe;}
 .tlc-cb.checked{border-color:#1a73e8 !important;background:#1a73e8 !important;}
 .tlc-cb.checked::after{content:'✓';color:#fff;font-size:10px;line-height:1;font-weight:700;}
-/* loading: keep pointer cursor, just dim it — never use cursor:wait */
 .tlc-cb.loading{opacity:.45;border-color:#a8c7fa !important;background:#e8f0fe !important;}
 .tlc-cb.loading::after{content:'';display:none;}
-
 .tlc-task-body{flex:1;min-width:0;cursor:default;}
 .tlc-task-name{font-size:13px;color:#202124;line-height:1.4;}
 .tlc-task-name.done{text-decoration:line-through;color:#9aa0a6;}
@@ -264,8 +221,17 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .coming-soon-icon{font-size:40px;}
 .coming-soon-title{font-size:16px;font-weight:500;color:#5f6368;}
 .coming-soon-sub{font-size:13px;}
+
+/* ═══ RIGHT PANEL ═══ */
 .r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
-.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;margin-bottom:12px;text-transform:uppercase;}
+.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
+
+/* CHANGE 4 & 5 — tag chips for Send to MIE (matches task.html) */
+.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
+.tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
+.tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
+
 .msg-ta{width:100%;min-height:72px;border:1px solid #dadce0;border-radius:6px;padding:10px 12px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
 .msg-ta:focus{border-color:#1a73e8;}
 .msg-actions{display:flex;gap:8px;margin-top:10px;}
@@ -277,13 +243,17 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .send-btn:hover:not(:disabled){background:#1765cc;}
 .send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .send-status{font-size:11px;text-align:center;margin-top:6px;min-height:14px;}
+
+/* CHANGE 3 — Quick Action font size matches dashboard (13px) */
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
 .qa-icon{font-size:22px;margin-bottom:6px;}
-.qa-name{font-size:14px;font-weight:500;color:#202124;}
-.qa-desc{display:none;}  /* hides all Korean subtitles */
+.qa-name{font-size:13px;font-weight:500;color:#202124;}
+.qa-desc{display:none;}
+
+/* ═══ MODALS ═══ */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
 .modal-bg.hidden{display:none;}
 .modal-box{background:#fff;border-radius:12px;padding:20px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);}
@@ -322,7 +292,36 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .btn-delete{background:#fff;color:#d93025;border:1px solid #fad2cf;border-radius:6px;padding:8px 10px;font-size:13px;cursor:pointer;}
 .btn-delete:hover{background:#fce8e6;border-color:#d93025;}
 .modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
-@media(max-width:767px){html,body{overflow:auto;}#dashboard{height:auto;overflow:visible;}.topbar{padding:0 12px;}.sidebar-overlay{top:46px;}.tb-meta{display:none;}.body-wrap{flex-direction:column;overflow:visible;height:auto;padding:10px 10px 14px;gap:10px;}.col-left,.col-right{flex:0 0 auto;width:100%;}.ov-panels{grid-template-columns:1fr;}.task-layout{flex-direction:column;}.task-sidebar{width:100%;border-right:none;border-bottom:1px solid #f1f3f4;flex-direction:row;flex-wrap:wrap;padding:8px;}.task-lists-grid.multi{grid-template-columns:1fr;}}
+
+/* ══ MOBILE / SKEWED VIEWPORT FIX — matches task.html ══ */
+@media(max-width:900px){
+  /* Hide right column, let col-left fill all space */
+  .col-right{display:none;}
+  .col-left{flex:1 1 auto;}
+}
+@media(max-width:767px){
+  .tb-meta{display:none;}
+  .topbar{padding:0 12px;}
+  .body-wrap{padding:8px 12px 10px;}
+}
+@media(max-width:640px){
+  html,body{overflow:auto;}
+  #dashboard{height:auto;overflow:visible;}
+  .sidebar-overlay{top:46px;}
+  .body-wrap{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:10px 10px 14px;gap:10px;
+  }
+  .col-left,.col-right{flex:0 0 auto;width:100%;}
+  /* Overview panels stay 2-col on mobile */
+  .ov-panels{grid-template-columns:1fr 1fr;}
+  .task-layout{flex-direction:column;}
+  .task-sidebar{
+    width:100%;border-right:none;border-bottom:1px solid #f1f3f4;
+    flex-direction:row;flex-wrap:wrap;padding:8px;
+  }
+  .task-lists-grid.multi{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
@@ -391,11 +390,12 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
       <!-- CALENDAR MODULE -->
       <div class="module active" id="mod-calendar">
         <div class="module-top-space"></div>
+        <!-- CHANGE 1 & 2: clickable overview panels -->
         <div class="ov-panels">
-          <div class="ov-panel">
+          <div class="ov-panel clickable" id="ov-tasks-panel" title="Go to Tasks">
             <div class="ov-panel-hd"><span class="ov-panel-title">✅ Tasks to Complete</span><span class="ov-panel-count" id="ov-task-count">0</span></div>
           </div>
-          <div class="ov-panel">
+          <div class="ov-panel clickable" id="ov-proj-panel" title="Go to Trackers">
             <div class="ov-panel-hd"><span class="ov-panel-title">📁 Projects</span><span class="ov-panel-count" id="ov-proj-count">0</span></div>
           </div>
         </div>
@@ -455,8 +455,16 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
     </div>
 
     <div class="col-right">
+      <!-- CHANGE 4 & 5: Send to MIE now has tag chips matching task.html, @draft first -->
       <div class="r-card">
         <div class="r-label">Send to MIE</div>
+        <div class="tag-chips">
+          <button class="tag-chip" data-tag="@draft">@draft</button>
+          <button class="tag-chip" data-tag="@calendar">@calendar</button>
+          <button class="tag-chip" data-tag="@tasks">@tasks</button>
+          <button class="tag-chip" data-tag="@finance">@finance</button>
+          <button class="tag-chip" data-tag="@food">@food</button>
+        </div>
         <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
         <div class="msg-actions">
           <label class="attach-lbl" for="file-input">📎 Attach</label>
@@ -470,14 +478,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
       <div class="r-card" style="flex:1;overflow-y:auto;">
         <div class="r-label">Quick Actions</div>
         <div class="qa-grid">
-          <div class="qa-btn qa-active" data-mod="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div><div class="qa-desc">캘린더</div></div>
-          <div class="qa-btn" data-mod="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div><div class="qa-desc">할 일 관리</div></div>
-          <div class="qa-btn" data-mod="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div><div class="qa-desc">수입/지출</div></div>
-          <div class="qa-btn" data-mod="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div><div class="qa-desc">식단/영양</div></div>
-          <div class="qa-btn" data-mod="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div><div class="qa-desc">프로젝트</div></div>
-          <div class="qa-btn" data-mod="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div><div class="qa-desc">가이드</div></div>
-          <div class="qa-btn" data-mod="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div><div class="qa-desc">요약</div></div>
-          <div class="qa-btn" data-mod="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div><div class="qa-desc">설정</div></div>
+          <div class="qa-btn qa-active" data-mod="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></div>
+          <div class="qa-btn" data-mod="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
+          <div class="qa-btn" data-mod="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
+          <div class="qa-btn" data-mod="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div></div>
+          <div class="qa-btn" data-mod="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
+          <div class="qa-btn" data-mod="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
+          <div class="qa-btn" data-mod="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
+          <div class="qa-btn" data-mod="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
         </div>
       </div>
     </div>
@@ -503,43 +511,20 @@ var cal=null,eventsByDate={},allEvents=[],calendarMeta=[];
 var allTasks=[],taskLists=[],currentTaskFilter='all';
 var currentMod='calendar';
 
-/* ══════════════════════════════════════════════════════════
-   ISSUE #1 FIX — PASTEL COLOR MAP
-   The old HTML (doc index 2) used hardcoded CSS classes.
-   The FullCalendar-based dashboard uses dynamic colors from
-   Google Calendar API. The fix is two-part:
-   1. Nuked ALL FC default event backgrounds in CSS above
-   2. Here we map every known Google Calendar color ID
-      to the exact pastel pairs shown in screenshot 3
-══════════════════════════════════════════════════════════ */
-/* ── COMPLETE Google Calendar colorId → pastel map ──
-   colorId "1"  Tomato     #d50000
-   colorId "2"  Flamingo   #e67c73
-   colorId "3"  Tangerine  #f4511e
-   colorId "4"  Banana     #f6bf26
-   colorId "5"  Sage       #33b679
-   colorId "6"  Basil      #0b8043
-   colorId "7"  Peacock    #039be5
-   colorId "8"  Blueberry  #3f51b5  ← was MISSING, caused lavender bleed
-   colorId "9"  Lavender   #7986cb
-   colorId "10" Grape      #8e24aa
-   colorId "11" Graphite   #616161
-─────────────────────────────────────── */
+/* ══ PASTEL COLOR MAP ══ */
 var PASTEL_MAP={
-  /* ── Google colorId exact hex values ── */
-  '#d50000':{bg:'#fdd5d5',text:'#b71c1c'},   /* 1  Tomato     */
-  '#e67c73':{bg:'#fce4e3',text:'#c5221f'},   /* 2  Flamingo   */
-  '#f4511e':{bg:'#fde8e1',text:'#b83000'},   /* 3  Tangerine  */
-  '#f6bf26':{bg:'#fef3cd',text:'#a07000'},   /* 4  Banana     */
-  '#33b679':{bg:'#d3ead9',text:'#0b6b37'},   /* 5  Sage       */
-  '#0b8043':{bg:'#d3ead9',text:'#0b6b37'},   /* 6  Basil      */
-  '#039be5':{bg:'#cdeaf8',text:'#0277a8'},   /* 7  Peacock    */
-  '#3f51b5':{bg:'#e0e4f7',text:'#283593'},   /* 8  Blueberry  ← was missing */
-  '#7986cb':{bg:'#e8eaf6',text:'#3949ab'},   /* 9  Lavender   */
-  '#8e24aa':{bg:'#ead5f5',text:'#6a1899'},   /* 10 Grape      */
-  '#616161':{bg:'#e8eaed',text:'#3c4043'},   /* 11 Graphite   */
-  /* ── Calendar background colors (calendarList.backgroundColor) ── */
-  '#1a73e8':{bg:'#dce8fd',text:'#1a56b0'},   /* Google default blue */
+  '#d50000':{bg:'#fdd5d5',text:'#b71c1c'},
+  '#e67c73':{bg:'#fce4e3',text:'#c5221f'},
+  '#f4511e':{bg:'#fde8e1',text:'#b83000'},
+  '#f6bf26':{bg:'#fef3cd',text:'#a07000'},
+  '#33b679':{bg:'#d3ead9',text:'#0b6b37'},
+  '#0b8043':{bg:'#d3ead9',text:'#0b6b37'},
+  '#039be5':{bg:'#cdeaf8',text:'#0277a8'},
+  '#3f51b5':{bg:'#e0e4f7',text:'#283593'},
+  '#7986cb':{bg:'#e8eaf6',text:'#3949ab'},
+  '#8e24aa':{bg:'#ead5f5',text:'#6a1899'},
+  '#616161':{bg:'#e8eaed',text:'#3c4043'},
+  '#1a73e8':{bg:'#dce8fd',text:'#1a56b0'},
   '#4285f4':{bg:'#dce8fd',text:'#1a56b0'},
   '#4986e7':{bg:'#dce8fd',text:'#1a56b0'},
   '#0f9d58':{bg:'#d3ead9',text:'#0b6b37'},
@@ -550,7 +535,6 @@ var PASTEL_MAP={
   '#a142f4':{bg:'#ead5f5',text:'#6a1899'},
   '#ad1457':{bg:'#fce4ec',text:'#880e4f'},
   '#e91e63':{bg:'#fce4ec',text:'#880e4f'},
-  '#616161':{bg:'#e8eaed',text:'#3c4043'},
   '#a79b8e':{bg:'#ede9e5',text:'#5d4037'},
   '#795548':{bg:'#ede9e5',text:'#5d4037'},
   '#8d6e63':{bg:'#f0e6e2',text:'#7b3f2b'},
@@ -560,14 +544,11 @@ function pastelFor(hex){
   if(!hex)return{bg:'#dce8fd',text:'#1a56b0'};
   var k=hex.toLowerCase();
   if(PASTEL_MAP[k])return PASTEL_MAP[k];
-  /* Dynamic pastel derivation for unknown colors */
   var h=k.replace('#','');
   if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
   if(h.length!==6)return{bg:'#dce8fd',text:'#1a56b0'};
   var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
-  /* Mix 22% original + 78% white for background */
   var pr=Math.round(r*0.22+255*0.78),pg=Math.round(g*0.22+255*0.78),pb=Math.round(b*0.22+255*0.78);
-  /* 55% original for text (dark enough to read) */
   var tr=Math.round(r*0.55),tg=Math.round(g*0.55),tb=Math.round(b*0.55);
   function hx(n){return n.toString(16).padStart(2,'0');}
   return{bg:'#'+hx(pr)+hx(pg)+hx(pb),text:'#'+hx(tr)+hx(tg)+hx(tb)};
@@ -604,7 +585,8 @@ function switchModule(modId){
   if(modId==='tasks')renderTaskModule();
   if(modId==='calendar'&&cal)setTimeout(function(){cal.updateSize();},60);
 }
-/* Tasks navigates to /task — everything else switches module inline */
+
+/* Tasks → /task page; everything else switches inline */
 document.querySelectorAll('.qa-btn[data-mod]').forEach(function(btn){
   btn.addEventListener('click',function(){
     if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}
@@ -618,12 +600,38 @@ document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){
   });
 });
 
+/* CHANGE 1: Tasks panel → /task */
+document.getElementById('ov-tasks-panel').addEventListener('click',function(){
+  window.location.href='/task';
+});
+/* CHANGE 2: Projects panel → Trackers module */
+document.getElementById('ov-proj-panel').addEventListener('click',function(){
+  switchModule('trackers');
+});
+
 var sidebarOverlay=document.getElementById('sidebar-overlay');
 function openSidebar(){sidebarOverlay.classList.add('is-open');document.getElementById('hamburger').classList.add('is-open');}
 function closeSidebar(){sidebarOverlay.classList.remove('is-open');document.getElementById('hamburger').classList.remove('is-open');}
 document.getElementById('hamburger').addEventListener('click',function(){sidebarOverlay.classList.contains('is-open')?closeSidebar():openSidebar();});
 document.getElementById('sidebar-dim').addEventListener('click',closeSidebar);
 document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
+
+/* CHANGE 4 & 5: Tag chip logic for dashboard Send to MIE */
+document.querySelectorAll('.tag-chip').forEach(function(chip){
+  chip.addEventListener('click',function(){
+    var tag=chip.getAttribute('data-tag');
+    var ta=document.getElementById('msg-input');
+    chip.classList.toggle('selected');
+    var val=ta.value;
+    if(chip.classList.contains('selected')){
+      if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}
+    }else{
+      ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();
+    }
+    ta.dispatchEvent(new Event('input'));
+    ta.focus();
+  });
+});
 
 function init(){
   show(loadWrap);
@@ -784,38 +792,8 @@ function loadTasks(){
 function renderOvPanels(){
   var active=allTasks.filter(function(t){return t.status!=='completed';});
   var now=new Date();now.setHours(0,0,0,0);
-  var overdue=active.filter(function(t){if(!t.due)return false;return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;});
-  var today2=active.filter(function(t){if(!t.due)return false;var d=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));return Math.round((d-now)/86400000)===0;});
-  var upcoming=active.filter(function(t){if(!t.due)return false;var d=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((d-now)/86400000);return diff>0&&diff<=7;});
-  var noDue=active.filter(function(t){return !t.due;});
   document.getElementById('ov-task-count').textContent=active.length;
-  var taskList=document.getElementById('ov-task-list');taskList.innerHTML='';
-  if(!active.length){taskList.innerHTML='<div class="ov-empty">All caught up! 🎉</div>';return;}
-  var shown=[];
-  overdue.slice(0,2).forEach(function(t){shown.push({t:t,cls:'red'});});
-  today2.slice(0,2).forEach(function(t){shown.push({t:t,cls:'orange'});});
-  upcoming.slice(0,2).forEach(function(t){shown.push({t:t,cls:'blue'});});
-  noDue.slice(0,1).forEach(function(t){shown.push({t:t,cls:'green'});});
-  if(!shown.length)shown=active.slice(0,4).map(function(t){return{t:t,cls:'blue'};});
-  shown.slice(0,5).forEach(function(item){
-    var el=document.createElement('div');el.className='ov-item';
-    var dot=document.createElement('div');dot.className='ov-dot '+item.cls;
-    var nm=document.createElement('span');nm.textContent=item.t.title||'Untitled';
-    nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
-    el.appendChild(dot);el.appendChild(nm);taskList.appendChild(el);
-  });
   document.getElementById('ov-proj-count').textContent=taskLists.length||'—';
-  var projList=document.getElementById('ov-proj-list');projList.innerHTML='';
-  if(!taskLists.length){projList.innerHTML='<div class="ov-empty">No lists yet</div>';return;}
-  taskLists.forEach(function(l){
-    var cnt=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;
-    var total=allTasks.filter(function(t){return t.listId===l.id;}).length;
-    var el=document.createElement('div');el.className='ov-item';
-    var dot=document.createElement('div');dot.className='ov-dot blue';
-    var nm=document.createElement('span');nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';nm.textContent=l.title||'My Tasks';
-    var badge=document.createElement('span');badge.style.cssText='font-size:10px;color:#9aa0a6;flex-shrink:0;margin-left:4px;';badge.textContent=cnt+'/'+total;
-    el.appendChild(dot);el.appendChild(nm);el.appendChild(badge);projList.appendChild(el);
-  });
 }
 
 function renderTaskSidebar(){
@@ -864,44 +842,27 @@ function buildListCard(lst){
   return card;
 }
 
-/* ══════════════════════════════════════════════════════════
-   ISSUE #3 FIX — buildTaskRow
-   Old problem: mousedown used preventDefault() which stopped
-   the click from firing in some browsers. Also, the loading
-   state set cursor:wait on the entire row via inheritance.
-   Fix:
-   - Remove preventDefault from mousedown (only stopPropagation)
-   - Use a flag variable instead of .loading class for state
-   - Never touch cursor on anything except the cb element itself
-══════════════════════════════════════════════════════════ */
 function buildTaskRow(t){
   var isDone=t.status==='completed';
   var row=document.createElement('div');row.className='tlc-task';
-
   var cb=document.createElement('div');
   cb.className='tlc-cb'+(isDone?' checked':'');
   cb.setAttribute('role','checkbox');
   cb.setAttribute('aria-checked',isDone?'true':'false');
   cb.setAttribute('tabindex','0');
-
-  /* Use task-level flag so re-render doesn't orphan the closure variable */
   cb.addEventListener('mousedown',function(e){e.stopPropagation();});
-
   cb.addEventListener('click',function(e){
     e.stopPropagation();
-    if(t._pending)return;      /* prevent double-click */
+    if(t._pending)return;
     t._pending=true;
     toggleTask(t,cb,row,function(){t._pending=false;});
   });
-
   cb.addEventListener('keydown',function(e){
     if((e.key===' '||e.key==='Enter')&&!t._pending){
-      e.preventDefault();
-      t._pending=true;
+      e.preventDefault();t._pending=true;
       toggleTask(t,cb,row,function(){t._pending=false;});
     }
   });
-
   var body=document.createElement('div');body.className='tlc-task-body';
   var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';
   body.appendChild(nm);
@@ -916,8 +877,6 @@ function buildTaskRow(t){
 function toggleTask(t,cb,row,onDone){
   var wasDone=t.status==='completed';
   var newStatus=wasDone?'needsAction':'completed';
-
-  /* Optimistic UI — dim the circle, show check immediately */
   cb.classList.add('loading');
   cb.classList.toggle('checked',!wasDone);
   cb.setAttribute('aria-checked',(!wasDone).toString());
@@ -925,7 +884,6 @@ function toggleTask(t,cb,row,onDone){
   if(nameEl)nameEl.classList.toggle('done',!wasDone);
   t.status=newStatus;
   renderOvPanels();
-
   function attemptUpdate(listId){
     return fetch(BACKEND+'/api/me/tasks/update',{
       method:'POST',credentials:'include',
@@ -933,7 +891,6 @@ function toggleTask(t,cb,row,onDone){
       body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})
     });
   }
-
   attemptUpdate(t.listId||'@default')
     .then(function(r){
       if(r.status===404&&t.listId!=='@default')return attemptUpdate('@default');
@@ -941,27 +898,12 @@ function toggleTask(t,cb,row,onDone){
     })
     .then(function(r){
       cb.classList.remove('loading');
-      if(r&&r.ok){
-        renderTaskSidebar();
-        if(currentMod==='tasks')renderTaskModule();
-        renderOvPanels();
-      }else{
-        /* Revert */
-        t.status=wasDone?'completed':'needsAction';
-        cb.classList.toggle('checked',wasDone);
-        cb.setAttribute('aria-checked',wasDone.toString());
-        if(nameEl)nameEl.classList.toggle('done',wasDone);
-        renderOvPanels();
-      }
+      if(r&&r.ok){renderTaskSidebar();if(currentMod==='tasks')renderTaskModule();renderOvPanels();}
+      else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);cb.setAttribute('aria-checked',wasDone.toString());if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();}
       if(onDone)onDone();
     })
     .catch(function(){
-      cb.classList.remove('loading');
-      t.status=wasDone?'completed':'needsAction';
-      cb.classList.toggle('checked',wasDone);
-      if(nameEl)nameEl.classList.toggle('done',wasDone);
-      renderOvPanels();
-      if(onDone)onDone();
+      cb.classList.remove('loading');t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();if(onDone)onDone();
     });
 }
 
@@ -1006,54 +948,32 @@ function initCal(){
       var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;
       if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;
     },
-    /* ══ ISSUE #1 FIX — eventContent
-       We return a DOM node with ALL styling inline.
-       The CSS above strips FC's own colors. This function
-       applies our pastel palette based on Google Calendar
-       color → pastelFor() mapping.
-    ══ */
     eventContent:function(arg){
       var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;
       var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';
       var p=pastelForCalId(rawColor,calId);
       var viewType=arg.view.type;
       var w=document.createElement('div');
-      /* Shared base: full width, no overflow */
-      w.style.width='100%';
-      w.style.overflow='hidden';
-
+      w.style.width='100%';w.style.overflow='hidden';
       if(arg.event.allDay){
-        /* All-day bar: solid pastel bg pill */
         w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';
         var tx=document.createElement('span');
         tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';
-        tx.textContent=arg.event.title||'';
-        w.appendChild(tx);
-
+        tx.textContent=arg.event.title||'';w.appendChild(tx);
       }else if(viewType==='dayGridMonth'){
-        /* Month timed event: colored dot + text on white bg */
         w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';
         var dot=document.createElement('span');
-        /* Solid circle in the calendar color — matches screenshot 3 exactly */
         dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';
         var tx=document.createElement('span');
         tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';
         tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');
         w.appendChild(dot);w.appendChild(tx);
-
       }else{
-        /* Week/Day view: pastel bg block */
         w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';
-        if(arg.timeText){
-          var ttime=document.createElement('span');
-          ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';
-          ttime.textContent=arg.timeText;
-          w.appendChild(ttime);
-        }
+        if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}
         var ttitle=document.createElement('span');
         ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-        ttitle.textContent=arg.event.title||'';
-        w.appendChild(ttitle);
+        ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);
       }
       return{domNodes:[w]};
     },
@@ -1195,8 +1115,12 @@ document.getElementById('edit-delete-btn').addEventListener('click',function(){
   document.getElementById('edit-delete-btn').disabled=true;status.style.color='#5f6368';status.textContent='Deleting…';
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:currentEditEvent.id,calendarId:(currentEditEvent.extendedProps&&currentEditEvent.extendedProps.calId)||'primary'})})
     .then(function(r){
-      if(r.ok){status.style.color='#1e8e3e';status.textContent='🗑 Deleted';var fd=cal?cal.getEventById(currentEditEvent.id):null;if(fd)fd.remove();allEvents=allEvents.filter(function(e){return e.id!==currentEditEvent.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==currentEditEvent.id;});});setTimeout(function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;status.textContent='';rebuildPills();},400);}
-      else{status.style.color='#d93025';status.textContent='❌ Delete failed.';}
+      if(r.ok){status.style.color='#1e8e3e';status.textContent='🗑 Deleted';
+        var fd=cal?cal.getEventById(currentEditEvent.id):null;if(fd)fd.remove();
+        allEvents=allEvents.filter(function(e){return e.id!==currentEditEvent.id;});
+        Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==currentEditEvent.id;});});
+        setTimeout(function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;status.textContent='';rebuildPills();},400);
+      }else{status.style.color='#d93025';status.textContent='❌ Delete failed.';}
     }).catch(function(){status.style.color='#d93025';status.textContent='❌ Network error.';}).finally(function(){document.getElementById('edit-delete-btn').disabled=false;});
 });
 document.getElementById('m-close').addEventListener('click',function(){document.getElementById('event-modal').classList.add('hidden');});
@@ -1212,13 +1136,18 @@ sndBtn.addEventListener('click',function(){
   var txt=msgIn.value.trim();if(!txt&&!selFile)return;
   sndBtn.disabled=true;sndSt.textContent='';
   fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
-    .then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}})
-    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
+    .then(function(r){
+      if(r.ok){
+        sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';
+        msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
+        document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});
+      }else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}
+    })
+    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';})
+    .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
 });
 
 init();
 </script>
 </body>
 </html>
-
-
