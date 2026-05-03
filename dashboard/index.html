@@ -293,34 +293,62 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .btn-delete:hover{background:#fce8e6;border-color:#d93025;}
 .modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
 
-/* ══ MOBILE / SKEWED VIEWPORT FIX — matches task.html ══ */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET & MOBILE
+
+   Problems fixed:
+   1. FullCalendar needs explicit px height — height:100%
+      resolves to 0 when parents lose fixed height on mobile.
+   2. col-right (Send to MIE, Quick Actions) was hidden at
+      ≤900px. On mobile these panels stack below, not hidden.
+   3. html,body overflow:hidden prevents scrolling on mobile.
+   4. #dashboard height:100vh collapses with overflow removed.
+══════════════════════════════════════════════════════════ */
+
+/* ── TABLET (≤900px): stack columns, keep BOTH visible ── */
 @media(max-width:900px){
-  /* Hide right column, let col-left fill all space */
-  .col-right{display:none;}
-  .col-left{flex:1 1 auto;}
+  html,body{overflow:auto;}
+  #dashboard{height:auto;min-height:100vh;overflow:visible;}
+  .body-wrap{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 14px 16px;gap:12px;
+  }
+  .col-left{flex:0 0 auto;width:100%;min-height:520px;}
+  .col-right{flex:0 0 auto;width:100%;display:flex;overflow:visible;}
+  /* cal-wrap needs explicit px height — flex-fill no longer works */
+  .cal-wrap{min-height:420px;height:420px;}
+  #calendar{height:420px !important;}
 }
+
+/* ── PHONE LANDSCAPE / SMALL TABLET (≤767px) ── */
 @media(max-width:767px){
   .tb-meta{display:none;}
   .topbar{padding:0 12px;}
-  .body-wrap{padding:8px 12px 10px;}
+  .body-wrap{padding:8px 10px 16px;}
+  .col-left{min-height:480px;}
+  .cal-wrap{min-height:380px;height:380px;}
+  #calendar{height:380px !important;}
 }
-@media(max-width:640px){
-  html,body{overflow:auto;}
-  #dashboard{height:auto;overflow:visible;}
-  .sidebar-overlay{top:46px;}
-  .body-wrap{
-    flex-direction:column;overflow:visible;
-    height:auto;padding:10px 10px 14px;gap:10px;
-  }
-  .col-left,.col-right{flex:0 0 auto;width:100%;}
-  /* Overview panels stay 2-col on mobile */
+
+/* ── PHONE PORTRAIT (≤480px) ── */
+@media(max-width:480px){
   .ov-panels{grid-template-columns:1fr 1fr;}
+  .cal-topbar{flex-wrap:wrap;gap:6px;padding:0 12px 8px;}
+  .cal-month-title{font-size:15px;}
+  .col-left{min-height:440px;}
+  .cal-wrap{min-height:340px;height:340px;}
+  #calendar{height:340px !important;}
   .task-layout{flex-direction:column;}
   .task-sidebar{
     width:100%;border-right:none;border-bottom:1px solid #f1f3f4;
-    flex-direction:row;flex-wrap:wrap;padding:8px;
+    flex-direction:row;flex-wrap:wrap;padding:8px;height:auto;
   }
   .task-lists-grid.multi{grid-template-columns:1fr;}
+  .r-card{padding:12px 14px;}
+  .qa-grid{grid-template-columns:1fr 1fr;gap:6px;}
+  .qa-btn{padding:10px 4px;}
+  .qa-icon{font-size:18px;}
+  .qa-name{font-size:12px;}
 }
 </style>
 </head>
@@ -980,6 +1008,15 @@ function initCal(){
     eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEditModal(info.event);}
   });
   cal.render();syncTitle();
+
+  /* Resize calendar when window size changes (critical for mobile) */
+  var _calResizeTmr=null;
+  window.addEventListener('resize',function(){
+    if(_calResizeTmr)clearTimeout(_calResizeTmr);
+    _calResizeTmr=setTimeout(function(){
+      if(cal){cal.updateSize();}
+    },150);
+  });
   document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
   document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
   document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});
