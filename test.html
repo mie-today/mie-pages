@@ -1117,7 +1117,7 @@ function applyFilter(){
   eventsByDate={};
   var filtered=allEvents.filter(function(ev){return ids.length===0||ids.indexOf(ev.extendedProps.calId)!==-1;});
   filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});
-  cal.removeAllEvents();cal.addEventSource(function(fi,ok){ok(filtered);});
+  cal.removeAllEventSources();cal.addEventSource(function(fi,ok){ok(filtered);});
   setTimeout(rebuildPills,120);
 }
 
@@ -1318,8 +1318,9 @@ document.getElementById('event-view-modal').addEventListener('click',function(e)
 
 document.getElementById('ev-edit-btn').addEventListener('click',function(){
   if(!currentViewEvent)return;
+  var evToEdit=currentViewEvent;  /* save ref BEFORE closeEventView nulls it */
   closeEventView();
-  openEditModal(currentViewEvent);
+  openEditModal(evToEdit);
 });
 
 document.getElementById('ev-delete-btn').addEventListener('click',function(){
