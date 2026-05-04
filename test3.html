@@ -264,6 +264,53 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .modal-row{font-size:12px;color:#5f6368;margin-bottom:4px;line-height:1.5;}
 .modal-link{display:inline-block;margin-top:10px;background:#1a73e8;color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;text-decoration:none;}
 .modal-link:hover{background:#1765cc;}
+
+/* ═══ EVENT VIEW POPUP — Google Calendar style ═══ */
+.ev-view-box{
+  background:#fff;border-radius:14px;
+  padding:0;max-width:380px;width:100%;
+  box-shadow:0 8px 32px rgba(0,0,0,.18);
+  animation:mIn .16s ease;overflow:hidden;
+}
+.ev-view-toolbar{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:4px;padding:10px 12px 6px;
+  border-bottom:1px solid #f1f3f4;
+}
+.ev-view-icon-btn{
+  background:none;border:none;cursor:pointer;
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#5f6368;transition:background .12s;flex-shrink:0;
+}
+.ev-view-icon-btn:hover{background:#f1f3f4;}
+.ev-view-icon-btn svg{width:16px;height:16px;}
+.ev-view-body{padding:16px 20px 20px;}
+.ev-view-color-bar{
+  width:14px;height:14px;border-radius:3px;
+  flex-shrink:0;margin-top:2px;
+}
+.ev-view-title-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.ev-view-title{font-size:18px;font-weight:500;color:#202124;line-height:1.3;flex:1;}
+.ev-view-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.ev-view-row-icon{
+  width:18px;height:18px;flex-shrink:0;
+  margin-top:1px;color:#5f6368;
+}
+.ev-view-row-icon svg{width:18px;height:18px;}
+.ev-view-row-text{font-size:13px;color:#3c4043;line-height:1.5;flex:1;}
+.ev-view-row-text a{color:#1a73e8;text-decoration:none;}
+.ev-view-row-text a:hover{text-decoration:underline;}
+.ev-view-cal-dot{
+  width:10px;height:10px;border-radius:50%;
+  flex-shrink:0;margin-top:4px;
+}
+.ev-view-gcal-link{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:4px;color:#1a73e8;font-size:12px;
+  text-decoration:none;font-weight:500;
+}
+.ev-view-gcal-link:hover{text-decoration:underline;}
 .day-ev-item{display:flex;align-items:flex-start;gap:8px;padding:8px 4px;border-bottom:1px solid #f1f3f4;cursor:pointer;border-radius:6px;transition:all .1s;}
 .day-ev-item:hover{background:#f8f9fa;}
 .day-ev-item:last-child{border-bottom:none;}
@@ -293,34 +340,62 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .btn-delete:hover{background:#fce8e6;border-color:#d93025;}
 .modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
 
-/* ══ MOBILE / SKEWED VIEWPORT FIX — matches task.html ══ */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET & MOBILE
+
+   Problems fixed:
+   1. FullCalendar needs explicit px height — height:100%
+      resolves to 0 when parents lose fixed height on mobile.
+   2. col-right (Send to MIE, Quick Actions) was hidden at
+      ≤900px. On mobile these panels stack below, not hidden.
+   3. html,body overflow:hidden prevents scrolling on mobile.
+   4. #dashboard height:100vh collapses with overflow removed.
+══════════════════════════════════════════════════════════ */
+
+/* ── TABLET (≤900px): stack columns, keep BOTH visible ── */
 @media(max-width:900px){
-  /* Hide right column, let col-left fill all space */
-  .col-right{display:none;}
-  .col-left{flex:1 1 auto;}
+  html,body{overflow:auto;}
+  #dashboard{height:auto;min-height:100vh;overflow:visible;}
+  .body-wrap{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 14px 16px;gap:12px;
+  }
+  .col-left{flex:0 0 auto;width:100%;min-height:520px;}
+  .col-right{flex:0 0 auto;width:100%;display:flex;overflow:visible;}
+  /* cal-wrap needs explicit px height — flex-fill no longer works */
+  .cal-wrap{min-height:420px;height:420px;}
+  #calendar{height:420px !important;}
 }
+
+/* ── PHONE LANDSCAPE / SMALL TABLET (≤767px) ── */
 @media(max-width:767px){
   .tb-meta{display:none;}
   .topbar{padding:0 12px;}
-  .body-wrap{padding:8px 12px 10px;}
+  .body-wrap{padding:8px 10px 16px;}
+  .col-left{min-height:480px;}
+  .cal-wrap{min-height:380px;height:380px;}
+  #calendar{height:380px !important;}
 }
-@media(max-width:640px){
-  html,body{overflow:auto;}
-  #dashboard{height:auto;overflow:visible;}
-  .sidebar-overlay{top:46px;}
-  .body-wrap{
-    flex-direction:column;overflow:visible;
-    height:auto;padding:10px 10px 14px;gap:10px;
-  }
-  .col-left,.col-right{flex:0 0 auto;width:100%;}
-  /* Overview panels stay 2-col on mobile */
+
+/* ── PHONE PORTRAIT (≤480px) ── */
+@media(max-width:480px){
   .ov-panels{grid-template-columns:1fr 1fr;}
+  .cal-topbar{flex-wrap:wrap;gap:6px;padding:0 12px 8px;}
+  .cal-month-title{font-size:15px;}
+  .col-left{min-height:440px;}
+  .cal-wrap{min-height:340px;height:340px;}
+  #calendar{height:340px !important;}
   .task-layout{flex-direction:column;}
   .task-sidebar{
     width:100%;border-right:none;border-bottom:1px solid #f1f3f4;
-    flex-direction:row;flex-wrap:wrap;padding:8px;
+    flex-direction:row;flex-wrap:wrap;padding:8px;height:auto;
   }
   .task-lists-grid.multi{grid-template-columns:1fr;}
+  .r-card{padding:12px 14px;}
+  .qa-grid{grid-template-columns:1fr 1fr;gap:6px;}
+  .qa-btn{padding:10px 4px;}
+  .qa-icon{font-size:18px;}
+  .qa-name{font-size:12px;}
 }
 </style>
 </head>
@@ -496,7 +571,68 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 <div class="modal-bg hidden" id="add-event-modal"><div class="add-event-box"><div class="m-title">Add Event</div><div class="f-field"><label class="f-lbl">Title</label><input class="f-input" type="text" id="ae-title" placeholder="Event title"/></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Date</label><input class="f-input" type="date" id="ae-date"/></div><div class="f-field"><label class="f-lbl">Time</label><input class="f-input" type="time" id="ae-time"/></div></div><div class="f-row2"><div class="f-field"><label class="f-lbl">End Date</label><input class="f-input" type="date" id="ae-end-date"/></div><div class="f-field"><label class="f-lbl">End Time</label><input class="f-input" type="time" id="ae-end-time"/></div></div><div class="f-field"><label class="f-lbl">Location</label><input class="f-input" type="text" id="ae-location" placeholder="Add a location"/></div><div class="f-field"><label class="f-lbl">Calendar</label><select class="f-input" id="ae-cal"></select></div><div class="edit-actions"><button class="btn-cancel" id="ae-cancel">Cancel</button><button class="btn-save" id="ae-save">Add Event</button></div><div class="modal-status" id="ae-status"></div></div></div>
 <div class="modal-bg hidden" id="add-task-modal"><div class="add-task-box"><div class="m-title">Add Task</div><div class="f-field"><label class="f-lbl">Title</label><input class="f-input" type="text" id="at-title" placeholder="Task title"/></div><div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="at-notes" placeholder="Optional notes"/></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Due Date</label><input class="f-input" type="date" id="at-due"/></div><div class="f-field"><label class="f-lbl">Priority</label><select class="f-input" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div><div class="f-field"><label class="f-lbl">Task List</label><select class="f-input" id="at-list"></select></div><div class="edit-actions"><button class="btn-cancel" id="at-cancel">Cancel</button><button class="btn-save" id="at-save">Add Task</button></div><div class="modal-status" id="at-status"></div></div></div>
 <div class="modal-bg hidden" id="new-list-modal"><div class="new-list-box"><div class="m-title">Create New List</div><div class="f-field"><label class="f-lbl">List Name</label><input class="f-input" type="text" id="nl-name" placeholder="e.g. Work, Personal, Health…"/></div><div class="edit-actions"><button class="btn-cancel" id="nl-cancel">Cancel</button><button class="btn-save" id="nl-save">Create</button></div><div class="modal-status" id="nl-status"></div></div></div>
-<div class="modal-bg hidden" id="event-modal"><div class="modal-box"><div class="modal-hd"><div class="modal-title" id="m-title"></div><button class="modal-x" id="m-close">&times;</button></div><div class="modal-row" id="m-time"></div><div class="modal-row" id="m-loc"></div><div class="modal-row" id="m-desc"></div><a class="modal-link" id="m-link" href="#" target="_blank">Open in Google Calendar</a></div></div>
+<div class="modal-bg hidden" id="event-view-modal">
+  <div class="ev-view-box">
+    <div class="ev-view-toolbar">
+      <button class="ev-view-icon-btn" id="ev-edit-btn" title="Edit event">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5l3 3L6 17H3v-3L14.5 2.5z"/></svg>
+      </button>
+      <button class="ev-view-icon-btn" id="ev-delete-btn" title="Delete event">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,6 15,6"/><path d="M8 6V4h4v2"/><rect x="6" y="6" width="8" height="11" rx="1"/><line x1="9" y1="10" x2="9" y2="15"/><line x1="11" y1="10" x2="11" y2="15"/></svg>
+      </button>
+      <button class="ev-view-icon-btn" id="ev-close-btn" title="Close">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+    </div>
+    <div class="ev-view-body">
+      <div class="ev-view-title-row">
+        <div class="ev-view-color-bar" id="ev-color-bar"></div>
+        <div class="ev-view-title" id="ev-view-title"></div>
+      </div>
+      <div class="ev-view-row" id="ev-time-row">
+        <div class="ev-view-row-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><polyline points="10,6 10,10 13,13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="ev-view-row-text" id="ev-view-time"></div>
+      </div>
+      <div class="ev-view-row" id="ev-loc-row" style="display:none;">
+        <div class="ev-view-row-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6z" stroke-linejoin="round"/><circle cx="10" cy="8" r="2"/></svg>
+        </div>
+        <div class="ev-view-row-text" id="ev-view-loc"></div>
+      </div>
+      <div class="ev-view-row" id="ev-desc-row" style="display:none;">
+        <div class="ev-view-row-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="6" x2="16" y2="6" stroke-linecap="round"/><line x1="4" y1="10" x2="16" y2="10" stroke-linecap="round"/><line x1="4" y1="14" x2="11" y2="14" stroke-linecap="round"/></svg>
+        </div>
+        <div class="ev-view-row-text" id="ev-view-desc"></div>
+      </div>
+      <div class="ev-view-row" id="ev-cal-row">
+        <div class="ev-view-row-icon">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="15" rx="1.5"/><line x1="2" y1="8" x2="18" y2="8"/><line x1="6" y1="1.5" x2="6" y2="4.5" stroke-linecap="round"/><line x1="14" y1="1.5" x2="14" y2="4.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="ev-view-row-text">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="ev-view-cal-dot" id="ev-cal-dot"></div>
+            <span id="ev-view-cal-name"></span>
+          </div>
+          <a class="ev-view-gcal-link" id="ev-gcal-link" href="#" target="_blank">
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 13v4H3V3h4"/><path d="M10 10L17 3"/><polyline points="13,3 17,3 17,7"/></svg>
+            Open in Google Calendar
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="ev-view-delete-confirm" id="ev-delete-confirm" style="display:none;padding:12px 20px 16px;border-top:1px solid #f1f3f4;">
+      <div style="font-size:13px;color:#202124;margin-bottom:10px;">Delete this event?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-cancel" id="ev-delete-cancel" style="flex:1;padding:7px;font-size:13px;">Cancel</button>
+        <button class="btn-save" id="ev-delete-confirm-btn" style="flex:1;padding:7px;font-size:13px;background:#d93025;">Delete</button>
+      </div>
+      <div class="modal-status" id="ev-delete-status"></div>
+    </div>
+  </div>
+</div>
 <div class="modal-bg hidden" id="day-modal"><div class="day-modal-box"><div class="modal-hd"><div class="modal-title" id="day-modal-title"></div><button class="modal-x" id="day-modal-close">&times;</button></div><div id="day-modal-list"></div></div></div>
 <div class="modal-bg hidden" id="edit-modal"><div class="edit-modal-box"><div class="edit-hd"><div class="m-title" style="margin-bottom:0;">Edit Event</div><div style="display:flex;align-items:center;gap:8px;"><span class="edit-badge">Google Calendar</span><button class="modal-x" id="edit-modal-close">&times;</button></div></div><div class="f-field"><label class="f-lbl">Event Title</label><input class="f-input" type="text" id="edit-title" placeholder="Add a title"/></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Start Date</label><input class="f-input" type="date" id="edit-date"/></div><div class="f-field"><label class="f-lbl">Start Time</label><input class="f-input" type="time" id="edit-time"/></div></div><div class="f-row2"><div class="f-field"><label class="f-lbl">End Date</label><input class="f-input" type="date" id="edit-end-date"/></div><div class="f-field"><label class="f-lbl">End Time</label><input class="f-input" type="time" id="edit-end-time"/></div></div><div class="f-field"><label class="f-lbl">Location</label><input class="f-input" type="text" id="edit-location" placeholder="Add a location"/></div><div class="f-field"><label class="f-lbl">Description</label><textarea class="f-input large" id="edit-desc" placeholder="Add a description"></textarea></div><div class="edit-actions"><button class="btn-cancel" id="edit-cancel-btn">Cancel</button><button class="btn-save" id="edit-save-btn">Save Changes</button><button class="btn-delete" id="edit-delete-btn">🗑</button></div><div class="modal-status" id="edit-save-status"></div></div></div>
 
@@ -977,9 +1113,18 @@ function initCal(){
       }
       return{domNodes:[w]};
     },
-    eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEditModal(info.event);}
+    eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}
   });
   cal.render();syncTitle();
+
+  /* Resize calendar when window size changes (critical for mobile) */
+  var _calResizeTmr=null;
+  window.addEventListener('resize',function(){
+    if(_calResizeTmr)clearTimeout(_calResizeTmr);
+    _calResizeTmr=setTimeout(function(){
+      if(cal){cal.updateSize();}
+    },150);
+  });
   document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
   document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
   document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});
@@ -1061,7 +1206,7 @@ function openDayModal(ds,evs){
     ttDiv.textContent=ev.title||'No Title';info.appendChild(tDiv);info.appendChild(ttDiv);
     if(ev.extendedProps&&ev.extendedProps.loc){var lDiv=document.createElement('div');lDiv.className='day-ev-loc';lDiv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lDiv);}
     item.appendChild(dot);item.appendChild(info);
-    item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');openEditModal(ev);});
+    item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');openEventView(ev);});
     list.appendChild(item);
   });
   document.getElementById('day-modal').classList.remove('hidden');
@@ -1123,8 +1268,112 @@ document.getElementById('edit-delete-btn').addEventListener('click',function(){
       }else{status.style.color='#d93025';status.textContent='❌ Delete failed.';}
     }).catch(function(){status.style.color='#d93025';status.textContent='❌ Network error.';}).finally(function(){document.getElementById('edit-delete-btn').disabled=false;});
 });
-document.getElementById('m-close').addEventListener('click',function(){document.getElementById('event-modal').classList.add('hidden');});
-document.getElementById('event-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+/* ═══ EVENT VIEW POPUP ═══ */
+var currentViewEvent=null;
+
+function fmtEvTime(ev){
+  if(!ev.start)return'';
+  var allDay=(typeof ev.allDay!=='undefined')?ev.allDay:false;
+  if(allDay){
+    var sd=new Date((typeof ev.start==='string'?ev.start:ev.start.toISOString()).slice(0,10)+'T12:00:00');
+    return sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · All day';
+  }
+  var ss=typeof ev.start==='string'?ev.start:ev.start.toISOString();
+  var es=ev.end?(typeof ev.end==='string'?ev.end:ev.end.toISOString()):null;
+  var sd=new Date(ss);
+  var dateStr=sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var startT=sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  var endT=es?new Date(es).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+  return dateStr+' · '+startT+(endT?' – '+endT:'');
+}
+
+function openEventView(ev){
+  currentViewEvent=ev;
+  /* hide delete confirm if previously shown */
+  document.getElementById('ev-delete-confirm').style.display='none';
+  document.getElementById('ev-delete-status').textContent='';
+  document.getElementById('ev-delete-confirm-btn').disabled=false;
+
+  /* title + color bar */
+  var rawCc=(ev.extendedProps&&ev.extendedProps.cc)||null;
+  var calId=(ev.extendedProps&&ev.extendedProps.calId)||'primary';
+  var p=pastelForCalId(rawCc,calId);
+  document.getElementById('ev-color-bar').style.background=p.text;
+  document.getElementById('ev-view-title').textContent=ev.title||'(No title)';
+
+  /* time */
+  document.getElementById('ev-view-time').textContent=fmtEvTime(ev);
+
+  /* location */
+  var loc=(ev.extendedProps&&ev.extendedProps.loc)||'';
+  if(loc){
+    var mapsUrl='https://maps.google.com/?q='+encodeURIComponent(loc);
+    document.getElementById('ev-view-loc').innerHTML='<a href="'+mapsUrl+'" target="_blank">'+escHtml(loc)+'</a>';
+    document.getElementById('ev-loc-row').style.display='flex';
+  }else{
+    document.getElementById('ev-loc-row').style.display='none';
+  }
+
+  /* description */
+  var desc=(ev.extendedProps&&ev.extendedProps.desc)||'';
+  if(desc){
+    document.getElementById('ev-view-desc').textContent=desc;
+    document.getElementById('ev-desc-row').style.display='flex';
+  }else{
+    document.getElementById('ev-desc-row').style.display='none';
+  }
+
+  /* calendar name + dot color */
+  var calMeta=calendarMeta.find(function(c){return c.id===calId;});
+  var calName=calMeta?calMeta.summary:(calId==='primary'?'My Calendar':calId);
+  document.getElementById('ev-cal-dot').style.background=p.text;
+  document.getElementById('ev-view-cal-name').textContent=calName;
+
+  /* Google Calendar link */
+  document.getElementById('ev-gcal-link').href=ev.url||('https://calendar.google.com/');
+
+  document.getElementById('event-view-modal').classList.remove('hidden');
+}
+
+function closeEventView(){
+  document.getElementById('event-view-modal').classList.add('hidden');
+  currentViewEvent=null;
+}
+
+function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+document.getElementById('ev-close-btn').addEventListener('click',closeEventView);
+document.getElementById('event-view-modal').addEventListener('click',function(e){if(e.target===this)closeEventView();});
+
+document.getElementById('ev-edit-btn').addEventListener('click',function(){
+  if(!currentViewEvent)return;
+  closeEventView();
+  openEditModal(currentViewEvent);
+});
+
+document.getElementById('ev-delete-btn').addEventListener('click',function(){
+  document.getElementById('ev-delete-confirm').style.display='block';
+});
+document.getElementById('ev-delete-cancel').addEventListener('click',function(){
+  document.getElementById('ev-delete-confirm').style.display='none';
+});
+document.getElementById('ev-delete-confirm-btn').addEventListener('click',function(){
+  if(!currentViewEvent)return;
+  var btn=this;
+  var st=document.getElementById('ev-delete-status');
+  btn.disabled=true;st.style.color='#5f6368';st.textContent='Deleting…';
+  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({eventId:currentViewEvent.id,calendarId:(currentViewEvent.extendedProps&&currentViewEvent.extendedProps.calId)||'primary'})})
+    .then(function(r){
+      if(r.ok){
+        var fd=cal?cal.getEventById(currentViewEvent.id):null;if(fd)fd.remove();
+        allEvents=allEvents.filter(function(e){return e.id!==currentViewEvent.id;});
+        Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==currentViewEvent.id;});});
+        rebuildPills();
+        closeEventView();
+      }else{st.style.color='#d93025';st.textContent='❌ Delete failed.';btn.disabled=false;}
+    }).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';btn.disabled=false;});
+});
 
 /* ═══ MESSAGING ═══ */
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status'),filIn=document.getElementById('file-input'),fnm=document.getElementById('fname'),rmf=document.getElementById('rm-file'),selFile=null;
