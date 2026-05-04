@@ -9,6 +9,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
 
+/* ══ AUTH ══ */
 .auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
 .auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
 .auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
@@ -17,12 +18,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .connect-btn:hover{background:#1765cc;}
 
+/* ══ SPINNER ══ */
 .spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
 .spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
+/* ══ APP SHELL ══ */
 #app{display:none;height:100vh;flex-direction:column;overflow:hidden;}
 
+/* ══ TOPBAR ══ */
 .topbar{flex-shrink:0;height:46px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:10;}
 .tb-left{display:flex;align-items:center;gap:10px;}
 .back-btn{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#5f6368;font-size:13px;font-family:'DM Sans',sans-serif;padding:5px 8px;border-radius:6px;transition:background .12s;}
@@ -39,27 +43,92 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tb-weather{display:flex;align-items:center;gap:3px;font-size:12px;color:#202124;}
 .signout-btn{font-size:13px;color:#1a73e8;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .signout-btn:hover{text-decoration:underline;}
-.add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s,box-shadow .15s;}
+.add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s;}
 .add-fab:hover{background:#1765cc;}
 
-.app-body{flex:1;display:flex;overflow:hidden;min-height:0;padding:0;gap:0;align-items:stretch;}
+/* ══════════════════════════════════════════════════════════
+   LAYOUT
+   - Left sidebar: fixed 200px, flush (no card border)
+   - content-area: padded wrapper, flex row
+   - task-centre: 60% fluid (matches dashboard col-left)
+   - right-col: 40% fluid, max-width capped at 219px,
+                min-width floored at 160px so it never
+                crushes — same proportions as dashboard
+══════════════════════════════════════════════════════════ */
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
 
-/* ── FIXED: single clean declaration, no duplicates, no broken inline comments ── */
-.content-area{
-  flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;
-  padding:8px 20px 10px 16px;gap:14px;align-items:stretch;margin-right:219px;
+/* ══════════════════════════════════════════════════════════
+   LAYOUT — mirrors dashboard.html exactly.
+
+   Dashboard structure:
+     topbar (46px fixed)
+     body-wrap: padded, max-width:1440px, margin:0 auto
+       col-left:  flex:0 0 60%   → the calendar/main panel
+       col-right: flex:0 0 calc(40%-16px) → send+actions
+
+   Task.html adds a 200px flush sidebar before body-wrap,
+   so we split the remaining space the same way:
+     task-sidebar: 200px flush (like dashboard's hamburger nav)
+     body-wrap equivalent (padded, max-width, centered):
+       task-centre: flex:0 0 60%
+       right-col:   flex:0 0 calc(40%-14px), max 219px
+
+   The 219px cap means at wide screens the right panel
+   never grows beyond 219px and the task-centre absorbs
+   the extra — matching the visual in screenshot 2.
+══════════════════════════════════════════════════════════ */
+
+/* Flush 200px left sidebar — identical to dashboard sidebar drawer width */
+.task-sidebar{
+  flex:0 0 200px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  background:#fff;border-right:1px solid #e0e0e0;
+  padding:10px 8px;overflow-y:auto;gap:1px;
 }
-
-.task-sidebar{flex:0 0 200px;min-width:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;padding:10px 8px;overflow-y:auto;gap:1px;}
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
+
+/* body-wrap equivalent — same padding as dashboard body-wrap */
+.content-area{
+  flex:1;min-width:0;
+  display:flex;overflow:hidden;min-height:0;
+  padding:8px 20px 10px 16px;
+  gap:14px;align-items:stretch;
+  /* 1398px cap creates the 236px right breathing room at 1870px viewport.
+     Below 1634px (sidebar+padding+1398) the breathing compresses to 0
+     and content-area fills the remaining space naturally. */
+  max-width:1398px;
+}
+
+/* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
+.task-centre{
+  flex:0 0 60%;min-width:0;
+  display:flex;flex-direction:column;
+  background:#fff;border:1px solid #e0e0e0;border-radius:12px;
+  overflow:hidden;
+}
+
+/* right-col: calc(40%-14px) of content-area, capped at 219px.
+   At the dashboard's typical 1392px content width:
+     60% = 835px  (≈ task screenshot's 846px ✓)
+     40%-14px = 543px → capped to 219px
+   The gap between 219px and 543px becomes extra breathing room
+   for the task-centre, which grows to fill it via auto margin. */
+.right-col{
+  flex:0 0 calc(40% - 14px);
+  min-width:0;
+  display:flex;flex-direction:column;gap:14px;
+  overflow:hidden;
+}
+
+/* ══ SIDEBAR ITEMS ══ */
 .sidebar-sec{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 3px;}
 .tl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#3c4043;transition:background .12s;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;}
 .tl-item:hover{background:#f1f3f4;}
 .tl-item.active{background:#e8f0fe;color:#1a73e8;}
 .tl-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
 .tl-item.active svg{opacity:1;}
-.tl-count{margin-left:auto;font-size:10px;font-weight:600;background:#f1f3f4;border-radius:8px;padding:1px 6px;color:#5f6368;}
+.tl-count{margin-left:auto;font-size:10px;font-weight:600;background:#f1f3f4;border-radius:8px;padding:1px 6px;color:#5f6368;flex-shrink:0;}
 .tl-item.active .tl-count{background:#c5d9fb;color:#1a56b0;}
 .tl-count.red-badge{background:#fce8e6 !important;color:#c5221f !important;}
 .tl-sep{height:1px;background:#f1f3f4;margin:4px 6px;}
@@ -72,49 +141,47 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stat-val.green{color:#1e8e3e;}
 .stat-val.red{color:#d93025;}
 
-/* ── FIXED: flex:1 fills remaining space after right-col takes its share ── */
-.task-centre{
-  flex:1;min-width:0;
-  display:flex;flex-direction:column;
-  background:#fff;border:1px solid #e0e0e0;border-radius:12px;
-  overflow:hidden;
-}
-.task-topbar{flex-shrink:0;padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between;}
+/* ══ OVERVIEW PANELS — matches dashboard exactly ══ */
+.ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px 4px;flex-shrink:0;}
+.ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;transition:background .12s,border-color .12s;}
+.ov-panel.clickable{cursor:pointer;}
+.ov-panel.clickable:hover{background:#e8f0fe;border-color:#1a73e8;}
+.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;}
+.ov-panel-title{font-size:13px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
+.ov-panel.clickable:hover .ov-panel-title{color:#1a73e8;}
+.ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
+
+/* ══ TASK CENTRE INTERNALS ══ */
+.task-topbar{flex-shrink:0;padding:10px 18px 0;display:flex;align-items:center;justify-content:space-between;}
 .task-title-row{display:flex;align-items:center;gap:8px;}
 .task-page-title{font-size:20px;font-weight:500;color:#202124;}
-
 .chip-bar{display:flex;gap:6px;padding:10px 18px 10px;flex-shrink:0;border-bottom:1px solid #f1f3f4;}
 .chip{background:none;border:1px solid #dadce0;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500;color:#5f6368;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .chip:hover{background:#f1f3f4;}
 .chip.active{background:#1a73e8;color:#fff;border-color:#1a73e8;}
-
 .task-scroll{flex:1;overflow-y:auto;padding:14px 18px;}
 .task-scroll::-webkit-scrollbar{width:4px;}
 .task-scroll::-webkit-scrollbar-thumb{background:#dadce0;border-radius:4px;}
 
+/* ══ TASK GRID & CARDS ══ */
 .task-grid{display:grid;gap:14px;}
 .task-grid.multi{grid-template-columns:1fr 1fr;}
 .task-grid.single{grid-template-columns:1fr;max-width:640px;}
-
 .task-list-card{background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;isolation:isolate;}
 .tlc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e8eaed;}
 .tlc-name{font-size:13px;font-weight:600;color:#202124;}
 .tlc-badge{font-size:10px;font-weight:500;color:#5f6368;background:#e8eaed;border-radius:8px;padding:2px 7px;}
-
 .tlc-add{display:flex;align-items:center;gap:7px;padding:7px 4px;color:#1a73e8;cursor:pointer;font-size:12px;font-weight:500;border:none;background:none;font-family:'DM Sans',sans-serif;width:100%;text-align:left;border-radius:6px;transition:background .12s;}
 .tlc-add:hover{background:#e8f0fe;}
 .tlc-add svg{width:14px;height:14px;flex-shrink:0;}
-
 .tlc-task{display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-radius:6px;transition:background .1s;overflow:visible;position:relative;}
 .tlc-task:hover{background:#fff;}
-
 .tlc-cb{width:18px;height:18px;min-width:18px;border:1.5px solid #9aa0a6;border-radius:50%;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:border-color .15s,background .15s,transform .1s;position:relative;z-index:2;font-family:inherit;outline:none;}
 .tlc-cb:hover{border-color:#1a73e8;background:#e8f0fe;transform:scale(1.1);}
 .tlc-cb:focus-visible{outline:2px solid #1a73e8;outline-offset:2px;}
 .tlc-cb.checked{border-color:#1a73e8;background:#1a73e8;}
 .tlc-cb.checked::after{content:'✓';color:#fff;font-size:10px;font-weight:700;line-height:1;}
 .tlc-cb[disabled]{opacity:.45;cursor:wait;}
-
 .tlc-task-body{flex:1;min-width:0;}
 .tlc-task-name{font-size:13px;color:#202124;line-height:1.4;font-weight:500;}
 .tlc-task-name.done{text-decoration:line-through;color:#9aa0a6;font-weight:400;}
@@ -124,7 +191,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-due-chip.overdue{background:#fce8e6;color:#c5221f;}
 .tlc-due-chip.today{background:#fef7e0;color:#b06000;}
 .tlc-due-chip.future{background:#f1f3f4;color:#5f6368;}
-
 .comp-sep{height:1px;background:#e8eaed;margin:6px 0;}
 .tlc-completed-sec{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;color:#5f6368;font-size:11px;border-radius:6px;transition:background .12s;}
 .tlc-completed-sec:hover{background:#fff;}
@@ -132,7 +198,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .tlc-completed-sec.open svg{transform:rotate(90deg);}
 .tlc-completed-tasks{display:none;}
 .tlc-completed-tasks.show{display:block;}
-
 .empty-card{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:10px;}
 .empty-icon{font-size:40px;}
 .empty-title{font-size:14px;font-weight:500;color:#5f6368;}
@@ -140,41 +205,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .skeleton{height:13px;background:linear-gradient(90deg,#f1f3f4 25%,#e8eaed 50%,#f1f3f4 75%);background-size:200% 100%;animation:shimmer 1.3s infinite;border-radius:6px;margin:6px 0;}
 @keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
 
-/* ── FIXED: proper flex matching dashboard col-right ── */
-.right-col{
-  flex:0 0 calc(40% - 14px);
-  min-width:0;
-  display:flex;flex-direction:column;gap:14px;
-}
-
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
+/* ══ RIGHT PANEL CARDS ══ */
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;}
 .r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
-
-.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;}
+.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
 .tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
 .tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
-
-.msg-ta{width:100%;min-height:68px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
+.msg-ta{width:100%;min-height:64px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
 .msg-ta:focus{border-color:#1a73e8;}
-.msg-actions{display:flex;gap:8px;margin-top:8px;}
-.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:6px 12px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
+.msg-actions{display:flex;gap:6px;margin-top:8px;}
+.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .attach-btn:hover{background:#f1f3f4;}
 .send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .send-btn:hover:not(:disabled){background:#1765cc;}
 .send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .send-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
-.fname{font-size:10px;color:#5f6368;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;}
-
-.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
+.fname{font-size:10px;color:#5f6368;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;padding:0;}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:22px;margin-bottom:6px;}
-.qa-name{font-size:14px;font-weight:500;color:#202124;}
+.qa-icon{font-size:20px;margin-bottom:4px;}
+.qa-name{font-size:12px;font-weight:500;color:#202124;}
 .qa-desc{display:none;}
 
+/* ══ MODALS ══ */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
 .modal-bg.hidden{display:none;}
 .modal-box{background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.16);animation:mIn .18s ease;}
@@ -194,24 +251,54 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .btn-cancel:hover{background:#e0e0e0;}
 .modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
 
+/* ══ TOAST ══ */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#202124;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .25s ease,opacity .25s;opacity:0;z-index:999;white-space:nowrap;pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.success{background:#1e8e3e;}
 .toast.error{background:#d93025;}
 
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE
+   At ≤900px: right-col stays visible but stacks below task-centre.
+   Both panels are always available — never hidden on mobile.
+   Layout mirrors dashboard.html responsive behaviour.
+══════════════════════════════════════════════════════════ */
+/* ══ RESPONSIVE ══
+   ≤900px : stack sidebar + content-area vertically,
+            right-col goes full-width below task-centre.
+            Both panels always visible — never hidden.
+   ≤480px : tighten padding for small phones.
+*/
 @media(max-width:900px){
-  .right-col{display:none;}
-  .task-centre{flex:1;}
-}
-@media(max-width:640px){
   html,body{overflow:auto;}
   #app{height:auto;min-height:100vh;overflow:visible;}
   .app-body{flex-direction:column;overflow:visible;height:auto;}
-  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 16px;}
-  .task-sidebar{flex:none;width:100%;border-right:none;border-bottom:1px solid #e0e0e0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;}
+  /* sidebar strip */
+  .task-sidebar{
+    flex:none;width:100%;
+    border-right:none;border-bottom:1px solid #e0e0e0;
+    flex-direction:row;flex-wrap:wrap;
+    padding:8px;gap:4px;overflow-y:visible;
+  }
   .sidebar-stats{display:none;}
+  /* content area stacks */
+  .content-area{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 14px 16px;gap:12px;
+    max-width:none;width:100%;
+  }
+  /* task-centre: full width, stacked */
+  .task-centre{flex:0 0 auto;width:100%;min-height:400px;}
+  /* right-col: full width, all caps removed */
+  .right-col{flex:0 0 auto;width:100%;overflow:visible;}
   .task-grid.multi{grid-template-columns:1fr;}
   .tb-meta{display:none;}
+  .ov-panels{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 12px;}
+  .content-area{padding:8px 8px 14px;}
+  .task-centre{min-height:360px;}
 }
 </style>
 </head>
@@ -232,7 +319,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 </div>
 
 <div id="app">
-
   <div class="topbar">
     <div class="tb-left">
       <button class="back-btn" id="back-btn">
@@ -247,10 +333,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
     </div>
     <div class="tb-right">
       <div class="tb-meta">
-        <span id="wb-date"></span>
-        <span class="tb-sep">·</span>
-        <span id="wb-time"></span>
-        <span class="tb-sep">·</span>
+        <span id="wb-date"></span><span class="tb-sep">·</span>
+        <span id="wb-time"></span><span class="tb-sep">·</span>
         <div class="tb-weather"><span id="wb-icon" style="font-size:14px;"></span><span id="wb-temp"></span></div>
       </div>
       <button class="signout-btn" id="signout-btn">Sign out</button>
@@ -259,22 +343,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
   <div class="app-body">
 
+    <!-- Flush left sidebar -->
     <div class="task-sidebar" id="task-sidebar">
       <div class="sidebar-sec">Views</div>
       <button class="tl-item active" data-filter="all" id="tl-all">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        All tasks
-        <span class="tl-count" id="count-all">0</span>
+        All tasks<span class="tl-count" id="count-all">0</span>
       </button>
       <button class="tl-item" data-filter="today" id="tl-today">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
-        Due Today
-        <span class="tl-count" id="count-today">0</span>
+        Due Today<span class="tl-count" id="count-today">0</span>
       </button>
       <button class="tl-item" data-filter="overdue" id="tl-overdue">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="4.5" x2="8" y2="8.5" stroke-linecap="round"/><circle cx="8" cy="10.5" r=".7" fill="currentColor" stroke="none"/></svg>
-        Overdue
-        <span class="tl-count" id="count-overdue">0</span>
+        Overdue<span class="tl-count" id="count-overdue">0</span>
       </button>
       <div class="tl-sep"></div>
       <div class="sidebar-sec">My Lists</div>
@@ -291,9 +373,27 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div>
     </div>
 
+    <!-- Content: 60% task-centre + up-to-219px right-col -->
     <div class="content-area">
 
       <div class="task-centre">
+
+        <!-- Overview panels — 📅 Events → Dashboard, 📁 Projects → Trackers -->
+        <div class="ov-panels">
+          <div class="ov-panel clickable" id="ov-events-panel" title="Go to Calendar">
+            <div class="ov-panel-hd">
+              <span class="ov-panel-title">📅 Events Today</span>
+              <span class="ov-panel-count" id="ov-event-count">—</span>
+            </div>
+          </div>
+          <div class="ov-panel clickable" id="ov-proj-panel" title="Go to Trackers">
+            <div class="ov-panel-hd">
+              <span class="ov-panel-title">📁 Projects</span>
+              <span class="ov-panel-count" id="ov-proj-count">—</span>
+            </div>
+          </div>
+        </div>
+
         <div class="task-topbar">
           <div class="task-title-row">
             <span style="font-size:18px;">✅</span>
@@ -301,11 +401,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
           <button class="add-fab" id="add-task-btn2">+ Add</button>
         </div>
+
         <div class="chip-bar">
           <button class="chip active" data-chip="all">All</button>
           <button class="chip" data-chip="active">Active</button>
           <button class="chip" data-chip="done">Completed</button>
         </div>
+
         <div class="task-scroll">
           <div class="task-grid single" id="task-grid">
             <div class="task-list-card">
@@ -316,13 +418,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /task-centre -->
 
+      <!-- Right column: max 219px, min 160px -->
       <div class="right-col">
-
         <div class="r-card">
           <div class="r-label">Send to MIE</div>
           <div class="tag-chips">
+            <button class="tag-chip" data-tag="@draft">@draft</button>
             <button class="tag-chip" data-tag="@calendar">@calendar</button>
             <button class="tag-chip" data-tag="@tasks">@tasks</button>
             <button class="tag-chip" data-tag="@finance">@finance</button>
@@ -338,11 +441,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
           <div class="send-status" id="send-status"></div>
         </div>
-
         <div class="r-card" style="flex:1;overflow-y:auto;">
           <div class="r-label">Quick Actions</div>
           <div class="qa-grid">
-            <a class="qa-btn" href="/dashboard" data-qa="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
+            <a class="qa-btn" href="/dashboard"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
             <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
             <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
             <div class="qa-btn" data-qa="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div></div>
@@ -352,13 +454,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             <div class="qa-btn" data-qa="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
           </div>
         </div>
+      </div><!-- /right-col -->
 
-      </div>
+    </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
 
-    </div>
-  </div>
-</div>
-
+<!-- ADD TASK MODAL -->
 <div class="modal-bg hidden" id="add-task-modal">
   <div class="modal-box">
     <div class="modal-title">Add Task</div>
@@ -376,6 +478,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   </div>
 </div>
 
+<!-- NEW LIST MODAL -->
 <div class="modal-bg hidden" id="new-list-modal">
   <div class="modal-box">
     <div class="modal-title">Create New List</div>
@@ -394,423 +497,88 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 'use strict';
 var BACKEND='https://api.mie.today';
 var DASHBOARD='/dashboard';
-
 var authWrap=document.getElementById('auth-wrap');
 var loadWrap=document.getElementById('loading-wrap');
 var appEl=document.getElementById('app');
+var allTasks=[],taskLists=[],currentFilter='all',currentChip='all';
 
-var allTasks=[];
-var taskLists=[];
-var currentFilter='all';
-var currentChip='all';
-
-function show(el){
-  [authWrap,loadWrap,appEl].forEach(function(e){e.style.display='none';});
-  if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';}
-  else el.style.display='';
-}
+function show(el){[authWrap,loadWrap,appEl].forEach(function(e){e.style.display='none';});if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';}else el.style.display='';}
 
 var toastTmr=null;
-function toast(msg,type){
-  var t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast '+(type||'');
-  setTimeout(function(){t.classList.add('show');},10);
-  if(toastTmr)clearTimeout(toastTmr);
-  toastTmr=setTimeout(function(){t.classList.remove('show');},2600);
-}
+function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
 
-function startClock(){
-  function tick(){
-    var n=new Date();
-    document.getElementById('wb-date').textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-    document.getElementById('wb-time').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
-  }
-  tick();setInterval(tick,30000);
-}
+function startClock(){function tick(){var n=new Date();document.getElementById('wb-date').textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});document.getElementById('wb-time').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
 
 function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';return'⛈️';}
-function loadWeather(){
-  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});}
-  else doWeather(37.7749,-122.4194);
-}
-function doWeather(lat,lon){
-  fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
-    .then(function(r){return r.json();})
-    .then(function(w){
-      var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);
-      document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);
-      document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';
-    }).catch(function(){});
-}
+function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});else doWeather(37.7749,-122.4194);}
+function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';}).catch(function(){});}
 
-function init(){
-  show(loadWrap);
-  fetch(BACKEND+'/api/me/status',{credentials:'include'})
-    .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
-    .then(function(d){
-      if(!d)return;
-      if(d.connected){show(appEl);loadTasks();startClock();loadWeather();}
-      else show(authWrap);
-    }).catch(function(){show(authWrap);});
+/* ── Overview panels ── */
+function loadEventsToday(){
+  var now=new Date();
+  var start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  var end=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1);
+  var params=new URLSearchParams({timeMin:start.toISOString(),timeMax:end.toISOString(),_cb:Date.now()});
+  fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){document.getElementById('ov-event-count').textContent=data&&Array.isArray(data.events)?data.events.length:'—';})
+    .catch(function(){document.getElementById('ov-event-count').textContent='—';});
 }
+function updateOvPanels(){document.getElementById('ov-proj-count').textContent=taskLists.length||'0';}
+document.getElementById('ov-events-panel').addEventListener('click',function(){window.location.href=DASHBOARD;});
+document.getElementById('ov-proj-panel').addEventListener('click',function(){window.location.href=DASHBOARD+'?mod=trackers';});
+
+function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){show(appEl);loadTasks();loadEventsToday();startClock();loadWeather();}else show(authWrap);}).catch(function(){show(authWrap);});}
 
 document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
-document.getElementById('signout-btn').addEventListener('click',function(){
-  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});
-});
+document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
 document.getElementById('back-btn').addEventListener('click',function(){window.location.href=DASHBOARD;});
 
-document.querySelectorAll('.tag-chip').forEach(function(chip){
-  chip.addEventListener('click',function(){
-    var tag=chip.getAttribute('data-tag');
-    var ta=document.getElementById('msg-input');
-    chip.classList.toggle('selected');
-    var val=ta.value;
-    if(chip.classList.contains('selected')){
-      if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}
-    }else{
-      ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();
-    }
-    updateSendBtn();
-    ta.focus();
-  });
-});
+/* ── Tag chips ── */
+document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1)ta.value=(tag+' '+val).trimEnd();}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}updateSendBtn();ta.focus();});});
 
-var msgIn=document.getElementById('msg-input');
-var sndBtn=document.getElementById('send-btn');
-var sndSt=document.getElementById('send-status');
-var filIn=document.getElementById('file-input');
-var fnm=document.getElementById('fname');
-var rmf=document.getElementById('rm-file');
-var selFile=null;
+/* ── Messaging ── */
+var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status');
+var filIn=document.getElementById('file-input'),fnm=document.getElementById('fname'),rmf=document.getElementById('rm-file'),selFile=null;
 function updateSendBtn(){sndBtn.disabled=!msgIn.value.trim()&&!selFile;}
 msgIn.addEventListener('input',updateSendBtn);
-filIn.addEventListener('change',function(){
-  selFile=filIn.files[0]||null;
-  if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}
-  else{fnm.style.display='none';rmf.style.display='none';}
-  updateSendBtn();
-});
+filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}else{fnm.style.display='none';rmf.style.display='none';}updateSendBtn();});
 rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
-sndBtn.addEventListener('click',function(){
-  var txt=msgIn.value.trim();if(!txt&&!selFile)return;
-  sndBtn.disabled=true;sndSt.textContent='';
-  fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
-    .then(function(r){
-      if(r.ok){
-        sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';
-        msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
-        document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});
-      }else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}
-    })
-    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';})
-    .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
-});
+sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile)return;sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});});
 
-document.querySelectorAll('.qa-btn[data-qa]').forEach(function(btn){
-  if(btn.tagName==='A')return;
-  btn.addEventListener('click',function(){
-    var qa=btn.getAttribute('data-qa');
-    if(qa==='tasks')return;
-    window.location.href=DASHBOARD+'?mod='+qa;
-  });
-});
+/* ── Quick actions ── */
+document.querySelectorAll('.qa-btn[data-qa]').forEach(function(btn){btn.addEventListener('click',function(){var qa=btn.getAttribute('data-qa');if(qa==='tasks')return;window.location.href=DASHBOARD+'?mod='+qa;});});
 
-function loadTasks(){
-  fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data){allTasks=[];taskLists=[];}
-      else{
-        taskLists=Array.isArray(data.lists)?data.lists:[];
-        var raw=Array.isArray(data.tasks)?data.tasks:[];
-        allTasks=raw.map(function(t){
-          var lid=t.listId||t.taskListId||null;
-          if(!lid&&taskLists.length===1)lid=taskLists[0].id;
-          return Object.assign({},t,{listId:lid||'@default',_pending:false});
-        });
-      }
-      updateStats();renderSidebar();renderMain();
-    })
-    .catch(function(){allTasks=[];taskLists=[];updateStats();renderSidebar();renderMain();});
-}
+/* ── Load tasks ── */
+function loadTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){allTasks=[];taskLists=[];}else{taskLists=Array.isArray(data.lists)?data.lists:[];var raw=Array.isArray(data.tasks)?data.tasks:[];allTasks=raw.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default',_pending:false});});}updateStats();updateOvPanels();renderSidebar();renderMain();}).catch(function(){allTasks=[];taskLists=[];updateStats();updateOvPanels();renderSidebar();renderMain();});}
 
-function updateStats(){
-  var done=allTasks.filter(function(t){return t.status==='completed';}).length;
-  var todo=allTasks.filter(function(t){return t.status!=='completed';}).length;
-  document.getElementById('stat-done').textContent=done;
-  document.getElementById('stat-todo').textContent=todo;
-  document.getElementById('stat-total').textContent=allTasks.length;
-  var now=new Date();now.setHours(0,0,0,0);
-  var todayCnt=allTasks.filter(function(t){
-    if(t.status==='completed'||!t.due)return false;
-    return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;
-  }).length;
-  var overdueCnt=allTasks.filter(function(t){
-    if(t.status==='completed'||!t.due)return false;
-    return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;
-  }).length;
-  var allActive=allTasks.filter(function(t){return t.status!=='completed';}).length;
-  document.getElementById('count-all').textContent=allActive;
-  document.getElementById('count-today').textContent=todayCnt;
-  var ob=document.getElementById('count-overdue');
-  ob.textContent=overdueCnt;
-  ob.className='tl-count'+(overdueCnt>0?' red-badge':'');
-}
+function updateStats(){var done=allTasks.filter(function(t){return t.status==='completed';}).length;var todo=allTasks.filter(function(t){return t.status!=='completed';}).length;document.getElementById('stat-done').textContent=done;document.getElementById('stat-todo').textContent=todo;document.getElementById('stat-total').textContent=allTasks.length;var now=new Date();now.setHours(0,0,0,0);var todayCnt=allTasks.filter(function(t){if(t.status==='completed'||!t.due)return false;return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;}).length;var overdueCnt=allTasks.filter(function(t){if(t.status==='completed'||!t.due)return false;return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;}).length;document.getElementById('count-all').textContent=allTasks.filter(function(t){return t.status!=='completed';}).length;document.getElementById('count-today').textContent=todayCnt;var ob=document.getElementById('count-overdue');ob.textContent=overdueCnt;ob.className='tl-count'+(overdueCnt>0?' red-badge':'');}
 
-function renderSidebar(){
-  ['all','today','overdue'].forEach(function(f){
-    var el=document.getElementById('tl-'+f);
-    if(el)el.className='tl-item'+(currentFilter===f?' active':'');
-  });
-  var con=document.getElementById('list-sidebar-items');con.innerHTML='';
-  taskLists.forEach(function(l){
-    var cnt=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;
-    var btn=document.createElement('button');
-    btn.className='tl-item'+(currentFilter===l.id?' active':'');
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/></svg>'
-      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escHtml(l.title)+'</span>'
-      +'<span class="tl-count">'+cnt+'</span>';
-    btn.addEventListener('click',function(){setFilter(l.id);});
-    con.appendChild(btn);
-  });
-}
-
+function renderSidebar(){['all','today','overdue'].forEach(function(f){var el=document.getElementById('tl-'+f);if(el)el.className='tl-item'+(currentFilter===f?' active':'');});var con=document.getElementById('list-sidebar-items');con.innerHTML='';taskLists.forEach(function(l){var cnt=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;var btn=document.createElement('button');btn.className='tl-item'+(currentFilter===l.id?' active':'');btn.innerHTML='<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/></svg><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">'+escHtml(l.title)+'</span><span class="tl-count">'+cnt+'</span>';btn.addEventListener('click',function(){setFilter(l.id);});con.appendChild(btn);});}
 function setFilter(f){currentFilter=f;renderSidebar();renderMain();}
-['all','today','overdue'].forEach(function(f){
-  var el=document.getElementById('tl-'+f);
-  if(el)el.addEventListener('click',function(){setFilter(f);});
-});
+['all','today','overdue'].forEach(function(f){var el=document.getElementById('tl-'+f);if(el)el.addEventListener('click',function(){setFilter(f);});});
+document.querySelectorAll('.chip').forEach(function(c){c.addEventListener('click',function(){currentChip=c.getAttribute('data-chip');document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});c.classList.add('active');renderMain();});});
 
-document.querySelectorAll('.chip').forEach(function(c){
-  c.addEventListener('click',function(){
-    currentChip=c.getAttribute('data-chip');
-    document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('active');});
-    c.classList.add('active');
-    renderMain();
-  });
-});
+function renderMain(){var grid=document.getElementById('task-grid');grid.innerHTML='';var now=new Date();now.setHours(0,0,0,0);var listsToRender=[];if(currentFilter==='all'){listsToRender=taskLists.length?taskLists.slice():[{id:'@default',title:'My Tasks'}];}else if(currentFilter==='today'||currentFilter==='overdue'){listsToRender=[{id:'__virtual__',title:currentFilter==='today'?'Due Today':'Overdue',_virtual:currentFilter}];}else{var found=taskLists.find(function(l){return l.id===currentFilter;});listsToRender=[found||{id:currentFilter,title:'Tasks'}];}grid.className='task-grid '+(listsToRender.length>1?'multi':'single');listsToRender.forEach(function(lst){var tasks;if(lst._virtual==='today'){tasks=allTasks.filter(function(t){if(!t.due)return false;return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;});}else if(lst._virtual==='overdue'){tasks=allTasks.filter(function(t){if(!t.due||t.status==='completed')return false;return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;});}else{tasks=allTasks.filter(function(t){return t.listId===lst.id;});}var active=tasks.filter(function(t){return t.status!=='completed';});var done=tasks.filter(function(t){return t.status==='completed';});var showActive=(currentChip==='all'||currentChip==='active');var showDone=(currentChip==='all'||currentChip==='done');grid.appendChild(buildCard(lst,showActive?active:[],showDone?done:[]));});if(!grid.children.length){var emp=document.createElement('div');emp.className='task-list-card';emp.innerHTML='<div class="empty-card"><div class="empty-icon">✅</div><div class="empty-title">All caught up!</div><div class="empty-sub">No tasks match this filter.</div></div>';grid.appendChild(emp);}}
 
-function renderMain(){
-  var grid=document.getElementById('task-grid');grid.innerHTML='';
-  var now=new Date();now.setHours(0,0,0,0);
-  var listsToRender=[];
-  if(currentFilter==='all'){
-    listsToRender=taskLists.length?taskLists.slice():[{id:'@default',title:'My Tasks'}];
-  }else if(currentFilter==='today'||currentFilter==='overdue'){
-    listsToRender=[{id:'__virtual__',title:currentFilter==='today'?'Due Today':'Overdue',_virtual:currentFilter}];
-  }else{
-    var found=taskLists.find(function(l){return l.id===currentFilter;});
-    listsToRender=[found||{id:currentFilter,title:'Tasks'}];
-  }
-  grid.className='task-grid '+(listsToRender.length>1?'multi':'single');
-  listsToRender.forEach(function(lst){
-    var tasks;
-    if(lst._virtual==='today'){
-      tasks=allTasks.filter(function(t){
-        if(!t.due)return false;
-        return Math.round((new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))-now)/86400000)===0;
-      });
-    }else if(lst._virtual==='overdue'){
-      tasks=allTasks.filter(function(t){
-        if(!t.due||t.status==='completed')return false;
-        return new Date(t.due+(t.due.includes('T')?'':'T12:00:00'))<now;
-      });
-    }else{
-      tasks=allTasks.filter(function(t){return t.listId===lst.id;});
-    }
-    var active=tasks.filter(function(t){return t.status!=='completed';});
-    var done=tasks.filter(function(t){return t.status==='completed';});
-    var showActive=(currentChip==='all'||currentChip==='active');
-    var showDone=(currentChip==='all'||currentChip==='done');
-    grid.appendChild(buildCard(lst,showActive?active:[],showDone?done:[]));
-  });
-  if(!grid.children.length){
-    grid.innerHTML='';
-    var emp=document.createElement('div');emp.className='task-list-card';
-    emp.innerHTML='<div class="empty-card"><div class="empty-icon">✅</div><div class="empty-title">All caught up!</div><div class="empty-sub">No tasks match this filter.</div></div>';
-    grid.appendChild(emp);
-  }
-}
+function buildCard(lst,active,done){var card=document.createElement('div');card.className='task-list-card';var hd=document.createElement('div');hd.className='tlc-header';var nm=document.createElement('span');nm.className='tlc-name';nm.textContent=lst.title||'My Tasks';var badge=document.createElement('span');badge.className='tlc-badge';badge.textContent=active.length+' active';hd.appendChild(nm);hd.appendChild(badge);card.appendChild(hd);if(!lst._virtual){var addBtn=document.createElement('button');addBtn.className='tlc-add';addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="#1a73e8" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Add a task';addBtn.addEventListener('click',function(){openAddModal(lst.id);});card.appendChild(addBtn);}if(active.length){active.forEach(function(t){card.appendChild(buildRow(t));});}else if(!done.length){var e=document.createElement('div');e.style.cssText='padding:10px 4px;font-size:12px;color:#9aa0a6;font-style:italic;';e.textContent='No tasks here yet.';card.appendChild(e);}if(done.length){var sep=document.createElement('div');sep.className='comp-sep';card.appendChild(sep);var sec=document.createElement('div');sec.className='tlc-completed-sec';sec.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="4,6 8,10 12,6"/></svg>Completed ('+done.length+')';var list=document.createElement('div');list.className='tlc-completed-tasks';done.forEach(function(t){list.appendChild(buildRow(t));});sec.addEventListener('click',function(){sec.classList.toggle('open');list.classList.toggle('show');});card.appendChild(sec);card.appendChild(list);}return card;}
 
-function buildCard(lst,active,done){
-  var card=document.createElement('div');card.className='task-list-card';
-  var hd=document.createElement('div');hd.className='tlc-header';
-  var nm=document.createElement('span');nm.className='tlc-name';nm.textContent=lst.title||'My Tasks';
-  var badge=document.createElement('span');badge.className='tlc-badge';badge.textContent=active.length+' active';
-  hd.appendChild(nm);hd.appendChild(badge);card.appendChild(hd);
-  if(!lst._virtual){
-    var addBtn=document.createElement('button');addBtn.className='tlc-add';
-    addBtn.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="#1a73e8" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Add a task';
-    addBtn.addEventListener('click',function(){openAddModal(lst.id);});
-    card.appendChild(addBtn);
-  }
-  if(active.length){
-    active.forEach(function(t){card.appendChild(buildRow(t));});
-  }else if(!done.length){
-    var e=document.createElement('div');
-    e.style.cssText='padding:10px 4px;font-size:12px;color:#9aa0a6;font-style:italic;';
-    e.textContent='No tasks here yet.';card.appendChild(e);
-  }
-  if(done.length){
-    var sep=document.createElement('div');sep.className='comp-sep';card.appendChild(sep);
-    var sec=document.createElement('div');sec.className='tlc-completed-sec';
-    sec.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="4,6 8,10 12,6"/></svg>Completed ('+done.length+')';
-    var list=document.createElement('div');list.className='tlc-completed-tasks';
-    done.forEach(function(t){list.appendChild(buildRow(t));});
-    sec.addEventListener('click',function(){sec.classList.toggle('open');list.classList.toggle('show');});
-    card.appendChild(sec);card.appendChild(list);
-  }
-  return card;
-}
+function buildRow(t){var isDone=t.status==='completed';var row=document.createElement('div');row.className='tlc-task';var cb=document.createElement('button');cb.type='button';cb.className='tlc-cb'+(isDone?' checked':'');cb.setAttribute('role','checkbox');cb.setAttribute('aria-checked',isDone?'true':'false');cb.setAttribute('aria-label',(isDone?'Unmark':'Mark complete')+': '+(t.title||'task'));cb.addEventListener('click',function(){if(t._pending)return;t._pending=true;cb.disabled=true;toggleTask(t,cb,row,function(){t._pending=false;cb.disabled=false;});});var body=document.createElement('div');body.className='tlc-task-body';var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';body.appendChild(nm);var notes=(t.notes||'').replace(/\[priority:(high|medium|low)\]/gi,'').trim();if(notes){var nd=document.createElement('div');nd.className='tlc-task-notes';nd.textContent=notes;body.appendChild(nd);}if(!isDone&&t.due){var df=fmtDue(t.due);if(df){var meta=document.createElement('div');meta.className='tlc-task-meta';var chip=document.createElement('span');chip.className='tlc-due-chip '+df.cls;chip.textContent='📅 '+df.label;meta.appendChild(chip);body.appendChild(meta);}}row.appendChild(cb);row.appendChild(body);return row;}
 
-function buildRow(t){
-  var isDone=t.status==='completed';
-  var row=document.createElement('div');row.className='tlc-task';
-  var cb=document.createElement('button');
-  cb.type='button';
-  cb.className='tlc-cb'+(isDone?' checked':'');
-  cb.setAttribute('role','checkbox');
-  cb.setAttribute('aria-checked',isDone?'true':'false');
-  cb.setAttribute('aria-label',(isDone?'Unmark':'Mark complete')+': '+(t.title||'task'));
-  cb.addEventListener('click',function(){
-    if(t._pending)return;
-    t._pending=true;
-    cb.disabled=true;
-    toggleTask(t,cb,row,function(){t._pending=false;cb.disabled=false;});
-  });
-  var body=document.createElement('div');body.className='tlc-task-body';
-  var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';
-  body.appendChild(nm);
-  var notes=(t.notes||'').replace(/\[priority:(high|medium|low)\]/gi,'').trim();
-  if(notes){
-    var nd=document.createElement('div');nd.className='tlc-task-notes';nd.textContent=notes;
-    body.appendChild(nd);
-  }
-  if(!isDone&&t.due){
-    var df=fmtDue(t.due);
-    if(df){
-      var meta=document.createElement('div');meta.className='tlc-task-meta';
-      var chip=document.createElement('span');chip.className='tlc-due-chip '+df.cls;
-      chip.textContent='📅 '+df.label;
-      meta.appendChild(chip);body.appendChild(meta);
-    }
-  }
-  row.appendChild(cb);row.appendChild(body);
-  return row;
-}
+function toggleTask(t,cb,row,onDone){var wasDone=t.status==='completed';var newStatus=wasDone?'needsAction':'completed';cb.classList.toggle('checked',!wasDone);cb.setAttribute('aria-checked',(!wasDone).toString());var nameEl=row.querySelector('.tlc-task-name');if(nameEl)nameEl.classList.toggle('done',!wasDone);t.status=newStatus;updateStats();function attempt(listId){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})});}attempt(t.listId||'@default').then(function(r){if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;}).then(function(r){if(r&&r.ok){toast(newStatus==='completed'?'✅ Task completed!':'↩ Task reopened.',newStatus==='completed'?'success':'');renderSidebar();renderMain();updateStats();}else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);updateStats();toast('Could not update task.','error');}if(onDone)onDone();}).catch(function(){t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);updateStats();if(onDone)onDone();});}
 
-function toggleTask(t,cb,row,onDone){
-  var wasDone=t.status==='completed';
-  var newStatus=wasDone?'needsAction':'completed';
-  cb.classList.toggle('checked',!wasDone);
-  cb.setAttribute('aria-checked',(!wasDone).toString());
-  var nameEl=row.querySelector('.tlc-task-name');
-  if(nameEl)nameEl.classList.toggle('done',!wasDone);
-  t.status=newStatus;
-  updateStats();
-  function attempt(listId){
-    return fetch(BACKEND+'/api/me/tasks/update',{
-      method:'POST',credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})
-    });
-  }
-  attempt(t.listId||'@default')
-    .then(function(r){
-      if(r.status===404&&t.listId!=='@default')return attempt('@default');
-      return r;
-    })
-    .then(function(r){
-      if(r&&r.ok){
-        toast(newStatus==='completed'?'✅ Task completed!':'↩ Task reopened.',newStatus==='completed'?'success':'');
-        renderSidebar();renderMain();updateStats();
-      }else{
-        t.status=wasDone?'completed':'needsAction';
-        cb.classList.toggle('checked',wasDone);
-        if(nameEl)nameEl.classList.toggle('done',wasDone);
-        updateStats();
-        toast('Could not update task.','error');
-      }
-      if(onDone)onDone();
-    })
-    .catch(function(){
-      t.status=wasDone?'completed':'needsAction';
-      cb.classList.toggle('checked',wasDone);
-      if(nameEl)nameEl.classList.toggle('done',wasDone);
-      updateStats();
-      if(onDone)onDone();
-    });
-}
-
-function openAddModal(preselect){
-  document.getElementById('at-title').value='';
-  document.getElementById('at-notes').value='';
-  document.getElementById('at-due').value='';
-  document.getElementById('at-status').textContent='';
-  var sel=document.getElementById('at-list');sel.innerHTML='';
-  taskLists.forEach(function(l){
-    var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;
-    if(l.id===preselect)o.selected=true;
-    sel.appendChild(o);
-  });
-  if(!taskLists.length){var o=document.createElement('option');o.value='@default';o.textContent='My Tasks';sel.appendChild(o);}
-  document.getElementById('add-task-modal').classList.remove('hidden');
-  setTimeout(function(){document.getElementById('at-title').focus();},60);
-}
+function openAddModal(preselect){document.getElementById('at-title').value='';document.getElementById('at-notes').value='';document.getElementById('at-due').value='';document.getElementById('at-status').textContent='';var sel=document.getElementById('at-list');sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;if(l.id===preselect)o.selected=true;sel.appendChild(o);});if(!taskLists.length){var o=document.createElement('option');o.value='@default';o.textContent='My Tasks';sel.appendChild(o);}document.getElementById('add-task-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('at-title').focus();},60);}
 document.getElementById('add-task-btn2').addEventListener('click',function(){openAddModal(null);});
 document.getElementById('at-cancel').addEventListener('click',function(){document.getElementById('add-task-modal').classList.add('hidden');});
 document.getElementById('add-task-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-document.getElementById('at-save').addEventListener('click',function(){
-  var title=document.getElementById('at-title').value.trim();
-  var notes=document.getElementById('at-notes').value.trim();
-  var due=document.getElementById('at-due').value;
-  var listId=document.getElementById('at-list').value||'@default';
-  var st=document.getElementById('at-status');
-  if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}
-  var payload={title:title,listId:listId};
-  if(notes)payload.notes=notes;
-  if(due)payload.due=due+'T00:00:00.000Z';
-  document.getElementById('at-save').disabled=true;st.style.color='#5f6368';st.textContent='Saving…';
-  fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-    .then(function(r){
-      if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Added!';setTimeout(function(){document.getElementById('add-task-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}
-      else{st.style.color='#d93025';st.textContent='❌ Failed.';}
-    })
-    .catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';})
-    .finally(function(){document.getElementById('at-save').disabled=false;});
-});
+document.getElementById('at-save').addEventListener('click',function(){var title=document.getElementById('at-title').value.trim();var notes=document.getElementById('at-notes').value.trim();var due=document.getElementById('at-due').value;var listId=document.getElementById('at-list').value||'@default';var st=document.getElementById('at-status');if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}var payload={title:title,listId:listId};if(notes)payload.notes=notes;if(due)payload.due=due+'T00:00:00.000Z';document.getElementById('at-save').disabled=true;st.style.color='#5f6368';st.textContent='Saving…';fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Added!';setTimeout(function(){document.getElementById('add-task-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}else{st.style.color='#d93025';st.textContent='❌ Failed.';}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';}).finally(function(){document.getElementById('at-save').disabled=false;});});
 
-document.getElementById('tl-create-btn').addEventListener('click',function(){
-  document.getElementById('nl-name').value='';document.getElementById('nl-status').textContent='';
-  document.getElementById('new-list-modal').classList.remove('hidden');
-  setTimeout(function(){document.getElementById('nl-name').focus();},60);
-});
+document.getElementById('tl-create-btn').addEventListener('click',function(){document.getElementById('nl-name').value='';document.getElementById('nl-status').textContent='';document.getElementById('new-list-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('nl-name').focus();},60);});
 document.getElementById('nl-cancel').addEventListener('click',function(){document.getElementById('new-list-modal').classList.add('hidden');});
 document.getElementById('new-list-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-document.getElementById('nl-save').addEventListener('click',function(){
-  var name=document.getElementById('nl-name').value.trim();
-  var st=document.getElementById('nl-status');
-  if(!name){st.style.color='#d93025';st.textContent='Name is required.';return;}
-  document.getElementById('nl-save').disabled=true;st.style.color='#5f6368';st.textContent='Creating…';
-  fetch(BACKEND+'/api/me/tasks/lists/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:name})})
-    .then(function(r){
-      if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Created!';setTimeout(function(){document.getElementById('new-list-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}
-      else{st.style.color='#d93025';st.textContent='❌ Failed.';}
-    })
-    .catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';})
-    .finally(function(){document.getElementById('nl-save').disabled=false;});
-});
+document.getElementById('nl-save').addEventListener('click',function(){var name=document.getElementById('nl-name').value.trim();var st=document.getElementById('nl-status');if(!name){st.style.color='#d93025';st.textContent='Name is required.';return;}document.getElementById('nl-save').disabled=true;st.style.color='#5f6368';st.textContent='Creating…';fetch(BACKEND+'/api/me/tasks/lists/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:name})}).then(function(r){if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Created!';setTimeout(function(){document.getElementById('new-list-modal').classList.add('hidden');st.textContent='';loadTasks();},500);}else{st.style.color='#d93025';st.textContent='❌ Failed.';}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';}).finally(function(){document.getElementById('nl-save').disabled=false;});});
 
-function fmtDue(d){
-  if(!d)return null;
-  var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now=new Date();now.setHours(0,0,0,0);
-  var diff=Math.round((dt-now)/86400000);
-  if(diff<0)return{label:'Overdue',cls:'overdue'};
-  if(diff===0)return{label:'Today',cls:'today'};
-  if(diff===1)return{label:'Tomorrow',cls:'future'};
-  return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};
-}
+function fmtDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now=new Date();now.setHours(0,0,0,0);var diff=Math.round((dt-now)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};if(diff===1)return{label:'Tomorrow',cls:'future'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
 function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 init();
