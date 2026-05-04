@@ -57,6 +57,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 ══════════════════════════════════════════════════════════ */
 .app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
 
+/* ══════════════════════════════════════════════════════════
+   LAYOUT — mirrors dashboard.html exactly.
+
+   Dashboard structure:
+     topbar (46px fixed)
+     body-wrap: padded, max-width:1440px, margin:0 auto
+       col-left:  flex:0 0 60%   → the calendar/main panel
+       col-right: flex:0 0 calc(40%-16px) → send+actions
+
+   Task.html adds a 200px flush sidebar before body-wrap,
+   so we split the remaining space the same way:
+     task-sidebar: 200px flush (like dashboard's hamburger nav)
+     body-wrap equivalent (padded, max-width, centered):
+       task-centre: flex:0 0 60%
+       right-col:   flex:0 0 calc(40%-14px), max 219px
+
+   The 219px cap means at wide screens the right panel
+   never grows beyond 219px and the task-centre absorbs
+   the extra — matching the visual in screenshot 2.
+══════════════════════════════════════════════════════════ */
+
+/* Flush 200px left sidebar — identical to dashboard sidebar drawer width */
 .task-sidebar{
   flex:0 0 200px;flex-shrink:0;
   display:flex;flex-direction:column;
@@ -66,26 +88,36 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
 
+/* body-wrap equivalent — same padding as dashboard body-wrap */
 .content-area{
   flex:1;min-width:0;
   display:flex;overflow:hidden;min-height:0;
-  padding:8px 20px 10px 16px;gap:14px;align-items:stretch;
+  /* Match dashboard: padding:8px 20px 10px, gap:14px */
+  padding:8px 20px 10px 16px;
+  gap:14px;align-items:stretch;
+  max-width:calc(1440px - 200px);  /* account for sidebar */
 }
 
-/* task-centre: fluid 60%, absorbs remaining after right-col */
+/* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
 .task-centre{
-  flex:1 1 60%;min-width:0;
+  flex:0 0 60%;min-width:0;
   display:flex;flex-direction:column;
   background:#fff;border:1px solid #e0e0e0;border-radius:12px;
   overflow:hidden;
 }
 
-/* right-col: fluid 40%, capped at 219px, min 160px */
+/* right-col: calc(40%-14px) of content-area, capped at 219px.
+   At the dashboard's typical 1392px content width:
+     60% = 835px  (≈ task screenshot's 846px ✓)
+     40%-14px = 543px → capped to 219px
+   The gap between 219px and 543px becomes extra breathing room
+   for the task-centre, which grows to fill it via auto margin. */
 .right-col{
-  flex:0 1 calc(40% - 14px);
-  min-width:160px;
+  flex:0 0 calc(40% - 14px);
   max-width:219px;
+  min-width:16px;
   display:flex;flex-direction:column;gap:14px;
+  overflow:hidden;
 }
 
 /* ══ SIDEBAR ITEMS ══ */
@@ -230,15 +262,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
    Both panels are always available — never hidden on mobile.
    Layout mirrors dashboard.html responsive behaviour.
 ══════════════════════════════════════════════════════════ */
+/* ══ RESPONSIVE ══
+   ≤900px : stack sidebar + content-area vertically,
+            right-col goes full-width below task-centre.
+            Both panels always visible — never hidden.
+   ≤480px : tighten padding for small phones.
+*/
 @media(max-width:900px){
   html,body{overflow:auto;}
   #app{height:auto;min-height:100vh;overflow:visible;}
   .app-body{flex-direction:column;overflow:visible;height:auto;}
-  .content-area{
-    flex-direction:column;overflow:visible;
-    height:auto;padding:8px 12px 16px;gap:12px;
-  }
-  /* sidebar becomes horizontal strip */
+  /* sidebar strip */
   .task-sidebar{
     flex:none;width:100%;
     border-right:none;border-bottom:1px solid #e0e0e0;
@@ -246,12 +280,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
     padding:8px;gap:4px;overflow-y:visible;
   }
   .sidebar-stats{display:none;}
-  /* both panels full width, stacked */
-  .task-centre{flex:none;width:100%;min-height:400px;}
-  .right-col{
-    flex:none;width:100%;
-    max-width:none;min-width:0;
+  /* content area stacks */
+  .content-area{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 14px 16px;gap:12px;
+    max-width:none;
   }
+  /* task-centre full width */
+  .task-centre{flex:none;width:100%;min-height:400px;}
+  /* right-col full width, no cap */
+  .right-col{flex:none;width:100%;max-width:none;min-width:0;}
   .task-grid.multi{grid-template-columns:1fr;}
   .tb-meta{display:none;}
   .ov-panels{grid-template-columns:1fr 1fr;}
