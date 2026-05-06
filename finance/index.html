@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MIE Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
+
+/* ══ APP SHELL ══ */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ══ TOPBAR ══ */
+.topbar{flex-shrink:0;height:46px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:10;}
+.tb-left{display:flex;align-items:center;gap:10px;}
+.back-btn{display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:#5f6368;font-size:13px;font-family:'DM Sans',sans-serif;padding:5px 8px;border-radius:6px;transition:background .12s;}
+.back-btn:hover{background:#f1f3f4;color:#202124;}
+.back-btn svg{width:14px;height:14px;flex-shrink:0;}
+.tb-sep-line{width:1px;height:18px;background:#e0e0e0;}
+.tb-logo{width:28px;height:28px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:12px;}
+.tb-brand{font-size:15px;font-weight:600;color:#1a73e8;}
+.tb-slash{font-size:13px;color:#dadce0;margin:0 2px;}
+.tb-page{font-size:13px;color:#5f6368;font-weight:500;}
+.tb-right{display:flex;align-items:center;gap:14px;}
+.tb-meta{display:flex;align-items:center;gap:6px;font-size:12px;color:#5f6368;}
+.tb-sep{color:#dadce0;}
+.tb-weather{display:flex;align-items:center;gap:3px;font-size:12px;color:#202124;}
+.signout-btn{font-size:13px;color:#1a73e8;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.signout-btn:hover{text-decoration:underline;}
+
+/* ══ BODY ══ */
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ══ LEFT 200px SIDEBAR (matches tasks.html — kept but minimal for Finance) ══ */
+.task-sidebar{
+  flex:0 0 200px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  background:#fff;border-right:1px solid #e0e0e0;
+  padding:10px 8px;overflow-y:auto;gap:1px;
+}
+.task-sidebar::-webkit-scrollbar{width:3px;}
+.task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
+.sidebar-sec{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.08em;padding:6px 10px 3px;}
+.tl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#3c4043;transition:background .12s;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;}
+.tl-item:hover{background:#f1f3f4;}
+.tl-item.active{background:#e8f0fe;color:#1a73e8;}
+.tl-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
+.tl-item.active svg{opacity:1;}
+.tl-sep{height:1px;background:#f1f3f4;margin:4px 6px;}
+.sidebar-stats{margin-top:auto;padding:10px 10px 4px;border-top:1px solid #f1f3f4;display:flex;flex-direction:column;gap:3px;}
+.stat-row{display:flex;justify-content:space-between;align-items:center;}
+.stat-label{font-size:11px;color:#9aa0a6;}
+.stat-val{font-size:11px;font-weight:600;color:#202124;}
+.stat-val.green{color:#1e8e3e;}
+.stat-val.red{color:#d93025;}
+
+/* ══ CONTENT AREA — 60% centre + right col ══ */
+.content-area{
+  flex:1;min-width:0;
+  display:flex;overflow:hidden;min-height:0;
+  padding:16px 20px 16px 16px;
+  gap:14px;align-items:stretch;
+}
+
+/* ══ FINANCE CENTRE (60%) ══ */
+.finance-centre{
+  flex:0 0 60%;min-width:0;
+  display:flex;flex-direction:column;
+  gap:12px;
+  overflow-y:auto;
+}
+.finance-centre::-webkit-scrollbar{width:4px;}
+.finance-centre::-webkit-scrollbar-thumb{background:#dadce0;border-radius:4px;}
+
+/* ══ TOP ROW: remaining + month nav ══ */
+.top-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.remaining-pill{background:#fff;border:1px solid #e0e0e0;border-radius:16px;padding:10px 18px;display:flex;flex-direction:column;gap:1px;min-width:120px;}
+.rem-label{font-size:11px;color:#5f6368;font-weight:400;}
+.rem-value{font-size:22px;font-weight:600;color:#1e8e3e;line-height:1.2;}
+.month-nav{display:flex;align-items:center;gap:8px;}
+.nav-arrow{width:32px;height:32px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#5f6368;transition:background .12s;}
+.nav-arrow:hover{background:#f1f3f4;}
+.month-pill{background:#1a73e8;color:#fff;border-radius:20px;padding:6px 22px;font-size:14px;font-weight:500;border:none;cursor:pointer;}
+.ytd-btn{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
+.ytd-btn:hover{background:#e8f0fe;}
+.ytd-btn.active{background:#e8f0fe;}
+
+/* ══ OVERALL BREAKDOWN CARD (purple border = active) ══ */
+.breakdown-card{
+  background:#fff;
+  border:2px solid #7c4dff;
+  border-radius:14px;
+  padding:20px 22px;
+  flex-shrink:0;
+}
+.bc-title{font-size:20px;font-weight:700;color:#202124;margin-bottom:14px;}
+.bc-dot{display:none;}
+.stacked-bar{height:22px;border-radius:8px;overflow:hidden;display:flex;width:100%;margin-bottom:12px;}
+.sb-seg{height:100%;}
+.bar-legend{display:flex;gap:18px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:13px;color:#3c4043;}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* ══ SUB-CARDS: row1=Income+Savings side-by-side, row2=Needs full, row3=Wants full ══ */
+.sub-cards-wrapper{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex-shrink:0;
+}
+.sub-row-top{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.sub-card{
+  background:#fff;
+  border:1px solid #e8eaed;
+  border-radius:12px;
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+}
+.sub-col{display:contents;}
+.sub-col-right{display:contents;}
+.sub-card-divider{display:none;}
+
+.sc-section-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9aa0a6;margin-bottom:10px;}
+
+/* bar row inside sub-card */
+.sc-bar-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+.sc-bar-title{font-size:14px;font-weight:500;color:#202124;}
+.sc-bar-amount{font-size:13px;color:#5f6368;}
+.sc-bar-amount span{color:#202124;font-weight:500;}
+.sc-bar-track{height:14px;border-radius:6px;overflow:hidden;display:flex;width:100%;margin-bottom:8px;}
+.sc-seg{height:100%;}
+.sc-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.sc-leg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#5f6368;}
+.sc-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* status badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;border-radius:20px;padding:3px 10px;margin-top:4px;}
+.badge.over{background:#fce8e6;color:#c5221f;}
+.badge.short{background:#fef7e0;color:#b06000;}
+.badge.ok{background:#e6f4ea;color:#137333;}
+
+/* ══ RIGHT COLUMN ══ */
+.right-col{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  gap:14px;overflow:hidden;
+}
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;}
+.r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+
+/* tag chips */
+.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;}
+.tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
+.tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
+
+/* message area */
+.msg-ta{width:100%;min-height:64px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
+.msg-ta:focus{border-color:#1a73e8;}
+.msg-actions{display:flex;gap:6px;margin-top:8px;}
+.attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
+.attach-btn:hover{background:#f1f3f4;}
+.send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.send-btn:hover{background:#1765cc;}
+.send-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
+
+/* quick actions */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
+.qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
+.qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
+.qa-icon{font-size:20px;margin-bottom:4px;}
+.qa-name{font-size:12px;font-weight:500;color:#202124;}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#202124;color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .25s ease,opacity .25s;opacity:0;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success{background:#1e8e3e;}
+.toast.error{background:#d93025;}
+
+/* responsive */
+@media(max-width:900px){
+  html,body{overflow:auto;}
+  #app{height:auto;min-height:100vh;overflow:visible;}
+  .app-body{flex-direction:column;overflow:visible;height:auto;}
+  .task-sidebar{flex:none;width:100%;border-right:none;border-bottom:1px solid #e0e0e0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-y:visible;}
+  .sidebar-stats{display:none;}
+  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 14px 16px;gap:12px;max-width:none;width:100%;}
+  .finance-centre{flex:0 0 auto;width:100%;overflow-y:visible;}
+  .right-col{flex:0 0 auto;width:100%;overflow:visible;}
+  .sub-cards-wrapper{grid-template-columns:1fr;}
+  .sub-col-right{border-left:none;border-top:1px solid #e8eaed;}
+  .tb-meta{display:none;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 12px;}
+  .content-area{padding:8px 8px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="back-btn" onclick="window.location.href='/dashboard'">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="10,3 5,8 10,13"/></svg>
+        Dashboard
+      </button>
+      <div class="tb-sep-line"></div>
+      <div class="tb-logo">M</div>
+      <span class="tb-brand">MIE</span>
+      <span class="tb-slash">/</span>
+      <span class="tb-page">Finance</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-meta">
+        <span id="wb-date"></span>
+        <span class="tb-sep">·</span>
+        <span id="wb-time"></span>
+        <span class="tb-sep">·</span>
+        <div class="tb-weather">
+          <span id="wb-icon" style="font-size:14px;"></span>
+          <span id="wb-temp"></span>
+        </div>
+      </div>
+      <button class="signout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+
+    <!-- 200px LEFT SIDEBAR (matches tasks.html structure) -->
+    <div class="task-sidebar">
+      <div class="sidebar-sec">Finance</div>
+      <button class="tl-item active">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 6h14" stroke-linecap="round"/><circle cx="5" cy="9.5" r=".8" fill="currentColor" stroke="none"/></svg>
+        Overview
+      </button>
+      <button class="tl-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,12 5,8 8,10 11,5 14,7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Trends
+      </button>
+      <button class="tl-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><line x1="2" y1="6" x2="14" y2="6"/><line x1="6" y1="2" x2="6" y2="14"/></svg>
+        Categories
+      </button>
+      <div class="tl-sep"></div>
+      <div class="sidebar-sec">Period</div>
+      <button class="tl-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
+        Monthly
+      </button>
+      <button class="tl-item">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><polyline points="8,4 8,8 11,10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Yearly
+      </button>
+      <div class="sidebar-stats">
+        <div class="stat-row"><span class="stat-label">Income</span><span class="stat-val green">$5,000</span></div>
+        <div class="stat-row"><span class="stat-label">Expenses</span><span class="stat-val red">$3,500</span></div>
+        <div class="stat-row"><span class="stat-label">Remaining</span><span class="stat-val">$650</span></div>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+      <!-- FINANCE CENTRE (60%) -->
+      <div class="finance-centre">
+
+        <!-- TOP ROW: Remaining pill + month nav -->
+        <div class="top-row">
+          <div class="remaining-pill">
+            <span class="rem-label">Remaining</span>
+            <span class="rem-value">$650</span>
+          </div>
+          <div class="month-nav">
+            <button class="nav-arrow" onclick="changeMonth(-1)">&#8249;</button>
+            <button class="month-pill" id="month-display">May 2025</button>
+            <button class="nav-arrow" onclick="changeMonth(1)">&#8250;</button>
+            <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
+          </div>
+        </div>
+
+        <!-- OVERALL BREAKDOWN CARD (purple border = active) -->
+        <div class="breakdown-card">
+          <div class="bc-title" style="font-size:20px;font-weight:700;color:#202124;margin-bottom:14px;display:block;">
+            <span id="overview-title">Overview - May 2025</span>
+          </div>
+          <!-- Single allocation bar -->
+          <div class="stacked-bar" style="height:18px;margin-bottom:12px;">
+            <div class="sb-seg" style="width:70%;background:#c0522b;border-radius:8px 0 0 8px;"></div>
+            <div class="sb-seg" style="width:17%;background:#34a853;margin-left:1px;"></div>
+            <div class="sb-seg" style="width:13%;background:#dadce0;border-radius:0 8px 8px 0;margin-left:1px;"></div>
+          </div>
+          <!-- 4-item legend in 2x2 grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 0;">
+            <div class="leg-item"><div class="leg-dot" style="background:#c0522b;"></div>Expenses $3,500 (70%)</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#34a853;"></div>Savings $850 (17%)</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#dadce0;"></div>Remaining $650 (13%)</div>
+            <div class="leg-item"><div class="leg-dot" style="background:#7c3aed;"></div><strong>Income $5000 (100%)</strong></div>
+          </div>
+        </div>
+
+        <!-- SUB-CARDS: Income+Savings side-by-side top row, Needs full-width, Wants full-width -->
+        <div class="sub-cards-wrapper">
+
+          <!-- TOP ROW: Income (left) + Savings (right) -->
+          <div class="sub-row-top">
+
+            <!-- INCOME -->
+            <div class="sub-card">
+              <div class="sc-section-label">Income</div>
+              <div class="sc-bar-header">
+                <span class="sc-bar-title">All sources</span>
+                <span class="sc-bar-amount">$5,000</span>
+              </div>
+              <div class="sc-bar-track">
+                <div class="sc-seg" style="width:70%;background:#1e8e3e;border-radius:6px 0 0 6px;"></div>
+                <div class="sc-seg" style="width:15%;background:#5bb974;margin-left:1px;"></div>
+                <div class="sc-seg" style="width:15%;background:#a8d5b5;border-radius:0 6px 6px 0;margin-left:1px;"></div>
+              </div>
+              <div class="sc-legend">
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#1e8e3e;"></div>Salary</div>
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#5bb974;"></div>Freelance</div>
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#a8d5b5;"></div>Other</div>
+              </div>
+            </div>
+
+            <!-- SAVINGS -->
+            <div class="sub-card">
+              <div class="sc-section-label">Savings</div>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px;">
+                <span style="font-size:22px;font-weight:700;color:#202124;">$850</span>
+                <span style="font-size:13px;color:#5f6368;">/ $1,000</span>
+              </div>
+              <div class="sc-bar-track">
+                <div class="sc-seg" style="width:40%;background:#1a73e8;border-radius:6px 0 0 6px;"></div>
+                <div class="sc-seg" style="width:30%;background:#4da3f5;margin-left:1px;"></div>
+                <div class="sc-seg" style="width:15%;background:#9fc8fa;border-radius:0 6px 6px 0;margin-left:1px;"></div>
+              </div>
+              <div class="sc-legend">
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#1a73e8;"></div>Emergency</div>
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#4da3f5;"></div>Retirement</div>
+                <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#9fc8fa;"></div>Investment</div>
+              </div>
+              <div class="badge short" style="width:100%;margin-top:8px;">&#9888; $150 short</div>
+            </div>
+
+          </div><!-- /sub-row-top -->
+
+          <!-- NEEDS — full width -->
+          <div class="sub-card">
+            <div class="sc-section-label">Expenses — Needs</div>
+            <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px;">
+              <span style="font-size:22px;font-weight:700;color:#202124;">$2,640</span>
+              <span style="font-size:13px;color:#5f6368;">/ $2,500</span>
+            </div>
+            <div class="sc-bar-track" style="margin-bottom:10px;">
+              <div class="sc-seg" style="width:36%;background:#bf360c;border-radius:6px 0 0 6px;"></div>
+              <div class="sc-seg" style="width:18%;background:#e64a19;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:14%;background:#f4863a;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:10%;background:#f5a461;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:10%;background:#f8c49a;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:12%;background:#fbe0c8;border-radius:0 6px 6px 0;margin-left:1px;"></div>
+            </div>
+            <div class="sc-legend" style="margin-bottom:10px;">
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#bf360c;"></div>Rent</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#e64a19;"></div>Groceries</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#f4863a;"></div>Insurance</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#f5a461;"></div>Utilities</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#f8c49a;"></div>Transport</div>
+            </div>
+            <div class="badge over" style="width:100%;">&#9650; $140 over budget</div>
+          </div><!-- /needs -->
+
+          <!-- WANTS — full width -->
+          <div class="sub-card">
+            <div class="sc-section-label">Expenses — Wants</div>
+            <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px;">
+              <span style="font-size:22px;font-weight:700;color:#202124;">$610</span>
+              <span style="font-size:13px;color:#5f6368;">/ $750</span>
+            </div>
+            <div class="sc-bar-track" style="margin-bottom:10px;">
+              <div class="sc-seg" style="width:22%;background:#6a1b9a;border-radius:6px 0 0 6px;"></div>
+              <div class="sc-seg" style="width:15%;background:#8e24aa;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:12%;background:#ab47bc;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:10%;background:#ce93d8;margin-left:1px;"></div>
+              <div class="sc-seg" style="width:8%;background:#e1bee7;border-radius:0 6px 6px 0;margin-left:1px;"></div>
+            </div>
+            <div class="sc-legend" style="margin-bottom:10px;">
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#6a1b9a;"></div>Dining</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#8e24aa;"></div>Shopping</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#ab47bc;"></div>Entertain.</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#ce93d8;"></div>Subscript.</div>
+              <div class="sc-leg-item"><div class="sc-leg-dot" style="background:#e1bee7;"></div>Other</div>
+            </div>
+            <div class="badge ok" style="width:100%;">&#10003; $140 remaining</div>
+          </div><!-- /wants -->
+
+        </div><!-- /sub-cards-wrapper -->
+
+      </div><!-- /finance-centre -->
+
+      <!-- RIGHT COLUMN: Send to MIE + Quick Actions -->
+      <div class="right-col">
+
+        <!-- SEND TO MIE -->
+        <div class="r-card">
+          <div class="r-label">Send to MIE</div>
+          <div class="tag-chips">
+            <button class="tag-chip" data-tag="@draft">@draft</button>
+            <button class="tag-chip" data-tag="@calendar">@calendar</button>
+            <button class="tag-chip" data-tag="@tasks">@tasks</button>
+            <button class="tag-chip selected" data-tag="@finance">@finance</button>
+            <button class="tag-chip" data-tag="@food">@food</button>
+          </div>
+          <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
+          <div class="msg-actions">
+            <label class="attach-btn" for="file-input">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-6 6a4 4 0 01-5.66-5.66l6-6a2.5 2.5 0 013.54 3.54l-6 6a1 1 0 01-1.42-1.42l5.5-5.5" stroke-linecap="round"/></svg>
+              Attach
+            </label>
+            <input type="file" id="file-input" style="display:none;"/>
+            <button class="send-btn" id="send-btn">Send</button>
+          </div>
+          <div class="send-status" id="send-status"></div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="r-card" style="flex:1;overflow-y:auto;">
+          <div class="r-label">Quick Actions</div>
+          <div class="qa-grid">
+            <a class="qa-btn" href="/dashboard">
+              <div class="qa-icon">📅</div>
+              <div class="qa-name">Calendar</div>
+            </a>
+            <a class="qa-btn" href="/tasks">
+              <div class="qa-icon">✅</div>
+              <div class="qa-name">Tasks</div>
+            </a>
+            <div class="qa-btn qa-active">
+              <div class="qa-icon">💰</div>
+              <div class="qa-name">Financial</div>
+            </div>
+            <div class="qa-btn" onclick="navigate('food')">
+              <div class="qa-icon">🍽️</div>
+              <div class="qa-name">Food Log</div>
+            </div>
+            <div class="qa-btn" onclick="navigate('trackers')">
+              <div class="qa-icon">📊</div>
+              <div class="qa-name">Trackers</div>
+            </div>
+            <div class="qa-btn" onclick="navigate('playbook')">
+              <div class="qa-icon">📖</div>
+              <div class="qa-name">Playbook</div>
+            </div>
+            <div class="qa-btn" onclick="navigate('summaries')">
+              <div class="qa-icon">📋</div>
+              <div class="qa-name">Summaries</div>
+            </div>
+            <div class="qa-btn" onclick="navigate('settings')">
+              <div class="qa-icon">⚙️</div>
+              <div class="qa-name">Settings</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+
+    </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+var BACKEND = 'https://api.mie.today';
+var DASHBOARD = '/dashboard';
+
+/* ── Clock ── */
+function startClock() {
+  function tick() {
+    var n = new Date();
+    document.getElementById('wb-date').textContent = n.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    document.getElementById('wb-time').textContent = n.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true, timeZoneName:'short'});
+  }
+  tick();
+  setInterval(tick, 30000);
+}
+
+/* ── Weather ── */
+function wIcon(c) {
+  if(c===0) return '☀️';
+  if(c<=2)  return '🌤️';
+  if(c===3) return '☁️';
+  if(c<=49) return '🌫️';
+  if(c<=59) return '🌦️';
+  if(c<=69) return '🌧️';
+  if(c<=79) return '❄️';
+  if(c<=82) return '🌧️';
+  return '⛈️';
+}
+function loadWeather() {
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      function(p) { doWeather(p.coords.latitude, p.coords.longitude); },
+      function()  { doWeather(37.7749, -122.4194); },
+      {timeout:5000}
+    );
+  } else {
+    doWeather(37.7749, -122.4194);
+  }
+}
+function doWeather(lat, lon) {
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
+    .then(function(r) { return r.json(); })
+    .then(function(w) {
+      var c = Math.round(w.current.temperature_2m);
+      var f = Math.round(c * 9/5 + 32);
+      document.getElementById('wb-icon').textContent = wIcon(w.current.weathercode);
+      document.getElementById('wb-temp').textContent = f + '°F / ' + c + '°C';
+    }).catch(function(){});
+}
+
+/* ── Toast ── */
+var toastTmr = null;
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || '');
+  setTimeout(function() { t.classList.add('show'); }, 10);
+  if(toastTmr) clearTimeout(toastTmr);
+  toastTmr = setTimeout(function() { t.classList.remove('show'); }, 2600);
+}
+
+/* ── Month navigation ── */
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var currentMonth = 4; /* 0-indexed, May = 4 */
+var currentYear  = 2025;
+var ytdActive = false;
+
+function renderMonth() {
+  var label = MONTHS[currentMonth] + ' ' + currentYear;
+  document.getElementById('month-display').textContent = label;
+  document.getElementById('overview-title').textContent = 'Overview - ' + label;
+}
+function changeMonth(dir) {
+  if(ytdActive) return;
+  currentMonth += dir;
+  if(currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  if(currentMonth > 11) { currentMonth = 0;  currentYear++; }
+  renderMonth();
+  toast('Showing ' + MONTHS[currentMonth] + ' ' + currentYear);
+}
+function toggleYTD() {
+  ytdActive = !ytdActive;
+  var btn = document.getElementById('ytd-btn');
+  btn.classList.toggle('active', ytdActive);
+  if(ytdActive) {
+    document.getElementById('month-display').textContent = currentYear + ' YTD';
+    document.getElementById('overview-title').textContent = 'Overview - ' + currentYear + ' YTD';
+    toast('Showing ' + currentYear + ' year to date');
+  } else {
+    renderMonth();
+  }
+}
+
+/* ── Tag chips ── */
+document.querySelectorAll('.tag-chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    var tag = chip.getAttribute('data-tag');
+    var ta  = document.getElementById('msg-input');
+    chip.classList.toggle('selected');
+    var val = ta.value;
+    if(chip.classList.contains('selected')) {
+      if(val.indexOf(tag) === -1) ta.value = (tag + ' ' + val).trimEnd();
+    } else {
+      ta.value = val.replace(tag, '').replace(/^\s+/, '').trimEnd();
+    }
+    ta.focus();
+  });
+});
+
+/* ── Send message ── */
+var msgIn  = document.getElementById('msg-input');
+var sndBtn = document.getElementById('send-btn');
+var sndSt  = document.getElementById('send-status');
+var filIn  = document.getElementById('file-input');
+var selFile = null;
+
+filIn.addEventListener('change', function() {
+  selFile = filIn.files[0] || null;
+});
+
+sndBtn.addEventListener('click', function() {
+  var txt = msgIn.value.trim();
+  if(!txt && !selFile) { toast('Type a message first.', 'error'); return; }
+  sndBtn.disabled = true;
+  sndSt.textContent = '';
+  fetch(BACKEND + '/api/me/message', {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text: txt + (selFile ? '\n\n[Attachment: ' + selFile.name + ']' : '')})
+  }).then(function(r) {
+    if(r.ok) {
+      sndSt.style.color = '#1e8e3e';
+      sndSt.textContent = '✅ Sent!';
+      msgIn.value = '';
+      selFile = null;
+      filIn.value = '';
+      document.querySelectorAll('.tag-chip.selected').forEach(function(c) { c.classList.remove('selected'); });
+      document.querySelector('.tag-chip[data-tag="@finance"]').classList.add('selected');
+    } else {
+      sndSt.style.color = '#d93025';
+      sndSt.textContent = '❌ Failed.';
+    }
+  }).catch(function() {
+    sndSt.style.color = '#d93025';
+    sndSt.textContent = '❌ Error.';
+  }).finally(function() {
+    sndBtn.disabled = false;
+    setTimeout(function() { sndSt.textContent = ''; }, 3000);
+  });
+});
+
+/* ── Navigation ── */
+function navigate(mod) {
+  window.location.href = DASHBOARD + '?mod=' + mod;
+}
+
+/* ── Init ── */
+startClock();
+loadWeather();
+renderMonth();
+</script>
+</body>
+</html>
