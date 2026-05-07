@@ -144,33 +144,40 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
   flex-shrink:0;
   border-top:1px solid #f1f3f4;
   overflow:hidden;
-  transition:max-height .28s cubic-bezier(.4,0,.2,1);
-  max-height:36px;
+  transition:max-height .3s cubic-bezier(.4,0,.2,1);
+  max-height:0;
 }
-.cal-task-section.expanded{max-height:260px;}
-.cal-task-toggle{
-  display:flex;align-items:center;gap:7px;
-  padding:8px 16px;
-  cursor:pointer;background:none;border:none;
-  width:100%;text-align:left;
-  font-family:'DM Sans',sans-serif;
-  font-size:12px;font-weight:600;color:#5f6368;
-  transition:background .12s;
-}
-.cal-task-toggle:hover{background:#f8f9fa;}
-.ctt-icon{font-size:13px;}
-.ctt-label{flex:1;color:#3c4043;font-size:12px;font-weight:600;}
-.ctt-count{font-size:10px;font-weight:600;background:#e8f0fe;color:#1a56b0;border-radius:10px;padding:1px 7px;}
-.ctt-count.has-overdue{background:#fce8e6;color:#c5221f;}
-.ctt-arrow{font-size:10px;color:#9aa0a6;transition:transform .22s;}
-.cal-task-section.expanded .ctt-arrow{transform:rotate(180deg);}
+.cal-task-section.expanded{max-height:280px;}
 .cal-task-list{
-  padding:2px 12px 10px;
+  padding:6px 12px 12px;
   display:flex;flex-direction:column;gap:2px;
-  overflow-y:auto;max-height:218px;
+  overflow-y:auto;max-height:262px;
 }
 .cal-task-list::-webkit-scrollbar{width:3px;}
 .cal-task-list::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px;}
+/* top panel arrow indicator */
+.ov-panel-arrow{
+  font-size:9px;color:#9aa0a6;
+  transition:transform .22s;
+  margin-left:4px;flex-shrink:0;
+}
+.ov-panel.task-open .ov-panel-arrow{transform:rotate(180deg);}
+.ov-panel.task-open{background:#e8f0fe;border-color:#1a73e8;}
+.ov-panel.task-open .ov-panel-title{color:#1a73e8;}
+/* task section header row */
+.cal-task-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px 4px;
+  font-size:11px;font-weight:600;color:#5f6368;
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.cal-task-header-link{
+  font-size:11px;color:#1a73e8;font-weight:500;
+  background:none;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;padding:0;
+  text-decoration:none;
+}
+.cal-task-header-link:hover{text-decoration:underline;}
 .cal-task-item{
   display:flex;align-items:center;gap:8px;
   padding:5px 6px;border-radius:6px;
@@ -192,6 +199,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .cal-task-badge{font-size:10px;font-weight:500;border-radius:8px;padding:1px 6px;flex-shrink:0;}
 .cal-task-badge.today-badge{background:#fef7e0;color:#b06000;}
 .cal-task-badge.overdue-badge{background:#fce8e6;color:#c5221f;}
+.cal-task-badge.future-badge{background:#f1f3f4;color:#5f6368;}
 .cal-task-empty{font-size:11px;color:#9aa0a6;text-align:center;padding:12px 0;font-style:italic;}
 
 /* ══ TASKS MODULE ══ */
@@ -427,8 +435,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
       <div class="module active" id="mod-calendar">
         <div class="module-top-space"></div>
         <div class="ov-panels">
-          <div class="ov-panel clickable" id="ov-tasks-panel" title="Go to Tasks">
-            <div class="ov-panel-hd"><span class="ov-panel-title">✅ Tasks to Complete</span><span class="ov-panel-count" id="ov-task-count">0</span></div>
+          <div class="ov-panel clickable" id="ov-tasks-panel" title="Show Tasks">
+            <div class="ov-panel-hd"><span class="ov-panel-title">✅ Tasks to Complete</span><span class="ov-panel-count" id="ov-task-count">0</span><span class="ov-panel-arrow" id="ov-tasks-arrow">&#9660;</span></div>
           </div>
           <div class="ov-panel clickable" id="ov-proj-panel" title="Go to Trackers">
             <div class="ov-panel-hd"><span class="ov-panel-title">📁 Projects</span><span class="ov-panel-count" id="ov-proj-count">0</span></div>
@@ -455,20 +463,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
             <div id="cal-popup-list"></div>
           </div>
         </div>
+        <!-- ══ TASK PANEL (slides in below calendar, triggered by top panel) ══ -->
+        <div class="cal-task-section" id="cal-task-section">
+          <div class="cal-task-list" id="cal-task-list"></div>
+        </div>
+
         <div class="cal-footer-row">
           <button class="cal-cals-btn" id="cal-list-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Calendars</button>
           <button class="add-fab" id="cal-add-fab">+ Add</button>
-        </div>
-
-        <!-- ══ TASK TODAY SECTION (NEW) ══ -->
-        <div class="cal-task-section" id="cal-task-section">
-          <button class="cal-task-toggle" id="cal-task-toggle" onclick="toggleCalTaskSection()">
-            <span class="ctt-icon">✅</span>
-            <span class="ctt-label">Tasks Today</span>
-            <span class="ctt-count" id="cal-task-count">0</span>
-            <span class="ctt-arrow">&#9660;</span>
-          </button>
-          <div class="cal-task-list" id="cal-task-list"></div>
         </div>
 
       </div><!-- /mod-calendar -->
@@ -649,7 +651,14 @@ document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){
   });
 });
 
-document.getElementById('ov-tasks-panel').addEventListener('click',function(){window.location.href='/task';});
+document.getElementById('ov-tasks-panel').addEventListener('click',function(){
+  var section=document.getElementById('cal-task-section');
+  var panel=document.getElementById('ov-tasks-panel');
+  var isOpen=section.classList.contains('expanded');
+  section.classList.toggle('expanded',!isOpen);
+  panel.classList.toggle('task-open',!isOpen);
+  if(!isOpen)renderCalTaskSection();
+});
 document.getElementById('ov-proj-panel').addEventListener('click',function(){switchModule('trackers');});
 
 var sidebarOverlay=document.getElementById('sidebar-overlay');
@@ -829,81 +838,80 @@ function loadTasks(){
     }).catch(function(){allTasks=[];taskLists=[];renderOvPanels();renderCalTaskSection();});
 }
 
-/* ══ NEW: Task Today section in calendar footer ══ */
+/* ══ NEW: Task panel triggered by top ov-tasks-panel ══ */
 function renderCalTaskSection(){
   var now=new Date();now.setHours(0,0,0,0);
-
-  var todayAndOverdue=allTasks.filter(function(t){
-    if(t.status==='completed'||!t.due)return false;
-    var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
-    return Math.round((dt-now)/86400000)<=0;
-  });
-
-  var overdueCnt=todayAndOverdue.filter(function(t){
-    var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
-    return Math.round((dt-now)/86400000)<0;
-  }).length;
-
-  var countEl=document.getElementById('cal-task-count');
   var listEl=document.getElementById('cal-task-list');
-  if(!countEl||!listEl)return;
-
-  countEl.textContent=todayAndOverdue.length;
-  countEl.className='ctt-count'+(overdueCnt>0?' has-overdue':'');
-
+  if(!listEl)return;
   listEl.innerHTML='';
 
-  if(!todayAndOverdue.length){
+  /* All active tasks — sorted: overdue first, today next, future after */
+  var activeTasks=allTasks.filter(function(t){return t.status!=='completed';});
+  activeTasks.sort(function(a,b){
+    function score(t){
+      if(!t.due)return 2;
+      var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
+      var diff=Math.round((dt-now)/86400000);
+      if(diff<0)return 0;
+      if(diff===0)return 1;
+      return 2;
+    }
+    var sa=score(a),sb=score(b);
+    if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);
+    return 0;
+  });
+
+  /* Header row with "View all" link */
+  var hdr=document.createElement('div');
+  hdr.className='cal-task-header';
+  hdr.innerHTML='<span>All tasks ('+activeTasks.length+')</span><a class="cal-task-header-link" href="/task">View all →</a>';
+  listEl.appendChild(hdr);
+
+  if(!activeTasks.length){
     var empty=document.createElement('div');
     empty.className='cal-task-empty';
-    empty.textContent='All caught up! No tasks due today.';
+    empty.textContent='All caught up! No pending tasks.';
     listEl.appendChild(empty);
     return;
   }
 
-  /* Sort: overdue first, then today */
-  todayAndOverdue.sort(function(a,b){
-    var da=new Date(a.due+(a.due.includes('T')?'':'T12:00:00'));
-    var db=new Date(b.due+(b.due.includes('T')?'':'T12:00:00'));
-    return da-db;
-  });
-
-  todayAndOverdue.forEach(function(t){
-    var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
-    var diff=Math.round((dt-now)/86400000);
-    var isOverdue=diff<0;
+  activeTasks.forEach(function(t){
+    var isOverdue=false,isToday=false;
+    if(t.due){
+      var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
+      var diff=Math.round((dt-now)/86400000);
+      isOverdue=diff<0;isToday=diff===0;
+    }
 
     var item=document.createElement('div');
     item.className='cal-task-item';
 
-    /* Checkbox */
     var cb=document.createElement('div');
-    cb.className='cal-task-cb'+(t.status==='completed'?' checked':'');
+    cb.className='cal-task-cb';
     cb.addEventListener('click',function(e){
       e.stopPropagation();
-      if(t._calPending)return;
-      t._calPending=true;
+      if(t._calPending)return;t._calPending=true;
       toggleTaskFromCal_(t,cb,item,function(){t._calPending=false;});
     });
 
-    /* Title */
     var name=document.createElement('div');
-    name.className='cal-task-name'+(t.status==='completed'?' done':'');
+    name.className='cal-task-name';
     name.textContent=t.title||'Untitled';
 
-    /* Badge */
     var badge=document.createElement('span');
-    badge.className='cal-task-badge '+(isOverdue?'overdue-badge':'today-badge');
-    badge.textContent=isOverdue?'⚠ Overdue':'Today';
+    if(isOverdue){
+      badge.className='cal-task-badge overdue-badge';badge.textContent='⚠ Overdue';
+    }else if(isToday){
+      badge.className='cal-task-badge today-badge';badge.textContent='Today';
+    }else if(t.due){
+      var dt2=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
+      badge.className='cal-task-badge future-badge';
+      badge.textContent=dt2.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    }
 
-    item.appendChild(cb);
-    item.appendChild(name);
-    item.appendChild(badge);
-
-    /* Click body → go to task page */
-    name.addEventListener('click',function(){window.location.href='/task';});
-    badge.addEventListener('click',function(){window.location.href='/task';});
-
+    item.appendChild(cb);item.appendChild(name);
+    if(badge.textContent)item.appendChild(badge);
     listEl.appendChild(item);
   });
 }
@@ -945,10 +953,6 @@ function toggleTaskFromCal_(t,cb,row,onDone){
       renderOvPanels();
       if(onDone)onDone();
     });
-}
-
-function toggleCalTaskSection(){
-  document.getElementById('cal-task-section').classList.toggle('expanded');
 }
 
 function renderOvPanels(){
