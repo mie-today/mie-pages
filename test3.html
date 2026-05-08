@@ -145,6 +145,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .hrow-sm{flex:0 0 auto;display:flex;overflow:hidden;min-height:0;}
 /* Rows 3, 4, 5: share all remaining space equally */
 .hrow{flex:1;min-height:0;display:flex;overflow:hidden;}
+/* Medical row: when it's the only flex:1 row shown it fills all space */
+#row-medical{flex:1;}
 
 /* ── OVERVIEW CARD shell ── */
 .ov-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:5px 10px;display:flex;align-items:stretch;width:100%;overflow:hidden;}
@@ -209,8 +211,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
 /* Medical card internals */
 .med-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
-.med-scroll::-webkit-scrollbar{width:2px;}
+.med-scroll::-webkit-scrollbar{width:3px;}
 .med-scroll::-webkit-scrollbar-thumb{background:#e0e0e0;}
+/* When medical row is expanded alone, each sub-card grows taller */
+#row-medical .sub-card{min-height:0;}
+#row-medical .three-col{height:100%;}
 .med-field{flex-shrink:0;}
 .med-lbl{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;}
 .med-val{font-size:11px;color:#202124;background:#f8f9fa;border:1px solid #e8eaed;border-radius:5px;padding:3px 7px;min-height:22px;cursor:text;line-height:1.5;outline:none;}
@@ -437,7 +442,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </button>
         <div class="tl-sep"></div>
         <div class="sidebar-sec">Records</div>
-        <button class="tl-item" onclick="setView('medical',this)">
+        <button class="tl-item" id="nav-medical" onclick="setView('medical',this)">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke-linecap="round"/></svg>Medical
         </button>
         <div class="tl-sep"></div>
@@ -659,7 +664,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
 
           <!-- ══ ROW 3: Food Log ══ -->
-          <div class="hrow">
+          <div class="hrow" id="row-food">
             <div class="food-log-card">
               <div class="food-log-hd">
                 <span class="food-log-title">Food Log</span>
@@ -692,7 +697,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
 
           <!-- ══ ROW 4: Notes (list) | Tasks | Period Tracker ══ -->
-          <div class="hrow">
+          <div class="hrow" id="row-daily">
             <div class="three-col">
 
               <!-- Col 1: Notes as a list -->
@@ -758,8 +763,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             </div>
           </div>
 
-          <!-- ══ ROW 5: Insurance & Doctors | Medication | Medical History ══ -->
-          <div class="hrow">
+          <!-- ══ ROW 5: Medical — hidden until "Medical" clicked in sidebar ══ -->
+          <div class="hrow" id="row-medical" style="display:none;">
             <div class="three-col">
 
               <div class="sub-card">
@@ -1169,7 +1174,49 @@ document.querySelectorAll('.med-val[data-key]').forEach(function(el){
 });
 function loadMedFields(){document.querySelectorAll('.med-val[data-key]').forEach(function(el){try{var v=localStorage.getItem('mie_med_'+el.getAttribute('data-key'));if(v!==null)el.textContent=v;}catch(e){}});}
 
-function setView(v,btn){document.querySelectorAll('.tl-item').forEach(function(el){el.classList.remove('active');});if(btn)btn.classList.add('active');toast('Viewing '+v.charAt(0).toUpperCase()+v.slice(1));}
+/* ── View switching — Medical row show/hide ── */
+var medicalOpen=false;
+function setView(v,btn){
+  // Highlight sidebar item
+  document.querySelectorAll('.tl-item').forEach(function(el){el.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+
+  var rowMed=document.getElementById('row-medical');
+  var rowFood=document.getElementById('row-food');
+  var rowDaily=document.getElementById('row-daily');
+  var row1=document.querySelector('.hrow-sm:first-of-type');
+
+  if(v==='medical'){
+    if(medicalOpen){
+      // Toggle OFF — hide medical, restore normal rows
+      rowMed.style.display='none';
+      if(rowFood)rowFood.style.display='flex';
+      if(rowDaily)rowDaily.style.display='flex';
+      medicalOpen=false;
+      // Remove active from medical nav
+      if(btn)btn.classList.remove('active');
+      // Restore overview as active
+      var ovBtn=document.querySelector('.tl-item[onclick*="overview"]');
+      if(ovBtn)ovBtn.classList.add('active');
+    } else {
+      // Toggle ON — show medical as full-height, hide food + daily rows
+      rowMed.style.display='flex';
+      if(rowFood)rowFood.style.display='none';
+      if(rowDaily)rowDaily.style.display='none';
+      medicalOpen=true;
+      toast('Medical records — click Medical again to close');
+    }
+  } else {
+    // Any other nav: hide medical, show normal rows
+    if(medicalOpen){
+      rowMed.style.display='none';
+      if(rowFood)rowFood.style.display='flex';
+      if(rowDaily)rowDaily.style.display='flex';
+      medicalOpen=false;
+    }
+    toast('Viewing '+v.charAt(0).toUpperCase()+v.slice(1));
+  }
+}
 
 /* ── Sidebar collapse ── */
 function toggleSidebar(){
