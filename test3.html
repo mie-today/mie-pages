@@ -104,9 +104,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .sf-input{width:100%;border:1px solid #dadce0;border-radius:5px;padding:4px 7px;font-size:11px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;transition:border-color .12s;}
 .sf-input:focus{border-color:#1a73e8;}
 .sf-row2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.sf-save-btn{width:100%;background:#1a73e8;color:#fff;border:none;border-radius:5px;padding:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:2px;transition:background .12s;}
+.sf-save-btn{width:100%;background:#1a73e8;color:#fff;border:none;border-radius:5px;padding:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;transition:background .12s;}
 .sf-save-btn:hover{background:#1765cc;}
 .sf-saved{font-size:10px;color:#1e8e3e;text-align:center;min-height:13px;}
+.sf-section-lbl{font-size:8.5px;font-weight:700;color:#1a73e8;text-transform:uppercase;letter-spacing:.08em;padding:3px 0 1px;}
+.sf-results{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
+.sf-result-divider{height:1px;background:#e0e0e0;margin:4px 0 2px;}
+.sf-result-row{display:flex;align-items:center;justify-content:space-between;gap:3px;}
+.sf-result-lbl{font-size:9px;color:#9aa0a6;flex-shrink:0;}
+.sf-result-val{font-size:10px;font-weight:700;color:#202124;text-align:right;}
+.sf-result-tag{font-size:8.5px;font-weight:600;border-radius:6px;padding:1px 5px;flex-shrink:0;}
+.sf-result-tag.normal{background:#e6f4ea;color:#137333;}
+.sf-result-tag.overweight{background:#fef7e0;color:#b06000;}
+.sf-result-tag.obese{background:#fce8e6;color:#c5221f;}
+.sf-result-tag.underweight{background:#e8f0fe;color:#1a56b0;}
 
 /* ── CONTENT AREA ── */
 .content-area{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;padding:6px 10px 6px 8px;gap:8px;align-items:stretch;}
@@ -442,28 +453,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
       </div><!-- /sidebar-nav -->
 
-      <!-- Settings panel -->
+      <!-- ══ INFORMATION & BMI PANEL ══ -->
       <div class="sidebar-settings">
         <div class="settings-hd" onclick="toggleSettings()">
           <div class="settings-hd-lbl">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" stroke-linecap="round"/></svg>
-            My Profile
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2"/><path d="M3 14c0-3 2-5 5-5s5 2 5 5" stroke-linecap="round"/></svg>
+            My Info &amp; Goals
           </div>
           <span class="settings-arrow" id="settings-arrow">▾</span>
         </div>
         <div class="settings-body" id="settings-body">
+          <div class="sf-section-lbl">Personal</div>
           <div><div class="sf-lbl">Full Name</div><input class="sf-input" type="text" id="sf-name" placeholder="Jane Doe"/></div>
           <div class="sf-row2">
-            <div><div class="sf-lbl">Date of Birth</div><input class="sf-input" type="date" id="sf-dob"/></div>
+            <div><div class="sf-lbl">Date of Birth</div><input class="sf-input" type="date" id="sf-dob" onchange="calcAll()"/></div>
             <div><div class="sf-lbl">Sex</div>
-              <select class="sf-input" id="sf-sex">
-                <option value="">—</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not</option>
+              <select class="sf-input" id="sf-sex" onchange="calcAll()">
+                <option value="">—</option><option>Female</option><option>Male</option><option>Other</option>
               </select>
             </div>
-          </div>
-          <div class="sf-row2">
-            <div><div class="sf-lbl">Height</div><input class="sf-input" type="text" id="sf-height" placeholder="5′ 5″"/></div>
-            <div><div class="sf-lbl">Weight</div><input class="sf-input" type="text" id="sf-weight" placeholder="70.4 kg"/></div>
           </div>
           <div><div class="sf-lbl">Blood Type</div>
             <select class="sf-input" id="sf-blood">
@@ -472,8 +480,44 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
           <div><div class="sf-lbl">Allergies</div><input class="sf-input" type="text" id="sf-allergies" placeholder="e.g. Penicillin, Peanuts"/></div>
           <div><div class="sf-lbl">Emergency Contact</div><input class="sf-input" type="text" id="sf-emcontact" placeholder="Name · Phone"/></div>
-          <div><div class="sf-lbl">Daily Calorie Goal</div><input class="sf-input" type="number" id="sf-calgoal" placeholder="2874"/></div>
-          <button class="sf-save-btn" onclick="saveProfile()">Save Profile</button>
+          <div class="sf-section-lbl" style="margin-top:4px;">Body &amp; Goals</div>
+          <div class="sf-row2">
+            <div><div class="sf-lbl">Height (cm)</div><input class="sf-input" type="number" id="sf-height-cm" placeholder="165" onchange="calcAll()"/></div>
+            <div><div class="sf-lbl">Current Wt (kg)</div><input class="sf-input" type="number" id="sf-weight-kg" placeholder="70.4" step="0.1" onchange="calcAll()"/></div>
+          </div>
+          <div><div class="sf-lbl">Activity Level</div>
+            <select class="sf-input" id="sf-activity" onchange="calcAll()">
+              <option value="1.2">Sedentary</option>
+              <option value="1.375">Light (1-3×/wk)</option>
+              <option value="1.55" selected>Moderate (3-5×)</option>
+              <option value="1.725">Active (6-7×)</option>
+              <option value="1.9">Very Active</option>
+            </select>
+          </div>
+          <div class="sf-row2">
+            <div><div class="sf-lbl">Goal</div>
+              <select class="sf-input" id="sf-goal" onchange="calcAll()">
+                <option value="lose">Lose Weight</option>
+                <option value="maintain" selected>Maintain</option>
+                <option value="gain">Gain Weight</option>
+              </select>
+            </div>
+            <div><div class="sf-lbl">Months</div><input class="sf-input" type="number" id="sf-goal-months" placeholder="4" min="1" max="36" onchange="calcAll()"/></div>
+          </div>
+          <div><div class="sf-lbl">Target Weight (kg)</div><input class="sf-input" type="number" id="sf-target-kg" placeholder="63" step="0.1" onchange="calcAll()"/></div>
+          <!-- Results -->
+          <div class="sf-results" id="sf-results" style="display:none;">
+            <div class="sf-result-divider"></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">Age</span><span class="sf-result-val" id="res-age">—</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">BMI</span><span class="sf-result-val" id="res-bmi">—</span><span class="sf-result-tag" id="res-bmi-tag"></span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">BMR</span><span class="sf-result-val" id="res-bmr">— kcal</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">TDEE</span><span class="sf-result-val" id="res-tdee">— kcal</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">Cal Intake/day</span><span class="sf-result-val" id="res-intake">— kcal</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">Exercise Cal/day</span><span class="sf-result-val" id="res-exercise">— kcal</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">Wt to Change</span><span class="sf-result-val" id="res-wt-delta">—</span></div>
+            <div class="sf-result-row"><span class="sf-result-lbl">Weekly pace</span><span class="sf-result-val" id="res-pace">—</span></div>
+          </div>
+          <button class="sf-save-btn" onclick="saveProfile()">Save &amp; Calculate</button>
           <div class="sf-saved" id="sf-saved"></div>
         </div>
       </div><!-- /sidebar-settings -->
@@ -1020,23 +1064,104 @@ function delNote(btn){
   setTimeout(function(){item.remove();},150);
 }
 
-/* ── Sidebar settings ── */
+/* ── Sidebar settings + BMI / Calorie Calculator ── */
 function toggleSettings(){
   var body=document.getElementById('settings-body');
   var arrow=document.getElementById('settings-arrow');
   body.classList.toggle('open');
   arrow.classList.toggle('open');
 }
-function saveProfile(){
-  var ids=['sf-name','sf-dob','sf-sex','sf-height','sf-weight','sf-blood','sf-allergies','sf-emcontact','sf-calgoal'];
-  var data={};ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});
-  try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}
-  var goal=document.getElementById('sf-calgoal').value;
-  if(goal)document.getElementById('cal-goal-display').textContent='/ '+parseInt(goal).toLocaleString()+' goal';
-  var s=document.getElementById('sf-saved');s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);
-  toast('Profile saved!','success');
+
+function calcAll(){
+  var dob=document.getElementById('sf-dob').value;
+  var sex=document.getElementById('sf-sex').value;
+  var hcm=parseFloat(document.getElementById('sf-height-cm').value);
+  var wkg=parseFloat(document.getElementById('sf-weight-kg').value);
+  var act=parseFloat(document.getElementById('sf-activity').value)||1.55;
+  var goal=document.getElementById('sf-goal').value||'maintain';
+  var tkg=parseFloat(document.getElementById('sf-target-kg').value);
+  var months=parseFloat(document.getElementById('sf-goal-months').value)||4;
+
+  var resultsDiv=document.getElementById('sf-results');
+  if(!dob||!sex||!hcm||!wkg){resultsDiv.style.display='none';return;}
+  resultsDiv.style.display='flex';
+
+  // Age
+  var today=new Date();
+  var bd=new Date(dob);
+  var age=today.getFullYear()-bd.getFullYear()-((today.getMonth()<bd.getMonth()||(today.getMonth()===bd.getMonth()&&today.getDate()<bd.getDate()))?1:0);
+  document.getElementById('res-age').textContent=age+' yrs';
+
+  // BMI
+  var hm=hcm/100;
+  var bmi=wkg/(hm*hm);
+  document.getElementById('res-bmi').textContent=bmi.toFixed(1);
+  var bmiTag=document.getElementById('res-bmi-tag');
+  if(bmi<18.5){bmiTag.textContent='Underweight';bmiTag.className='sf-result-tag underweight';}
+  else if(bmi<25){bmiTag.textContent='Normal';bmiTag.className='sf-result-tag normal';}
+  else if(bmi<30){bmiTag.textContent='Overweight';bmiTag.className='sf-result-tag overweight';}
+  else{bmiTag.textContent='Obese';bmiTag.className='sf-result-tag obese';}
+
+  // BMR — Mifflin-St Jeor
+  var bmr;
+  if(sex==='Male'){bmr=10*wkg+6.25*hcm-5*age+5;}
+  else{bmr=10*wkg+6.25*hcm-5*age-161;}
+  document.getElementById('res-bmr').textContent=Math.round(bmr)+' kcal';
+
+  // TDEE
+  var tdee=bmr*act;
+  document.getElementById('res-tdee').textContent=Math.round(tdee)+' kcal';
+
+  // Weight delta & pace
+  var delta=0,pace=0,intakeCal=tdee,exerciseCal=0;
+  if(!isNaN(tkg)&&goal!=='maintain'){
+    delta=tkg-wkg; // negative = lose
+    var totalKcal=delta*7700; // ~7700 kcal per kg
+    var days=months*30.44;
+    var dailyDelta=totalKcal/days;
+    // Split: 60% diet, 40% exercise
+    intakeCal=Math.round(tdee+dailyDelta*0.6);
+    exerciseCal=Math.round(Math.abs(dailyDelta*0.4));
+    pace=Math.abs(delta/months);
+    document.getElementById('res-wt-delta').textContent=(delta>0?'+':'')+delta.toFixed(1)+' kg';
+    document.getElementById('res-pace').textContent=pace.toFixed(2)+' kg/mo';
+  } else {
+    intakeCal=Math.round(tdee);
+    exerciseCal=0;
+    document.getElementById('res-wt-delta').textContent='—';
+    document.getElementById('res-pace').textContent='Maintain';
+  }
+  document.getElementById('res-intake').textContent=intakeCal+' kcal';
+  document.getElementById('res-exercise').textContent=exerciseCal>0?exerciseCal+' kcal':'0 kcal';
+
+  // Push intake goal to the main overview card
+  document.getElementById('cal-goal-display').textContent='/ '+intakeCal.toLocaleString()+' goal';
 }
-function loadProfile(){try{var raw=localStorage.getItem('mie_health_profile');if(!raw)return;var data=JSON.parse(raw);Object.keys(data).forEach(function(id){var el=document.getElementById(id);if(el)el.value=data[id];});}catch(e){}}
+
+function saveProfile(){
+  var ids=['sf-name','sf-dob','sf-sex','sf-blood','sf-allergies','sf-emcontact',
+           'sf-height-cm','sf-weight-kg','sf-activity','sf-goal','sf-goal-months','sf-target-kg'];
+  var data={};
+  ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});
+  try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}
+  calcAll();
+  var s=document.getElementById('sf-saved');
+  s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);
+  toast('Profile saved & calculated!','success');
+}
+
+function loadProfile(){
+  try{
+    var raw=localStorage.getItem('mie_health_profile');
+    if(!raw)return;
+    var data=JSON.parse(raw);
+    Object.keys(data).forEach(function(id){
+      var el=document.getElementById(id);
+      if(el)el.value=data[id];
+    });
+    calcAll();
+  }catch(e){}
+}
 
 /* ── Auto-save medical fields ── */
 document.querySelectorAll('.med-val[data-key]').forEach(function(el){
