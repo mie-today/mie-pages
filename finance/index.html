@@ -1047,24 +1047,37 @@ function saveBudget(){
   var effDate=document.getElementById('b-eff-date').value;
   var changed=Object.keys(budgetChanges);
   var st=document.getElementById('s-status');
+
   if(!effDate){st.style.color='#d93025';st.textContent='Set effective from date.';return;}
   if(!changed.length){st.style.color='#9aa0a6';st.textContent='No changes to save.';return;}
-  var saveBtn=document.getElementById('b-save-btn');
-  saveBtn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';
 
-  Promise.all(changed.map(function(category){
-    var amount=budgetChanges[category];
-    return fetch(BACKEND+'/api/me/finance/baseline',{
-      method:'PUT',credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({category:category,monthly_budget:amount,effective_from:effDate})
-    })
-    .then(function(r){
-      if(!r.ok) return r.text().then(function(t){throw new Error('Failed: '+category+' → '+t.substring(0,80));});
-      return r.json();
-    })
-    .then(function(){
-      // 인덱스로 인풋 찾아서 UI 업데이트
+  // 변경된 항목 배열 구성
+  var items=changed.map(function(category){
+    return {category:category, monthly_budget:budgetChanges[category]};
+  });
+
+  var saveBtn=document.getElementById('b-save-btn');
+  saveBtn.disabled=true;
+  st.style.color='#5f6368';
+  st.textContent='Saving '+items.length+' budget(s)…';
+
+  // 단 1번의 bulk API 호출 — Sheets API Quota 초과 방지
+  fetch(BACKEND+'/api/me/finance/baseline/bulk',{
+    method:'PUT',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({effective_from:effDate, items:items})
+  })
+  .then(function(r){
+    if(!r.ok) return r.text().then(function(t){
+      try{var j=JSON.parse(t);throw new Error(j.message||j.error||t);}
+      catch(e2){throw new Error(t.substring(0,120));}
+    });
+    return r.json();
+  })
+  .then(function(data){
+    // UI 업데이트 — 저장된 항목들 changed 스타일 제거
+    changed.forEach(function(category){
       var idx=_budgetCategories.indexOf(category);
       if(idx>=0){
         var inp=document.querySelector('.bp-input[data-idx="'+idx+'"]');
@@ -1072,16 +1085,18 @@ function saveBudget(){
       }
       delete budgetChanges[category];
     });
-  }))
-  .then(function(){
     st.style.color='#1e8e3e';
-    st.textContent='✅ Saved '+changed.length+' budget(s).';
+    st.textContent='✅ Saved '+data.saved+' budget(s).';
     toast('Budget saved','success');
     setTimeout(function(){st.textContent='';},3000);
     financeCache={};
     loadFinanceData();
   })
-  .catch(function(err){st.style.color='#d93025';st.textContent='❌ '+err.message;})
+  .catch(function(err){
+    st.style.color='#d93025';
+    st.textContent='❌ '+err.message;
+    console.error('saveBudget error:',err);
+  })
   .finally(function(){saveBtn.disabled=false;});
 }
 
