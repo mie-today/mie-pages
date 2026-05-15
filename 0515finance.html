@@ -55,6 +55,30 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .sidebar-toggle{position:absolute;top:50%;right:-12px;transform:translateY(-50%);width:20px;height:36px;background:#fff;border:1px solid #e0e0e0;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;font-size:11px;color:#9aa0a6;transition:background .12s,color .12s;box-shadow:2px 0 4px rgba(0,0,0,.06);}
 .sidebar-toggle:hover{background:#f1f3f4;color:#202124;}
 .task-sidebar.collapsed .sidebar-toggle{right:-20px;border-radius:0 8px 8px 0;width:20px;}
+/* ── CENTER SIDEBAR TOGGLE ── */
+.sidebar-center-toggle{position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
+.sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
+/* ── PERIOD PILLS ── */
+.period-pills{display:flex;gap:3px;align-items:center;}
+.period-pill{width:26px;height:22px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#5f6368;font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;display:flex;align-items:center;justify-content:center;}
+.period-pill:hover{background:#f1f3f4;border-color:#1a73e8;color:#1a73e8;}
+.period-pill.active{background:#1a73e8;border-color:#1a73e8;color:#fff;}
+/* ── PICKER TABS ── */
+.picker-tab{flex:1;padding:5px 8px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;transition:all .12s;}
+.picker-tab.active{color:#1a73e8;border-bottom-color:#1a73e8;}
+/* ── CARD CLICKABLE ── */
+.card-clickable{cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.card-clickable:hover{box-shadow:0 2px 10px rgba(26,115,232,.12);border-color:#a8c7fa;}
+.card-click-hint{font-size:10px;color:#dadce0;font-weight:400;margin-left:2px;transition:color .12s;}
+.card-clickable:hover .card-click-hint{color:#1a73e8;}
+/* ── TRENDS ── */
+.trend-section{margin-bottom:16px;}
+.trend-label{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.trend-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.trend-month-label{flex:0 0 28px;font-size:10px;color:#5f6368;text-align:right;}
+.trend-bar-wrap{flex:1;height:14px;background:#f1f3f4;border-radius:4px;overflow:hidden;}
+.trend-bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+.trend-amount{flex:0 0 60px;font-size:10px;color:#3c4043;text-align:right;font-weight:500;}
 .sidebar-sec{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.08em;padding:5px 10px 2px;white-space:nowrap;}
 .tl-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#3c4043;transition:background .12s;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;white-space:nowrap;}
 .tl-item:hover{background:#f1f3f4;}
@@ -80,7 +104,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .s-save-btn:hover{background:#1765cc;}
 .s-save-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .s-status{font-size:10px;text-align:center;margin-top:3px;min-height:11px;color:#1e8e3e;}
-.content-area{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;padding:8px 12px 8px 10px;gap:10px;align-items:stretch;}
+.content-area{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;padding:8px 12px 8px 10px;gap:10px;align-items:stretch;position:relative;}
 .finance-centre{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;gap:5px;overflow:hidden;}
 .top-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .month-nav{display:flex;align-items:center;gap:6px;}
@@ -265,7 +289,7 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
       <button class="tl-item active" id="nav-overview" onclick="showView('overview')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 6h14" stroke-linecap="round"/><circle cx="5" cy="9.5" r=".8" fill="currentColor" stroke="none"/></svg>Overview
       </button>
-      <button class="tl-item" onclick="toast('Trends — Coming soon')">
+      <button class="tl-item" id="nav-trends" onclick="showView('trends')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,12 5,8 8,10 11,5 14,7" stroke-linecap="round" stroke-linejoin="round"/></svg>Trends
       </button>
       <div class="tl-sep"></div>
@@ -280,46 +304,61 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="12" height="9" rx="1.5"/><path d="M5 5V4a3 3 0 016 0v1" stroke-linecap="round"/></svg>Savings
       </button>
       <div class="tl-sep"></div>
-      <div class="sidebar-sec">Period</div>
-      <button class="tl-item" onclick="setPeriod('daily',this)">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="4" x2="8" y2="8"/><line x1="8" y1="8" x2="11" y2="10" stroke-linecap="round"/></svg>Daily
-      </button>
-      <button class="tl-item" onclick="setPeriod('weekly',this)">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/><line x1="4" y1="10" x2="7" y2="10"/></svg>Weekly
-      </button>
-      <button class="tl-item active" id="period-monthly" onclick="setPeriod('monthly',this)">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Monthly
-      </button>
-      <button class="tl-item" onclick="setPeriod('quarterly',this)">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/><line x1="4" y1="10" x2="12" y2="10"/></svg>Quarterly
-      </button>
-      <button class="tl-item" onclick="setPeriod('yearly',this)">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><polyline points="8,4 8,8 11,10" stroke-linecap="round" stroke-linejoin="round"/></svg>Yearly
-      </button>
-      <div class="tl-sep"></div>
       <button class="tl-item" id="nav-budget" onclick="showView('budget')">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke-linecap="round"/></svg>
         Budget Settings
       </button>
     </div>
     <div class="content-area">
+      <!-- ── SIDEBAR CENTER TOGGLE ── -->
+      <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#8249;</button>
       <div class="finance-centre">
+        <!-- TOP ROW: nav + period pills + add -->
         <div class="top-row">
           <div class="month-nav">
-            <button class="nav-arrow" onclick="changeMonth(-1)">&#8249;</button>
+            <button class="nav-arrow" onclick="changeMonth(-1)" id="nav-arrow-prev">&#8249;</button>
             <div class="picker-wrap" id="picker-wrap">
               <button class="month-pill" id="month-display" onclick="togglePicker(event)">May 2026</button>
               <div class="picker-popup" id="picker-popup">
-                <div class="picker-header">
-                  <button class="picker-arr" onclick="pickerYearStep(-1)">&#8249;</button>
-                  <span class="picker-year" id="picker-year">2026</span>
-                  <button class="picker-arr" onclick="pickerYearStep(1)">&#8250;</button>
+                <!-- Tab switcher -->
+                <div style="display:flex;border-bottom:1px solid #f1f3f4;margin-bottom:10px;">
+                  <button class="picker-tab active" id="tab-month" onclick="switchPickerTab('month')">Month</button>
+                  <button class="picker-tab" id="tab-range" onclick="switchPickerTab('range')">Custom Range</button>
                 </div>
-                <div class="picker-grid" id="picker-grid"></div>
+                <!-- Month tab -->
+                <div id="picker-month-tab">
+                  <div class="picker-header">
+                    <button class="picker-arr" onclick="pickerYearStep(-1)">&#8249;</button>
+                    <span class="picker-year" id="picker-year">2026</span>
+                    <button class="picker-arr" onclick="pickerYearStep(1)">&#8250;</button>
+                  </div>
+                  <div class="picker-grid" id="picker-grid"></div>
+                </div>
+                <!-- Custom Range tab -->
+                <div id="picker-range-tab" style="display:none;padding:4px 0;">
+                  <div style="margin-bottom:8px;">
+                    <div style="font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Start Date *</div>
+                    <input type="date" id="range-start" class="f-input" style="font-size:12px;padding:5px 8px;"/>
+                  </div>
+                  <div style="margin-bottom:10px;">
+                    <div style="font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">End Date <span style="font-weight:400;text-transform:none;color:#9aa0a6;">(optional)</span></div>
+                    <input type="date" id="range-end" class="f-input" style="font-size:12px;padding:5px 8px;"/>
+                  </div>
+                  <button onclick="applyCustomRange()" style="width:100%;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Apply Range</button>
+                  <div id="range-error" style="font-size:10px;color:#d93025;margin-top:4px;min-height:12px;"></div>
+                </div>
               </div>
             </div>
-            <button class="nav-arrow" onclick="changeMonth(1)">&#8250;</button>
+            <button class="nav-arrow" onclick="changeMonth(1)" id="nav-arrow-next">&#8250;</button>
             <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
+          </div>
+          <!-- Period pills -->
+          <div class="period-pills" id="period-pills">
+            <button class="period-pill" id="pp-daily"     onclick="setPeriodPill('daily')">D</button>
+            <button class="period-pill" id="pp-weekly"    onclick="setPeriodPill('weekly')">W</button>
+            <button class="period-pill active" id="pp-monthly"   onclick="setPeriodPill('monthly')">M</button>
+            <button class="period-pill" id="pp-quarterly" onclick="setPeriodPill('quarterly')">Q</button>
+            <button class="period-pill" id="pp-yearly"    onclick="setPeriodPill('yearly')">Y</button>
           </div>
           <button class="add-fab" onclick="openAddModal()">+ Add</button>
         </div>
@@ -348,14 +387,14 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
           </div>
           <div class="sub-cards-wrapper">
             <div class="sub-row-top">
-              <div class="sub-card">
-                <div class="sc-section-label">Income</div>
+              <div class="sub-card card-clickable" onclick="showView('income')" title="View Income details">
+                <div class="sc-section-label">Income <span class="card-click-hint">›</span></div>
                 <div class="sc-bar-header"><span class="sc-bar-title">All sources</span><span class="sc-bar-amount" id="inc-total">$&#8212;</span></div>
                 <div class="sc-bar-track" id="inc-bar"></div>
                 <div class="sc-legend" id="inc-legend"></div>
               </div>
-              <div class="sub-card">
-                <div class="sc-section-label">Savings</div>
+              <div class="sub-card card-clickable" onclick="showView('savings')" title="View Savings details">
+                <div class="sc-section-label">Savings <span class="card-click-hint">›</span></div>
                 <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
                   <span id="sav-actual" style="font-size:18px;font-weight:700;color:#202124;">$&#8212;</span>
                   <span id="sav-budget" style="font-size:11px;color:#5f6368;">/ $&#8212;</span>
@@ -365,8 +404,8 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
                 <div class="badge" id="sav-badge" style="width:100%;margin-top:auto;"></div>
               </div>
             </div>
-            <div class="sub-card-full">
-              <div class="sc-section-label">Expenses &#8212; Needs</div>
+            <div class="sub-card-full card-clickable" onclick="showView('expenses-needs')" title="View Expenses — Needs details">
+              <div class="sc-section-label">Expenses &#8212; Needs <span class="card-click-hint">›</span></div>
               <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
                 <span id="exp-actual" style="font-size:18px;font-weight:700;color:#202124;">$&#8212;</span>
                 <span id="exp-budget" style="font-size:11px;color:#5f6368;">/ $&#8212;</span>
@@ -375,8 +414,8 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
               <div class="sc-legend" id="exp-legend" style="margin-bottom:3px;"></div>
               <div class="badge" id="exp-badge" style="width:100%;"></div>
             </div>
-            <div class="sub-card-full">
-              <div class="sc-section-label">Expenses &#8212; Wants</div>
+            <div class="sub-card-full card-clickable" onclick="showView('expenses-wants')" title="View Expenses — Wants details">
+              <div class="sc-section-label">Expenses &#8212; Wants <span class="card-click-hint">›</span></div>
               <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:4px;">
                 <span id="wan-actual" style="font-size:18px;font-weight:700;color:#202124;">$&#8212;</span>
                 <span id="wan-budget" style="font-size:11px;color:#5f6368;">/ $&#8212;</span>
@@ -421,6 +460,43 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
               </div>
               <div class="s-status" id="s-status" style="text-align:left;margin-top:6px;font-size:11px;"></div>
             </div>
+          </div>
+        </div>
+        <!-- ── TRENDS VIEW ── -->
+        <div class="table-view" id="view-trends">
+          <div class="table-header">
+            <button class="table-back-btn" onclick="showView('overview')">&#8249; Overview</button>
+            <span class="table-title">Trends</span>
+            <span class="table-type-badge" style="background:#e8f0fe;color:#1a56b0;">Last 6 Months</span>
+          </div>
+          <div id="trends-body" style="flex:1;overflow-y:auto;padding:4px 0;"></div>
+        </div>
+        <!-- ── EXPENSES-NEEDS FILTERED TABLE ── -->
+        <div class="table-view" id="view-expenses-needs">
+          <div class="table-header">
+            <button class="table-back-btn" onclick="showView('overview')">&#8249; Overview</button>
+            <span class="table-title">Expenses — Needs</span>
+            <span class="table-type-badge expense">Needs</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Sub-label</th><th>vs Budget</th><th>Notes</th><th>Source</th></tr></thead>
+              <tbody id="table-body-needs"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- ── EXPENSES-WANTS FILTERED TABLE ── -->
+        <div class="table-view" id="view-expenses-wants">
+          <div class="table-header">
+            <button class="table-back-btn" onclick="showView('overview')">&#8249; Overview</button>
+            <span class="table-title">Expenses — Wants</span>
+            <span class="table-type-badge expense">Wants</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Sub-label</th><th>vs Budget</th><th>Notes</th><th>Source</th></tr></thead>
+              <tbody id="table-body-wants"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -500,7 +576,7 @@ var now=new Date();
 var currentMonth=now.getMonth(),currentYear=now.getFullYear();
 var ytdActive=false,pickerYear=currentYear,selectedType='Income';
 var sidebarOpen=true,currentView='overview';
-var activePeriodBtn=document.getElementById('period-monthly');
+var activePeriodBtn=null; // period pills로 교체됨
 var currentData=null,financeCache={},budgetChanges={};
 
 var CATEGORIES={
@@ -532,49 +608,184 @@ function currentYM(){return currentYear+'-'+String(currentMonth+1).padStart(2,'0
 function openHamburger(){document.getElementById('ham-overlay').classList.add('open');}
 function closeHamburger(){document.getElementById('ham-overlay').classList.remove('open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHamburger();});
-function toggleSidebar(){var sb=document.getElementById('task-sidebar'),btn=document.getElementById('sidebar-toggle');sidebarOpen=!sidebarOpen;sb.classList.toggle('collapsed',!sidebarOpen);btn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';}
+function toggleSidebar(){
+  var sb=document.getElementById('task-sidebar');
+  var ctBtn=document.getElementById('sidebar-center-toggle');
+  sidebarOpen=!sidebarOpen;
+  sb.classList.toggle('collapsed',!sidebarOpen);
+  if(ctBtn){ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';}
+}
 // ── Period 상태 ─────────────────────────────────────────────────────────────
-var currentPeriod = 'monthly'; // 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
-var periodFilteredData = null; // 필터링된 데이터 (daily/weekly용)
+var currentPeriod = 'monthly';
+var customRangeActive = false;
+var customRangeStart = null;
+var customRangeEnd = null;
 
-function setPeriod(period, btn) {
-  if (activePeriodBtn) activePeriodBtn.classList.remove('active');
-  btn.classList.add('active');
-  activePeriodBtn = btn;
+function setPeriodPill(period) {
+  // pill UI 업데이트
+  ['daily','weekly','monthly','quarterly','yearly'].forEach(function(p){
+    var el=document.getElementById('pp-'+p);
+    if(el) el.classList.toggle('active', p===period);
+  });
   currentPeriod = period;
+  customRangeActive = false;
 
-  // YTD 버튼 상태 동기화
-  var ytdBtn = document.getElementById('ytd-btn');
+  // nav arrows 표시/숨김 (Custom Range 선택 시 숨김)
+  var prevBtn=document.getElementById('nav-arrow-prev');
+  var nextBtn=document.getElementById('nav-arrow-next');
+  if(prevBtn) prevBtn.style.display='';
+  if(nextBtn) nextBtn.style.display='';
 
-  if (period === 'yearly') {
-    // Yearly = YTD 토글과 동일
-    if (!ytdActive) {
-      ytdActive = true;
-      ytdBtn.classList.add('active');
-      document.getElementById('month-display').textContent = currentYear + ' YTD';
-      document.getElementById('overview-title').textContent = 'Overview — ' + currentYear + ' YTD';
-    }
+  var ytdBtn=document.getElementById('ytd-btn');
+  if(period==='yearly'){
+    if(!ytdActive){ytdActive=true;ytdBtn.classList.add('active');
+      document.getElementById('month-display').textContent=currentYear+' YTD';
+      document.getElementById('overview-title').textContent='Overview — '+currentYear+' YTD';}
     loadFinanceData();
   } else {
-    // yearly 이외는 YTD 해제
-    if (ytdActive) {
-      ytdActive = false;
-      ytdBtn.classList.remove('active');
-      renderMonth();
-    }
-    if (period === 'monthly') {
-      loadFinanceData();
-    } else if (period === 'quarterly') {
-      loadQuarterlyData();
-    } else {
-      // daily / weekly: 현재 월 데이터 로드 후 프론트에서 필터
-      loadFinanceData();
-    }
+    if(ytdActive){ytdActive=false;ytdBtn.classList.remove('active');renderMonth();}
+    if(period==='quarterly'){loadQuarterlyData();}
+    else{loadFinanceData();}
   }
-  toast('Period: ' + period.charAt(0).toUpperCase() + period.slice(1));
+  toast(period.charAt(0).toUpperCase()+period.slice(1));
 }
 
-// Quarterly: 현재 월 기준 3개월 데이터 로드 후 합산
+// keep old setPeriod for backward compat (period pills use setPeriodPill)
+function setPeriod(period,btn){setPeriodPill(period);}
+
+// ── Picker Tab ───────────────────────────────────────────────────────────────
+function switchPickerTab(tab){
+  document.getElementById('tab-month').classList.toggle('active',tab==='month');
+  document.getElementById('tab-range').classList.toggle('active',tab==='range');
+  document.getElementById('picker-month-tab').style.display=tab==='month'?'':'none';
+  document.getElementById('picker-range-tab').style.display=tab==='range'?'':'none';
+}
+
+// ── Custom Range ─────────────────────────────────────────────────────────────
+function applyCustomRange(){
+  var start=document.getElementById('range-start').value;
+  var end=document.getElementById('range-end').value;
+  var errEl=document.getElementById('range-error');
+  if(!start){errEl.textContent='Start Date is required.';return;}
+  if(end && end<start){errEl.textContent='End Date must be after Start Date.';return;}
+  errEl.textContent='';
+  customRangeActive=true;
+  customRangeStart=start;
+  customRangeEnd=end||start;
+  // pill 모두 비활성
+  ['daily','weekly','monthly','quarterly','yearly'].forEach(function(p){
+    var el=document.getElementById('pp-'+p);if(el)el.classList.remove('active');
+  });
+  ytdActive=false;
+  document.getElementById('ytd-btn').classList.remove('active');
+  // label 업데이트
+  var label=start+(end&&end!==start?' – '+end:'');
+  document.getElementById('month-display').textContent=label;
+  document.getElementById('overview-title').textContent='Overview — '+label;
+  closePicker();
+  loadCustomRangeData(start,end||start);
+}
+
+function loadCustomRangeData(start,end){
+  // 해당 범위에 걸친 월 목록 추출
+  var months=[];
+  var s=new Date(start),e=new Date(end);
+  var cur=new Date(s.getFullYear(),s.getMonth(),1);
+  while(cur<=e){
+    months.push(cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0'));
+    cur.setMonth(cur.getMonth()+1);
+  }
+  Promise.all(months.map(function(ym){
+    return fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});
+  })).then(function(results){
+    var merged={
+      month:months[months.length-1],ytd:false,
+      baseline:results[results.length-1].baseline,
+      income:results.flatMap(function(d){return d.income.filter(function(r){return r.date>=start&&r.date<=end;});}),
+      expenses:results.flatMap(function(d){return d.expenses.filter(function(r){return r.date>=start&&r.date<=end;});}),
+      savings:results.flatMap(function(d){return d.savings.filter(function(r){return r.date>=start&&r.date<=end;});}),
+      summary:{remaining:0,income:{actual:0,budget:0,diff:0},expenses:{actual:0,budget:0,diff:0},savings:{actual:0,budget:0,diff:0}}
+    };
+    merged.summary.income.actual=merged.income.reduce(function(s,r){return s+r.amount;},0);
+    merged.summary.expenses.actual=merged.expenses.reduce(function(s,r){return s+r.amount;},0);
+    merged.summary.savings.actual=merged.savings.reduce(function(s,r){return s+r.amount;},0);
+    merged.summary.remaining=merged.summary.income.actual-merged.summary.expenses.actual-merged.summary.savings.actual;
+    merged.summary.income.budget=results[results.length-1].summary.income.budget;
+    merged.summary.expenses.budget=results[results.length-1].summary.expenses.budget;
+    merged.summary.savings.budget=results[results.length-1].summary.savings.budget;
+    currentData=merged;
+    renderOverview(merged);
+    if(currentView!=='overview')renderTable(currentView,merged);
+  }).catch(function(err){console.error('Custom range error:',err);});
+}
+
+// ── Filtered Expenses Table ───────────────────────────────────────────────────
+function renderFilteredExpenses(type){
+  var isNeeds=(type==='needs');
+  var rows=(currentData.expenses||[]).filter(function(r){return isNeeds?isNeedsCategory(r.category):!isNeedsCategory(r.category);});
+  var tbodyId=isNeeds?'table-body-needs':'table-body-wants';
+  var tbody=document.getElementById(tbodyId);
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="7" class="table-empty">No '+( isNeeds?'Needs':'Wants')+' expenses for this period.</td></tr>';return;}
+  tbody.innerHTML=rows.map(function(r){
+    var diff=r.vs_budget,diffStr;
+    if(diff===null||diff===undefined){diffStr='<span style="color:#9aa0a6;font-size:10px;">—</span>';}
+    else if(diff>0){diffStr='<span class="td-diff over">+'+fmt(diff)+'</span>';}
+    else if(diff<0){diffStr='<span class="td-diff ok">'+fmt(diff)+'</span>';}
+    else{diffStr='<span class="td-diff ok">On target</span>';}
+    var srcClass=(r.source||'direct').toLowerCase(),srcPill='<span class="src-pill '+srcClass+'">'+(r.source||'Direct')+'</span>';
+    var subLbl=r.sublabel?'<span style="display:inline-block;background:#f1f3f4;border-radius:10px;padding:1px 7px;font-size:10px;color:#3c4043;font-weight:500;">'+r.sublabel+'</span>':'<span style="color:#dadce0;font-size:10px;">—</span>';
+    return '<tr><td class="td-date">'+r.date+'</td><td class="td-amount expense">'+fmt(r.amount)+'</td><td class="td-cat">'+r.category+'</td><td>'+subLbl+'</td><td>'+diffStr+'</td><td style="color:#5f6368;font-size:11px;">'+(r.notes||'—')+'</td><td class="td-source">'+srcPill+'</td></tr>';
+  }).join('');
+}
+
+// ── Trends Render ─────────────────────────────────────────────────────────────
+function renderTrends(){
+  var body=document.getElementById('trends-body');
+  body.innerHTML='<div style="padding:12px;font-size:11px;color:#9aa0a6;text-align:center;">Loading 6-month trends…</div>';
+  // 현재 월 기준 최근 6개월 로드
+  var months=[];
+  for(var i=5;i>=0;i--){
+    var m=currentMonth-i,y=currentYear;
+    if(m<0){m+=12;y--;}
+    months.push({ym:y+'-'+String(m+1).padStart(2,'0'),label:MONTHS_SHORT[m]+' '+y});
+  }
+  Promise.all(months.map(function(mo){
+    return fetch(BACKEND+'/api/me/finance?month='+mo.ym,{credentials:'include'})
+      .then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+  })).then(function(results){
+    var data=results.map(function(d,i){return{
+      label:months[i].label,
+      income:d?d.summary.income.actual:0,
+      expenses:d?d.summary.expenses.actual:0,
+      savings:d?d.summary.savings.actual:0
+    };});
+    var maxIncome=Math.max.apply(null,data.map(function(d){return d.income;}))||1;
+    var maxExp=Math.max.apply(null,data.map(function(d){return d.expenses;}))||1;
+    var maxSav=Math.max.apply(null,data.map(function(d){return d.savings;}))||1;
+
+    function barSection(label,items,maxVal,color){
+      var html='<div class="trend-section"><div class="trend-label">'+label+'</div>';
+      items.forEach(function(d){
+        var w=Math.round(d.val/maxVal*100);
+        html+='<div class="trend-bar-row">'
+          +'<div class="trend-month-label">'+d.label+'</div>'
+          +'<div class="trend-bar-wrap"><div class="trend-bar-fill" style="width:'+w+'%;background:'+color+';"></div></div>'
+          +'<div class="trend-amount">'+fmtS(d.val)+'</div>'
+          +'</div>';
+      });
+      html+='</div>';
+      return html;
+    }
+
+    body.innerHTML='<div style="padding:12px 14px;">'
+      +barSection('💵 Income',data.map(function(d){return{label:d.label,val:d.income};}),maxIncome,'#1e8e3e')
+      +barSection('💸 Expenses',data.map(function(d){return{label:d.label,val:d.expenses};}),maxExp,'#bf360c')
+      +barSection('🏦 Savings',data.map(function(d){return{label:d.label,val:d.savings};}),maxSav,'#1a73e8')
+      +'</div>';
+  });
+}
+// ── Quarterly Load ───────────────────────────────────────────────────────────
 function loadQuarterlyData() {
   var months = [];
   for (var i = 2; i >= 0; i--) {
@@ -686,26 +897,35 @@ filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});document.querySelector('.tag-chip[data-tag="@finance"]').classList.add('selected');}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){sndBtn.disabled=false;setTimeout(function(){sndSt.textContent='';},3000);});});
 function showView(view){
   currentView=view;
-  var overviewEl=document.getElementById('view-overview');
-  var tableEl=document.getElementById('view-table');
-  var budgetEl=document.getElementById('view-budget');
-  ['nav-overview','nav-income','nav-expenses','nav-savings','nav-budget'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.classList.remove('active');
+  var allViews=['view-overview','view-table','view-budget','view-trends','view-expenses-needs','view-expenses-wants'];
+  var allNavs=['nav-overview','nav-income','nav-expenses','nav-savings','nav-budget','nav-trends'];
+  allViews.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.style.display='none';el.classList.remove('active');}
   });
-  // 모든 뷰 숨기기
-  overviewEl.style.display='none';
-  tableEl.classList.remove('active');
-  budgetEl.classList.remove('active');
+  allNavs.forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('active');});
 
   if(view==='overview'){
-    overviewEl.style.display='flex';
+    document.getElementById('view-overview').style.display='flex';
     document.getElementById('nav-overview').classList.add('active');
+  } else if(view==='trends'){
+    document.getElementById('view-trends').classList.add('active');
+    document.getElementById('nav-trends').classList.add('active');
+    renderTrends();
   } else if(view==='budget'){
-    budgetEl.classList.add('active');
+    document.getElementById('view-budget').classList.add('active');
     document.getElementById('nav-budget').classList.add('active');
     if(currentData) renderBudgetPanel(currentData.baseline||[]);
+  } else if(view==='expenses-needs'){
+    document.getElementById('view-expenses-needs').classList.add('active');
+    document.getElementById('nav-expenses').classList.add('active');
+    if(currentData) renderFilteredExpenses('needs');
+  } else if(view==='expenses-wants'){
+    document.getElementById('view-expenses-wants').classList.add('active');
+    document.getElementById('nav-expenses').classList.add('active');
+    if(currentData) renderFilteredExpenses('wants');
   } else {
-    tableEl.classList.add('active');
+    document.getElementById('view-table').classList.add('active');
     var navEl=document.getElementById('nav-'+view);
     if(navEl) navEl.classList.add('active');
     if(currentData) renderTable(view,currentData);
