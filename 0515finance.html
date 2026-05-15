@@ -265,7 +265,7 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
       <button class="tl-item active" id="nav-overview" onclick="showView('overview')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 6h14" stroke-linecap="round"/><circle cx="5" cy="9.5" r=".8" fill="currentColor" stroke="none"/></svg>Overview
       </button>
-      <button class="tl-item" onclick="navigate('trends')">
+      <button class="tl-item" onclick="toast('Trends — Coming soon')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,12 5,8 8,10 11,5 14,7" stroke-linecap="round" stroke-linejoin="round"/></svg>Trends
       </button>
       <div class="tl-sep"></div>
@@ -533,7 +533,140 @@ function openHamburger(){document.getElementById('ham-overlay').classList.add('o
 function closeHamburger(){document.getElementById('ham-overlay').classList.remove('open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHamburger();});
 function toggleSidebar(){var sb=document.getElementById('task-sidebar'),btn=document.getElementById('sidebar-toggle');sidebarOpen=!sidebarOpen;sb.classList.toggle('collapsed',!sidebarOpen);btn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';}
-function setPeriod(period,btn){if(activePeriodBtn)activePeriodBtn.classList.remove('active');btn.classList.add('active');activePeriodBtn=btn;toast('Period: '+period.charAt(0).toUpperCase()+period.slice(1));}
+// ── Period 상태 ─────────────────────────────────────────────────────────────
+var currentPeriod = 'monthly'; // 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+var periodFilteredData = null; // 필터링된 데이터 (daily/weekly용)
+
+function setPeriod(period, btn) {
+  if (activePeriodBtn) activePeriodBtn.classList.remove('active');
+  btn.classList.add('active');
+  activePeriodBtn = btn;
+  currentPeriod = period;
+
+  // YTD 버튼 상태 동기화
+  var ytdBtn = document.getElementById('ytd-btn');
+
+  if (period === 'yearly') {
+    // Yearly = YTD 토글과 동일
+    if (!ytdActive) {
+      ytdActive = true;
+      ytdBtn.classList.add('active');
+      document.getElementById('month-display').textContent = currentYear + ' YTD';
+      document.getElementById('overview-title').textContent = 'Overview — ' + currentYear + ' YTD';
+    }
+    loadFinanceData();
+  } else {
+    // yearly 이외는 YTD 해제
+    if (ytdActive) {
+      ytdActive = false;
+      ytdBtn.classList.remove('active');
+      renderMonth();
+    }
+    if (period === 'monthly') {
+      loadFinanceData();
+    } else if (period === 'quarterly') {
+      loadQuarterlyData();
+    } else {
+      // daily / weekly: 현재 월 데이터 로드 후 프론트에서 필터
+      loadFinanceData();
+    }
+  }
+  toast('Period: ' + period.charAt(0).toUpperCase() + period.slice(1));
+}
+
+// Quarterly: 현재 월 기준 3개월 데이터 로드 후 합산
+function loadQuarterlyData() {
+  var months = [];
+  for (var i = 2; i >= 0; i--) {
+    var m = currentMonth - i;
+    var y = currentYear;
+    if (m < 0) { m += 12; y--; }
+    months.push(y + '-' + String(m + 1).padStart(2, '0'));
+  }
+  var label = MONTHS_SHORT[parseInt(months[0].split('-')[1]) - 1] + ' – ' + MONTHS[currentMonth] + ' ' + currentYear;
+  document.getElementById('month-display').textContent = label;
+  document.getElementById('overview-title').textContent = 'Overview — Q ' + label;
+
+  Promise.all(months.map(function(ym) {
+    return fetch(BACKEND + '/api/me/finance?month=' + ym, { credentials: 'include' })
+      .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  })).then(function(results) {
+    // 3개월 합산
+    var merged = {
+      month: months[2], ytd: false,
+      baseline: results[2].baseline,
+      income:   results.flatMap(function(d) { return d.income; }),
+      expenses: results.flatMap(function(d) { return d.expenses; }),
+      savings:  results.flatMap(function(d) { return d.savings; }),
+      summary: {
+        income:   { actual: results.reduce(function(s,d){return s+d.summary.income.actual;},0),   budget: results[2].summary.income.budget,   diff: 0 },
+        expenses: { actual: results.reduce(function(s,d){return s+d.summary.expenses.actual;},0), budget: results[2].summary.expenses.budget, diff: 0 },
+        savings:  { actual: results.reduce(function(s,d){return s+d.summary.savings.actual;},0),  budget: results[2].summary.savings.budget,  diff: 0 },
+        remaining: 0
+      }
+    };
+    merged.summary.remaining = merged.summary.income.actual - merged.summary.expenses.actual - merged.summary.savings.actual;
+    currentData = merged;
+    renderOverview(merged);
+    if (currentView !== 'overview') renderTable(currentView, merged);
+  }).catch(function(err) { console.error('Quarterly load error:', err); });
+}
+
+// Daily / Weekly 필터 적용 (데이터 로드 후 호출)
+function applyPeriodFilter(data) {
+  if (currentPeriod === 'monthly' || currentPeriod === 'yearly' || currentPeriod === 'quarterly') return data;
+  var today = new Date();
+  var todayStr = today.toISOString().slice(0, 10);
+
+  // Weekly: 이번 주 월요일 ~ 오늘
+  var weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+  var weekStartStr = weekStart.toISOString().slice(0, 10);
+
+  function filterRows(rows) {
+    return rows.filter(function(r) {
+      if (currentPeriod === 'daily') return r.date === todayStr;
+      if (currentPeriod === 'weekly') return r.date >= weekStartStr && r.date <= todayStr;
+      return true;
+    });
+  }
+
+  var filtered = {
+    month: data.month, ytd: data.ytd, baseline: data.baseline,
+    income:   filterRows(data.income),
+    expenses: filterRows(data.expenses),
+    savings:  filterRows(data.savings),
+    summary: { remaining: 0,
+      income:   { actual: 0, budget: data.summary.income.budget,   diff: 0 },
+      expenses: { actual: 0, budget: data.summary.expenses.budget, diff: 0 },
+      savings:  { actual: 0, budget: data.summary.savings.budget,  diff: 0 }
+    }
+  };
+  filtered.summary.income.actual   = filtered.income.reduce(function(s,r){return s+r.amount;},0);
+  filtered.summary.expenses.actual = filtered.expenses.reduce(function(s,r){return s+r.amount;},0);
+  filtered.summary.savings.actual  = filtered.savings.reduce(function(s,r){return s+r.amount;},0);
+  filtered.summary.remaining = filtered.summary.income.actual - filtered.summary.expenses.actual - filtered.summary.savings.actual;
+
+  // Period 라벨 업데이트
+  if (currentPeriod === 'daily') {
+    document.getElementById('month-display').textContent = 'Today';
+    document.getElementById('overview-title').textContent = 'Overview — Today (' + todayStr + ')';
+  } else if (currentPeriod === 'weekly') {
+    document.getElementById('month-display').textContent = 'This Week';
+    document.getElementById('overview-title').textContent = 'Overview — Week of ' + weekStartStr;
+  }
+  return filtered;
+}
+
+function navigate(mod) {
+  // 현재 구현된 페이지만 이동, 나머지는 안내
+  var implemented = { dashboard: '/dashboard', task: '/task', health: '/health' };
+  if (implemented[mod]) {
+    window.location.href = implemented[mod];
+  } else {
+    toast(mod.charAt(0).toUpperCase() + mod.slice(1) + ' — Coming soon', 'error');
+  }
+}
 function startClock(){function tick(){var n=new Date(),d=document.getElementById('wb-date'),t=document.getElementById('wb-time');if(d)d.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});if(t)t.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
 function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});else doWeather(37.7749,-122.4194);}
 function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32),icon=document.getElementById('wb-icon'),temp=document.getElementById('wb-temp');var wc=w.current.weathercode;var ic=wc===0?'☀️':wc<=2?'🌤️':wc===3?'☁️':wc<=49?'🌫️':wc<=59?'🌦️':wc<=69?'🌧️':wc<=79?'❄️':wc<=82?'🌧️':'⛈️';if(icon)icon.textContent=ic;if(temp)temp.textContent=f+'°F / '+c+'°C';}).catch(function(){});}
@@ -551,7 +684,6 @@ document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListe
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status'),filIn=document.getElementById('file-input'),selFile=null;
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});document.querySelector('.tag-chip[data-tag="@finance"]').classList.add('selected');}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){sndBtn.disabled=false;setTimeout(function(){sndSt.textContent='';},3000);});});
-function navigate(mod){window.location.href=DASHBOARD+'?mod='+mod;}
 function showView(view){
   currentView=view;
   var overviewEl=document.getElementById('view-overview');
@@ -590,9 +722,11 @@ function loadFinanceData(){
     // Set default effective date
     var effInput=document.getElementById('b-eff-date');
     if(effInput&&!effInput.value){var t=new Date();effInput.value=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
-    renderOverview(data);
+    // Daily / Weekly 필터 적용
+    var displayData = applyPeriodFilter(data);
+    renderOverview(displayData);
     if(currentView==='budget') renderBudgetPanel(data.baseline||[]);
-    else if(currentView!=='overview') renderTable(currentView,data);
+    else if(currentView!=='overview') renderTable(currentView,displayData);
   })
   .catch(function(err){if(err.message!=='unauth')console.error('Finance error:',err);});
 }
@@ -629,7 +763,7 @@ function renderOverview(data){
   var wantsActual = wantsRows.reduce(function(s,r){return s+r.amount;},0);
 
   // Needs 예산: Baseline에서 Needs 카테고리 합계
-  var baseline = currentData.baseline||[];
+  var baseline = data.baseline||[];
   var needsBudget = baseline.filter(function(b){ return b.section==='EXPENSES' && isNeedsCategory(b.category); }).reduce(function(s,b){return s+b.monthly_budget;},0);
   var wantsBudget = baseline.filter(function(b){ return b.section==='EXPENSES' && !isNeedsCategory(b.category); }).reduce(function(s,b){return s+b.monthly_budget;},0);
 
@@ -784,6 +918,7 @@ function openAddModal(){
   document.getElementById('add-status').textContent='';document.getElementById('add-create-cal').checked=false;
   var type='Income';if(currentView==='expenses')type='Expenses';else if(currentView==='savings')type='Savings';
   setType(type);document.getElementById('add-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('add-amount').focus();},60);
+}
 function closeAddModal(){document.getElementById('add-modal').classList.add('hidden');}
 document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
 function setType(type){
