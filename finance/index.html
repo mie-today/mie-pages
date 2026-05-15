@@ -1044,29 +1044,56 @@ function renderTable(view,data){
 }
 
 function saveBudget(){
-  var effDate=document.getElementById('b-eff-date').value,changed=Object.keys(budgetChanges),st=document.getElementById('s-status');
+  var effDate=document.getElementById('b-eff-date').value;
+  var changed=Object.keys(budgetChanges);
+  var st=document.getElementById('s-status');
   if(!effDate){st.style.color='#d93025';st.textContent='Set effective from date.';return;}
   if(!changed.length){st.style.color='#9aa0a6';st.textContent='No changes to save.';return;}
-  var saveBtn=document.getElementById('b-save-btn');saveBtn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';
+  var saveBtn=document.getElementById('b-save-btn');
+  saveBtn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';
+
   Promise.all(changed.map(function(category){
-    return fetch(BACKEND+'/api/me/finance/baseline',{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:category,monthly_budget:budgetChanges[category],effective_from:effDate})})
-    .then(function(r){if(!r.ok)throw new Error('Failed: '+category);return r.json();})
+    var amount=budgetChanges[category];
+    return fetch(BACKEND+'/api/me/finance/baseline',{
+      method:'PUT',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({category:category,monthly_budget:amount,effective_from:effDate})
+    })
+    .then(function(r){
+      if(!r.ok) return r.text().then(function(t){throw new Error('Failed: '+category+' → '+t.substring(0,80));});
+      return r.json();
+    })
     .then(function(){
-      // 패널 인풋 업데이트
-      var inp=document.querySelector('[data-budget-cat="'+category.replace(/"/g,'\\"')+'"]');
-      if(inp){inp.classList.remove('changed');inp.setAttribute('data-original',inp.value);}
+      // 인덱스로 인풋 찾아서 UI 업데이트
+      var idx=_budgetCategories.indexOf(category);
+      if(idx>=0){
+        var inp=document.querySelector('.bp-input[data-idx="'+idx+'"]');
+        if(inp){inp.classList.remove('changed');inp.setAttribute('data-original',inp.value);}
+      }
       delete budgetChanges[category];
     });
   }))
-  .then(function(){st.style.color='#1e8e3e';st.textContent='✅ Saved '+changed.length+' budget(s).';toast('Budget saved','success');setTimeout(function(){st.textContent='';},3000);financeCache={};loadFinanceData();})
+  .then(function(){
+    st.style.color='#1e8e3e';
+    st.textContent='✅ Saved '+changed.length+' budget(s).';
+    toast('Budget saved','success');
+    setTimeout(function(){st.textContent='';},3000);
+    financeCache={};
+    loadFinanceData();
+  })
   .catch(function(err){st.style.color='#d93025';st.textContent='❌ '+err.message;})
   .finally(function(){saveBtn.disabled=false;});
 }
 
 // ── Budget Settings 중앙 패널 렌더링 ────────────────────────────────────────
+var _budgetCategories = []; // 인덱스 기반 카테고리 추적 (& 인코딩 문제 우회)
+
 function renderBudgetPanel(baseline){
   var container=document.getElementById('budget-panel-body');
   if(!baseline.length){container.innerHTML='<div style="font-size:12px;color:#9aa0a6;text-align:center;padding:24px;">No baseline data found.</div>';return;}
+
+  _budgetCategories = []; // 리셋
+  budgetChanges = {};     // 패널 다시 열 때 변경사항 초기화
 
   var sections={INCOME:[],EXPENSES:[],SAVINGS:[]};
   baseline.forEach(function(b){if(sections[b.section])sections[b.section].push(b);});
@@ -1086,7 +1113,7 @@ function renderBudgetPanel(baseline){
     +'.bp-input:focus{border-color:#1a73e8;}'
     +'.bp-input.changed{border-color:#fbbc04;background:#fffde7;}'
     +'.bp-cur{font-size:10px;color:#9aa0a6;flex:1;}'
-    +'.hybrid-toggle{display:flex;gap:2px;margin-left:4px;}'
+    +'.hybrid-toggle{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle;}'
     +'.htg-btn{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid #dadce0;background:#f8f9fa;cursor:pointer;color:#5f6368;font-family:"DM Sans",sans-serif;}'
     +'.htg-btn.active-n{background:#e6f4ea;color:#137333;border-color:#34a853;}'
     +'.htg-btn.active-w{background:#fce8e6;color:#c5221f;border-color:#e64a19;}'
@@ -1096,23 +1123,27 @@ function renderBudgetPanel(baseline){
     var rows=sections[sec.key];if(!rows.length)return;
     html+='<div class="bp-sec-label" style="color:'+sec.color+';">'+sec.label+'</div>';
     rows.forEach(function(b){
+      var idx=_budgetCategories.length;
+      _budgetCategories.push(b.category); // 인덱스로 카테고리 추적
+
       var isHybrid=HYBRID_CATS.indexOf(b.category)!==-1;
       var currentN = isHybrid ? (hybridOverrides[b.category]==='N') : isNeedsCategory(b.category);
       var nwTag = sec.key==='EXPENSES' ? (isHybrid
-        ? '<div class="hybrid-toggle">'
-          +'<button class="htg-btn'+(currentN?' active-n':'')+'" onclick="setHybrid(\''+b.category+'\',\'N\',this)">N</button>'
-          +'<button class="htg-btn'+(!currentN?' active-w':'')+'" onclick="setHybrid(\''+b.category+'\',\'W\',this)">W</button>'
-          +'</div>'
+        ? '<span class="hybrid-toggle">'
+          +'<button class="htg-btn'+(currentN?' active-n':'')+'" onclick="setHybrid(\''+b.category.replace(/'/g,"\\'").replace(/&/g,'\\u0026')+'\',\'N\',this)">N</button>'
+          +'<button class="htg-btn'+(!currentN?' active-w':'')+'" onclick="setHybrid(\''+b.category.replace(/'/g,"\\'").replace(/&/g,'\\u0026')+'\',\'W\',this)">W</button>'
+          +'</span>'
         : '<span style="font-size:9px;color:#9aa0a6;margin-left:6px;">'+(isNeedsCategory(b.category)?'Needs':'Wants')+'</span>')
         : '';
+
       html+='<div class="bp-row">'
-        +'<div class="bp-label">'+b.category+''+nwTag+'</div>'
+        +'<div class="bp-label">'+b.category+nwTag+'</div>'
         +'<input class="bp-input" type="number" min="0" step="1" '
         +'value="'+b.monthly_budget+'" '
         +'data-original="'+b.monthly_budget+'" '
-        +'data-budget-cat="'+b.category.replace(/"/g,'&quot;')+'" '
+        +'data-idx="'+idx+'" '
         +'onchange="markBudgetChanged(this)"/>'
-        +'<span class="bp-cur">/ mo &nbsp; annual: $'+(b.monthly_budget*12).toLocaleString()+'</span>'
+        +'<span class="bp-cur">/ mo &nbsp;&nbsp; annual: '+fmtS(b.monthly_budget*12)+'</span>'
         +'</div>';
     });
   });
@@ -1123,12 +1154,13 @@ function renderBudgetPanel(baseline){
 function markBudgetChanged(input){
   var orig=parseFloat(input.getAttribute('data-original'))||0;
   var cur=parseFloat(input.value)||0;
-  var cat=input.getAttribute('data-budget-cat');
+  var idx=parseInt(input.getAttribute('data-idx'));
+  var cat=_budgetCategories[idx]; // 인덱스로 카테고리 이름 조회 (& 인코딩 없음)
+  if(!cat) return;
   if(cur!==orig){input.classList.add('changed');budgetChanges[cat]=cur;}
   else{input.classList.remove('changed');delete budgetChanges[cat];}
-  // annual 표시 실시간 업데이트
   var annualEl=input.nextElementSibling;
-  if(annualEl)annualEl.textContent='/ mo   annual: $'+(cur*12).toLocaleString();
+  if(annualEl) annualEl.textContent='/ mo   annual: '+fmtS(cur*12);
 }
 
 function setHybrid(category, nw, btn){
