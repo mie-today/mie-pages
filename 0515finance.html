@@ -58,11 +58,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 /* ── CENTER SIDEBAR TOGGLE ── */
 .sidebar-center-toggle{position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
 .sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
-/* ── PERIOD PILLS ── */
-.period-pills{display:flex;gap:3px;align-items:center;}
-.period-pill{width:26px;height:22px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#5f6368;font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;display:flex;align-items:center;justify-content:center;}
-.period-pill:hover{background:#f1f3f4;border-color:#1a73e8;color:#1a73e8;}
-.period-pill.active{background:#1a73e8;border-color:#1a73e8;color:#fff;}
+/* ── PERIOD DROPDOWN ── */
+.period-dropdown-wrap{display:flex;align-items:center;}
+.period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
 /* ── PICKER TABS ── */
 .picker-tab{flex:1;padding:5px 8px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;transition:all .12s;}
 .picker-tab.active{color:#1a73e8;border-bottom-color:#1a73e8;}
@@ -279,7 +277,7 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
         <span id="wb-time"></span><span class="tb-sep">&middot;</span>
         <div class="tb-weather"><span id="wb-icon" style="font-size:14px;"></span><span id="wb-temp"></span></div>
       </div>
-      <button class="signout-btn">Sign out</button>
+      <button class="signout-btn" onclick="fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).then(function(){window.location.href=BACKEND+'/auth/google';})">Sign out</button>
     </div>
   </div>
   <div class="app-body">
@@ -351,14 +349,16 @@ tbody td{padding:7px 10px;color:#3c4043;vertical-align:middle;}
             </div>
             <button class="nav-arrow" onclick="changeMonth(1)" id="nav-arrow-next">&#8250;</button>
             <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
-          </div>
-          <!-- Period pills -->
-          <div class="period-pills" id="period-pills">
-            <button class="period-pill" id="pp-daily"     onclick="setPeriodPill('daily')">D</button>
-            <button class="period-pill" id="pp-weekly"    onclick="setPeriodPill('weekly')">W</button>
-            <button class="period-pill active" id="pp-monthly"   onclick="setPeriodPill('monthly')">M</button>
-            <button class="period-pill" id="pp-quarterly" onclick="setPeriodPill('quarterly')">Q</button>
-            <button class="period-pill" id="pp-yearly"    onclick="setPeriodPill('yearly')">Y</button>
+            <!-- Period dropdown — YTD 바로 옆 -->
+            <div class="period-dropdown-wrap">
+              <select class="period-select" id="period-select" onchange="setPeriodPill(this.value)">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly" selected>Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
           </div>
           <button class="add-fab" onclick="openAddModal()">+ Add</button>
         </div>
@@ -622,11 +622,9 @@ var customRangeStart = null;
 var customRangeEnd = null;
 
 function setPeriodPill(period) {
-  // pill UI 업데이트
-  ['daily','weekly','monthly','quarterly','yearly'].forEach(function(p){
-    var el=document.getElementById('pp-'+p);
-    if(el) el.classList.toggle('active', p===period);
-  });
+  // dropdown UI 동기화
+  var sel=document.getElementById('period-select');
+  if(sel) sel.value=period;
   currentPeriod = period;
   customRangeActive = false;
 
@@ -899,33 +897,48 @@ function showView(view){
   currentView=view;
   var allViews=['view-overview','view-table','view-budget','view-trends','view-expenses-needs','view-expenses-wants'];
   var allNavs=['nav-overview','nav-income','nav-expenses','nav-savings','nav-budget','nav-trends'];
+
+  // 모든 뷰 숨기기 — inline style 제거 후 CSS로 처리
   allViews.forEach(function(id){
     var el=document.getElementById(id);
-    if(el){el.style.display='none';el.classList.remove('active');}
+    if(!el)return;
+    el.style.display='none';   // 먼저 숨김
+    el.classList.remove('active');
   });
   allNavs.forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('active');});
 
   if(view==='overview'){
-    document.getElementById('view-overview').style.display='flex';
+    var ov=document.getElementById('view-overview');
+    ov.style.display='flex';
     document.getElementById('nav-overview').classList.add('active');
   } else if(view==='trends'){
-    document.getElementById('view-trends').classList.add('active');
+    var el=document.getElementById('view-trends');
+    el.style.display=''; // inline 해제 → CSS .table-view.active 적용
+    el.classList.add('active');
     document.getElementById('nav-trends').classList.add('active');
     renderTrends();
   } else if(view==='budget'){
-    document.getElementById('view-budget').classList.add('active');
+    var el=document.getElementById('view-budget');
+    el.style.display='';
+    el.classList.add('active');
     document.getElementById('nav-budget').classList.add('active');
     if(currentData) renderBudgetPanel(currentData.baseline||[]);
   } else if(view==='expenses-needs'){
-    document.getElementById('view-expenses-needs').classList.add('active');
+    var el=document.getElementById('view-expenses-needs');
+    el.style.display='';
+    el.classList.add('active');
     document.getElementById('nav-expenses').classList.add('active');
     if(currentData) renderFilteredExpenses('needs');
   } else if(view==='expenses-wants'){
-    document.getElementById('view-expenses-wants').classList.add('active');
+    var el=document.getElementById('view-expenses-wants');
+    el.style.display='';
+    el.classList.add('active');
     document.getElementById('nav-expenses').classList.add('active');
     if(currentData) renderFilteredExpenses('wants');
   } else {
-    document.getElementById('view-table').classList.add('active');
+    var el=document.getElementById('view-table');
+    el.style.display='';
+    el.classList.add('active');
     var navEl=document.getElementById('nav-'+view);
     if(navEl) navEl.classList.add('active');
     if(currentData) renderTable(view,currentData);
