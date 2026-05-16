@@ -84,9 +84,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   display:flex;flex-direction:column;
   background:#fff;border-right:1px solid #e0e0e0;
   padding:10px 8px;overflow-y:auto;gap:1px;
+  transition:flex-basis .2s ease,padding .2s ease;
+  position:relative;
 }
+.task-sidebar.collapsed{flex:0 0 0px;padding:0;overflow:hidden;}
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
+.sidebar-center-toggle{position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
+.sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
 
 /* body-wrap equivalent — same padding as dashboard body-wrap */
 .content-area{
@@ -98,6 +103,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
      Below 1634px (sidebar+padding+1398) the breathing compresses to 0
      and content-area fills the remaining space naturally. */
   max-width:1398px;
+  position:relative;
 }
 
 /* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
@@ -375,6 +381,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
     <!-- Content: 60% task-centre + up-to-219px right-col -->
     <div class="content-area">
+      <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Expand sidebar">&#8250;</button>
 
       <div class="task-centre">
 
@@ -580,6 +587,16 @@ document.getElementById('nl-save').addEventListener('click',function(){var name=
 
 function fmtDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now=new Date();now.setHours(0,0,0,0);var diff=Math.round((dt-now)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};if(diff===1)return{label:'Tomorrow',cls:'future'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
 function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+/* ── Sidebar toggle ── */
+var sidebarOpen=true;
+function toggleSidebar(){
+  var sb=document.getElementById('task-sidebar');
+  var ctBtn=document.getElementById('sidebar-center-toggle');
+  sidebarOpen=!sidebarOpen;
+  sb.classList.toggle('collapsed',!sidebarOpen);
+  if(ctBtn){ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';}
+}
 
 init();
 </script>
