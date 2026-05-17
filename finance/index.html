@@ -48,12 +48,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .ham-sep{height:1px;background:#f1f3f4;margin:4px 12px;}
 .ham-footer{margin-top:auto;border-top:1px solid #f1f3f4;padding:8px 0;}
 .app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
-.task-sidebar{flex:0 0 200px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;padding:8px 8px;overflow-y:auto;gap:1px;transition:flex-basis .2s ease,padding .2s ease;position:relative;}
-.task-sidebar.collapsed{flex:0 0 0px;padding:0;overflow:hidden;}
+.task-sidebar{flex:0 0 200px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;padding:8px 8px;overflow-y:auto;gap:1px;transition:flex-basis .22s ease,min-width .22s ease,padding .22s ease;position:relative;min-width:200px;}
+.task-sidebar.collapsed{flex-basis:28px;min-width:28px;padding:0;overflow:hidden;}
+.task-sidebar.collapsed .sidebar-nav-inner{opacity:0;pointer-events:none;}
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
-.sidebar-center-toggle{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
-.sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
+/* ── Sidebar toggle tab — health.html style ── */
+.sidebar-toggle{position:absolute;right:0;top:50%;transform:translateY(-50%);width:18px;height:36px;background:#fff;border:1px solid #e0e0e0;border-right:none;border-radius:6px 0 0 6px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;box-shadow:-2px 0 6px rgba(0,0,0,.06);transition:background .12s;}
+.sidebar-toggle:hover{background:#e8f0fe;}
+.sidebar-toggle svg{width:10px;height:10px;color:#5f6368;transition:transform .22s;}
+.task-sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
 .period-dropdown-wrap{display:flex;align-items:center;}
 .period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
 .picker-tab{flex:1;padding:5px 8px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;transition:all .12s;}
@@ -348,6 +352,13 @@ tbody tr:hover .row-pen-btn{opacity:1;}
   </div>
   <div class="app-body">
     <div class="task-sidebar" id="task-sidebar">
+      <!-- Toggle tab on right edge — always visible, SVG rotates on collapse -->
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
+        <svg viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="7,2 2,8 7,14"/>
+        </svg>
+      </button>
+      <div class="sidebar-nav-inner">
       <div class="sidebar-sec">Finance</div>
       <button class="tl-item active" id="nav-overview" onclick="showView('overview')">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 6h14" stroke-linecap="round"/><circle cx="5" cy="9.5" r=".8" fill="currentColor" stroke="none"/></svg>Overview
@@ -371,9 +382,9 @@ tbody tr:hover .row-pen-btn{opacity:1;}
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke-linecap="round"/></svg>
         Budget Settings
       </button>
+      </div><!-- /sidebar-nav-inner -->
     </div>
     <div class="body-wrap-finance">
-      <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#8249;</button>
     <div class="content-area">
       <div class="finance-centre">
         <div class="top-row">
@@ -623,10 +634,7 @@ function closeHamburger(){document.getElementById('ham-overlay').classList.remov
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeHamburger();closeEditModal();closeDelModal();}});
 function toggleSidebar(){
   var sb=document.getElementById('task-sidebar');
-  var ctBtn=document.getElementById('sidebar-center-toggle');
-  sidebarOpen=!sidebarOpen;
-  sb.classList.toggle('collapsed',!sidebarOpen);
-  if(ctBtn){ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';}
+  sb.classList.toggle('collapsed');
 }
 var currentPeriod='monthly';
 var customRangeActive=false,customRangeStart=null,customRangeEnd=null;
