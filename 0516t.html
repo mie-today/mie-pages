@@ -47,12 +47,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .ham-item-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
 .ham-sep{height:1px;background:#f1f3f4;margin:4px 12px;}
 .ham-footer{margin-top:auto;border-top:1px solid #f1f3f4;padding:8px 0;}
-.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;position:relative;}
 .task-sidebar{flex:0 0 200px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;padding:8px 8px;overflow-y:auto;gap:1px;transition:flex-basis .2s ease,padding .2s ease;position:relative;}
 .task-sidebar.collapsed{flex:0 0 0px;padding:0;overflow:hidden;}
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
-.sidebar-center-toggle{position:absolute;left:25px;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
+.sidebar-center-toggle{position:absolute;left:200px;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:left .2s ease,background .12s,color .12s;}
 .sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
 .period-dropdown-wrap{display:flex;align-items:center;}
 .period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
@@ -94,7 +94,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .s-save-btn:hover{background:#1765cc;}
 .s-save-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .s-status{font-size:10px;text-align:center;margin-top:3px;min-height:11px;color:#1e8e3e;}
-.body-wrap-finance{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;position:relative;}
+.body-wrap-finance{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;}
 .content-area{width:100%;max-width:1440px;margin:0 auto;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;gap:16px;align-items:stretch;}
 .finance-centre{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;gap:5px;overflow:hidden;}
 .top-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
@@ -373,8 +373,8 @@ tbody tr:hover .row-pen-btn{opacity:1;}
         Budget Settings
       </button>
     </div>
+    <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</button>
     <div class="body-wrap-finance">
-      <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#8249;</button>
     <div class="content-area">
       <div class="finance-centre">
         <div class="top-row">
@@ -627,7 +627,11 @@ function toggleSidebar(){
   var ctBtn=document.getElementById('sidebar-center-toggle');
   sidebarOpen=!sidebarOpen;
   sb.classList.toggle('collapsed',!sidebarOpen);
-  if(ctBtn){ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';}
+  if(ctBtn){
+    ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';
+    ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';
+    ctBtn.style.left=sidebarOpen?'200px':'4px';
+  }
 }
 var currentPeriod='monthly';
 var customRangeActive=false,customRangeStart=null,customRangeEnd=null;
