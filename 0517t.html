@@ -94,15 +94,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
 
 /* body-wrap equivalent — same padding as dashboard body-wrap */
+.body-wrap-task{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;}
 .content-area{
-  flex:1;min-width:0;
+  width:100%;max-width:1440px;margin:0 auto;
   display:flex;overflow:hidden;min-height:0;
   padding:8px 20px 10px 16px;
   gap:14px;align-items:stretch;
-  /* 1398px cap creates the 236px right breathing room at 1870px viewport.
-     Below 1634px (sidebar+padding+1398) the breathing compresses to 0
-     and content-area fills the remaining space naturally. */
-  max-width:1398px;
 }
 
 /* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
@@ -287,6 +284,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   }
   .sidebar-stats{display:none;}
   /* content area stacks */
+  .body-wrap-task{overflow:visible;height:auto;}
   .content-area{
     flex-direction:column;overflow:visible;
     height:auto;padding:8px 14px 16px;gap:12px;
@@ -380,6 +378,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
     <!-- Content: 60% task-centre + up-to-219px right-col -->
     <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</button>
+    <div class="body-wrap-task">
     <div class="content-area">
 
       <div class="task-centre">
@@ -462,7 +461,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
       </div><!-- /right-col -->
 
-    </div><!-- /content-area -->
+    </div>
+    </div><!-- /body-wrap-task --><!-- /content-area -->
   </div><!-- /app-body -->
 </div><!-- /app -->
 
