@@ -46,39 +46,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s;}
 .add-fab:hover{background:#1765cc;}
 
-/* ══════════════════════════════════════════════════════════
-   LAYOUT
-   - Left sidebar: fixed 200px, flush (no card border)
-   - content-area: padded wrapper, flex row
-   - task-centre: 60% fluid (matches dashboard col-left)
-   - right-col: 40% fluid, max-width capped at 219px,
-                min-width floored at 160px so it never
-                crushes — same proportions as dashboard
-══════════════════════════════════════════════════════════ */
 .app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;position:relative;}
 
-/* ══════════════════════════════════════════════════════════
-   LAYOUT — mirrors dashboard.html exactly.
-
-   Dashboard structure:
-     topbar (46px fixed)
-     body-wrap: padded, max-width:1440px, margin:0 auto
-       col-left:  flex:0 0 60%   → the calendar/main panel
-       col-right: flex:0 0 calc(40%-16px) → send+actions
-
-   Task.html adds a 200px flush sidebar before body-wrap,
-   so we split the remaining space the same way:
-     task-sidebar: 200px flush (like dashboard's hamburger nav)
-     body-wrap equivalent (padded, max-width, centered):
-       task-centre: flex:0 0 60%
-       right-col:   flex:0 0 calc(40%-14px), max 219px
-
-   The 219px cap means at wide screens the right panel
-   never grows beyond 219px and the task-centre absorbs
-   the extra — matching the visual in screenshot 2.
-══════════════════════════════════════════════════════════ */
-
-/* Flush 200px left sidebar — identical to dashboard sidebar drawer width */
+/* Flush 200px left sidebar */
 .task-sidebar{
   flex:0 0 200px;flex-shrink:0;
   display:flex;flex-direction:column;
@@ -93,7 +63,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .sidebar-center-toggle{position:absolute;left:200px;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:left .2s ease,background .12s,color .12s;}
 .sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
 
-/* body-wrap equivalent — same padding as dashboard body-wrap */
 .body-wrap-task{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;}
 .content-area{
   width:100%;max-width:1440px;margin:0 auto;
@@ -102,7 +71,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   gap:14px;align-items:stretch;
 }
 
-/* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
+/* task-centre: 60% — matches dashboard col-left */
 .task-centre{
   flex:0 0 60%;min-width:0;
   display:flex;flex-direction:column;
@@ -110,14 +79,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   overflow:hidden;
 }
 
-/* right-col: calc(40%-14px) of content-area, capped at 219px.
-   At the dashboard's typical 1392px content width:
-     60% = 835px  (≈ task screenshot's 846px ✓)
-     40%-14px = 543px → capped to 219px
-   The gap between 219px and 543px becomes extra breathing room
-   for the task-centre, which grows to fill it via auto margin. */
+/* ▶ CHANGE 1/8: flex calc(40% - 14px) → calc(40% - 16px) — matches dashboard col-right */
 .right-col{
-  flex:0 0 calc(40% - 14px);
+  flex:0 0 calc(40% - 16px);
   min-width:0;
   display:flex;flex-direction:column;gap:14px;
   overflow:hidden;
@@ -143,7 +107,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stat-val.green{color:#1e8e3e;}
 .stat-val.red{color:#d93025;}
 
-/* ══ OVERVIEW PANELS — matches dashboard exactly ══ */
+/* ══ OVERVIEW PANELS ══ */
 .ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px 4px;flex-shrink:0;}
 .ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;transition:background .12s,border-color .12s;}
 .ov-panel.clickable{cursor:pointer;}
@@ -208,13 +172,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 @keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
 
 /* ══ RIGHT PANEL CARDS ══ */
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px 16px;}
-.r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
-.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
-.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 8px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
+/* ▶ CHANGE 2/8: padding 14px 16px → 16px 18px */
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
+/* ▶ CHANGE 3/8: font-size 10px → 11px */
+.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+/* ▶ CHANGE 4/8: gap 5px → 6px */
+.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+/* ▶ CHANGE 5/8: padding 3px 8px → 3px 10px */
+.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
 .tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
 .tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
-.msg-ta{width:100%;min-height:64px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
+/* ▶ CHANGE 6/8: min-height 64px → 72px */
+.msg-ta{width:100%;min-height:72px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
 .msg-ta:focus{border-color:#1a73e8;}
 .msg-actions{display:flex;gap:6px;margin-top:8px;}
 .attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;white-space:nowrap;}
@@ -226,11 +195,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .fname{font-size:10px;color:#5f6368;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;padding:0;}
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
+/* ▶ CHANGE 7/8: padding 10px 4px → 14px 8px */
+.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:20px;margin-bottom:4px;}
-.qa-name{font-size:12px;font-weight:500;color:#202124;}
+/* ▶ CHANGE 8/8: font-size 20px → 22px */
+.qa-icon{font-size:22px;margin-bottom:4px;}
+/* ▶ CHANGE 8/8 (cont): font-size 12px → 13px */
+.qa-name{font-size:13px;font-weight:500;color:#202124;}
 .qa-desc{display:none;}
 
 /* ══ MODALS ══ */
@@ -241,7 +213,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .modal-title{font-size:15px;font-weight:600;color:#202124;margin-bottom:14px;}
 .f-field{margin-bottom:10px;}
 .f-lbl{font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
-.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12s;}
+.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12px;}
 .f-input:focus{border-color:#1a73e8;background:#fff;}
 .f-input.large{min-height:64px;resize:vertical;}
 .f-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -259,23 +231,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .toast.success{background:#1e8e3e;}
 .toast.error{background:#d93025;}
 
-/* ══════════════════════════════════════════════════════════
-   RESPONSIVE
-   At ≤900px: right-col stays visible but stacks below task-centre.
-   Both panels are always available — never hidden on mobile.
-   Layout mirrors dashboard.html responsive behaviour.
-══════════════════════════════════════════════════════════ */
-/* ══ RESPONSIVE ══
-   ≤900px : stack sidebar + content-area vertically,
-            right-col goes full-width below task-centre.
-            Both panels always visible — never hidden.
-   ≤480px : tighten padding for small phones.
-*/
+/* ══ RESPONSIVE ══ */
 @media(max-width:900px){
   html,body{overflow:auto;}
   #app{height:auto;min-height:100vh;overflow:visible;}
   .app-body{flex-direction:column;overflow:visible;height:auto;}
-  /* sidebar strip */
   .task-sidebar{
     flex:none;width:100%;
     border-right:none;border-bottom:1px solid #e0e0e0;
@@ -283,16 +243,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
     padding:8px;gap:4px;overflow-y:visible;
   }
   .sidebar-stats{display:none;}
-  /* content area stacks */
   .body-wrap-task{overflow:visible;height:auto;}
   .content-area{
     flex-direction:column;overflow:visible;
     height:auto;padding:8px 14px 16px;gap:12px;
     max-width:none;width:100%;
   }
-  /* task-centre: full width, stacked */
   .task-centre{flex:0 0 auto;width:100%;min-height:400px;}
-  /* right-col: full width, all caps removed */
   .right-col{flex:0 0 auto;width:100%;overflow:visible;}
   .task-grid.multi{grid-template-columns:1fr;}
   .tb-meta{display:none;}
@@ -376,14 +333,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div>
     </div>
 
-    <!-- Content: 60% task-centre + up-to-219px right-col -->
     <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</button>
     <div class="body-wrap-task">
     <div class="content-area">
 
       <div class="task-centre">
 
-        <!-- Overview panels — 📅 Events → Dashboard, 📁 Projects → Trackers -->
         <div class="ov-panels">
           <div class="ov-panel clickable" id="ov-events-panel" title="Go to Calendar">
             <div class="ov-panel-hd">
@@ -425,7 +380,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
       </div><!-- /task-centre -->
 
-      <!-- Right column: max 219px, min 160px -->
       <div class="right-col">
         <div class="r-card">
           <div class="r-label">Send to MIE</div>
@@ -451,8 +405,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           <div class="qa-grid">
             <a class="qa-btn" href="/dashboard"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
             <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
-            <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
-            <div class="qa-btn" data-qa="food"><div class="qa-icon">🍽️</div><div class="qa-name">Food Log</div></div>
+            <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Finance</div></div>
+            <div class="qa-btn" data-qa="food"><div class="qa-icon">💪</div><div class="qa-name">Health</div></div>
             <div class="qa-btn" data-qa="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
             <div class="qa-btn" data-qa="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
             <div class="qa-btn" data-qa="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
@@ -462,7 +416,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       </div><!-- /right-col -->
 
     </div>
-    </div><!-- /body-wrap-task --><!-- /content-area -->
+    </div>
   </div><!-- /app-body -->
 </div><!-- /app -->
 
