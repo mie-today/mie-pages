@@ -55,7 +55,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                 min-width floored at 160px so it never
                 crushes — same proportions as dashboard
 ══════════════════════════════════════════════════════════ */
-.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;}
+.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;position:relative;}
 
 /* ══════════════════════════════════════════════════════════
    LAYOUT — mirrors dashboard.html exactly.
@@ -90,20 +90,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .task-sidebar.collapsed{flex:0 0 0px;padding:0;overflow:hidden;}
 .task-sidebar::-webkit-scrollbar{width:3px;}
 .task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
-.sidebar-center-toggle{position:absolute;left:0;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:background .12s,color .12s;}
+.sidebar-center-toggle{position:absolute;left:200px;top:50%;transform:translateY(-50%);width:14px;height:36px;background:#fff;border:1px solid #e0e0e0;border-left:none;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;font-size:11px;color:#9aa0a6;box-shadow:2px 0 4px rgba(0,0,0,.06);transition:left .2s ease,background .12s,color .12s;}
 .sidebar-center-toggle:hover{background:#f1f3f4;color:#1a73e8;}
 
 /* body-wrap equivalent — same padding as dashboard body-wrap */
+.body-wrap-task{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;}
 .content-area{
-  flex:1;min-width:0;
+  width:100%;max-width:1440px;margin:0 auto;
   display:flex;overflow:hidden;min-height:0;
   padding:8px 20px 10px 16px;
   gap:14px;align-items:stretch;
-  /* 1398px cap creates the 236px right breathing room at 1870px viewport.
-     Below 1634px (sidebar+padding+1398) the breathing compresses to 0
-     and content-area fills the remaining space naturally. */
-  max-width:1398px;
-  position:relative;
 }
 
 /* task-centre: EXACTLY 60% of content-area — matches dashboard col-left */
@@ -288,6 +284,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   }
   .sidebar-stats{display:none;}
   /* content area stacks */
+  .body-wrap-task{overflow:visible;height:auto;}
   .content-area{
     flex-direction:column;overflow:visible;
     height:auto;padding:8px 14px 16px;gap:12px;
@@ -380,8 +377,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
     </div>
 
     <!-- Content: 60% task-centre + up-to-219px right-col -->
+    <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Collapse sidebar">&#8249;</button>
+    <div class="body-wrap-task">
     <div class="content-area">
-      <button class="sidebar-center-toggle" id="sidebar-center-toggle" onclick="toggleSidebar()" title="Expand sidebar">&#8250;</button>
 
       <div class="task-centre">
 
@@ -453,7 +451,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           <div class="qa-grid">
             <a class="qa-btn" href="/dashboard"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></a>
             <div class="qa-btn qa-active" data-qa="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
-            <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Finance</div></div>
+            <div class="qa-btn" data-qa="financial"><div class="qa-icon">💰</div><div class="qa-name">Financial</div></div>
             <div class="qa-btn" data-qa="food"><div class="qa-icon">💪</div><div class="qa-name">Health</div></div>
             <div class="qa-btn" data-qa="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
             <div class="qa-btn" data-qa="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
@@ -463,7 +461,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
       </div><!-- /right-col -->
 
-    </div><!-- /content-area -->
+    </div>
+    </div><!-- /body-wrap-task --><!-- /content-area -->
   </div><!-- /app-body -->
 </div><!-- /app -->
 
@@ -595,7 +594,11 @@ function toggleSidebar(){
   var ctBtn=document.getElementById('sidebar-center-toggle');
   sidebarOpen=!sidebarOpen;
   sb.classList.toggle('collapsed',!sidebarOpen);
-  if(ctBtn){ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';}
+  if(ctBtn){
+    ctBtn.innerHTML=sidebarOpen?'&#8249;':'&#8250;';
+    ctBtn.title=sidebarOpen?'Collapse sidebar':'Expand sidebar';
+    ctBtn.style.left=sidebarOpen?'200px':'4px';
+  }
 }
 
 init();
