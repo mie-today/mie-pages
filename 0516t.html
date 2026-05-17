@@ -193,7 +193,7 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .btn-delete{flex:1;background:#d93025;color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-delete:hover{background:#b52a1d;}
 .btn-delete:disabled{background:#f4a49a;cursor:not-allowed;}
-.right-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden;}
+.right-col{flex:0 0 calc(40% - 10px);min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden;}
 .r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:12px 14px;}
 .r-label{font-size:10px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;}
 .tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px;}
@@ -261,10 +261,51 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .toast.error{background:#d93025;}
 @media(max-width:900px){html,body{overflow:auto;}#app{height:auto;min-height:100vh;overflow:visible;}.app-body{flex-direction:column;overflow:visible;height:auto;}.task-sidebar{flex:none;width:100%;border-right:none;border-bottom:1px solid #e0e0e0;flex-direction:row;flex-wrap:wrap;padding:8px;gap:4px;overflow-y:visible;}.settings-section{display:none;}.content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 14px 16px;gap:12px;}.finance-centre{flex:0 0 auto;width:100%;overflow-y:visible;}.right-col{flex:0 0 auto;width:100%;overflow:visible;}.tb-meta{display:none;}}
 @media(max-width:480px){.topbar{padding:0 12px;}.content-area{padding:8px 8px 14px;}}
+
+/* ══ AUTH ══ */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
+.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
+.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
+.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
+.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.connect-btn:hover{background:#1765cc;}
+
+/* ══ SPINNER ══ */
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
+.spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ══ AUTH ══ */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
+.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
+.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
+.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
+.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.connect-btn:hover{background:#1765cc;}
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
+.spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin2 .7s linear infinite;}
+@keyframes spin2{to{transform:rotate(360deg);}}
+
 </style>
 </head>
 <body>
-<div id="app">
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">M</div>
+    <div class="auth-title">MIE Finance</div>
+    <div class="auth-sub">Sign in to view and manage your finances.</div>
+    <button class="connect-btn" id="connect-btn">Connect Google</button>
+  </div>
+</div>
+
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+  <div class="spinner"></div>
+  <div style="font-size:12px;color:#5f6368;margin-top:4px;">Loading…</div>
+</div>
+
+<div id="app" style="display:none;">
   <div class="ham-overlay" id="ham-overlay">
     <div class="ham-backdrop" onclick="closeHamburger()"></div>
     <div class="ham-menu">
@@ -506,9 +547,12 @@ tbody tr:hover .row-pen-btn{opacity:1;}
             <button class="tag-chip selected" data-tag="@finance">@finance</button>
             <button class="tag-chip" data-tag="@food">@food</button>
           </div>
-          <textarea class="msg-ta" id="msg-input" placeholder="Type your message&#8230;"></textarea>
+          <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
           <div class="msg-actions">
-            <label class="attach-btn" for="file-input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-6 6a4 4 0 01-5.66-5.66l6-6a2.5 2.5 0 013.54 3.54l-6 6a1 1 0 01-1.42-1.42l5.5-5.5" stroke-linecap="round"/></svg>Attach</label>
+            <label class="attach-btn" for="file-input">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-6 6a4 4 0 01-5.66-5.66l6-6a2.5 2.5 0 013.54 3.54l-6 6a1 1 0 01-1.42-1.42l5.5-5.5" stroke-linecap="round"/></svg>
+              Attach
+            </label>
             <input type="file" id="file-input" style="display:none;"/>
             <button class="send-btn" id="send-btn">Send</button>
           </div>
@@ -539,6 +583,19 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
+var authWrap=document.getElementById('auth-wrap');
+var loadWrap=document.getElementById('loading-wrap');
+var appEl=document.getElementById('app');
+
+function show(el){
+  [authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});
+  if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';}
+  else if(el)el.style.display='';
+}
+
+document.getElementById('connect-btn').addEventListener('click',function(){
+  window.location.href=BACKEND+'/auth/google';
+});
 var DASHBOARD='/dashboard';
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -626,7 +683,19 @@ function closeAddModal(){document.getElementById('add-modal').classList.add('hid
 document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
 function setType(type){selectedType=type;var btnMap={Income:'income',Expenses:'expense',Savings:'saving'};['Income','Expenses','Savings'].forEach(function(t){var btn=document.getElementById('type-'+btnMap[t]);if(btn)btn.className='type-btn'+(t===type?' active-'+btnMap[t]:'');});var sel=document.getElementById('add-category');sel.innerHTML='';(CATEGORIES[type]||[]).forEach(function(cat){var o=document.createElement('option');o.value=cat;o.textContent=cat;sel.appendChild(o);});}
 function saveTransaction(){var amount=parseFloat(document.getElementById('add-amount').value),st=document.getElementById('add-status');if(!amount||amount<=0){st.style.color='#d93025';st.textContent='Please enter a valid amount.';return;}var btn=document.getElementById('add-save-btn');btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';var payload={type:selectedType,amount:amount,category:document.getElementById('add-category').value,sublabel:document.getElementById('add-sublabel').value.trim(),notes:document.getElementById('add-notes').value.trim(),date:document.getElementById('add-date').value,createCalendarEvent:document.getElementById('add-create-cal').checked};fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(data){st.style.color='#1e8e3e';st.textContent='✅ Added!'+(payload.sublabel?' ['+payload.sublabel+']':'')+(data.calendar_event?' + Calendar event.':'');toast('Transaction added','success');financeCache={};setTimeout(function(){closeAddModal();loadFinanceData();},900);}).catch(function(err){st.style.color='#d93025';st.textContent='❌ '+err.message;}).finally(function(){btn.disabled=false;});}
-startClock();loadWeather();renderMonth();loadFinanceData();
+function init(){
+  show(loadWrap);
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
+    .then(function(d){
+      if(!d)return;
+      if(d.connected){show(appEl);startClock();loadWeather();renderMonth();loadFinanceData();}
+      else show(authWrap);
+    })
+    .catch(function(){show(authWrap);});
+}
+
+init();
 </script>
 </body>
 </html>
