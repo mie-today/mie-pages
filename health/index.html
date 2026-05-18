@@ -358,10 +358,39 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   .tb-meta{display:none;}
 }
 @media(max-width:480px){.topbar{padding:0 12px;}.content-area{padding:6px;}}
+
+/* ══ AUTH ══ */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
+.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
+.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
+.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
+.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.connect-btn:hover{background:#1765cc;}
+
+/* ══ SPINNER ══ */
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
+.spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin2 .7s linear infinite;}
+@keyframes spin2{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
-<div id="app">
+
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">M</div>
+    <div class="auth-title">MIE Health</div>
+    <div class="auth-sub">Sign in to view and manage your health data.</div>
+    <button class="connect-btn" id="connect-btn">Connect Google</button>
+  </div>
+</div>
+
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+  <div class="spinner"></div>
+  <div style="font-size:12px;color:#5f6368;margin-top:4px;">Loading…</div>
+</div>
+
+<div id="app" style="display:none;flex-direction:column;height:100vh;overflow:hidden;">
 
   <div class="topbar">
     <div class="tb-left">
@@ -761,6 +790,36 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 'use strict';
 var BACKEND='https://api.mie.today';
 var DASHBOARD='/dashboard';
+var authWrap=document.getElementById('auth-wrap');
+var loadWrap=document.getElementById('loading-wrap');
+var appEl=document.getElementById('app');
+
+function show(el){
+  [authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});
+  if(el===appEl){appEl.style.display='flex';}
+  else if(el)el.style.display='';
+}
+
+document.getElementById('connect-btn').addEventListener('click',function(){
+  window.location.href=BACKEND+'/auth/google';
+});
+
+document.querySelector('.signout-btn').addEventListener('click',function(){
+  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'})
+    .catch(function(){}).finally(function(){show(authWrap);});
+});
+
+function init(){
+  show(loadWrap);
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
+    .then(function(d){
+      if(!d)return;
+      if(d.connected){show(appEl);startClock();loadWeather();renderDate();loadProfile();loadMedFields();}
+      else show(authWrap);
+    })
+    .catch(function(){show(authWrap);});
+}
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var now=new Date();
@@ -813,7 +872,7 @@ document.getElementById('add-modal').addEventListener('click',function(e){if(e.t
 function setType(type){selectedType=type;['food','body','activity','period'].forEach(function(t){document.getElementById('type-'+t).className='type-btn'+(t===type?' active-'+t:'');var fields=document.getElementById('fields-'+t);if(fields)fields.style.display=t===type?'':'none';});}
 function saveEntry(){var st=document.getElementById('add-status');var btn=document.getElementById('add-save-btn');var valid=true;if(selectedType==='food'&&!document.getElementById('food-name').value.trim())valid=false;if(!valid){st.style.color='#d93025';st.textContent='Please fill in required fields.';return;}btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';setTimeout(function(){st.style.color='#1e8e3e';st.textContent='✅ Entry added!';setTimeout(function(){closeAddModal();st.textContent='';},900);btn.disabled=false;toast('Health entry logged!','success');},500);}
 
-startClock();loadWeather();renderDate();loadProfile();loadMedFields();
+init();
 </script>
 </body>
 </html>
