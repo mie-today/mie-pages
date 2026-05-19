@@ -115,7 +115,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stacked-bar{height:13px;border-radius:5px;overflow:hidden;display:flex;width:100%;margin-bottom:6px;}
 .sb-seg{height:100%;}
 .bar-legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 0;}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#3c4043;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#3c4043;}
 .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
 /* ══ OVERVIEW PANELS WRAPPER — 7 panels ══ */
@@ -472,11 +472,11 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 
           <!-- Row 1: Overview bar -->
           <div class="breakdown-card">
-            <div style="font-size:14px;font-weight:600;color:#202124;margin-bottom:5px;"><span id="overview-title">Overview &#8212; May 2026</span></div>
+            <div style="font-size:15px;font-weight:600;color:#202124;margin-bottom:6px;"><span id="overview-title">Overview &#8212; May 2026</span></div>
             <!-- Remaining big -->
             <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:5px;">
-              <div style="font-size:10px;color:#5f6368;font-weight:400;">Remaining</div>
-              <div id="ov-remaining" style="font-size:22px;font-weight:700;color:#1e8e3e;line-height:1;">$&#8212;</div>
+              <div style="font-size:11px;color:#5f6368;font-weight:400;">Remaining</div>
+              <div id="ov-remaining" style="font-size:23px;font-weight:700;color:#1e8e3e;line-height:1;">$&#8212;</div>
             </div>
             <!-- Stacked bar -->
             <div class="stacked-bar" style="height:11px;margin-bottom:6px;">
@@ -755,8 +755,8 @@ if(bR){bR.style.width=(expWantsPct+remPct)+'%';bR.style.borderRadius=(expWantsPc
 var lI=document.getElementById('leg-inc'),lS=document.getElementById('leg-sav'),lE=document.getElementById('leg-exp'),lR=document.getElementById('leg-rem');
 if(lI)lI.textContent='Income '+fmtS(s.income.actual)+' (100%)';
 if(lS)lS.textContent='Savings '+fmtS(s.savings.actual)+' ('+savPct+'%)';
-if(lE)lE.textContent='Exp\u2011Needs '+fmtS(needsActual)+' ('+expNeedsPct+'%)';
-if(lR)lR.textContent='Exp\u2011Wants '+fmtS(wantsActual)+' ('+expWantsPct+'%)';
+if(lE)lE.textContent='Needs '+fmtS(needsActual)+' ('+expNeedsPct+'%)';
+if(lR)lR.textContent='Wants '+fmtS(wantsActual)+' ('+expWantsPct+'%)';
 renderMiniBar('inc-bar','inc-legend','inc-total',data.income,'#1e8e3e',['#5bb974','#a8d5b5','#d0ebd7']);var sA=document.getElementById('sav-actual'),sB=document.getElementById('sav-budget');if(sA)sA.textContent=fmtS(s.savings.actual);if(sB)sB.textContent='/ '+fmtS(s.savings.budget);renderMiniBar('sav-bar','sav-legend',null,data.savings,'#1a73e8',['#4da3f5','#9fc8fa','#c8e1fd']);var savDiff=s.savings.budget-s.savings.actual,savBadge=document.getElementById('sav-badge');if(savBadge){if(savDiff>0){savBadge.className='badge short';savBadge.textContent='⚠ '+fmt(savDiff)+' short';}else if(savDiff<0){savBadge.className='badge over';savBadge.textContent='▲ '+fmt(Math.abs(savDiff))+' over goal';}else{savBadge.className='badge ok';savBadge.textContent='✓ On target';}}var baseline=data.baseline||[];var needsBudget=baseline.filter(function(b){return b.section==='EXPENSES'&&isNeedsCategory(b.category);}).reduce(function(s,b){return s+b.monthly_budget;},0);var wantsBudget=baseline.filter(function(b){return b.section==='EXPENSES'&&!isNeedsCategory(b.category);}).reduce(function(s,b){return s+b.monthly_budget;},0);var eA=document.getElementById('exp-actual'),eB=document.getElementById('exp-budget');if(eA)eA.textContent=fmtS(needsActual);if(eB)eB.textContent='/ '+fmtS(needsBudget);renderMiniBar('exp-bar','exp-legend',null,needsRows,'#bf360c',['#e64a19','#f4863a','#f5a461','#f8c49a','#fbe0c8']);var expDiff=needsActual-needsBudget,expBadge=document.getElementById('exp-badge');if(expBadge){if(expDiff>0){expBadge.className='badge over';expBadge.textContent='▲ '+fmt(expDiff)+' over budget';}else if(expDiff<0){expBadge.className='badge ok';expBadge.textContent='✓ '+fmt(Math.abs(expDiff))+' remaining';}else{expBadge.className='badge ok';expBadge.textContent='✓ On budget';}}var wA=document.getElementById('wan-actual'),wB=document.getElementById('wan-budget');if(wA)wA.textContent=fmtS(wantsActual);if(wB)wB.textContent='/ '+fmtS(wantsBudget);renderMiniBar('wan-bar','wan-legend',null,wantsRows,'#6a1b9a',['#8e24aa','#ab47bc','#ce93d8','#e1bee7']);var wanDiff=wantsActual-wantsBudget,wanBadge=document.getElementById('wan-badge');if(wanBadge){if(wanDiff>0){wanBadge.className='badge over';wanBadge.textContent='▲ '+fmt(wanDiff)+' over budget';}else if(wanDiff<0){wanBadge.className='badge ok';wanBadge.textContent='✓ '+fmt(Math.abs(wanDiff))+' remaining';}else{wanBadge.className='badge ok';wanBadge.textContent='✓ On budget';}}}
 function renderMiniBar(barId,legendId,totalId,rows,baseColor,extraColors){var byCategory={};rows.forEach(function(r){byCategory[r.category]=(byCategory[r.category]||0)+r.amount;});var cats=Object.keys(byCategory).sort(function(a,b){return byCategory[b]-byCategory[a];}).slice(0,5);var total=cats.reduce(function(s,c){return s+byCategory[c];},0)||1;var allColors=[baseColor].concat(extraColors||[]);var track=document.getElementById(barId);if(track)track.innerHTML=cats.map(function(c,i){var w=pct(byCategory[c],total),color=allColors[i]||'#dadce0',br=i===0?'5px 0 0 5px':(i===cats.length-1?'0 5px 5px 0':'0');return '<div class="sc-seg" style="width:'+w+'%;background:'+color+';border-radius:'+br+';'+(i>0?'margin-left:1px;':'')+'"></div>';}).join('');var legend=document.getElementById(legendId);if(legend)legend.innerHTML=cats.map(function(c,i){var color=allColors[i]||'#dadce0';return '<div class="sc-leg-item"><div class="sc-leg-dot" style="background:'+color+';"></div>'+c+'</div>';}).join('');if(totalId){var el=document.getElementById(totalId);if(el)el.textContent=fmtS(total);}}
 function renderTable(view,data){var typeMap={income:{label:'Income',badgeClass:'income',rows:data.income,amtClass:'income',tabName:'income'},expenses:{label:'Expenses',badgeClass:'expense',rows:data.expenses,amtClass:'expense',tabName:'expenses'},savings:{label:'Savings',badgeClass:'saving',rows:data.savings,amtClass:'saving',tabName:'savings'}};var cfg=typeMap[view];document.getElementById('table-title').textContent=cfg.label;var badge=document.getElementById('table-badge');badge.textContent=cfg.label;badge.className='table-type-badge '+cfg.badgeClass;var rows=cfg.rows||[],tbody=document.getElementById('table-body');if(!rows.length){tbody.innerHTML='<tr><td colspan="8" class="table-empty">No entries for this period.</td></tr>';return;}tbody.innerHTML=rows.map(function(r,i){return buildRowHtml(r,cfg.amtClass,i,cfg.tabName);}).join('');}
