@@ -96,12 +96,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .top-row{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
 .page-title{font-size:17px;font-weight:600;color:#202124;display:flex;align-items:center;gap:6px;}
 .date-nav{display:flex;align-items:center;gap:5px;}
-.nav-arrow{width:26px;height:26px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#5f6368;transition:background .12s;}
+.nav-arrow{width:28px;height:28px;border:1px solid #e0e0e0;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#5f6368;transition:background .12s;}
 .nav-arrow:hover{background:#f1f3f4;}
-.date-pill{background:#1a73e8;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.ytd-btn{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
-.ytd-btn:hover,.ytd-btn.active{background:#e8f0fe;}
-.unit-btn{border:1.5px solid #e0e0e0;background:#fff;color:#5f6368;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.date-pill{background:#1a73e8;color:#fff;border-radius:20px;padding:5px 18px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+/* YTD: default = outlined; active = filled blue pill */
+.ytd-btn{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.ytd-btn:hover{background:#e8f0fe;}
+.ytd-btn.active{background:#1a73e8;color:#fff;border-color:#1a73e8;}
+/* Period dropdown — mirrors Finance */
+.period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
+.unit-btn{border:1.5px solid #e0e0e0;background:#fff;color:#5f6368;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .unit-btn.active{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
 .add-fab{display:flex;align-items:center;gap:5px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(26,115,232,.3);transition:background .15s;}
 .add-fab:hover{background:#1765cc;}
@@ -541,9 +545,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           <div class="page-title">💪 Health</div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div class="date-nav">
-              <button class="nav-arrow" onclick="changeDate(-1)">&#8249;</button>
+              <button class="nav-arrow" id="nav-prev" onclick="changeDate(-1)">&#8249;</button>
               <div class="picker-wrap" id="picker-wrap">
-                <button class="date-pill" id="date-display" onclick="togglePicker(event)">May 18 2026</button>
+                <button class="date-pill" id="date-display" onclick="togglePicker(event)">May 19 2026</button>
                 <div class="picker-popup" id="picker-popup">
                   <div class="picker-header">
                     <button class="picker-arr" onclick="calStep(-1);event.stopPropagation()">&#8249;</button>
@@ -563,7 +567,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                   </table>
                 </div>
               </div>
-              <button class="nav-arrow" onclick="changeDate(1)">&#8250;</button>
+              <button class="nav-arrow" id="nav-next" onclick="changeDate(1)">&#8250;</button>
+              <select class="period-select" id="period-select" onchange="onPeriodChange(this.value)">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly" selected>Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
               <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
             </div>
             <button class="unit-btn active" id="unit-btn" onclick="toggleUnit()">US / Metrics</button>
@@ -915,14 +925,121 @@ function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitu
 var toastTmr=null;
 function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
 
-function renderDate(){var d=new Date(currentYear,currentMonth,currentDay);var label=MONTHS_SHORT[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' '+d.getFullYear();document.getElementById('date-display').textContent=label;}
-function changeDate(dir){if(ytdActive)return;var d=new Date(currentYear,currentMonth,currentDay+dir);currentYear=d.getFullYear();currentMonth=d.getMonth();currentDay=d.getDate();renderDate();}
-function toggleYTD(){ytdActive=!ytdActive;var btn=document.getElementById('ytd-btn');btn.classList.toggle('active',ytdActive);if(ytdActive){document.getElementById('date-display').textContent=currentYear+' YTD';toast('Showing '+currentYear+' year to date');}else renderDate();}
+var currentPeriod='monthly';
+
+function renderDate(){
+  var d=new Date(currentYear,currentMonth,currentDay);
+  var label=MONTHS_SHORT[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' '+d.getFullYear();
+  document.getElementById('date-display').textContent=label;
+}
+
+function changeDate(dir){
+  if(ytdActive)return;
+  var d=new Date(currentYear,currentMonth,currentDay);
+  if(currentPeriod==='daily'){d.setDate(d.getDate()+dir);}
+  else if(currentPeriod==='weekly'){d.setDate(d.getDate()+(dir*7));}
+  else if(currentPeriod==='monthly'){d.setMonth(d.getMonth()+dir);}
+  else if(currentPeriod==='yearly'){d.setFullYear(d.getFullYear()+dir);}
+  /* Enforce max 1 year back from today */
+  var today=new Date();
+  var oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+  if(d<oneYearAgo)d=new Date(oneYearAgo);
+  if(d>today)d=new Date(today);
+  currentYear=d.getFullYear();currentMonth=d.getMonth();currentDay=d.getDate();
+  renderDate();
+}
+
+function onPeriodChange(period){
+  currentPeriod=period;
+  ytdActive=false;
+  var btn=document.getElementById('ytd-btn');
+  btn.classList.remove('active');
+  renderDate();
+  toast(period.charAt(0).toUpperCase()+period.slice(1));
+}
+
+function toggleYTD(){
+  ytdActive=!ytdActive;
+  var btn=document.getElementById('ytd-btn');
+  btn.classList.toggle('active',ytdActive);
+  if(ytdActive){
+    /* Show Jan 1 of current year → today */
+    document.getElementById('date-display').textContent='Jan 01 '+currentYear+' – Today';
+    /* Reset period dropdown to monthly while YTD active */
+    var sel=document.getElementById('period-select');
+    if(sel)sel.value='monthly';
+    toast('Showing '+currentYear+' YTD');
+  }else{
+    renderDate();
+  }
+}
 function toggleUnit(){unitMetric=!unitMetric;document.getElementById('unit-btn').textContent=unitMetric?'Metrics / US':'US / Metrics';if(unitMetric){document.getElementById('weight-display').textContent='70.4 kg';document.getElementById('weight-sub').textContent='155.10 lb';document.getElementById('muscle-display').textContent='42.5 kg';document.getElementById('fat-display').textContent='25.2 kg';document.getElementById('water-display').textContent='1200';document.getElementById('water-label').textContent='ml / oz';document.getElementById('cal-display').textContent='976';document.getElementById('cal-goal-display').textContent='/ 2,874 goal';}else{document.getElementById('weight-display').textContent='155.1 lb';document.getElementById('weight-sub').textContent='70.4 kg';document.getElementById('muscle-display').textContent='93.7 lb';document.getElementById('fat-display').textContent='55.6 lb';document.getElementById('water-display').textContent='40.6';document.getElementById('water-label').textContent='fl oz';document.getElementById('cal-display').textContent='976';document.getElementById('cal-goal-display').textContent='/ 2,874 goal';}toast('Switched to '+(unitMetric?'Metric':'US')+' units');}
 
 /* Calendar picker */
 var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
-function buildCalendar(){var today=new Date();var sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay();var startOffset=(firstDay===0)?6:firstDay-1;var daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate();var daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate();var day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td');var btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate());var isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');}(function(d,m,y){if(!btn.classList.contains('other-month')){btn.onclick=function(e){e.stopPropagation();currentDay=d;currentMonth=m;currentYear=y;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();closePicker();};}})(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
+function buildCalendar(){
+  var today=new Date();
+  var oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+  var sel=document.getElementById('cal-month-sel');
+  sel.innerHTML='';
+  MONTHS.forEach(function(m,i){
+    var opt=document.createElement('option');
+    opt.value=i;opt.textContent=m;
+    if(i===pickerNavMonth)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('cal-year-val').textContent=pickerNavYear;
+  var tbody=document.getElementById('cal-body');
+  tbody.innerHTML='';
+  var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay();
+  var startOffset=(firstDay===0)?6:firstDay-1;
+  var daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate();
+  var daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate();
+  var day=1-startOffset;
+  for(var week=0;week<6;week++){
+    if(day>daysInMonth)break;
+    var tr=document.createElement('tr');
+    for(var col=0;col<7;col++){
+      var td=document.createElement('td');
+      var btn=document.createElement('button');
+      btn.className='cal-day-btn';
+      var actualDay,actualMonth,actualYear;
+      if(day<=0){
+        actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;
+        if(actualMonth<0){actualMonth=11;actualYear--;}
+        btn.textContent=actualDay;btn.classList.add('other-month');
+      }else if(day>daysInMonth){
+        actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;
+        if(actualMonth>11){actualMonth=0;actualYear++;}
+        btn.textContent=actualDay;btn.classList.add('other-month');
+      }else{
+        actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;
+        btn.textContent=actualDay;
+        var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate());
+        var isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);
+        if(isToday)btn.classList.add('is-today');
+        if(isSel)btn.classList.add('is-selected');
+        var btnDate=new Date(actualYear,actualMonth,actualDay);
+        if(btnDate<oneYearAgo||btnDate>today){
+          btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';
+        }
+      }
+      (function(d,m,y){
+        if(!btn.classList.contains('other-month')&&!btn.disabled){
+          btn.onclick=function(e){
+            e.stopPropagation();
+            currentDay=d;currentMonth=m;currentYear=y;
+            ytdActive=false;
+            document.getElementById('ytd-btn').classList.remove('active');
+            renderDate();closePicker();
+          };
+        }
+      })(actualDay,actualMonth,actualYear);
+      td.appendChild(btn);tr.appendChild(td);day++;
+    }
+    tbody.appendChild(tr);
+  }
+}
 function calStep(dir){pickerNavMonth+=dir;if(pickerNavMonth<0){pickerNavMonth=11;pickerNavYear--;}if(pickerNavMonth>11){pickerNavMonth=0;pickerNavYear++;}buildCalendar();}
 function calYearStep(dir){pickerNavYear+=dir;buildCalendar();}
 function calMonthChange(sel){pickerNavMonth=parseInt(sel.value);buildCalendar();}
