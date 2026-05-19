@@ -108,11 +108,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 
 .rows-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow:hidden;}
 
-/* ── ROW 1: Combined Overview — fixed max height, does NOT flex-grow ── */
-/* Right panel: Send card ~180px + gap ~14px = ~194px offset from top.
-   Quick Actions starts roughly there. We cap Overview at that equivalent. */
-.hrow-overview{flex:0 0 auto;max-height:185px;min-height:120px;display:flex;overflow:hidden;}
-/* Row 2 (Food Log) and Row 3 (Tasks/Notes/Period) share remaining space equally */
+/* ── ROW 1: Overview — height set by JS to match Send to MIE card ── */
+.hrow-overview{flex:0 0 auto;display:flex;overflow:hidden;}
+/* Row 2 & 3 share all remaining space equally */
 .hrow{flex:1;min-height:0;display:flex;overflow:hidden;}
 #row-medical{flex:1;}
 
@@ -887,6 +885,8 @@ function init(){
         loadProfile();
         loadMedFields();
         loadHealthTasks();
+        /* sync overview height after layout paint */
+        requestAnimationFrame(function(){requestAnimationFrame(syncOverviewHeight);});
       }else show(authWrap);
     })
     .catch(function(){show(authWrap);});
@@ -1207,6 +1207,16 @@ function closeAddModal(){document.getElementById('add-modal').classList.add('hid
 document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
 function setType(type){selectedType=type;['food','body','activity','period'].forEach(function(t){document.getElementById('type-'+t).className='type-btn'+(t===type?' active-'+t:'');var fields=document.getElementById('fields-'+t);if(fields)fields.style.display=t===type?'':'none';});}
 function saveEntry(){var st=document.getElementById('add-status');var btn=document.getElementById('add-save-btn');var valid=true;if(selectedType==='food'&&!document.getElementById('food-name').value.trim())valid=false;if(!valid){st.style.color='#d93025';st.textContent='Please fill in required fields.';return;}btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';setTimeout(function(){st.style.color='#1e8e3e';st.textContent='✅ Entry added!';setTimeout(function(){closeAddModal();st.textContent='';},900);btn.disabled=false;toast('Health entry logged!','success');},500);}
+
+/* ══ Match Overview height to Send to MIE card ══ */
+function syncOverviewHeight(){
+  var sendCard=document.querySelector('.right-col .r-card');
+  var overviewRow=document.querySelector('.hrow-overview');
+  if(!sendCard||!overviewRow)return;
+  var h=sendCard.getBoundingClientRect().height;
+  if(h>0)overviewRow.style.height=h+'px';
+}
+window.addEventListener('resize',syncOverviewHeight);
 
 init();
 </script>
