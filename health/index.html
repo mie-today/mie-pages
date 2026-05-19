@@ -31,35 +31,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .app-body{flex:1;display:flex;overflow:hidden;min-height:0;}
 
 /* ═══════════════════════════════════
-   LEFT SIDEBAR — collapsible 200px
+   LEFT SIDEBAR
 ═══════════════════════════════════ */
-.task-sidebar{
-  flex:0 0 200px;
-  flex-shrink:0;
-  display:flex;
-  flex-direction:column;
-  background:#fff;
-  border-right:1px solid #e0e0e0;
-  overflow:hidden;
-  position:relative;
-  transition:flex-basis .22s ease, min-width .22s ease;
-  min-width:200px;
-}
+.task-sidebar{flex:0 0 200px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e0e0e0;overflow:hidden;position:relative;transition:flex-basis .22s ease,min-width .22s ease;min-width:200px;}
 .task-sidebar.collapsed{flex-basis:28px;min-width:28px;}
-.task-sidebar.collapsed .sidebar-nav,
-.task-sidebar.collapsed .sidebar-settings{opacity:0;pointer-events:none;}
-
-.sidebar-toggle{
-  position:absolute;right:0;top:50%;transform:translateY(-50%);
-  width:18px;height:36px;background:#fff;border:1px solid #e0e0e0;
-  border-right:none;border-radius:6px 0 0 6px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;z-index:20;box-shadow:-2px 0 6px rgba(0,0,0,.06);transition:background .12s;
-}
+.task-sidebar.collapsed .sidebar-nav,.task-sidebar.collapsed .sidebar-settings{opacity:0;pointer-events:none;}
+.sidebar-toggle{position:absolute;right:0;top:50%;transform:translateY(-50%);width:18px;height:36px;background:#fff;border:1px solid #e0e0e0;border-right:none;border-radius:6px 0 0 6px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;box-shadow:-2px 0 6px rgba(0,0,0,.06);transition:background .12s;}
 .sidebar-toggle:hover{background:#e8f0fe;}
 .sidebar-toggle svg{width:10px;height:10px;color:#5f6368;transition:transform .22s;}
 .task-sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
-
 .sidebar-nav{flex:1;overflow-y:auto;padding:8px 8px 4px;transition:opacity .18s;}
 .sidebar-nav::-webkit-scrollbar{width:3px;}
 .sidebar-nav::-webkit-scrollbar-thumb{background:#e0e0e0;}
@@ -78,7 +58,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .stat-val.teal{color:#00897b;}
 .stat-val.blue{color:#1a73e8;}
 
-/* ── SETTINGS PANEL (bottom of sidebar) ── */
+/* ── SETTINGS PANEL ── */
 .sidebar-settings{flex-shrink:0;border-top:1px solid #e0e0e0;background:#fafafa;}
 .settings-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;user-select:none;}
 .settings-hd-lbl{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.07em;}
@@ -106,14 +86,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .sf-result-tag.obese{background:#fce8e6;color:#c5221f;}
 .sf-result-tag.underweight{background:#e8f0fe;color:#1a56b0;}
 
-/* ── CONTENT AREA — matched to finance/task ── */
-/* ▶ CHANGE 1+2/14: max-width:1440px, margin:0 auto, padding/gap matched */
-.content-area{
-  width:100%;max-width:1440px;margin:0 auto;
-  display:flex;overflow:hidden;min-height:0;
-  padding:8px 20px 10px 16px;
-  gap:14px;align-items:stretch;
-}
+/* ── CONTENT AREA ── */
+.content-area{width:100%;max-width:1440px;margin:0 auto;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px 16px;gap:14px;align-items:stretch;}
 
 /* ── HEALTH CENTRE: 60% ── */
 .health-centre{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;gap:4px;overflow:hidden;}
@@ -133,65 +107,83 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .add-fab:hover{background:#1765cc;}
 
 .rows-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow:hidden;}
-.hrow-sm{flex:0 0 auto;display:flex;overflow:hidden;min-height:0;}
+
+/* ── ROW 1: Overview — height set by JS to match Send to MIE card ── */
+.hrow-overview{flex:0 0 auto;display:flex;overflow:hidden;}
+/* Row 2 & 3 share all remaining space equally */
 .hrow{flex:1;min-height:0;display:flex;overflow:hidden;}
 #row-medical{flex:1;}
 
-/* ── OVERVIEW CARD shell ── */
-.ov-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:5px 10px;display:flex;align-items:stretch;width:100%;overflow:hidden;}
+/* ── COMBINED OVERVIEW CARD ── */
+.ov-card-combined{
+  background:#fff;border:1px solid #e8eaed;border-radius:10px;
+  padding:7px 12px;display:flex;flex-direction:column;width:100%;overflow:hidden;gap:5px;
+}
+.ov-section-title{
+  font-size:13px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+  color:#9aa0a6;flex-shrink:0;
+}
+.ov-divider-h{height:1px;background:#f1f3f4;flex-shrink:0;}
+
+/* Calories + Macros row */
+.cal-macro-row{display:flex;align-items:stretch;flex:0 0 auto;}
 .ov-divider{width:1px;background:#f1f3f4;align-self:stretch;margin:0 8px;flex-shrink:0;}
 
-/* ── ROW 1: Calories 1/3 | Macros 2/3 ── */
 .cal-third{flex:0 0 33.33%;min-width:0;display:flex;flex-direction:column;justify-content:center;padding-right:4px;}
-.cal-label{font-size:8px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;}
+.cal-label{font-size:9.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;}
 .cal-block{display:flex;align-items:baseline;gap:4px;margin-bottom:0;}
-.cal-num{font-size:22px;font-weight:700;color:#202124;line-height:1;}
-.cal-unit{font-size:10px;color:#9aa0a6;}
-.cal-goal{font-size:9px;color:#9aa0a6;margin-bottom:3px;}
+.cal-num{font-size:24px;font-weight:700;color:#202124;line-height:1;}
+.cal-unit{font-size:11.5px;color:#9aa0a6;}
+.cal-goal{font-size:10.5px;color:#9aa0a6;margin-bottom:3px;}
 .cal-bigbar{height:5px;border-radius:3px;background:#f1f3f4;overflow:hidden;}
 .cal-bigfill{height:100%;border-radius:3px;background:#34a853;}
 .cal-stats{display:flex;gap:10px;margin-top:3px;}
-.cal-stat-item{font-size:9px;color:#5f6368;}
+.cal-stat-item{font-size:10.5px;color:#5f6368;}
 .cal-stat-item span{font-weight:600;color:#202124;}
-.macros-two-thirds{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-around;gap:2px;}
+
+.macros-two-thirds{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-around;gap:3px;}
 .macro-row-item{display:flex;align-items:center;gap:7px;}
-.macro-row-label{font-size:9px;font-weight:600;color:#5f6368;width:42px;flex-shrink:0;}
+.macro-row-label{font-size:10.5px;font-weight:600;color:#5f6368;width:46px;flex-shrink:0;}
 .macro-bar-track{flex:1;height:5px;border-radius:3px;background:#f1f3f4;overflow:hidden;}
 .macro-bar-fill{height:100%;border-radius:3px;}
-.macro-nums{font-size:9px;color:#9aa0a6;white-space:nowrap;flex-shrink:0;min-width:58px;text-align:right;}
+.macro-nums{font-size:10.5px;color:#9aa0a6;white-space:nowrap;flex-shrink:0;min-width:62px;text-align:right;}
 .macro-nums strong{color:#202124;font-weight:600;}
 
-/* ── ROW 2 ── */
-.icons-sixty{flex:0 0 60%;display:flex;align-items:center;justify-content:space-around;}
-.metric-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;}
-.metric-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;}
-.metric-val{font-size:11px;font-weight:600;color:#202124;text-align:center;line-height:1.2;}
-.metric-label{font-size:8px;color:#9aa0a6;text-align:center;}
-.body-forty{flex:0 0 40%;display:flex;align-items:center;justify-content:space-around;}
+/* Activity + Body metrics row */
+.activity-body-row{display:flex;align-items:center;flex:1;min-height:0;}
+.icons-sixty{flex:0 0 60%;display:flex;align-items:center;justify-content:space-around;height:100%;}
+.body-forty{flex:0 0 40%;display:flex;align-items:center;justify-content:space-around;height:100%;}
+.metric-item{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.metric-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;}
+.metric-val{font-size:14px;font-weight:600;color:#202124;text-align:center;line-height:1.2;}
+.metric-label{font-size:11px;color:#9aa0a6;text-align:center;}
 .bc-item{text-align:center;flex:1;}
-.bc-label{font-size:8px;color:#9aa0a6;margin-bottom:2px;line-height:1.3;}
-.bc-val{font-size:12px;font-weight:700;color:#202124;}
-.bc-sub{font-size:9px;color:#5f6368;margin-top:1px;}
+.bc-label{font-size:11px;color:#9aa0a6;margin-bottom:2px;line-height:1.3;}
+.bc-val{font-size:15px;font-weight:700;color:#202124;}
+.bc-sub{font-size:12px;color:#5f6368;margin-top:1px;}
 
-/* ── ROW 3: Food Log ── */
+/* ── ROW 2: Food Log ── */
 .food-log-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:7px 10px;display:flex;flex-direction:column;width:100%;overflow:hidden;}
 .food-log-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;}
-.food-log-title{font-size:11.5px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
+/* #1 — Match Quick Actions font size (13px font-weight 500) */
+.food-log-title{font-size:13px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
 .food-slots{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;flex:1;}
 .food-slot{background:#f8f9fa;border:1px dashed #e0e0e0;border-radius:8px;padding:6px 8px;display:flex;flex-direction:column;gap:2px;cursor:pointer;transition:all .12s;}
 .food-slot:hover{background:#e8f0fe;border-color:#1a73e8;border-style:solid;}
-.food-slot-label{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+/* #2 — subtitle/category font +1.5px (was 9px → 10.5px) */
+.food-slot-label{font-size:10.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
 .food-slot-items{flex:1;display:flex;flex-direction:column;gap:1px;overflow:hidden;}
-.food-entry{font-size:10px;color:#3c4043;line-height:1.35;}
-.food-entry-cal{font-size:9px;color:#9aa0a6;}
-.food-add{font-size:9px;color:#1a73e8;margin-top:auto;}
+.food-entry{font-size:11.5px;color:#3c4043;line-height:1.35;}
+.food-entry-cal{font-size:10.5px;color:#9aa0a6;}
+.food-add{font-size:10.5px;color:#1a73e8;margin-top:auto;}
 
 /* ── Sub-cards ── */
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;width:100%;}
 .sub-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;}
 .sc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;}
-.sc-label{font-size:8.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9aa0a6;}
-.sc-badge{font-size:9px;font-weight:600;border-radius:8px;padding:1px 6px;}
+/* #1 — sub-card title match Quick Actions (13px) */
+.sc-label{font-size:13px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#9aa0a6;}
+.sc-badge{font-size:10.5px;font-weight:600;border-radius:8px;padding:1px 6px;}
 .sc-badge.ok{background:#e6f4ea;color:#137333;}
 .sc-badge.warn{background:#fef7e0;color:#b06000;}
 .sc-badge.blue{background:#e8f0fe;color:#1a56b0;}
@@ -202,18 +194,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 #row-medical .sub-card{min-height:0;}
 #row-medical .three-col{height:100%;}
 .med-field{flex-shrink:0;}
-.med-lbl{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;}
-.med-val{font-size:11px;color:#202124;background:#f8f9fa;border:1px solid #e8eaed;border-radius:5px;padding:3px 7px;min-height:22px;cursor:text;line-height:1.5;outline:none;}
+.med-lbl{font-size:10.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px;}
+.med-val{font-size:12.5px;color:#202124;background:#f8f9fa;border:1px solid #e8eaed;border-radius:5px;padding:3px 7px;min-height:22px;cursor:text;line-height:1.5;outline:none;}
 .med-val:focus{border-color:#1a73e8;background:#fff;}
 .mini-list{display:flex;flex-direction:column;gap:3px;flex:1;overflow:hidden;}
-.mini-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#3c4043;padding:2px 0;flex-shrink:0;}
+.mini-item{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#3c4043;padding:2px 0;flex-shrink:0;}
 .mini-cb{width:14px;height:14px;min-width:14px;border:1.5px solid #9aa0a6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
 .mini-cb:hover{border-color:#1a73e8;}
 .mini-cb.done{border-color:#1a73e8;background:#1a73e8;}
 .mini-cb.done::after{content:'✓';color:#fff;font-size:8px;font-weight:700;}
 .mini-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .mini-text.done-text{text-decoration:line-through;color:#9aa0a6;}
-.mini-empty{font-size:11px;color:#9aa0a6;font-style:italic;}
+.mini-empty{font-size:12.5px;color:#9aa0a6;font-style:italic;}
 .sc-add-btn{background:none;border:none;cursor:pointer;font-size:15px;color:#1a73e8;line-height:1;padding:0 2px;font-family:'DM Sans',sans-serif;font-weight:600;flex-shrink:0;}
 .sc-add-btn:hover{color:#1765cc;}
 .notes-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
@@ -222,60 +214,73 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .note-item{display:flex;align-items:flex-start;gap:5px;padding:3px 2px;border-radius:5px;}
 .note-item:hover{background:#f8f9fa;}
 .note-bullet{font-size:13px;color:#1a73e8;flex-shrink:0;line-height:1.5;user-select:none;}
-.note-text{flex:1;font-size:11px;color:#3c4043;line-height:1.5;outline:none;min-width:0;word-break:break-word;}
+.note-text{flex:1;font-size:12.5px;color:#3c4043;line-height:1.5;outline:none;min-width:0;word-break:break-word;}
 .note-text:focus{color:#202124;}
 .note-del{background:none;border:none;cursor:pointer;font-size:13px;color:#dadce0;padding:0;line-height:1;flex-shrink:0;opacity:0;transition:opacity .12s,color .12s;font-family:sans-serif;}
 .note-item:hover .note-del{opacity:1;}
 .note-del:hover{color:#d93025;}
-.note-area{flex:1;background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;padding:5px 7px;font-size:11px;color:#3c4043;resize:none;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
-.note-area:focus{border-color:#1a73e8;}
 .period-section{display:flex;flex-direction:column;gap:5px;flex:1;overflow:hidden;}
 .period-btns{display:flex;gap:5px;flex-shrink:0;}
-.period-btn{flex:1;border:none;border-radius:20px;padding:4px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.period-btn{flex:1;border:none;border-radius:20px;padding:4px 6px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .period-btn.start{background:#e91e63;color:#fff;}
 .period-btn.end{background:#9e9e9e;color:#fff;}
 .period-info{display:flex;flex-direction:column;gap:4px;flex:1;}
 .period-row{display:flex;flex-direction:column;gap:1px;}
-.period-row strong{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.04em;}
-.period-row span{font-size:11px;color:#3c4043;}
+.period-row strong{font-size:10.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.04em;}
+.period-row span{font-size:12.5px;color:#3c4043;}
 .toggle-track{width:28px;height:15px;background:#dadce0;border-radius:8px;position:relative;transition:background .2s;flex-shrink:0;cursor:pointer;}
 .toggle-track.on{background:#e91e63;}
 .toggle-thumb{width:11px;height:11px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
 .toggle-track.on .toggle-thumb{left:15px;}
 
-/* ── RIGHT COLUMN — matched to finance/task ── */
-/* ▶ CHANGE 3/14: flex:1 → flex:0 0 calc(40%-16px); gap:8px → 14px */
+/* ══ TASKS PANEL — Health (mirrors Finance) ══ */
+.health-tasks-panel{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.health-tasks-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;}
+.health-tasks-label{font-size:13px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:#9aa0a6;}
+.health-tasks-badge{font-size:10.5px;font-weight:600;border-radius:8px;padding:1px 6px;}
+.health-tasks-badge.warn{background:#fef7e0;color:#b06000;}
+.health-tasks-badge.ok{background:#e6f4ea;color:#137333;}
+.health-task-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0;}
+.health-task-list::-webkit-scrollbar{width:3px;}
+.health-task-list::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px;}
+.health-task-item{display:flex;align-items:center;gap:7px;padding:4px 2px;border-radius:5px;transition:background .1s;flex-shrink:0;}
+.health-task-item:hover{background:#f8f9fa;}
+.health-task-cb{width:15px;height:15px;min-width:15px;border:1.5px solid #9aa0a6;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;background:transparent;}
+.health-task-cb:hover{border-color:#1a73e8;background:#e8f0fe;}
+.health-task-cb.checked{border-color:#1a73e8;background:#1a73e8;}
+.health-task-cb.checked::after{content:'✓';color:#fff;font-size:8px;font-weight:700;line-height:1;}
+.health-task-name{font-size:12.5px;color:#202124;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;}
+.health-task-name.done{text-decoration:line-through;color:#9aa0a6;}
+.health-task-due{font-size:10px;font-weight:500;border-radius:8px;padding:1px 5px;flex-shrink:0;white-space:nowrap;}
+.health-task-due.overdue{background:#fce8e6;color:#c5221f;}
+.health-task-due.today{background:#fef7e0;color:#b06000;}
+.health-task-due.future{background:#f1f3f4;color:#5f6368;}
+.health-task-empty{font-size:12.5px;color:#9aa0a6;font-style:italic;text-align:center;padding:8px 0;}
+.health-task-loading{font-size:12px;color:#9aa0a6;font-style:italic;padding:4px 0;}
+.health-tasks-add{background:none;border:none;cursor:pointer;font-size:16px;color:#1a73e8;line-height:1;padding:0 2px;font-family:'DM Sans',sans-serif;font-weight:600;flex-shrink:0;}
+.health-tasks-add:hover{color:#1765cc;}
+
+/* ── RIGHT COLUMN ── */
 .right-col{flex:0 0 calc(40% - 16px);min-width:0;display:flex;flex-direction:column;gap:14px;overflow:hidden;}
-/* ▶ CHANGE 4/14: padding:10px 12px → 16px 18px */
 .r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
-/* ▶ CHANGE 5/14: font-size:10px → 11px; margin-bottom:7px → 10px */
 .r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
-/* ▶ CHANGE 6/14: gap:4px → 6px; margin-bottom:6px → 8px */
 .tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-/* ▶ CHANGE 7/14: padding:2px 7px → 3px 10px; font-size:10px → 11px */
 .tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;}
 .tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
 .tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
-/* ▶ CHANGE 8/14: min-height:50px → 72px; padding:6px 8px → 8px 10px; font-size:12px → 13px */
 .msg-ta{width:100%;min-height:72px;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
 .msg-ta:focus{border-color:#1a73e8;}
-/* ▶ CHANGE 9/14: gap:5px → 6px; margin-top:5px → 8px */
 .msg-actions{display:flex;gap:6px;margin-top:8px;}
 .attach-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;color:#5f6368;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
 .attach-btn:hover{background:#f1f3f4;}
 .send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .send-btn:hover{background:#1765cc;}
-/* ▶ CHANGE 14/14: margin-top:3px → 5px; min-height:12px → 13px */
 .send-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
-/* ▶ CHANGE 10/14: gap:4px → 8px */
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-/* ▶ CHANGE 11/14: padding:7px 3px → 14px 8px */
 .qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-decoration:none;display:block;}
 .qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
 .qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-/* ▶ CHANGE 12/14: font-size:16px → 22px; margin-bottom:2px → 4px */
 .qa-icon{font-size:22px;margin-bottom:4px;}
-/* ▶ CHANGE 13/14: font-size:11px → 13px */
 .qa-name{font-size:13px;font-weight:500;color:#202124;}
 
 /* ── MODALS ── */
@@ -304,7 +309,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .btn-cancel:hover{background:#e0e0e0;}
 .btn-save{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-save:hover{background:#1765cc;}
+.btn-save:disabled{background:#a8c7fa;cursor:not-allowed;}
 .modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
+.f-check-row{display:flex;align-items:center;gap:6px;padding:6px 0;}
+.f-check-row input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:#1a73e8;}
+.f-check-row label{font-size:12px;color:#5f6368;cursor:pointer;}
 
 /* ── CALENDAR PICKER ── */
 .picker-wrap{position:relative;display:inline-block;}
@@ -349,13 +358,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px;}
   .health-centre,.right-col{flex:0 0 auto;width:100%;}
   .rows-wrap{overflow:visible;height:auto;}
-  .hrow{height:auto;flex-direction:column;}
-  .ov-card,.three-col,.food-log-card{height:auto;}
+  .hrow,.hrow-overview{height:auto;flex-direction:column;}
+  .ov-card-combined,.three-col,.food-log-card{height:auto;}
   .three-col{grid-template-columns:1fr;}
   .food-slots{grid-template-columns:1fr;}
   .icons-sixty,.body-forty{flex:0 0 100%;}
-  .ov-card{flex-wrap:wrap;}
-  .tb-meta{display:none;}
 }
 @media(max-width:480px){.topbar{padding:0 12px;}.content-area{padding:6px;}}
 
@@ -536,7 +543,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             <div class="date-nav">
               <button class="nav-arrow" onclick="changeDate(-1)">&#8249;</button>
               <div class="picker-wrap" id="picker-wrap">
-                <button class="date-pill" id="date-display" onclick="togglePicker(event)">May 07 2026</button>
+                <button class="date-pill" id="date-display" onclick="togglePicker(event)">May 18 2026</button>
                 <div class="picker-popup" id="picker-popup">
                   <div class="picker-header">
                     <button class="picker-arr" onclick="calStep(-1);event.stopPropagation()">&#8249;</button>
@@ -565,46 +572,55 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
 
         <div class="rows-wrap">
-          <div class="hrow-sm">
-            <div class="ov-card">
-              <div class="cal-third">
-                <div class="cal-label">Calories</div>
-                <div class="cal-block"><span class="cal-num" id="cal-display">976</span><span class="cal-unit">cal</span></div>
-                <div class="cal-goal" id="cal-goal-display">/ 2,874 goal</div>
-                <div class="cal-bigbar"><div class="cal-bigfill" style="width:34%;"></div></div>
-                <div class="cal-stats">
-                  <div class="cal-stat-item">Burned <span>1,862</span></div>
-                  <div class="cal-stat-item">Net <span>−886</span></div>
+
+          <!-- ══ ROW 1: Combined Overview (Calories+Macros + Activity+Body) ══ -->
+          <div class="hrow-overview">
+            <div class="ov-card-combined">
+              <div class="ov-section-title">Overview</div>
+
+              <!-- Calories + Macros -->
+              <div class="cal-macro-row">
+                <div class="cal-third">
+                  <div class="cal-label">Calories</div>
+                  <div class="cal-block"><span class="cal-num" id="cal-display">976</span><span class="cal-unit">cal</span></div>
+                  <div class="cal-goal" id="cal-goal-display">/ 2,874 goal</div>
+                  <div class="cal-bigbar"><div class="cal-bigfill" style="width:34%;"></div></div>
+                  <div class="cal-stats">
+                    <div class="cal-stat-item">Burned <span>1,862</span></div>
+                    <div class="cal-stat-item">Net <span>−886</span></div>
+                  </div>
+                </div>
+                <div class="ov-divider"></div>
+                <div class="macros-two-thirds">
+                  <div class="macro-row-item"><div class="macro-row-label">Carbs</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:48%;background:#1a73e8;"></div></div><div class="macro-nums"><strong>125 g</strong> / 260</div></div>
+                  <div class="macro-row-item"><div class="macro-row-label">Fat</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:46%;background:#fbbc04;"></div></div><div class="macro-nums"><strong>32 g</strong> / 70</div></div>
+                  <div class="macro-row-item"><div class="macro-row-label">Fiber</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:48%;background:#00897b;"></div></div><div class="macro-nums"><strong>125 g</strong> / 260</div></div>
+                  <div class="macro-row-item"><div class="macro-row-label">Protein</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:45%;background:#ea4335;"></div></div><div class="macro-nums"><strong>47 g</strong> / 104</div></div>
                 </div>
               </div>
-              <div class="ov-divider"></div>
-              <div class="macros-two-thirds">
-                <div class="macro-row-item"><div class="macro-row-label">Carbs</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:48%;background:#1a73e8;"></div></div><div class="macro-nums"><strong>125 g</strong> / 260</div></div>
-                <div class="macro-row-item"><div class="macro-row-label">Fat</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:46%;background:#fbbc04;"></div></div><div class="macro-nums"><strong>32 g</strong> / 70</div></div>
-                <div class="macro-row-item"><div class="macro-row-label">Fiber</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:48%;background:#00897b;"></div></div><div class="macro-nums"><strong>125 g</strong> / 260</div></div>
-                <div class="macro-row-item"><div class="macro-row-label">Protein</div><div class="macro-bar-track"><div class="macro-bar-fill" style="width:45%;background:#ea4335;"></div></div><div class="macro-nums"><strong>47 g</strong> / 104</div></div>
+
+              <div class="ov-divider-h"></div>
+
+              <!-- Activity + Body metrics -->
+              <div class="activity-body-row">
+                <div class="icons-sixty">
+                  <div class="metric-item"><div class="metric-icon" style="background:#e8f5e9;">🔥</div><div class="metric-val">1,862</div><div class="metric-label">Cals</div></div>
+                  <div class="metric-item"><div class="metric-icon" style="background:#e3f2fd;">👟</div><div class="metric-val">11,256</div><div class="metric-label">Steps</div></div>
+                  <div class="metric-item"><div class="metric-icon" style="background:#f3e5f5;">📍</div><div class="metric-val">5.52</div><div class="metric-label">Miles</div></div>
+                  <div class="metric-item"><div class="metric-icon" style="background:#fff3e0;">🏋️</div><div class="metric-val">862</div><div class="metric-label">Active Cal</div></div>
+                  <div class="metric-item"><div class="metric-icon" style="background:#e0f7fa;">💧</div><div class="metric-val" id="water-display">1200</div><div class="metric-label" id="water-label">ml / oz</div></div>
+                </div>
+                <div class="ov-divider"></div>
+                <div class="body-forty">
+                  <div class="bc-item"><div class="bc-label">Weight</div><div class="bc-val" id="weight-display">70.4 kg</div><div class="bc-sub" id="weight-sub">155.10 lb</div></div>
+                  <div class="bc-item"><div class="bc-label">Skeleton<br>Muscle Mass</div><div class="bc-val" id="muscle-display">42.5 kg</div><div class="bc-sub">(60.4 %)</div></div>
+                  <div class="bc-item"><div class="bc-label">Body Fat</div><div class="bc-val" id="fat-display">25.2 kg</div><div class="bc-sub">(35.8 %)</div></div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="hrow-sm">
-            <div class="ov-card">
-              <div class="icons-sixty">
-                <div class="metric-item"><div class="metric-icon" style="background:#e8f5e9;">🔥</div><div class="metric-val">1,862</div><div class="metric-label">Cals</div></div>
-                <div class="metric-item"><div class="metric-icon" style="background:#e3f2fd;">👟</div><div class="metric-val">11,256</div><div class="metric-label">Steps</div></div>
-                <div class="metric-item"><div class="metric-icon" style="background:#f3e5f5;">📍</div><div class="metric-val">5.52</div><div class="metric-label">Miles</div></div>
-                <div class="metric-item"><div class="metric-icon" style="background:#fff3e0;">🏋️</div><div class="metric-val">862</div><div class="metric-label">Active Cal</div></div>
-                <div class="metric-item"><div class="metric-icon" style="background:#e0f7fa;">💧</div><div class="metric-val" id="water-display">1200</div><div class="metric-label" id="water-label">ml / oz</div></div>
-              </div>
-              <div class="ov-divider"></div>
-              <div class="body-forty">
-                <div class="bc-item"><div class="bc-label">Weight</div><div class="bc-val" id="weight-display">70.4 kg</div><div class="bc-sub" id="weight-sub">155.10 lb</div></div>
-                <div class="bc-item"><div class="bc-label">Skeleton<br>Muscle Mass</div><div class="bc-val" id="muscle-display">42.5 kg</div><div class="bc-sub">(60.4 %)</div></div>
-                <div class="bc-item"><div class="bc-label">Body Fat</div><div class="bc-val" id="fat-display">25.2 kg</div><div class="bc-sub">(35.8 %)</div></div>
-              </div>
-            </div>
-          </div>
-
+          <!-- ══ ROW 2: Food Log ══ -->
           <div class="hrow" id="row-food">
             <div class="food-log-card">
               <div class="food-log-hd"><span class="food-log-title">Food Log</span><span class="sc-badge ok">976 cal logged</span></div>
@@ -616,8 +632,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
             </div>
           </div>
 
+          <!-- ══ ROW 3: Tasks | Notes | Period Tracker ══ -->
+          <!-- Changed order: Tasks first, Notes second, Period Tracker third -->
           <div class="hrow" id="row-daily">
             <div class="three-col">
+
+              <!-- Tasks — Health (API connected) -->
+              <div class="health-tasks-panel">
+                <div class="health-tasks-hd">
+                  <span class="health-tasks-label">✅ Tasks — Health</span>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="health-tasks-badge warn" id="health-tasks-badge">—</span>
+                    <button class="health-tasks-add" onclick="openAddHealthTaskModal()" title="Add task">+</button>
+                  </div>
+                </div>
+                <div class="health-task-list" id="health-task-list">
+                  <div class="health-task-loading">Loading…</div>
+                </div>
+              </div>
+
+              <!-- Notes -->
               <div class="sub-card">
                 <div class="sc-head"><span class="sc-label">Notes</span><button class="sc-add-btn" onclick="addNote()" title="Add note">+</button></div>
                 <div class="notes-list" id="notes-list">
@@ -626,15 +660,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                   <div class="note-item"><span class="note-bullet">•</span><span class="note-text" contenteditable="true" data-note="2">Skipped lunch — make up with protein at dinner</span><button class="note-del" onclick="delNote(this)" title="Delete">×</button></div>
                 </div>
               </div>
-              <div class="sub-card">
-                <div class="sc-head"><span class="sc-label">Tasks</span><span class="sc-badge warn" id="tasks-badge">2 pending</span></div>
-                <div class="mini-list">
-                  <div class="mini-item"><div class="mini-cb" onclick="toggleMiniCb(this)"></div><span class="mini-text">30 min cardio</span></div>
-                  <div class="mini-item"><div class="mini-cb done" onclick="toggleMiniCb(this)"></div><span class="mini-text done-text">Take vitamins</span></div>
-                  <div class="mini-item"><div class="mini-cb" onclick="toggleMiniCb(this)"></div><span class="mini-text">Drink 2L water</span></div>
-                  <div class="mini-item"><div class="mini-cb" onclick="toggleMiniCb(this)"></div><span class="mini-text">Sleep by 10 PM</span></div>
-                </div>
-              </div>
+
+              <!-- Period Tracker -->
               <div class="sub-card">
                 <div class="sc-head"><span class="sc-label">Period Tracker</span><div class="toggle-track on" id="period-toggle-track" onclick="togglePeriodCard()" title="Show / hide period tracker"><div class="toggle-thumb"></div></div></div>
                 <div class="period-section" id="period-body">
@@ -644,11 +671,13 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                     <div class="period-row" style="margin-top:4px;"><strong>Next Expected Date</strong><span>June 2 – June 6</span></div>
                   </div>
                 </div>
-                <div id="period-hidden" style="display:none;flex:1;align-items:center;justify-content:center;color:#9aa0a6;font-size:11px;font-style:italic;">Period Tracker hidden</div>
+                <div id="period-hidden" style="display:none;flex:1;align-items:center;justify-content:center;color:#9aa0a6;font-size:12.5px;font-style:italic;">Period Tracker hidden</div>
               </div>
+
             </div>
           </div>
 
+          <!-- ══ Medical row (hidden by default) ══ -->
           <div class="hrow" id="row-medical" style="display:none;">
             <div class="three-col">
               <div class="sub-card">
@@ -685,8 +714,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
               </div>
             </div>
           </div>
-        </div>
-      </div>
+
+        </div><!-- /rows-wrap -->
+      </div><!-- /health-centre -->
 
       <!-- RIGHT COLUMN -->
       <div class="right-col">
@@ -725,10 +755,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
         </div>
       </div>
 
-    </div>
-  </div>
-</div>
+    </div><!-- /content-area -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
 
+<!-- ══ ADD HEALTH ENTRY MODAL ══ -->
 <div class="modal-bg hidden" id="add-modal">
   <div class="modal-box">
     <div class="modal-hd"><div class="modal-title">Add Health Entry</div><button class="modal-x" onclick="closeAddModal()">&times;</button></div>
@@ -784,6 +815,37 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   </div>
 </div>
 
+<!-- ══ ADD HEALTH TASK MODAL ══ -->
+<div class="modal-bg hidden" id="add-health-task-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-title">Add Task — Health</div>
+      <button class="modal-x" onclick="closeAddHealthTaskModal()">&times;</button>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Title *</label>
+      <input class="f-input" type="text" id="htask-title" placeholder="Task title…"/>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Notes</label>
+      <textarea class="f-input" id="htask-notes" placeholder="Optional notes…" style="min-height:56px;resize:vertical;"></textarea>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Due Date</label>
+      <input class="f-input" type="date" id="htask-due"/>
+    </div>
+    <div class="f-check-row" id="htask-cal-row" style="display:none;">
+      <input type="checkbox" id="htask-create-cal"/>
+      <label for="htask-create-cal">Add to Calendar? <span style="color:#5f6368;font-weight:400;">(Visibility: Private)</span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddHealthTaskModal()">Cancel</button>
+      <button class="btn-save" id="add-htask-btn" onclick="saveHealthTask()">Add Task</button>
+    </div>
+    <div class="modal-status" id="add-htask-status"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -815,28 +877,50 @@ function init(){
     .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
     .then(function(d){
       if(!d)return;
-      if(d.connected){show(appEl);startClock();loadWeather();renderDate();loadProfile();loadMedFields();}
-      else show(authWrap);
+      if(d.connected){
+        show(appEl);
+        startClock();
+        loadWeather();
+        renderDate();
+        loadProfile();
+        loadMedFields();
+        loadHealthTasks();
+        /* sync overview height after layout paint */
+        requestAnimationFrame(function(){requestAnimationFrame(syncOverviewHeight);});
+      }else show(authWrap);
     })
     .catch(function(){show(authWrap);});
 }
+
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var now=new Date();
 var currentMonth=now.getMonth(),currentYear=now.getFullYear(),currentDay=now.getDate();
 var ytdActive=false,selectedType='food',unitMetric=false;
 
-function startClock(){function tick(){var n=new Date();var d=document.getElementById('wb-date');var t=document.getElementById('wb-time');if(d)d.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});if(t)t.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
+function startClock(){
+  function tick(){
+    var n=new Date();
+    var d=document.getElementById('wb-date');
+    var t=document.getElementById('wb-time');
+    if(d)d.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    if(t)t.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
+  }
+  tick();setInterval(tick,30000);
+}
 function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';return'⛈️';}
 function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});else doWeather(37.7749,-122.4194);}
 function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);var icon=document.getElementById('wb-icon'),temp=document.getElementById('wb-temp');if(icon)icon.textContent=wIcon(w.current.weathercode);if(temp)temp.textContent=f+'°F / '+c+'°C';}).catch(function(){});}
+
 var toastTmr=null;
 function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
+
 function renderDate(){var d=new Date(currentYear,currentMonth,currentDay);var label=MONTHS_SHORT[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' '+d.getFullYear();document.getElementById('date-display').textContent=label;}
 function changeDate(dir){if(ytdActive)return;var d=new Date(currentYear,currentMonth,currentDay+dir);currentYear=d.getFullYear();currentMonth=d.getMonth();currentDay=d.getDate();renderDate();}
 function toggleYTD(){ytdActive=!ytdActive;var btn=document.getElementById('ytd-btn');btn.classList.toggle('active',ytdActive);if(ytdActive){document.getElementById('date-display').textContent=currentYear+' YTD';toast('Showing '+currentYear+' year to date');}else renderDate();}
 function toggleUnit(){unitMetric=!unitMetric;document.getElementById('unit-btn').textContent=unitMetric?'Metrics / US':'US / Metrics';if(unitMetric){document.getElementById('weight-display').textContent='70.4 kg';document.getElementById('weight-sub').textContent='155.10 lb';document.getElementById('muscle-display').textContent='42.5 kg';document.getElementById('fat-display').textContent='25.2 kg';document.getElementById('water-display').textContent='1200';document.getElementById('water-label').textContent='ml / oz';document.getElementById('cal-display').textContent='976';document.getElementById('cal-goal-display').textContent='/ 2,874 goal';}else{document.getElementById('weight-display').textContent='155.1 lb';document.getElementById('weight-sub').textContent='70.4 kg';document.getElementById('muscle-display').textContent='93.7 lb';document.getElementById('fat-display').textContent='55.6 lb';document.getElementById('water-display').textContent='40.6';document.getElementById('water-label').textContent='fl oz';document.getElementById('cal-display').textContent='976';document.getElementById('cal-goal-display').textContent='/ 2,874 goal';}toast('Switched to '+(unitMetric?'Metric':'US')+' units');}
-var calViewMonth=false;
+
+/* Calendar picker */
 var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
 function buildCalendar(){var today=new Date();var sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay();var startOffset=(firstDay===0)?6:firstDay-1;var daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate();var daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate();var day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td');var btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate());var isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');}(function(d,m,y){if(!btn.classList.contains('other-month')){btn.onclick=function(e){e.stopPropagation();currentDay=d;currentMonth=m;currentYear=y;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();closePicker();};}})(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
 function calStep(dir){pickerNavMonth+=dir;if(pickerNavMonth<0){pickerNavMonth=11;pickerNavYear--;}if(pickerNavMonth>11){pickerNavMonth=0;pickerNavYear++;}buildCalendar();}
@@ -845,32 +929,294 @@ function calMonthChange(sel){pickerNavMonth=parseInt(sel.value);buildCalendar();
 function togglePicker(e){e.stopPropagation();if(ytdActive)return;var popup=document.getElementById('picker-popup');if(popup.classList.contains('open')){closePicker();}else{pickerNavYear=currentYear;pickerNavMonth=currentMonth;buildCalendar();popup.classList.add('open');}}
 function closePicker(){document.getElementById('picker-popup').classList.remove('open');}
 document.addEventListener('click',function(e){var wrap=document.getElementById('picker-wrap');if(wrap&&!wrap.contains(e.target))closePicker();});
+
+/* Notes */
 var noteCounter=10;
-function addNote(){var list=document.getElementById('notes-list');var item=document.createElement('div');item.className='note-item';item.innerHTML='<span class="note-bullet">•</span><span class="note-text" contenteditable="true" data-note="'+noteCounter+'" placeholder="New note…"></span><button class="note-del" onclick="delNote(this)" title="Delete">×</button>';list.appendChild(item);noteCounter++;var span=item.querySelector('.note-text');span.focus();}
+function addNote(){var list=document.getElementById('notes-list');var item=document.createElement('div');item.className='note-item';item.innerHTML='<span class="note-bullet">•</span><span class="note-text" contenteditable="true" data-note="'+noteCounter+'"></span><button class="note-del" onclick="delNote(this)" title="Delete">×</button>';list.appendChild(item);noteCounter++;item.querySelector('.note-text').focus();}
 function delNote(btn){var item=btn.parentElement;item.style.transition='opacity .15s';item.style.opacity='0';setTimeout(function(){item.remove();},150);}
+
+/* Settings */
 function toggleSettings(){var body=document.getElementById('settings-body');var arrow=document.getElementById('settings-arrow');body.classList.toggle('open');arrow.classList.toggle('open');}
 function calcAll(){var dob=document.getElementById('sf-dob').value;var sex=document.getElementById('sf-sex').value;var hcm=parseFloat(document.getElementById('sf-height-cm').value);var wkg=parseFloat(document.getElementById('sf-weight-kg').value);var act=parseFloat(document.getElementById('sf-activity').value)||1.55;var goal=document.getElementById('sf-goal').value||'maintain';var tkg=parseFloat(document.getElementById('sf-target-kg').value);var months=parseFloat(document.getElementById('sf-goal-months').value)||4;var resultsDiv=document.getElementById('sf-results');if(!dob||!sex||!hcm||!wkg){resultsDiv.style.display='none';return;}resultsDiv.style.display='flex';var today=new Date();var bd=new Date(dob);var age=today.getFullYear()-bd.getFullYear()-((today.getMonth()<bd.getMonth()||(today.getMonth()===bd.getMonth()&&today.getDate()<bd.getDate()))?1:0);document.getElementById('res-age').textContent=age+' yrs';var hm=hcm/100;var bmi=wkg/(hm*hm);document.getElementById('res-bmi').textContent=bmi.toFixed(1);var bmiTag=document.getElementById('res-bmi-tag');if(bmi<18.5){bmiTag.textContent='Underweight';bmiTag.className='sf-result-tag underweight';}else if(bmi<25){bmiTag.textContent='Normal';bmiTag.className='sf-result-tag normal';}else if(bmi<30){bmiTag.textContent='Overweight';bmiTag.className='sf-result-tag overweight';}else{bmiTag.textContent='Obese';bmiTag.className='sf-result-tag obese';}var bmr;if(sex==='Male'){bmr=10*wkg+6.25*hcm-5*age+5;}else{bmr=10*wkg+6.25*hcm-5*age-161;}document.getElementById('res-bmr').textContent=Math.round(bmr)+' kcal';var tdee=bmr*act;document.getElementById('res-tdee').textContent=Math.round(tdee)+' kcal';var delta=0,pace=0,intakeCal=tdee,exerciseCal=0;if(!isNaN(tkg)&&goal!=='maintain'){delta=tkg-wkg;var totalKcal=delta*7700;var days=months*30.44;var dailyDelta=totalKcal/days;intakeCal=Math.round(tdee+dailyDelta*0.6);exerciseCal=Math.round(Math.abs(dailyDelta*0.4));pace=Math.abs(delta/months);document.getElementById('res-wt-delta').textContent=(delta>0?'+':'')+delta.toFixed(1)+' kg';document.getElementById('res-pace').textContent=pace.toFixed(2)+' kg/mo';}else{intakeCal=Math.round(tdee);exerciseCal=0;document.getElementById('res-wt-delta').textContent='—';document.getElementById('res-pace').textContent='Maintain';}document.getElementById('res-intake').textContent=intakeCal+' kcal';document.getElementById('res-exercise').textContent=exerciseCal>0?exerciseCal+' kcal':'0 kcal';document.getElementById('cal-goal-display').textContent='/ '+intakeCal.toLocaleString()+' goal';}
 function saveProfile(){var ids=['sf-name','sf-dob','sf-sex','sf-blood','sf-allergies','sf-emcontact','sf-height-cm','sf-weight-kg','sf-activity','sf-goal','sf-goal-months','sf-target-kg'];var data={};ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}calcAll();var s=document.getElementById('sf-saved');s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);toast('Profile saved & calculated!','success');}
 function loadProfile(){try{var raw=localStorage.getItem('mie_health_profile');if(!raw)return;var data=JSON.parse(raw);Object.keys(data).forEach(function(id){var el=document.getElementById(id);if(el)el.value=data[id];});calcAll();}catch(e){}}
+
+/* Medical fields */
 document.querySelectorAll('.med-val[data-key]').forEach(function(el){el.addEventListener('blur',function(){try{localStorage.setItem('mie_med_'+el.getAttribute('data-key'),el.textContent);}catch(e){}});});
 function loadMedFields(){document.querySelectorAll('.med-val[data-key]').forEach(function(el){try{var v=localStorage.getItem('mie_med_'+el.getAttribute('data-key'));if(v!==null)el.textContent=v;}catch(e){}});}
+
+/* View switching */
 var medicalOpen=false;
-function setView(v,btn){document.querySelectorAll('.tl-item').forEach(function(el){el.classList.remove('active');});if(btn)btn.classList.add('active');var rowMed=document.getElementById('row-medical');var rowFood=document.getElementById('row-food');var rowDaily=document.getElementById('row-daily');if(v==='medical'){if(medicalOpen){rowMed.style.display='none';if(rowFood)rowFood.style.display='flex';if(rowDaily)rowDaily.style.display='flex';medicalOpen=false;if(btn)btn.classList.remove('active');var ovBtn=document.querySelector('.tl-item[onclick*="overview"]');if(ovBtn)ovBtn.classList.add('active');}else{rowMed.style.display='flex';if(rowFood)rowFood.style.display='none';if(rowDaily)rowDaily.style.display='none';medicalOpen=true;toast('Medical records — click Medical again to close');}}else{if(medicalOpen){rowMed.style.display='none';if(rowFood)rowFood.style.display='flex';if(rowDaily)rowDaily.style.display='flex';medicalOpen=false;}toast('Viewing '+v.charAt(0).toUpperCase()+v.slice(1));}}
+function setView(v,btn){
+  document.querySelectorAll('.tl-item').forEach(function(el){el.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  var rowMed=document.getElementById('row-medical');
+  var rowFood=document.getElementById('row-food');
+  var rowDaily=document.getElementById('row-daily');
+  if(v==='medical'){
+    if(medicalOpen){
+      rowMed.style.display='none';
+      if(rowFood)rowFood.style.display='flex';
+      if(rowDaily)rowDaily.style.display='flex';
+      medicalOpen=false;
+      if(btn)btn.classList.remove('active');
+      var ovBtn=document.querySelector('.tl-item[onclick*="overview"]');
+      if(ovBtn)ovBtn.classList.add('active');
+    }else{
+      rowMed.style.display='flex';
+      if(rowFood)rowFood.style.display='none';
+      if(rowDaily)rowDaily.style.display='none';
+      medicalOpen=true;
+      toast('Medical records — click Medical again to close');
+    }
+  }else{
+    if(medicalOpen){
+      rowMed.style.display='none';
+      if(rowFood)rowFood.style.display='flex';
+      if(rowDaily)rowDaily.style.display='flex';
+      medicalOpen=false;
+    }
+    toast('Viewing '+v.charAt(0).toUpperCase()+v.slice(1));
+  }
+}
+
 function toggleSidebar(){document.getElementById('task-sidebar').classList.toggle('collapsed');}
+
+/* Tag chips & send */
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1)ta.value=(tag+' '+val).trimEnd();}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.focus();});});
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status'),filIn=document.getElementById('file-input'),selFile=null;
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});document.querySelector('.tag-chip[data-tag="@health"]').classList.add('selected');}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){sndBtn.disabled=false;setTimeout(function(){sndSt.textContent='';},3000);});});
+
 function navigate(mod){window.location.href=DASHBOARD+'?mod='+mod;}
 function openFoodModal(meal){openAddModal();setType('food');var sel=document.getElementById('food-meal');for(var i=0;i<sel.options.length;i++){if(sel.options[i].text===meal){sel.selectedIndex=i;break;}}}
 function logPeriod(evt){toast('Period '+evt+' logged for today!','success');}
-function toggleMiniCb(cb){cb.classList.toggle('done');var txt=cb.nextElementSibling;if(txt)txt.classList.toggle('done-text');var pending=document.querySelectorAll('.mini-list .mini-cb:not(.done)').length;var badge=document.getElementById('tasks-badge');if(badge)badge.textContent=pending+' pending';toast('Task updated!','success');}
+function toggleMiniCb(cb){cb.classList.toggle('done');var txt=cb.nextElementSibling;if(txt)txt.classList.toggle('done-text');}
 function togglePeriodCard(){var track=document.getElementById('period-toggle-track');var body=document.getElementById('period-body');var hidden=document.getElementById('period-hidden');var isOn=track.classList.contains('on');track.classList.toggle('on',!isOn);if(body)body.style.display=isOn?'none':'flex';if(hidden)hidden.style.display=isOn?'flex':'none';}
-function openAddModal(){var today=new Date();document.getElementById('add-date').value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');document.getElementById('add-status').textContent='';document.getElementById('add-notes').value='';setType('food');document.getElementById('add-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('food-name').focus();},60);}
+
+/* ══════════════════════════════════
+   HEALTH TASKS — API integration
+   (mirrors Finance pattern exactly)
+══════════════════════════════════ */
+var _healthTasks=[];
+var _healthTaskLists=[];
+
+function loadHealthTasks(){
+  fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){_healthTasks=[];_healthTaskLists=[];}
+      else{
+        _healthTaskLists=Array.isArray(data.lists)?data.lists:[];
+        var raw=Array.isArray(data.tasks)?data.tasks:[];
+        var healthList=_healthTaskLists.find(function(l){
+          return l.title&&l.title.trim().toLowerCase()==='health';
+        });
+        var healthListId=healthList?healthList.id:null;
+        _healthTasks=raw
+          .filter(function(t){
+            if(!healthListId)return false;
+            var lid=t.listId||t.taskListId||null;
+            return lid===healthListId;
+          })
+          .map(function(t){return Object.assign({},t,{listId:healthListId,_pending:false});});
+      }
+      renderHealthTasks();
+    })
+    .catch(function(){_healthTasks=[];renderHealthTasks();});
+}
+
+function fmtHealthDue(d){
+  if(!d)return null;
+  var dt=new Date(d+(d.includes('T')?'':'T12:00:00'));
+  var now=new Date();now.setHours(0,0,0,0);
+  var diff=Math.round((dt-now)/86400000);
+  if(diff<0)return{label:'Overdue',cls:'overdue'};
+  if(diff===0)return{label:'Today',cls:'today'};
+  return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};
+}
+
+function renderHealthTasks(){
+  var list=document.getElementById('health-task-list');
+  var badge=document.getElementById('health-tasks-badge');
+  var active=_healthTasks.filter(function(t){return t.status!=='completed';});
+
+  if(badge){
+    badge.textContent=active.length+' pending';
+    badge.className='health-tasks-badge '+(active.length>0?'warn':'ok');
+  }
+  if(!list)return;
+  list.innerHTML='';
+
+  if(!active.length){
+    var emp=document.createElement('div');
+    emp.className='health-task-empty';
+    var hList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});
+    emp.textContent=hList?'All caught up! No pending Health tasks.':'No "Health" task list found.';
+    list.appendChild(emp);
+    return;
+  }
+
+  /* Sort: overdue → today → future → no-due */
+  active.sort(function(a,b){
+    function score(t){
+      if(!t.due)return 3;
+      var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));
+      var now=new Date();now.setHours(0,0,0,0);
+      var diff=Math.round((dt-now)/86400000);
+      if(diff<0)return 0;
+      if(diff===0)return 1;
+      return 2;
+    }
+    var sa=score(a),sb=score(b);
+    if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);
+    return 0;
+  });
+
+  active.forEach(function(t){
+    var item=document.createElement('div');
+    item.className='health-task-item';
+
+    var cb=document.createElement('div');
+    cb.className='health-task-cb';
+    cb.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(t._pending)return;
+      t._pending=true;
+      toggleHealthTask(t,cb,item,function(){t._pending=false;});
+    });
+
+    var nm=document.createElement('span');
+    nm.className='health-task-name';
+    nm.textContent=t.title||'Untitled';
+    nm.title=t.title||'';
+
+    item.appendChild(cb);
+    item.appendChild(nm);
+
+    if(t.due){
+      var df=fmtHealthDue(t.due);
+      if(df){
+        var chip=document.createElement('span');
+        chip.className='health-task-due '+df.cls;
+        chip.textContent=df.label;
+        item.appendChild(chip);
+      }
+    }
+    list.appendChild(item);
+  });
+}
+
+function toggleHealthTask(t,cb,row,onDone){
+  var wasDone=t.status==='completed';
+  var newStatus=wasDone?'needsAction':'completed';
+  cb.classList.toggle('checked',!wasDone);
+  var nm=row.querySelector('.health-task-name');
+  if(nm)nm.classList.toggle('done',!wasDone);
+  t.status=newStatus;
+
+  function attempt(listId){
+    return fetch(BACKEND+'/api/me/tasks/update',{
+      method:'POST',credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})
+    });
+  }
+  attempt(t.listId||'@default')
+    .then(function(r){if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;})
+    .then(function(r){
+      if(r&&r.ok){
+        toast(newStatus==='completed'?'✅ Task done!':'↩ Task reopened.',newStatus==='completed'?'success':'');
+        renderHealthTasks();
+      }else{
+        t.status=wasDone?'completed':'needsAction';
+        cb.classList.toggle('checked',wasDone);
+        if(nm)nm.classList.toggle('done',wasDone);
+        toast('Could not update task.','error');
+      }
+      if(onDone)onDone();
+    })
+    .catch(function(){
+      t.status=wasDone?'completed':'needsAction';
+      cb.classList.toggle('checked',wasDone);
+      if(nm)nm.classList.toggle('done',wasDone);
+      if(onDone)onDone();
+    });
+}
+
+/* ══ Add Health Task Modal ══ */
+function openAddHealthTaskModal(){
+  document.getElementById('htask-title').value='';
+  document.getElementById('htask-notes').value='';
+  document.getElementById('htask-due').value='';
+  document.getElementById('htask-create-cal').checked=false;
+  document.getElementById('htask-cal-row').style.display='none';
+  document.getElementById('add-htask-status').textContent='';
+  document.getElementById('add-htask-btn').disabled=false;
+  document.getElementById('add-health-task-modal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('htask-title').focus();},60);
+}
+function closeAddHealthTaskModal(){document.getElementById('add-health-task-modal').classList.add('hidden');}
+document.getElementById('htask-due').addEventListener('change',function(){
+  var calRow=document.getElementById('htask-cal-row');
+  calRow.style.display=this.value?'flex':'none';
+  if(!this.value)document.getElementById('htask-create-cal').checked=false;
+});
+document.getElementById('add-health-task-modal').addEventListener('click',function(e){if(e.target===this)closeAddHealthTaskModal();});
+
+function saveHealthTask(){
+  var title=document.getElementById('htask-title').value.trim();
+  var st=document.getElementById('add-htask-status');
+  if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}
+  var btn=document.getElementById('add-htask-btn');
+  btn.disabled=true;
+  st.style.color='#5f6368';
+  st.textContent='Saving…';
+  var dueVal=document.getElementById('htask-due').value;
+  var addToCal=dueVal&&document.getElementById('htask-create-cal').checked;
+  var healthList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});
+  var listId=healthList?healthList.id:'@default';
+  var payload={title:title,notes:document.getElementById('htask-notes').value.trim(),due:dueVal||null,listId:listId,createCalendarEvent:addToCal,calendarVisibility:'private'};
+  fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(data){
+      st.style.color='#1e8e3e';
+      st.textContent='✅ Task added!'+(data.calendar_event?' + Calendar event.':'');
+      toast('Task added','success');
+      setTimeout(function(){closeAddHealthTaskModal();loadHealthTasks();},700);
+    })
+    .catch(function(err){
+      st.style.color='#d93025';
+      st.textContent='❌ '+err.message;
+      btn.disabled=false;
+    });
+}
+
+/* ══ Health Entry Modal ══ */
+function openAddModal(){
+  var today=new Date();
+  document.getElementById('add-date').value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  document.getElementById('add-status').textContent='';
+  document.getElementById('add-notes').value='';
+  setType('food');
+  document.getElementById('add-modal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('food-name').focus();},60);
+}
 function closeAddModal(){document.getElementById('add-modal').classList.add('hidden');}
 document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
 function setType(type){selectedType=type;['food','body','activity','period'].forEach(function(t){document.getElementById('type-'+t).className='type-btn'+(t===type?' active-'+t:'');var fields=document.getElementById('fields-'+t);if(fields)fields.style.display=t===type?'':'none';});}
 function saveEntry(){var st=document.getElementById('add-status');var btn=document.getElementById('add-save-btn');var valid=true;if(selectedType==='food'&&!document.getElementById('food-name').value.trim())valid=false;if(!valid){st.style.color='#d93025';st.textContent='Please fill in required fields.';return;}btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';setTimeout(function(){st.style.color='#1e8e3e';st.textContent='✅ Entry added!';setTimeout(function(){closeAddModal();st.textContent='';},900);btn.disabled=false;toast('Health entry logged!','success');},500);}
+
+/* ══ Match Overview height to Send to MIE card ══ */
+function syncOverviewHeight(){
+  var sendCard=document.querySelector('.right-col .r-card');
+  var overviewRow=document.querySelector('.hrow-overview');
+  if(!sendCard||!overviewRow)return;
+  var h=sendCard.getBoundingClientRect().height;
+  if(h>0)overviewRow.style.height=h+'px';
+}
+window.addEventListener('resize',syncOverviewHeight);
 
 init();
 </script>
