@@ -977,11 +977,69 @@ function toggleUnit(){unitMetric=!unitMetric;document.getElementById('unit-btn')
 
 /* Calendar picker */
 var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
-function buildCalendar(){var today=new Date();var sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay();var startOffset=(firstDay===0)?6:firstDay-1;var daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate();var daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate();var day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td');var btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate());var isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');
-                /* Enforce range: 1 year ago → today */
-                var oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
-                var btnDate=new Date(actualYear,actualMonth,actualDay);
-                if(btnDate<oneYearAgo||btnDate>today){btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';}}(function(d,m,y){if(!btn.classList.contains('other-month')&&!btn.disabled){btn.onclick=function(e){e.stopPropagation();currentDay=d;currentMonth=m;currentYear=y;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();closePicker();};}}))(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
+function buildCalendar(){
+  var today=new Date();
+  var oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
+  var sel=document.getElementById('cal-month-sel');
+  sel.innerHTML='';
+  MONTHS.forEach(function(m,i){
+    var opt=document.createElement('option');
+    opt.value=i;opt.textContent=m;
+    if(i===pickerNavMonth)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('cal-year-val').textContent=pickerNavYear;
+  var tbody=document.getElementById('cal-body');
+  tbody.innerHTML='';
+  var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay();
+  var startOffset=(firstDay===0)?6:firstDay-1;
+  var daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate();
+  var daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate();
+  var day=1-startOffset;
+  for(var week=0;week<6;week++){
+    if(day>daysInMonth)break;
+    var tr=document.createElement('tr');
+    for(var col=0;col<7;col++){
+      var td=document.createElement('td');
+      var btn=document.createElement('button');
+      btn.className='cal-day-btn';
+      var actualDay,actualMonth,actualYear;
+      if(day<=0){
+        actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;
+        if(actualMonth<0){actualMonth=11;actualYear--;}
+        btn.textContent=actualDay;btn.classList.add('other-month');
+      }else if(day>daysInMonth){
+        actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;
+        if(actualMonth>11){actualMonth=0;actualYear++;}
+        btn.textContent=actualDay;btn.classList.add('other-month');
+      }else{
+        actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;
+        btn.textContent=actualDay;
+        var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate());
+        var isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);
+        if(isToday)btn.classList.add('is-today');
+        if(isSel)btn.classList.add('is-selected');
+        var btnDate=new Date(actualYear,actualMonth,actualDay);
+        if(btnDate<oneYearAgo||btnDate>today){
+          btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';
+        }
+      }
+      (function(d,m,y){
+        if(!btn.classList.contains('other-month')&&!btn.disabled){
+          btn.onclick=function(e){
+            e.stopPropagation();
+            currentDay=d;currentMonth=m;currentYear=y;
+            ytdActive=false;
+            document.getElementById('ytd-btn').classList.remove('active');
+            renderDate();closePicker();
+          };
+        }
+      })(actualDay,actualMonth,actualYear);
+      td.appendChild(btn);tr.appendChild(td);day++;
+    }
+    tbody.appendChild(tr);
+  }
+}
 function calStep(dir){pickerNavMonth+=dir;if(pickerNavMonth<0){pickerNavMonth=11;pickerNavYear--;}if(pickerNavMonth>11){pickerNavMonth=0;pickerNavYear++;}buildCalendar();}
 function calYearStep(dir){pickerNavYear+=dir;buildCalendar();}
 function calMonthChange(sel){pickerNavMonth=parseInt(sel.value);buildCalendar();}
