@@ -543,7 +543,10 @@ tbody tr:hover .row-pen-btn{opacity:1;}
             <div class="fin-tasks-panel">
               <div class="fin-tasks-hd">
                 <span class="fin-tasks-label">&#9989; Tasks &mdash; Finance</span>
-                <span class="fin-tasks-badge warn" id="fin-tasks-badge">—</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="fin-tasks-badge warn" id="fin-tasks-badge">—</span>
+                  <button class="fin-notes-add" onclick="openAddTaskModal()" title="Add task">+</button>
+                </div>
               </div>
               <div class="fin-task-list" id="fin-task-list">
                 <div class="fin-task-loading">Loading…</div>
@@ -661,6 +664,35 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 <div class="modal-bg hidden" id="add-modal"><div class="modal-box"><div class="modal-hd"><div class="modal-title">Add Transaction</div><button class="modal-x" onclick="closeAddModal()">&times;</button></div><div class="type-toggle"><button class="type-btn active-income" id="type-income" onclick="setType('Income')">&#128181; Income</button><button class="type-btn" id="type-expense" onclick="setType('Expenses')">&#128184; Expense</button><button class="type-btn" id="type-saving" onclick="setType('Savings')">&#127982; Saving</button></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Amount *</label><input class="f-input" type="number" id="add-amount" placeholder="0.00" min="0" step="0.01"/></div><div class="f-field"><label class="f-lbl">Date</label><input class="f-input" type="date" id="add-date"/></div></div><div class="f-field"><label class="f-lbl">Category *</label><select class="f-input" id="add-category"></select></div><div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="add-notes" placeholder="Optional description&#8230;"/></div><div class="f-field"><label class="f-lbl">Sub-label <span style="font-weight:400;text-transform:none;font-size:9px;color:#9aa0a6;">&#8212; custom grouping e.g. "Parent Support", "CD Chase 3.0%"</span></label><input class="f-input" type="text" id="add-sublabel" placeholder="e.g. Parent Support, CD Chase 3.0%, FB Marketplace&#8230;"/></div><div class="f-check-row"><input type="checkbox" id="add-create-cal"/><label for="add-create-cal">Also create a Calendar event (private, finance color)</label></div><div class="modal-actions"><button class="btn-cancel" onclick="closeAddModal()">Cancel</button><button class="btn-save" id="add-save-btn" onclick="saveTransaction()">Add Transaction</button></div><div class="modal-status" id="add-status"></div></div></div>
 <div class="edit-modal-bg hidden" id="edit-modal"><div class="edit-modal-box"><div class="edit-modal-hd"><div class="edit-modal-title">Edit Transaction</div><button class="edit-modal-x" onclick="closeEditModal()">&times;</button></div><div class="edit-cal-note" id="edit-cal-note" style="display:none;"><span>&#128197;</span><span>This entry has a linked Calendar event — changes will update the event title and date.</span></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Amount *</label><input class="f-input" type="number" id="edit-amount" placeholder="0.00" min="0" step="0.01"/></div><div class="f-field"><label class="f-lbl">Date</label><input class="f-input" type="date" id="edit-date"/></div></div><div class="f-field"><label class="f-lbl">Category *</label><select class="f-input" id="edit-category"></select></div><div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="edit-notes" placeholder="Optional description&#8230;"/></div><div class="f-field"><label class="f-lbl">Sub-label</label><input class="f-input" type="text" id="edit-sublabel" placeholder="e.g. Parent Support, CD Chase 3.0%&#8230;"/></div><div class="edit-modal-actions"><button class="btn-cancel" onclick="closeEditModal()">Cancel</button><button class="btn-save" id="edit-save-btn" onclick="saveEdit()">Save Changes</button></div><div class="edit-status" id="edit-status"></div></div></div>
 <div class="del-modal-bg hidden" id="del-modal"><div class="del-modal-box"><div class="del-modal-title">Delete Transaction?</div><div class="del-modal-desc" id="del-modal-desc">This will permanently remove the entry from the sheet.</div><div class="del-cal-check" id="del-cal-check" style="display:none;"><input type="checkbox" id="del-also-cal" checked/><label for="del-also-cal">Also delete the linked Calendar event</label></div><div class="del-modal-actions"><button class="btn-cancel" onclick="closeDelModal()">Cancel</button><button class="btn-delete" id="del-confirm-btn" onclick="confirmDelete()">Delete</button></div></div></div>
+<div class="modal-bg hidden" id="add-task-modal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-title">Add Task — Finance</div>
+      <button class="modal-x" onclick="closeAddTaskModal()">&times;</button>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Title *</label>
+      <input class="f-input" type="text" id="task-title" placeholder="Task title…"/>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Notes</label>
+      <textarea class="f-input" id="task-notes" placeholder="Optional notes…" style="min-height:56px;resize:vertical;"></textarea>
+    </div>
+    <div class="f-field">
+      <label class="f-lbl">Due Date</label>
+      <input class="f-input" type="date" id="task-due"/>
+    </div>
+    <div class="f-check-row" id="task-cal-row" style="display:none;">
+      <input type="checkbox" id="task-create-cal"/>
+      <label for="task-create-cal">Add to Calendar? <span style="color:#5f6368;font-weight:400;">(Visibility: Private)</span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddTaskModal()">Cancel</button>
+      <button class="btn-save" id="add-task-btn" onclick="saveFinanceTask()">Add Task</button>
+    </div>
+    <div class="modal-status" id="add-task-status"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1007,11 +1039,86 @@ function addFinNote(){
   _finNotes.push({text:'',id:Date.now()});
   saveFinanceNotes();
   renderFinanceNotes();
-  /* Focus the new note */
   setTimeout(function(){
     var items=document.querySelectorAll('#fin-notes-list .fin-note-text');
     if(items.length)items[items.length-1].focus();
   },40);
+}
+
+/* ══════════════════════════════════
+   ADD TASK MODAL — Finance list
+══════════════════════════════════ */
+function openAddTaskModal(){
+  document.getElementById('task-title').value='';
+  document.getElementById('task-notes').value='';
+  document.getElementById('task-due').value='';
+  document.getElementById('task-create-cal').checked=false;
+  document.getElementById('task-cal-row').style.display='none';
+  document.getElementById('add-task-status').textContent='';
+  document.getElementById('add-task-btn').disabled=false;
+  document.getElementById('add-task-modal').classList.remove('hidden');
+  setTimeout(function(){document.getElementById('task-title').focus();},60);
+}
+
+function closeAddTaskModal(){
+  document.getElementById('add-task-modal').classList.add('hidden');
+}
+
+document.getElementById('task-due').addEventListener('change',function(){
+  var calRow=document.getElementById('task-cal-row');
+  calRow.style.display=this.value?'flex':'none';
+  if(!this.value)document.getElementById('task-create-cal').checked=false;
+});
+
+document.getElementById('add-task-modal').addEventListener('click',function(e){
+  if(e.target===this)closeAddTaskModal();
+});
+
+function saveFinanceTask(){
+  var title=document.getElementById('task-title').value.trim();
+  var st=document.getElementById('add-task-status');
+  if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}
+
+  var btn=document.getElementById('add-task-btn');
+  btn.disabled=true;
+  st.style.color='#5f6368';
+  st.textContent='Saving…';
+
+  var dueVal=document.getElementById('task-due').value;
+  var addToCal=dueVal&&document.getElementById('task-create-cal').checked;
+
+  /* Find Finance list id from already-loaded lists */
+  var financeList=_finTaskLists.find(function(l){
+    return l.title&&l.title.trim().toLowerCase()==='finance';
+  });
+  var listId=financeList?financeList.id:'@default';
+
+  var payload={
+    title:title,
+    notes:document.getElementById('task-notes').value.trim(),
+    due:dueVal||null,
+    listId:listId,
+    createCalendarEvent:addToCal,
+    calendarVisibility:'private'
+  };
+
+  fetch(BACKEND+'/api/me/tasks/create',{
+    method:'POST',credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(data){
+    st.style.color='#1e8e3e';
+    st.textContent='✅ Task added!'+(data.calendar_event?' + Calendar event.':'');
+    toast('Task added','success');
+    setTimeout(function(){closeAddTaskModal();loadFinanceTasks();},700);
+  })
+  .catch(function(err){
+    st.style.color='#d93025';
+    st.textContent='❌ '+err.message;
+    btn.disabled=false;
+  });
 }
 
 /* ══ INIT ══ */
