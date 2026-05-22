@@ -775,10 +775,64 @@ function setView(v,btn){
   if(v==='overview'){rw.style.display='flex';pv.classList.remove('active');}
   else{rw.style.display='none';pv.classList.add('active');var title=document.getElementById('panel-title');if(title)title.textContent=PANEL_LABELS[v]||v;loadPanelContent(v);}
 }
-function loadPanelContent(v){
-  var body=document.getElementById('panel-body');if(!body)return;
-  var ph={food:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-logs.html</strong> — Food Log<br><br>AM / PM food entries, allergy banner, calorie totals.</div>',activity:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-logs.html</strong> — Activity Log<br><br>Steps / Miles / Active Cal / Active Min + workout entries.</div>',healthlog:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-logs.html</strong> — Health Log<br><br>Blood Pressure, Heart Rate, SpO2, Glucose, Temperature, Cholesterol + custom fields.</div>',sleep:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-logs.html</strong> — Sleep Log<br><br>Bedtime / Wake time, quality picker, notes, monthly bar chart.</div>',mood:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-logs.html</strong> — Mood Log<br><br>Mood picker (Amazing / Happy / Calm…), daily notes, history.</div>',period:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-trackers.html</strong> — Period Tracker<br><br>Start/End, BBT, Symptoms, Medication, Mood, Sex, Cervical Mucus, Ovulation, Pregnancy Test, BP, Notes.</div>',water:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-trackers.html</strong> — Water Tracker<br><br>Goal (ml/oz), cup visualization, US/Metric toggle.</div>',medication:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-trackers.html</strong> — Medication Tracker<br><br>Weekly 7-day check table (from Records > Medication).</div>',insurance:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-records.html</strong> — Insurance Info<br><br>Provider, Member ID, Group #, PCP, Specialist, Dentist.</div>',medrec:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-records.html</strong> — Medication Records<br><br>Medication 1–4, Supplements, Pharmacy + Allergy banner.</div>',history:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-records.html</strong> — Medical History<br><br>Conditions (Self), Surgeries, Allergies, Family-Mother, Family-Father.</div>',myinfo:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-overview.html</strong> — My Info<br><br>DOB, Sex, Height, Weight, Blood Type, Allergies, Emergency Contact + BMI/BMR/TDEE.</div>',goals:'<div style="padding:20px;color:#9aa0a6;font-style:italic;"><strong>panel-overview.html</strong> — Goals<br><br>Target weight, duration, direction, calorie goal, exercise goal, water goal.</div>'};
-  body.innerHTML=ph[v]||'<div style="padding:20px;color:#9aa0a6;">Panel coming soon.</div>';
+// 패널 파일 라우팅 맵
+var PANEL_FILE_MAP = {
+  food:      'panel-logs.html',
+  activity:  'panel-logs.html',
+  healthlog: 'panel-logs.html',
+  sleep:     'panel-logs.html',
+  mood:      'panel-logs.html',
+  period:    'panel-trackers.html',
+  water:     'panel-trackers.html',
+  medication:'panel-trackers.html',
+  insurance: 'panel-records.html',
+  medrec:    'panel-records.html',
+  history:   'panel-records.html',
+  myinfo:    'panel-overview.html',
+  goals:     'panel-overview.html'
+};
+
+function loadPanelContent(v) {
+  var body = document.getElementById('panel-body');
+  if (!body) return;
+
+  var file = PANEL_FILE_MAP[v];
+  if (!file) {
+    body.innerHTML = '<div style="padding:20px;color:#9aa0a6;">Panel coming soon.</div>';
+    return;
+  }
+
+  body.innerHTML = '<div style="padding:20px;color:#9aa0a6;font-style:italic;">Loading…</div>';
+
+  fetch('/health/' + file + '?v=' + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(html) {
+      body.innerHTML = html;
+
+      // <script> 태그 수동 재실행
+      var scripts = body.querySelectorAll('script');
+      scripts.forEach(function(oldScript) {
+        var newScript = document.createElement('script');
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+        } else {
+          newScript.textContent = oldScript.textContent;
+        }
+        document.head.appendChild(newScript);
+        document.head.removeChild(newScript);
+      });
+
+      // 패널에 현재 뷰 전달 (패널 JS가 어떤 섹션인지 알 수 있도록)
+      if (typeof window.onPanelLoad === 'function') {
+        window.onPanelLoad(v);
+      }
+    })
+    .catch(function(err) {
+      body.innerHTML = '<div style="padding:20px;color:#d93025;">Failed to load panel: ' + err.message + '</div>';
+    });
 }
 
 function toggleSidebar(){document.getElementById('task-sidebar').classList.toggle('collapsed');}
