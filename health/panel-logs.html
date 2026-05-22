@@ -1,1 +1,972 @@
+<!-- panel-logs.html — MIE Health Log Panel -->
+<!-- 로드 방식: health/index.html의 loadPanelContent()가 fetch 후 innerHTML inject -->
+<!-- onPanelLoad(view) 호출로 초기 탭 결정 -->
+<style>
+/* ── Panel 전용 스타일 (index.html 스타일과 충돌 없도록 pl- prefix) ── */
+.pl-wrap { display:flex; flex-direction:column; height:100%; font-family:'DM Sans',sans-serif; }
 
+/* 탭 */
+.pl-tabs { display:flex; gap:2px; flex-shrink:0; background:#f1f3f4; border-radius:10px; padding:3px; margin-bottom:12px; }
+.pl-tab  { flex:1; border:none; background:transparent; border-radius:8px; padding:7px 4px; font-size:12px; font-weight:600; color:#9aa0a6; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; white-space:nowrap; }
+.pl-tab.active { background:#fff; color:#1a73e8; box-shadow:0 1px 4px rgba(0,0,0,.1); }
+.pl-tab:hover:not(.active) { color:#5f6368; }
+
+/* 섹션 */
+.pl-section { display:none; flex-direction:column; gap:10px; flex:1; min-height:0; overflow-y:auto; }
+.pl-section.active { display:flex; }
+.pl-section::-webkit-scrollbar { width:4px; }
+.pl-section::-webkit-scrollbar-thumb { background:#e0e0e0; border-radius:2px; }
+
+/* 카드 공통 */
+.pl-card { background:#fff; border:1px solid #e8eaed; border-radius:10px; padding:12px 14px; }
+.pl-card-title { font-size:12px; font-weight:600; color:#9aa0a6; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; }
+
+/* 음식 검색 */
+.pl-search-wrap { position:relative; }
+.pl-search-input { width:100%; border:1.5px solid #e0e0e0; border-radius:8px; padding:9px 36px 9px 12px; font-size:13px; font-family:'DM Sans',sans-serif; color:#202124; outline:none; transition:border-color .12s; box-sizing:border-box; }
+.pl-search-input:focus { border-color:#1a73e8; }
+.pl-search-btn { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#1a73e8; font-size:16px; line-height:1; padding:2px; }
+.pl-search-results { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+.pl-food-result { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid #e8eaed; border-radius:8px; cursor:pointer; transition:all .12s; background:#fafafa; }
+.pl-food-result:hover { border-color:#1a73e8; background:#e8f0fe; }
+.pl-food-result-left { flex:1; min-width:0; }
+.pl-food-result-name { font-size:12.5px; font-weight:600; color:#202124; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pl-food-result-brand { font-size:11px; color:#9aa0a6; }
+.pl-food-result-cal { font-size:12px; font-weight:700; color:#1a73e8; white-space:nowrap; margin-left:8px; }
+.pl-food-result-est { font-size:10px; color:#fbbc04; margin-left:4px; }
+.pl-search-loading { font-size:12px; color:#9aa0a6; font-style:italic; padding:8px 0; text-align:center; }
+
+/* 음식 입력 폼 */
+.pl-add-form { background:#f8f9fa; border:1px solid #e8eaed; border-radius:8px; padding:10px 12px; }
+.pl-form-row { display:grid; gap:8px; margin-bottom:8px; }
+.pl-form-row.cols2 { grid-template-columns:1fr 1fr; }
+.pl-form-row.cols3 { grid-template-columns:1fr 1fr 1fr; }
+.pl-form-row.cols4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+.pl-field label { display:block; font-size:10px; font-weight:600; color:#9aa0a6; text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }
+.pl-input { width:100%; border:1px solid #dadce0; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:'DM Sans',sans-serif; color:#202124; background:#fff; outline:none; transition:border-color .12s; box-sizing:border-box; }
+.pl-input:focus { border-color:#1a73e8; }
+.pl-select { width:100%; border:1px solid #dadce0; border-radius:6px; padding:6px 9px; font-size:12.5px; font-family:'DM Sans',sans-serif; color:#202124; background:#fff; outline:none; cursor:pointer; }
+.pl-btn-row { display:flex; gap:6px; margin-top:6px; }
+.pl-btn-save { flex:1; background:#1a73e8; color:#fff; border:none; border-radius:6px; padding:7px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .12s; }
+.pl-btn-save:hover { background:#1765cc; }
+.pl-btn-save:disabled { background:#a8c7fa; cursor:not-allowed; }
+.pl-btn-cancel { background:#f1f3f4; color:#5f6368; border:1px solid #e0e0e0; border-radius:6px; padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+/* 로그 리스트 */
+.pl-log-list { display:flex; flex-direction:column; gap:4px; }
+.pl-log-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid #e8eaed; border-radius:8px; background:#fff; transition:background .1s; }
+.pl-log-item:hover { background:#f8f9fa; }
+.pl-log-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.pl-log-main { flex:1; min-width:0; }
+.pl-log-name { font-size:12.5px; font-weight:600; color:#202124; }
+.pl-log-sub  { font-size:11px; color:#9aa0a6; margin-top:1px; }
+.pl-log-cal  { font-size:12px; font-weight:700; color:#1a73e8; white-space:nowrap; }
+.pl-log-del  { background:none; border:none; cursor:pointer; color:#dadce0; font-size:14px; padding:2px; line-height:1; opacity:0; transition:opacity .12s; }
+.pl-log-item:hover .pl-log-del { opacity:1; }
+.pl-log-del:hover { color:#d93025; }
+.pl-log-empty { font-size:12.5px; color:#9aa0a6; font-style:italic; text-align:center; padding:16px 0; }
+
+/* 알레르기 배너 */
+.pl-allergy-banner { background:#fef7e0; border:1px solid #fbbc04; border-radius:8px; padding:7px 12px; font-size:12px; color:#b06000; font-weight:500; display:none; margin-bottom:8px; }
+.pl-allergy-banner.show { display:block; }
+
+/* 요약 바 */
+.pl-summary-bar { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; flex-shrink:0; }
+.pl-summary-item { background:#f8f9fa; border-radius:8px; padding:7px 6px; text-align:center; }
+.pl-summary-val  { font-size:14px; font-weight:700; color:#202124; }
+.pl-summary-label{ font-size:10px; color:#9aa0a6; margin-top:1px; }
+
+/* 활동 카테고리 버튼 */
+.pl-cat-row { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+.pl-cat-btn { border:1.5px solid #e0e0e0; background:#fff; border-radius:20px; padding:4px 12px; font-size:11.5px; font-weight:600; color:#5f6368; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .12s; }
+.pl-cat-btn.active { border-color:#1a73e8; color:#1a73e8; background:#e8f0fe; }
+
+/* 수면 질 picker */
+.pl-quality-row { display:flex; gap:6px; }
+.pl-quality-btn { flex:1; border:1.5px solid #e0e0e0; background:#fff; border-radius:8px; padding:6px 4px; font-size:14px; text-align:center; cursor:pointer; transition:all .12s; }
+.pl-quality-btn.active { border-color:#1a73e8; background:#e8f0fe; }
+
+/* 기분 picker */
+.pl-mood-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:8px; }
+.pl-mood-btn { border:1.5px solid #e0e0e0; background:#fff; border-radius:8px; padding:7px 4px; text-align:center; cursor:pointer; transition:all .12s; }
+.pl-mood-btn:hover { border-color:#1a73e8; background:#e8f0fe; }
+.pl-mood-btn.active { border-color:#1a73e8; background:#e8f0fe; }
+.pl-mood-emoji { font-size:18px; display:block; }
+.pl-mood-label { font-size:9.5px; color:#5f6368; margin-top:2px; }
+
+/* 상태 메시지 */
+.pl-status { font-size:11px; text-align:center; min-height:14px; margin-top:4px; }
+.pl-status.ok  { color:#1e8e3e; }
+.pl-status.err { color:#d93025; }
+
+/* 로딩 스피너 */
+.pl-spinner { display:inline-block; width:14px; height:14px; border:2px solid #e0e0e0; border-top-color:#1a73e8; border-radius:50%; animation:pl-spin .6s linear infinite; vertical-align:middle; margin-right:4px; }
+@keyframes pl-spin { to { transform:rotate(360deg); } }
+
+/* unit 토글 표시 */
+.pl-unit-badge { font-size:10px; background:#e8f0fe; color:#1a73e8; border-radius:4px; padding:1px 6px; font-weight:600; }
+</style>
+
+<div class="pl-wrap">
+  <!-- 탭 -->
+  <div class="pl-tabs">
+    <button class="pl-tab" data-tab="food"     onclick="plSetTab('food')">🍽 Food</button>
+    <button class="pl-tab" data-tab="activity" onclick="plSetTab('activity')">🏃 Activity</button>
+    <button class="pl-tab" data-tab="healthlog"onclick="plSetTab('healthlog')">❤️ Health</button>
+    <button class="pl-tab" data-tab="sleep"    onclick="plSetTab('sleep')">😴 Sleep</button>
+    <button class="pl-tab" data-tab="mood"     onclick="plSetTab('mood')">😊 Mood</button>
+  </div>
+
+  <!-- ══════════════ FOOD ══════════════ -->
+  <div class="pl-section" id="pl-food">
+    <!-- 알레르기 배너 -->
+    <div class="pl-allergy-banner" id="pl-allergy-banner"></div>
+
+    <!-- 요약 바 -->
+    <div class="pl-summary-bar">
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-f-cal">0</div><div class="pl-summary-label">kcal</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-f-pro">0g</div><div class="pl-summary-label">Protein</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-f-carb">0g</div><div class="pl-summary-label">Carbs</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-f-fat">0g</div><div class="pl-summary-label">Fat</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-f-fiber">0g</div><div class="pl-summary-label">Fiber</div></div>
+    </div>
+
+    <!-- 검색 -->
+    <div class="pl-card">
+      <div class="pl-card-title">
+        Search Food
+        <span class="pl-unit-badge" id="pl-unit-badge">metric</span>
+      </div>
+      <div class="pl-search-wrap">
+        <input class="pl-search-input" id="pl-food-search" type="text" placeholder='e.g. "chicken breast 100g"' onkeydown="if(event.key==='Enter')plFoodSearch()"/>
+        <button class="pl-search-btn" onclick="plFoodSearch()">🔍</button>
+      </div>
+      <div id="pl-search-results" class="pl-search-results"></div>
+    </div>
+
+    <!-- 입력 폼 -->
+    <div class="pl-card">
+      <div class="pl-card-title">Add Food Entry</div>
+      <div class="pl-add-form">
+        <div class="pl-form-row cols2">
+          <div class="pl-field">
+            <label>Meal Time</label>
+            <select class="pl-select" id="pl-food-meal">
+              <option value="AM">AM (Breakfast)</option>
+              <option value="PM">PM (Lunch/Dinner)</option>
+            </select>
+          </div>
+          <div class="pl-field">
+            <label>Food Name *</label>
+            <input class="pl-input" id="pl-food-name" type="text" placeholder="e.g. Oatmeal"/>
+          </div>
+        </div>
+        <div class="pl-form-row cols4">
+          <div class="pl-field"><label>Calories</label><input class="pl-input" id="pl-food-cal" type="number" placeholder="0" min="0"/></div>
+          <div class="pl-field"><label>Protein (g)</label><input class="pl-input" id="pl-food-pro" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Carbs (g)</label><input class="pl-input" id="pl-food-carb" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Fat (g)</label><input class="pl-input" id="pl-food-fat" type="number" placeholder="0" min="0" step="0.1"/></div>
+        </div>
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Fiber (g)</label><input class="pl-input" id="pl-food-fiber" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Notes</label><input class="pl-input" id="pl-food-notes" type="text" placeholder="Optional"/></div>
+        </div>
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="plFoodClear()">Clear</button>
+          <button class="pl-btn-save" id="pl-food-save-btn" onclick="plFoodSave()">Add Food</button>
+        </div>
+        <div class="pl-status" id="pl-food-status"></div>
+      </div>
+    </div>
+
+    <!-- 오늘 로그 -->
+    <div class="pl-card">
+      <div class="pl-card-title">Today's Food Log</div>
+      <div class="pl-log-list" id="pl-food-log"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ACTIVITY ══════════════ -->
+  <div class="pl-section" id="pl-activity">
+    <!-- 요약 바 -->
+    <div class="pl-summary-bar" style="grid-template-columns:repeat(4,1fr);">
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-a-cal">0</div><div class="pl-summary-label">Cal Burned</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-a-steps">0</div><div class="pl-summary-label">Steps</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-a-dist">0</div><div class="pl-summary-label">km</div></div>
+      <div class="pl-summary-item"><div class="pl-summary-val" id="pl-a-dur">0m</div><div class="pl-summary-label">Duration</div></div>
+    </div>
+
+    <div class="pl-card">
+      <div class="pl-card-title">Add Activity</div>
+      <!-- 카테고리 -->
+      <div class="pl-cat-row" id="pl-act-cats">
+        <button class="pl-cat-btn active" data-cat="Cardio"   onclick="plActCat(this)">🏃 Cardio</button>
+        <button class="pl-cat-btn"        data-cat="Strength" onclick="plActCat(this)">🏋️ Strength</button>
+        <button class="pl-cat-btn"        data-cat="Flexibility" onclick="plActCat(this)">🧘 Flexibility</button>
+        <button class="pl-cat-btn"        data-cat="HIIT"     onclick="plActCat(this)">⚡ HIIT</button>
+        <button class="pl-cat-btn"        data-cat="Other"    onclick="plActCat(this)">➕ Other</button>
+      </div>
+      <div class="pl-add-form">
+        <div class="pl-form-row cols2">
+          <div class="pl-field">
+            <label>Activity Type *</label>
+            <input class="pl-input" id="pl-act-type" type="text" placeholder="e.g. Running, Deadlift"/>
+          </div>
+          <div class="pl-field">
+            <label>Duration (min)</label>
+            <input class="pl-input" id="pl-act-dur" type="number" placeholder="0" min="0" oninput="plActAutoCalc()"/>
+          </div>
+        </div>
+        <!-- Strength 전용 -->
+        <div id="pl-strength-fields" style="display:none;">
+          <div class="pl-form-row cols3">
+            <div class="pl-field"><label>Sets</label><input class="pl-input" id="pl-act-sets" type="number" placeholder="3" min="0"/></div>
+            <div class="pl-field"><label>Reps</label><input class="pl-input" id="pl-act-reps" type="number" placeholder="15" min="0"/></div>
+            <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="pl-act-wkg" type="number" placeholder="30" min="0" step="0.5"/></div>
+          </div>
+        </div>
+        <div class="pl-form-row cols3">
+          <div class="pl-field"><label>MET Value</label><input class="pl-input" id="pl-act-met" type="number" placeholder="e.g. 8.0" step="0.1" oninput="plActAutoCalc()"/></div>
+          <div class="pl-field"><label>Cal Burned</label><input class="pl-input" id="pl-act-cal" type="number" placeholder="Auto-calc" min="0"/></div>
+          <div class="pl-field"><label>Steps</label><input class="pl-input" id="pl-act-steps" type="number" placeholder="0" min="0"/></div>
+        </div>
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Distance (km)</label><input class="pl-input" id="pl-act-dist" type="number" placeholder="0" step="0.01" min="0"/></div>
+          <div class="pl-field"><label>Notes</label><input class="pl-input" id="pl-act-notes" type="text" placeholder="Optional"/></div>
+        </div>
+        <div class="pl-met-hint" id="pl-met-hint" style="font-size:10.5px;color:#9aa0a6;margin-bottom:6px;display:none;"></div>
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="plActClear()">Clear</button>
+          <button class="pl-btn-save" id="pl-act-save-btn" onclick="plActSave()">Add Activity</button>
+        </div>
+        <div class="pl-status" id="pl-act-status"></div>
+      </div>
+    </div>
+
+    <div class="pl-card">
+      <div class="pl-card-title">Today's Activity Log</div>
+      <div class="pl-log-list" id="pl-act-log"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ HEALTH (VITALS) ══════════════ -->
+  <div class="pl-section" id="pl-healthlog">
+    <div class="pl-card">
+      <div class="pl-card-title">Body Metrics</div>
+      <div class="pl-add-form">
+        <div class="pl-form-row cols3">
+          <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="pl-h-wkg" type="number" placeholder="70.4" step="0.1" oninput="plVitalAutoCalc()"/></div>
+          <div class="pl-field"><label>BMI (auto)</label><input class="pl-input" id="pl-h-bmi" type="text" placeholder="—" readonly style="background:#f8f9fa;color:#9aa0a6;"/></div>
+          <div class="pl-field"><label>Body Fat % (manual)</label><input class="pl-input" id="pl-h-bfpct" type="number" placeholder="Auto if blank" step="0.1" oninput="plVitalAutoCalc()"/></div>
+        </div>
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Muscle Mass kg (manual)</label><input class="pl-input" id="pl-h-mmkg" type="number" placeholder="Auto if blank" step="0.1"/></div>
+          <div class="pl-field"><label>Lean Mass kg (auto)</label><input class="pl-input" id="pl-h-lean" type="text" placeholder="—" readonly style="background:#f8f9fa;color:#9aa0a6;"/></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pl-card">
+      <div class="pl-card-title">Vitals</div>
+      <div class="pl-add-form">
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Blood Pressure (sys)</label><input class="pl-input" id="pl-h-bpsys" type="number" placeholder="120" min="0"/></div>
+          <div class="pl-field"><label>Blood Pressure (dia)</label><input class="pl-input" id="pl-h-bpdia" type="number" placeholder="80" min="0"/></div>
+        </div>
+        <div class="pl-form-row cols3">
+          <div class="pl-field"><label>Heart Rate (bpm)</label><input class="pl-input" id="pl-h-hr" type="number" placeholder="72" min="0"/></div>
+          <div class="pl-field"><label>SpO2 (%)</label><input class="pl-input" id="pl-h-spo2" type="number" placeholder="98" min="0" max="100"/></div>
+          <div class="pl-field"><label>Glucose (mg/dL)</label><input class="pl-input" id="pl-h-glu" type="number" placeholder="95" min="0"/></div>
+        </div>
+        <div class="pl-form-row cols3">
+          <div class="pl-field"><label>Temperature (°C)</label><input class="pl-input" id="pl-h-temp" type="number" placeholder="36.6" step="0.1"/></div>
+          <div class="pl-field"><label>Cholesterol (mg/dL)</label><input class="pl-input" id="pl-h-chol" type="number" placeholder="180" min="0"/></div>
+          <div class="pl-field"><label>Notes</label><input class="pl-input" id="pl-h-notes" type="text" placeholder="Optional"/></div>
+        </div>
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="plHealthClear()">Clear</button>
+          <button class="pl-btn-save" id="pl-h-save-btn" onclick="plHealthSave()">Save Vitals</button>
+        </div>
+        <div class="pl-status" id="pl-h-status"></div>
+      </div>
+    </div>
+
+    <div class="pl-card">
+      <div class="pl-card-title">Recent Vitals</div>
+      <div class="pl-log-list" id="pl-h-log"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLEEP ══════════════ -->
+  <div class="pl-section" id="pl-sleep">
+    <div class="pl-card">
+      <div class="pl-card-title">Log Sleep</div>
+      <div class="pl-add-form">
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Bedtime</label><input class="pl-input" id="pl-s-bed" type="time" oninput="plSleepAutoCalc()"/></div>
+          <div class="pl-field"><label>Wake Time</label><input class="pl-input" id="pl-s-wake" type="time" oninput="plSleepAutoCalc()"/></div>
+        </div>
+        <div class="pl-form-row cols2">
+          <div class="pl-field"><label>Duration (auto)</label><input class="pl-input" id="pl-s-dur" type="text" placeholder="—" readonly style="background:#f8f9fa;color:#9aa0a6;"/></div>
+          <div class="pl-field"><label>Notes</label><input class="pl-input" id="pl-s-notes" type="text" placeholder="e.g. vivid dreams"/></div>
+        </div>
+        <div class="pl-field" style="margin-bottom:8px;">
+          <label>Sleep Quality</label>
+          <div class="pl-quality-row" id="pl-quality-row">
+            <button class="pl-quality-btn" data-q="1" onclick="plSetQuality(1)" title="Poor">😴 Poor</button>
+            <button class="pl-quality-btn" data-q="2" onclick="plSetQuality(2)" title="Fair">😐 Fair</button>
+            <button class="pl-quality-btn" data-q="3" onclick="plSetQuality(3)" title="Good">🙂 Good</button>
+            <button class="pl-quality-btn" data-q="4" onclick="plSetQuality(4)" title="Great">😊 Great</button>
+            <button class="pl-quality-btn" data-q="5" onclick="plSetQuality(5)" title="Excellent">🌟 Excellent</button>
+          </div>
+        </div>
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="plSleepClear()">Clear</button>
+          <button class="pl-btn-save" id="pl-s-save-btn" onclick="plSleepSave()">Log Sleep</button>
+        </div>
+        <div class="pl-status" id="pl-s-status"></div>
+      </div>
+    </div>
+
+    <!-- 월간 평균 차트 -->
+    <div class="pl-card">
+      <div class="pl-card-title">Recent Sleep History</div>
+      <div id="pl-sleep-chart" style="padding:8px 0;"></div>
+      <div class="pl-log-list" id="pl-s-log"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ MOOD ══════════════ -->
+  <div class="pl-section" id="pl-mood">
+    <div class="pl-card">
+      <div class="pl-card-title">How are you feeling?</div>
+      <div class="pl-add-form">
+        <div class="pl-mood-grid" id="pl-mood-grid">
+          <button class="pl-mood-btn" data-mood="Amazing"  onclick="plSetMood('Amazing')"><span class="pl-mood-emoji">🤩</span><div class="pl-mood-label">Amazing</div></button>
+          <button class="pl-mood-btn" data-mood="Happy"    onclick="plSetMood('Happy')"><span class="pl-mood-emoji">😊</span><div class="pl-mood-label">Happy</div></button>
+          <button class="pl-mood-btn" data-mood="Calm"     onclick="plSetMood('Calm')"><span class="pl-mood-emoji">😌</span><div class="pl-mood-label">Calm</div></button>
+          <button class="pl-mood-btn" data-mood="Neutral"  onclick="plSetMood('Neutral')"><span class="pl-mood-emoji">😐</span><div class="pl-mood-label">Neutral</div></button>
+          <button class="pl-mood-btn" data-mood="Tired"    onclick="plSetMood('Tired')"><span class="pl-mood-emoji">😴</span><div class="pl-mood-label">Tired</div></button>
+          <button class="pl-mood-btn" data-mood="Anxious"  onclick="plSetMood('Anxious')"><span class="pl-mood-emoji">😰</span><div class="pl-mood-label">Anxious</div></button>
+          <button class="pl-mood-btn" data-mood="Sad"      onclick="plSetMood('Sad')"><span class="pl-mood-emoji">😢</span><div class="pl-mood-label">Sad</div></button>
+          <button class="pl-mood-btn" data-mood="Angry"    onclick="plSetMood('Angry')"><span class="pl-mood-emoji">😠</span><div class="pl-mood-label">Angry</div></button>
+          <button class="pl-mood-btn" data-mood="Stressed" onclick="plSetMood('Stressed')"><span class="pl-mood-emoji">😫</span><div class="pl-mood-label">Stressed</div></button>
+          <button class="pl-mood-btn" data-mood="Grateful" onclick="plSetMood('Grateful')"><span class="pl-mood-emoji">🙏</span><div class="pl-mood-label">Grateful</div></button>
+        </div>
+        <div class="pl-field" style="margin-bottom:8px;">
+          <label>Energy Level</label>
+          <div class="pl-quality-row" id="pl-energy-row">
+            <button class="pl-quality-btn" data-e="1" onclick="plSetEnergy(1)">⚡ Very Low</button>
+            <button class="pl-quality-btn" data-e="2" onclick="plSetEnergy(2)">🔋 Low</button>
+            <button class="pl-quality-btn" data-e="3" onclick="plSetEnergy(3)">⚡ Medium</button>
+            <button class="pl-quality-btn" data-e="4" onclick="plSetEnergy(4)">🔥 High</button>
+            <button class="pl-quality-btn" data-e="5" onclick="plSetEnergy(5)">💥 Peak</button>
+          </div>
+        </div>
+        <div class="pl-field" style="margin-bottom:8px;">
+          <label>Notes</label>
+          <input class="pl-input" id="pl-m-notes" type="text" placeholder="What's on your mind?"/>
+        </div>
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="plMoodClear()">Clear</button>
+          <button class="pl-btn-save" id="pl-m-save-btn" onclick="plMoodSave()">Log Mood</button>
+        </div>
+        <div class="pl-status" id="pl-m-status"></div>
+      </div>
+    </div>
+
+    <div class="pl-card">
+      <div class="pl-card-title">Recent Mood History</div>
+      <div class="pl-log-list" id="pl-m-log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+'use strict';
+
+var BACKEND = 'https://api.mie.today';
+var _currentTab = 'food';
+var _sleepQuality = 0;
+var _currentMood  = '';
+var _energyLevel  = 0;
+var _actCategory  = 'Cardio';
+var _unitPref     = 'metric';
+var _profile      = null; // Baseline + Goal
+
+// MET 참고값 (WebMD 기준)
+var MET_REF = {
+  'Running': 8.0, 'Walking': 3.5, 'Cycling': 6.0, 'Swimming': 6.0,
+  'Yoga': 3.0, 'Pilates': 3.0, 'HIIT': 8.0, 'Jump Rope': 10.0,
+  'Deadlift': 6.0, 'Squat': 5.0, 'Bench Press': 5.0, 'Strength Training': 5.0,
+  'Hiking': 5.5, 'Boxing': 7.8, 'Tennis': 7.0, 'Basketball': 6.5,
+  'Soccer': 7.0, 'Rowing': 7.0, 'Stretching': 2.5, 'Other': 4.0,
+};
+
+// ── 초기화 ────────────────────────────────────────────────────────────────
+function init() {
+  _unitPref = (localStorage.getItem('mie_unit') || 'metric');
+  var badge = document.getElementById('pl-unit-badge');
+  if (badge) badge.textContent = _unitPref === 'us' ? 'US' : 'Metric';
+  loadProfile();
+  loadAllergyBanner();
+}
+
+function loadProfile() {
+  fetch(BACKEND + '/api/me/health/profile', { credentials: 'include' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) { if (d) _profile = d; })
+    .catch(function() {});
+}
+
+function loadAllergyBanner() {
+  try {
+    var raw = localStorage.getItem('mie_health_profile');
+    if (!raw) return;
+    var p = JSON.parse(raw);
+    var allergies = p['sf-allergies'] || '';
+    var banner = document.getElementById('pl-allergy-banner');
+    if (banner && allergies.trim()) {
+      banner.textContent = '⚠️ Allergies: ' + allergies;
+      banner.classList.add('show');
+    }
+  } catch(e) {}
+}
+
+// ── 탭 전환 ──────────────────────────────────────────────────────────────
+window.plSetTab = function(tab) {
+  _currentTab = tab;
+  document.querySelectorAll('.pl-tab').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  document.querySelectorAll('.pl-section').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  var tabMap = { food:'pl-food', activity:'pl-activity', healthlog:'pl-healthlog', sleep:'pl-sleep', mood:'pl-mood' };
+  var el = document.getElementById(tabMap[tab] || 'pl-food');
+  if (el) el.classList.add('active');
+  loadTabData(tab);
+};
+
+// index.html에서 호출 — 어떤 뷰를 먼저 보여줄지
+window.onPanelLoad = function(view) {
+  var tabMap = { food:'food', activity:'activity', healthlog:'healthlog', sleep:'sleep', mood:'mood' };
+  var tab = tabMap[view] || 'food';
+  plSetTab(tab);
+};
+
+// ── 날짜 헬퍼 ─────────────────────────────────────────────────────────────
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ── 탭별 데이터 로드 ──────────────────────────────────────────────────────
+function loadTabData(tab) {
+  var apiTab = tab === 'healthlog' ? 'health' : tab;
+  if (!['food','activity','health','sleep','mood'].includes(apiTab)) return;
+  fetch(BACKEND + '/api/me/health?date=' + todayStr() + '&period=daily&tab=' + apiTab, { credentials: 'include' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+      if (!d) return;
+      if (tab === 'food')      renderFoodLog(d.food || [], d.summary);
+      if (tab === 'activity')  renderActLog(d.activity || [], d.summary);
+      if (tab === 'healthlog') renderHealthLog(d.health || []);
+      if (tab === 'sleep')     renderSleepLog(d.sleep || []);
+      if (tab === 'mood')      renderMoodLog(d.mood || []);
+    })
+    .catch(function() {});
+}
+
+// ── FOOD ─────────────────────────────────────────────────────────────────
+window.plFoodSearch = function() {
+  var q = (document.getElementById('pl-food-search').value || '').trim();
+  if (!q) return;
+  var res = document.getElementById('pl-search-results');
+  res.innerHTML = '<div class="pl-search-loading"><span class="pl-spinner"></span>Searching…</div>';
+  fetch(BACKEND + '/api/health/food/search', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: q })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      res.innerHTML = '';
+      var foods = d.foods || [];
+      if (!foods.length) { res.innerHTML = '<div class="pl-search-loading">No results found.</div>'; return; }
+      foods.forEach(function(f) {
+        var item = document.createElement('div');
+        item.className = 'pl-food-result';
+        item.innerHTML =
+          '<div class="pl-food-result-left">' +
+            '<div class="pl-food-result-name">' + (f.food_name || '') + '</div>' +
+            '<div class="pl-food-result-brand">' + (f.brand_name || f.serving_unit || '') + '</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;">' +
+            '<span class="pl-food-result-cal">' + Math.round(f.calories_kcal || 0) + ' kcal</span>' +
+            (f.calories_estimated ? '<span class="pl-food-result-est" title="Estimated">~</span>' : '') +
+          '</div>';
+        item.onclick = function() { plFoodFill(f); res.innerHTML = ''; };
+        res.appendChild(item);
+      });
+    })
+    .catch(function() { res.innerHTML = '<div class="pl-search-loading">Search failed.</div>'; });
+};
+
+function plFoodFill(f) {
+  document.getElementById('pl-food-name').value  = f.food_name  || '';
+  document.getElementById('pl-food-cal').value   = Math.round(f.calories_kcal || 0);
+  document.getElementById('pl-food-pro').value   = f.protein_g  || 0;
+  document.getElementById('pl-food-carb').value  = f.carbs_g    || 0;
+  document.getElementById('pl-food-fat').value   = f.fat_g      || 0;
+  document.getElementById('pl-food-fiber').value = f.fiber_g    || 0;
+}
+
+window.plFoodClear = function() {
+  ['pl-food-name','pl-food-cal','pl-food-pro','pl-food-carb','pl-food-fat','pl-food-fiber','pl-food-notes'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('pl-food-status').textContent = '';
+};
+
+window.plFoodSave = function() {
+  var name = document.getElementById('pl-food-name').value.trim();
+  if (!name) { plStatus('pl-food-status', 'Food name is required.', 'err'); return; }
+  var btn = document.getElementById('pl-food-save-btn');
+  btn.disabled = true;
+  plStatus('pl-food-status', 'Saving…', '');
+  var data = {
+    meal_time:     document.getElementById('pl-food-meal').value,
+    food_name:     name,
+    calories_kcal: parseFloat(document.getElementById('pl-food-cal').value)  || 0,
+    protein_g:     parseFloat(document.getElementById('pl-food-pro').value)  || 0,
+    carbs_g:       parseFloat(document.getElementById('pl-food-carb').value) || 0,
+    fat_g:         parseFloat(document.getElementById('pl-food-fat').value)  || 0,
+    fiber_g:       parseFloat(document.getElementById('pl-food-fiber').value)|| 0,
+    notes:         document.getElementById('pl-food-notes').value.trim(),
+    source:        'Manual',
+  };
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'food', data: data, unit_pref: _unitPref })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        plStatus('pl-food-status', '✅ Food logged!', 'ok');
+        plFoodClear();
+        loadTabData('food');
+      } else { plStatus('pl-food-status', '❌ ' + (d.message || 'Error'), 'err'); }
+    })
+    .catch(function() { plStatus('pl-food-status', '❌ Network error', 'err'); })
+    .finally(function() { btn.disabled = false; });
+};
+
+function renderFoodLog(items, summary) {
+  // 요약 업데이트
+  if (summary) {
+    document.getElementById('pl-f-cal').textContent   = Math.round(summary.total_calories_kcal || 0);
+    document.getElementById('pl-f-pro').textContent   = (summary.total_protein_g  || 0) + 'g';
+    document.getElementById('pl-f-carb').textContent  = (summary.total_carbs_g   || 0) + 'g';
+    document.getElementById('pl-f-fat').textContent   = (summary.total_fat_g     || 0) + 'g';
+    document.getElementById('pl-f-fiber').textContent = (summary.total_fiber_g   || 0) + 'g';
+  }
+  var el = document.getElementById('pl-food-log');
+  if (!items.length) { el.innerHTML = '<div class="pl-log-empty">No food logged today.</div>'; return; }
+  el.innerHTML = '';
+  var mealColors = { AM: '#34a853', PM: '#1a73e8' };
+  items.forEach(function(f, idx) {
+    var item = document.createElement('div');
+    item.className = 'pl-log-item';
+    item.innerHTML =
+      '<div class="pl-log-dot" style="background:' + (mealColors[f.meal_time] || '#9aa0a6') + ';"></div>' +
+      '<div class="pl-log-main">' +
+        '<div class="pl-log-name">' + (f.food_name || '') + '</div>' +
+        '<div class="pl-log-sub">' + (f.meal_time || '') + ' · P:' + (f.protein_g||0) + 'g · C:' + (f.carbs_g||0) + 'g · F:' + (f.fat_g||0) + 'g</div>' +
+      '</div>' +
+      '<span class="pl-log-cal">' + Math.round(f.calories_kcal || 0) + ' kcal</span>' +
+      '<button class="pl-log-del" onclick="plDeleteLog(\'food\',' + idx + ')" title="Delete">×</button>';
+    el.appendChild(item);
+  });
+}
+
+// ── ACTIVITY ─────────────────────────────────────────────────────────────
+window.plActCat = function(btn) {
+  document.querySelectorAll('.pl-cat-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  _actCategory = btn.dataset.cat;
+  var sf = document.getElementById('pl-strength-fields');
+  if (sf) sf.style.display = _actCategory === 'Strength' ? 'block' : 'none';
+  // MET 힌트
+  var typeVal = document.getElementById('pl-act-type').value.trim();
+  plActAutoCalc();
+};
+
+window.plActAutoCalc = function() {
+  var typeVal = document.getElementById('pl-act-type').value.trim();
+  var met = parseFloat(document.getElementById('pl-act-met').value);
+  var dur = parseFloat(document.getElementById('pl-act-dur').value);
+  var hint = document.getElementById('pl-met-hint');
+
+  // MET 자동 제안
+  if (typeVal && !met) {
+    var suggestMet = null;
+    Object.keys(MET_REF).forEach(function(k) {
+      if (typeVal.toLowerCase().indexOf(k.toLowerCase()) >= 0) suggestMet = MET_REF[k];
+    });
+    if (suggestMet) {
+      if (hint) { hint.textContent = 'Suggested MET for "' + typeVal + '": ' + suggestMet + ' (WebMD)'; hint.style.display = 'block'; }
+      document.getElementById('pl-act-met').placeholder = suggestMet;
+      met = suggestMet;
+    } else {
+      if (hint) hint.style.display = 'none';
+    }
+  }
+
+  // 칼로리 자동계산
+  if (met && dur) {
+    var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg || 70) : 70;
+    var cal = Math.round(met * wkg * dur / 60);
+    var calEl = document.getElementById('pl-act-cal');
+    if (calEl && !calEl.value) calEl.placeholder = cal + ' (auto)';
+  }
+};
+
+window.plActClear = function() {
+  ['pl-act-type','pl-act-dur','pl-act-sets','pl-act-reps','pl-act-wkg','pl-act-met','pl-act-cal','pl-act-steps','pl-act-dist','pl-act-notes'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) { el.value = ''; el.placeholder = el.dataset.ph || ''; }
+  });
+  document.getElementById('pl-act-status').textContent = '';
+};
+
+window.plActSave = function() {
+  var type = (document.getElementById('pl-act-type').value || '').trim();
+  if (!type) { plStatus('pl-act-status', 'Activity type is required.', 'err'); return; }
+  var btn = document.getElementById('pl-act-save-btn');
+  btn.disabled = true;
+  plStatus('pl-act-status', 'Saving…', '');
+  var met = parseFloat(document.getElementById('pl-act-met').value) || null;
+  var dur = parseFloat(document.getElementById('pl-act-dur').value) || null;
+  var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg || null) : null;
+  var calBurned = parseFloat(document.getElementById('pl-act-cal').value) || null;
+  if (!calBurned && met && dur && wkg) calBurned = Math.round(met * wkg * dur / 60);
+  var data = {
+    category:            _actCategory,
+    type:                type,
+    sets:                parseInt(document.getElementById('pl-act-sets').value) || null,
+    reps:                parseInt(document.getElementById('pl-act-reps').value) || null,
+    weight_kg:           parseFloat(document.getElementById('pl-act-wkg').value) || null,
+    duration_min:        dur,
+    distance_km:         parseFloat(document.getElementById('pl-act-dist').value) || null,
+    met_value:           met,
+    calories_burned_kcal: calBurned,
+    steps:               parseInt(document.getElementById('pl-act-steps').value) || null,
+    notes:               document.getElementById('pl-act-notes').value.trim(),
+  };
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'activity', data: data, unit_pref: _unitPref })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { plStatus('pl-act-status', '✅ Activity logged!', 'ok'); plActClear(); loadTabData('activity'); }
+      else { plStatus('pl-act-status', '❌ ' + (d.message || 'Error'), 'err'); }
+    })
+    .catch(function() { plStatus('pl-act-status', '❌ Network error', 'err'); })
+    .finally(function() { btn.disabled = false; });
+};
+
+function renderActLog(items, summary) {
+  if (summary) {
+    document.getElementById('pl-a-cal').textContent   = Math.round(summary.total_calories_burned_kcal || 0);
+    document.getElementById('pl-a-steps').textContent = (summary.total_steps || 0).toLocaleString();
+    document.getElementById('pl-a-dist').textContent  = (summary.total_distance_km || 0) + ' km';
+    var totalDur = items.reduce(function(s,i) { return s + (i.duration_min || 0); }, 0);
+    document.getElementById('pl-a-dur').textContent   = Math.round(totalDur) + 'm';
+  }
+  var el = document.getElementById('pl-act-log');
+  if (!items.length) { el.innerHTML = '<div class="pl-log-empty">No activity logged today.</div>'; return; }
+  el.innerHTML = '';
+  var catColors = { Cardio:'#34a853', Strength:'#1a73e8', Flexibility:'#9c27b0', HIIT:'#ea4335', Other:'#9aa0a6' };
+  items.forEach(function(a, idx) {
+    var item = document.createElement('div');
+    item.className = 'pl-log-item';
+    var sub = [];
+    if (a.duration_min) sub.push(a.duration_min + ' min');
+    if (a.sets && a.reps) sub.push(a.sets + 'x' + a.reps + (a.weight_kg ? ' @' + a.weight_kg + 'kg' : ''));
+    if (a.distance_km) sub.push(a.distance_km + ' km');
+    item.innerHTML =
+      '<div class="pl-log-dot" style="background:' + (catColors[a.category] || '#9aa0a6') + ';"></div>' +
+      '<div class="pl-log-main">' +
+        '<div class="pl-log-name">' + (a.type || '') + ' <span style="font-weight:400;color:#9aa0a6;font-size:11px;">(' + (a.category||'') + ')</span></div>' +
+        '<div class="pl-log-sub">' + sub.join(' · ') + '</div>' +
+      '</div>' +
+      '<span class="pl-log-cal">' + Math.round(a.calories_burned_kcal || 0) + ' kcal</span>' +
+      '<button class="pl-log-del" onclick="plDeleteLog(\'activity\',' + idx + ')" title="Delete">×</button>';
+    el.appendChild(item);
+  });
+}
+
+// ── HEALTH VITALS ─────────────────────────────────────────────────────────
+window.plVitalAutoCalc = function() {
+  var wkg  = parseFloat(document.getElementById('pl-h-wkg').value);
+  var bfPct= parseFloat(document.getElementById('pl-h-bfpct').value);
+  if (!wkg) { document.getElementById('pl-h-bmi').value = ''; document.getElementById('pl-h-lean').value = ''; return; }
+  // BMI (키 필요)
+  var hcm = _profile && _profile.baseline ? (_profile.baseline.height_cm || null) : null;
+  if (hcm) {
+    var bmi = (wkg / Math.pow(hcm / 100, 2)).toFixed(1);
+    document.getElementById('pl-h-bmi').value = bmi;
+  }
+  // Boer lean mass
+  var sex = _profile && _profile.baseline ? (_profile.baseline.sex || 'Female') : 'Female';
+  if (hcm) {
+    var lean = sex.toLowerCase() === 'male'
+      ? 0.407 * wkg + 0.267 * hcm - 19.2
+      : 0.252 * wkg + 0.473 * hcm - 48.3;
+    document.getElementById('pl-h-lean').value = lean.toFixed(1) + ' kg';
+  }
+};
+
+window.plHealthClear = function() {
+  ['pl-h-wkg','pl-h-bfpct','pl-h-mmkg','pl-h-bpsys','pl-h-bpdia','pl-h-hr','pl-h-spo2','pl-h-glu','pl-h-temp','pl-h-chol','pl-h-notes'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('pl-h-bmi').value = '';
+  document.getElementById('pl-h-lean').value = '';
+  document.getElementById('pl-h-status').textContent = '';
+};
+
+window.plHealthSave = function() {
+  var btn = document.getElementById('pl-h-save-btn');
+  btn.disabled = true;
+  plStatus('pl-h-status', 'Saving…', '');
+  var sex = _profile && _profile.baseline ? (_profile.baseline.sex || '') : '';
+  var hcm = _profile && _profile.baseline ? (_profile.baseline.height_cm || null) : null;
+  var data = {
+    weight_kg:           parseFloat(document.getElementById('pl-h-wkg').value)    || null,
+    manual_body_fat_pct: document.getElementById('pl-h-bfpct').value.trim(),
+    manual_muscle_mass_kg: document.getElementById('pl-h-mmkg').value.trim(),
+    blood_pressure_sys:  parseFloat(document.getElementById('pl-h-bpsys').value)  || null,
+    blood_pressure_dia:  parseFloat(document.getElementById('pl-h-bpdia').value)  || null,
+    heart_rate_bpm:      parseFloat(document.getElementById('pl-h-hr').value)     || null,
+    spo2_pct:            parseFloat(document.getElementById('pl-h-spo2').value)   || null,
+    glucose_mgdl:        parseFloat(document.getElementById('pl-h-glu').value)    || null,
+    temperature_c:       parseFloat(document.getElementById('pl-h-temp').value)   || null,
+    cholesterol_mgdl:    parseFloat(document.getElementById('pl-h-chol').value)   || null,
+    notes:               document.getElementById('pl-h-notes').value.trim(),
+    sex:                 sex,
+    height_cm:           hcm,
+  };
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'health', data: data, unit_pref: _unitPref })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { plStatus('pl-h-status', '✅ Vitals saved!', 'ok'); plHealthClear(); loadTabData('healthlog'); }
+      else { plStatus('pl-h-status', '❌ ' + (d.message || 'Error'), 'err'); }
+    })
+    .catch(function() { plStatus('pl-h-status', '❌ Network error', 'err'); })
+    .finally(function() { btn.disabled = false; });
+};
+
+function renderHealthLog(items) {
+  var el = document.getElementById('pl-h-log');
+  if (!items.length) { el.innerHTML = '<div class="pl-log-empty">No vitals logged today.</div>'; return; }
+  el.innerHTML = '';
+  items.slice(-5).reverse().forEach(function(h, idx) {
+    var parts = [];
+    if (h.weight_kg)          parts.push('⚖ ' + h.weight_kg + ' kg');
+    if (h.bmi)                parts.push('BMI ' + h.bmi);
+    if (h.blood_pressure_sys) parts.push('BP ' + h.blood_pressure_sys + '/' + h.blood_pressure_dia);
+    if (h.heart_rate_bpm)     parts.push('❤ ' + h.heart_rate_bpm + ' bpm');
+    if (h.glucose_mgdl)       parts.push('🩸 ' + h.glucose_mgdl + ' mg/dL');
+    var item = document.createElement('div');
+    item.className = 'pl-log-item';
+    item.innerHTML =
+      '<div class="pl-log-dot" style="background:#ea4335;"></div>' +
+      '<div class="pl-log-main">' +
+        '<div class="pl-log-name">' + (h.stamp_date || '') + '</div>' +
+        '<div class="pl-log-sub">' + parts.join(' · ') + '</div>' +
+      '</div>' +
+      '<button class="pl-log-del" onclick="plDeleteLog(\'health\',' + idx + ')" title="Delete">×</button>';
+    el.appendChild(item);
+  });
+}
+
+// ── SLEEP ─────────────────────────────────────────────────────────────────
+window.plSetQuality = function(q) {
+  _sleepQuality = q;
+  document.querySelectorAll('#pl-quality-row .pl-quality-btn').forEach(function(b) {
+    b.classList.toggle('active', parseInt(b.dataset.q) === q);
+  });
+};
+
+window.plSleepAutoCalc = function() {
+  var bed  = document.getElementById('pl-s-bed').value;
+  var wake = document.getElementById('pl-s-wake').value;
+  if (!bed || !wake) return;
+  var bParts = bed.split(':').map(Number), wParts = wake.split(':').map(Number);
+  var mins = (wParts[0]*60+wParts[1]) - (bParts[0]*60+bParts[1]);
+  if (mins < 0) mins += 1440;
+  var hr = Math.floor(mins/60), mn = mins % 60;
+  document.getElementById('pl-s-dur').value = hr + 'h ' + mn + 'm (' + mins + ' min)';
+};
+
+window.plSleepClear = function() {
+  document.getElementById('pl-s-bed').value = '';
+  document.getElementById('pl-s-wake').value = '';
+  document.getElementById('pl-s-dur').value = '';
+  document.getElementById('pl-s-notes').value = '';
+  document.getElementById('pl-s-status').textContent = '';
+  _sleepQuality = 0;
+  document.querySelectorAll('#pl-quality-row .pl-quality-btn').forEach(function(b) { b.classList.remove('active'); });
+};
+
+window.plSleepSave = function() {
+  var bed = document.getElementById('pl-s-bed').value;
+  var wake = document.getElementById('pl-s-wake').value;
+  if (!bed || !wake) { plStatus('pl-s-status', 'Bedtime and wake time are required.', 'err'); return; }
+  var btn = document.getElementById('pl-s-save-btn');
+  btn.disabled = true;
+  plStatus('pl-s-status', 'Saving…', '');
+  var data = { bedtime: bed, wake_time: wake, quality_1to5: _sleepQuality || null, notes: document.getElementById('pl-s-notes').value.trim() };
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'sleep', data: data, unit_pref: _unitPref })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { plStatus('pl-s-status', '✅ Sleep logged!', 'ok'); plSleepClear(); loadTabData('sleep'); }
+      else { plStatus('pl-s-status', '❌ ' + (d.message || 'Error'), 'err'); }
+    })
+    .catch(function() { plStatus('pl-s-status', '❌ Network error', 'err'); })
+    .finally(function() { btn.disabled = false; });
+};
+
+function renderSleepLog(items) {
+  var el = document.getElementById('pl-s-log');
+  // 간단 바 차트
+  var chartEl = document.getElementById('pl-sleep-chart');
+  if (chartEl && items.length) {
+    var bars = items.slice(-7).map(function(s) {
+      var hr = s.duration_hr || (s.duration_min ? s.duration_min/60 : 0);
+      var pct = Math.min(100, (hr / 10) * 100);
+      var color = hr >= 7 ? '#34a853' : hr >= 6 ? '#fbbc04' : '#ea4335';
+      return '<div style="display:inline-flex;flex-direction:column;align-items:center;flex:1;gap:2px;">' +
+        '<div style="height:50px;width:100%;display:flex;align-items:flex-end;">' +
+          '<div style="width:100%;height:' + pct + '%;background:' + color + ';border-radius:3px 3px 0 0;min-height:3px;"></div>' +
+        '</div>' +
+        '<span style="font-size:9px;color:#9aa0a6;">' + (s.stamp_date||'').slice(5) + '</span>' +
+        '<span style="font-size:10px;font-weight:600;">' + (hr ? hr.toFixed(1) : '—') + 'h</span>' +
+      '</div>';
+    });
+    chartEl.innerHTML = '<div style="display:flex;gap:4px;align-items:flex-end;height:80px;">' + bars.join('') + '</div>';
+  }
+  if (!items.length) { el.innerHTML = '<div class="pl-log-empty">No sleep logged today.</div>'; return; }
+  el.innerHTML = '';
+  var qualityLabel = ['','😴 Poor','😐 Fair','🙂 Good','😊 Great','🌟 Excellent'];
+  items.slice(-3).reverse().forEach(function(s, idx) {
+    var item = document.createElement('div');
+    item.className = 'pl-log-item';
+    item.innerHTML =
+      '<div class="pl-log-dot" style="background:#7c4dff;"></div>' +
+      '<div class="pl-log-main">' +
+        '<div class="pl-log-name">' + (s.bedtime||'?') + ' → ' + (s.wake_time||'?') + '</div>' +
+        '<div class="pl-log-sub">' + (s.duration_hr ? s.duration_hr + 'h' : '') + (s.quality_1to5 ? ' · ' + qualityLabel[s.quality_1to5] : '') + '</div>' +
+      '</div>' +
+      '<button class="pl-log-del" onclick="plDeleteLog(\'sleep\',' + idx + ')" title="Delete">×</button>';
+    el.appendChild(item);
+  });
+}
+
+// ── MOOD ─────────────────────────────────────────────────────────────────
+window.plSetMood = function(mood) {
+  _currentMood = mood;
+  document.querySelectorAll('#pl-mood-grid .pl-mood-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.mood === mood);
+  });
+};
+
+window.plSetEnergy = function(e) {
+  _energyLevel = e;
+  document.querySelectorAll('#pl-energy-row .pl-quality-btn').forEach(function(b) {
+    b.classList.toggle('active', parseInt(b.dataset.e) === e);
+  });
+};
+
+window.plMoodClear = function() {
+  _currentMood = ''; _energyLevel = 0;
+  document.querySelectorAll('#pl-mood-grid .pl-mood-btn, #pl-energy-row .pl-quality-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('pl-m-notes').value = '';
+  document.getElementById('pl-m-status').textContent = '';
+};
+
+window.plMoodSave = function() {
+  if (!_currentMood) { plStatus('pl-m-status', 'Please select a mood.', 'err'); return; }
+  var btn = document.getElementById('pl-m-save-btn');
+  btn.disabled = true;
+  plStatus('pl-m-status', 'Saving…', '');
+  var data = { mood: _currentMood, energy_level: _energyLevel || null, notes: document.getElementById('pl-m-notes').value.trim() };
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'mood', data: data, unit_pref: _unitPref })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { plStatus('pl-m-status', '✅ Mood logged!', 'ok'); plMoodClear(); loadTabData('mood'); }
+      else { plStatus('pl-m-status', '❌ ' + (d.message || 'Error'), 'err'); }
+    })
+    .catch(function() { plStatus('pl-m-status', '❌ Network error', 'err'); })
+    .finally(function() { btn.disabled = false; });
+};
+
+function renderMoodLog(items) {
+  var el = document.getElementById('pl-m-log');
+  if (!items.length) { el.innerHTML = '<div class="pl-log-empty">No mood logged today.</div>'; return; }
+  el.innerHTML = '';
+  var moodEmoji = { Amazing:'🤩', Happy:'😊', Calm:'😌', Neutral:'😐', Tired:'😴', Anxious:'😰', Sad:'😢', Angry:'😠', Stressed:'😫', Grateful:'🙏' };
+  items.slice(-5).reverse().forEach(function(m, idx) {
+    var item = document.createElement('div');
+    item.className = 'pl-log-item';
+    item.innerHTML =
+      '<span style="font-size:20px;">' + (moodEmoji[m.mood] || '😐') + '</span>' +
+      '<div class="pl-log-main">' +
+        '<div class="pl-log-name">' + (m.mood || '') + '</div>' +
+        '<div class="pl-log-sub">' + (m.energy_level ? '⚡ Energy: ' + m.energy_level + '/5' : '') + (m.notes ? ' · ' + m.notes : '') + '</div>' +
+      '</div>' +
+      '<button class="pl-log-del" onclick="plDeleteLog(\'mood\',' + idx + ')" title="Delete">×</button>';
+    el.appendChild(item);
+  });
+}
+
+// ── 삭제 ─────────────────────────────────────────────────────────────────
+window.plDeleteLog = function(tab, rowIdx) {
+  if (!confirm('Delete this entry?')) return;
+  fetch(BACKEND + '/api/me/health/log/delete', {
+    method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: tab, row_idx: rowIdx })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        var tabView = tab === 'health' ? 'healthlog' : tab;
+        loadTabData(tabView);
+      }
+    })
+    .catch(function() {});
+};
+
+// ── 유틸 ─────────────────────────────────────────────────────────────────
+function plStatus(id, msg, type) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'pl-status' + (type ? ' ' + type : '');
+}
+
+// ── 시작 ─────────────────────────────────────────────────────────────────
+init();
+
+})();
+</script>
