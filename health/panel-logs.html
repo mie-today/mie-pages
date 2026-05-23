@@ -80,6 +80,11 @@
 
 /* activity category — hidden, value set via JS default */
 
+/* unit pills (dist km/mi, weight kg/lb) */
+.pl-unit-pill-row{display:flex;gap:4px;margin-bottom:3px;}
+.pl-unit-pill{border:1.5px solid #dadce0;background:#fff;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;color:#9aa0a6;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;line-height:1.6;}
+.pl-unit-pill.active{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
+
 /* quality/energy picker */
 .pl-picker-row{display:flex;gap:5px;margin-bottom:8px;}
 .pl-pick-btn{flex:1;border:1.5px solid #e0e0e0;background:#fff;border-radius:7px;padding:6px 3px;font-size:11px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;color:#5f6368;}
@@ -197,15 +202,33 @@
         <div class="pl-row c3">
           <div class="pl-field"><label>Sets</label><input class="pl-input" id="pa-sets" type="number" placeholder="3" min="0"/></div>
           <div class="pl-field"><label>Reps</label><input class="pl-input" id="pa-reps" type="number" placeholder="15" min="0"/></div>
-          <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="pa-wkg" type="number" placeholder="30" min="0" step="0.5"/></div>
+          <div class="pl-field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+              <label style="margin-bottom:0;">Weight</label>
+              <div class="pl-unit-pill-row">
+                <button class="pl-unit-pill active" id="pa-wunit-kg" onclick="plSetWeightUnit('kg')">kg</button>
+                <button class="pl-unit-pill" id="pa-wunit-lb" onclick="plSetWeightUnit('lb')">lb</button>
+              </div>
+            </div>
+            <input class="pl-input" id="pa-wkg" type="number" placeholder="30" min="0" step="0.5"/>
+          </div>
         </div>
         <div class="pl-row c3">
           <div class="pl-field"><label>MET Value <span id="pa-met-hint" style="font-weight:400;color:#1a73e8;"></span></label><input class="pl-input" id="pa-met" type="number" placeholder="e.g. 8.0" step="0.1" oninput="plActAutoCalc()"/></div>
           <div class="pl-field"><label>Cal Burned (auto)</label><input class="pl-input" id="pa-cal-in" type="number" placeholder="Auto" min="0"/></div>
-          <div class="pl-field"><label>Steps</label><input class="pl-input" id="pa-steps-in" type="number" placeholder="0" min="0"/></div>
+          <div class="pl-field"><label>Steps <span style="font-weight:400;color:#1a73e8;font-size:9px;">→ auto dist</span></label><input class="pl-input" id="pa-steps-in" type="number" placeholder="0" min="0" oninput="plActStepsToDistance()"/></div>
         </div>
         <div class="pl-row c2">
-          <div class="pl-field"><label id="pa-dist-label">Distance (km)</label><input class="pl-input" id="pa-dist-in" type="number" placeholder="0" step="0.01" min="0"/></div>
+          <div class="pl-field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+              <label style="margin-bottom:0;">Distance</label>
+              <div class="pl-unit-pill-row">
+                <button class="pl-unit-pill active" id="pa-dunit-km" onclick="plSetDistUnit('km')">km</button>
+                <button class="pl-unit-pill" id="pa-dunit-mi" onclick="plSetDistUnit('mi')">mi</button>
+              </div>
+            </div>
+            <input class="pl-input" id="pa-dist-in" type="number" placeholder="0" step="0.01" min="0"/>
+          </div>
           <div class="pl-field"><label>Notes</label><input class="pl-input" id="pa-notes" type="text" placeholder="Optional"/></div>
         </div>
         <div class="pl-btn-row">
@@ -437,7 +460,7 @@ function init() {
     }
   } catch(e) {}
   // set distance label based on current unit pref
-  plUpdateDistLabel();
+  plInitUnitPills();
 
   // load profile
   fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
@@ -655,18 +678,61 @@ function foodItem(f, idx) {
 }
 
 // ── ACTIVITY ──────────────────────────────────────────────────────────
-// unit toggle: km ↔ mile driven by _unitPref
-function plUpdateDistLabel() {
-  var lbl = document.getElementById('pa-dist-label');
-  if (!lbl) return;
-  lbl.textContent = _unitPref === 'us' ? 'Distance (mi)' : 'Distance (km)';
-}
+var _distUnit   = 'km'; // 'km' | 'mi'
+var _weightUnit = 'kg'; // 'kg' | 'lb'
 
-// call whenever unit pref changes (also call from init)
+// Called from index.html when global Metrics/US toggles
 window.plSetUnitPref = function(pref) {
   _unitPref = pref;
   localStorage.setItem('mie_unit', pref);
-  plUpdateDistLabel();
+  // B안: global pref sets pill defaults
+  plSetDistUnit(pref === 'us' ? 'mi' : 'km');
+  plSetWeightUnit(pref === 'us' ? 'lb' : 'kg');
+};
+
+window.plSetDistUnit = function(unit) {
+  _distUnit = unit;
+  var km = document.getElementById('pa-dunit-km');
+  var mi = document.getElementById('pa-dunit-mi');
+  if (km) km.classList.toggle('active', unit === 'km');
+  if (mi) mi.classList.toggle('active', unit === 'mi');
+  // re-run steps→distance with new unit
+  plActStepsToDistance();
+};
+
+window.plSetWeightUnit = function(unit) {
+  _weightUnit = unit;
+  var kg = document.getElementById('pa-wunit-kg');
+  var lb = document.getElementById('pa-wunit-lb');
+  if (kg) kg.classList.toggle('active', unit === 'kg');
+  if (lb) lb.classList.toggle('active', unit === 'lb');
+};
+
+// init pill state from _unitPref
+function plInitUnitPills() {
+  if (_unitPref === 'us') {
+    plSetDistUnit('mi');
+    plSetWeightUnit('lb');
+  } else {
+    plSetDistUnit('km');
+    plSetWeightUnit('kg');
+  }
+}
+
+// Steps → Distance auto-estimate
+// average stride: 0.762m → 1 step ≈ 0.000762 km
+window.plActStepsToDistance = function() {
+  var steps = parseInt(document.getElementById('pa-steps-in').value) || 0;
+  var distEl = document.getElementById('pa-dist-in');
+  if (!distEl) return;
+  if (steps > 0 && !distEl.value) {
+    var km = Math.round(steps * 0.000762 * 100) / 100;
+    var display = _distUnit === 'mi' ? Math.round(km / 1.60934 * 100) / 100 : km;
+    distEl.placeholder = display + ' (auto)';
+  } else if (steps === 0) {
+    distEl.placeholder = '0';
+  }
+  plActAutoCalc();
 };
 
 window.plActMETHint = function() {
@@ -694,9 +760,18 @@ window.plActAutoCalc = function() {
     Object.keys(MET).forEach(function(k){ if (type.indexOf(k) >= 0 && !met) met = MET[k]; });
   }
   var calEl = document.getElementById('pa-cal-in');
-  if (met && dur && calEl && !calEl.value) {
-    var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg || 70) : 70;
+  if (!calEl || calEl.value) return; // don't overwrite manual input
+  var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg || 70) : 70;
+  if (met && dur) {
     calEl.placeholder = Math.round(met * wkg * dur / 60) + ' (auto)';
+  } else if (met) {
+    // fallback: estimate from steps if no duration
+    var steps = parseInt(document.getElementById('pa-steps-in').value)||0;
+    if (steps) {
+      // steps → approx duration at 100 steps/min walking
+      var estDur = steps / 100;
+      calEl.placeholder = Math.round(met * wkg * estDur / 60) + ' (est)';
+    }
   }
 };
 
@@ -710,20 +785,36 @@ window.plActClear = function() {
 window.plActSave = function() {
   var type = (document.getElementById('pa-type').value||'').trim();
   if (!type) { setStatus('pa-status','Activity type is required.','err'); return; }
+
   var met = parseFloat(document.getElementById('pa-met').value)||null;
   var dur = parseFloat(document.getElementById('pa-dur-in').value)||null;
   var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg||null) : null;
-  var cal = parseFloat(document.getElementById('pa-cal-in').value)||null;
+
+  // cal: use manual input or auto-calc
+  var calEl = document.getElementById('pa-cal-in');
+  var cal = parseFloat(calEl.value)||null;
   if (!cal && met && dur && wkg) cal = Math.round(met * wkg * dur / 60);
-  // distance: convert mile→km if US unit
-  var distRaw = parseFloat(document.getElementById('pa-dist-in').value)||null;
-  var distKm = distRaw ? (_unitPref === 'us' ? distRaw * 1.60934 : distRaw) : null;
-  if (distKm) distKm = Math.round(distKm * 100) / 100;
+
+  // weight: convert lb→kg if needed
+  var wRaw = parseFloat(document.getElementById('pa-wkg').value)||null;
+  var wSave = wRaw ? (_weightUnit === 'lb' ? Math.round(wRaw / 2.20462 * 10) / 10 : wRaw) : null;
+
+  // distance: use manual value or auto from steps placeholder
+  var distEl = document.getElementById('pa-dist-in');
+  var distRaw = parseFloat(distEl.value) || null;
+  if (!distRaw) {
+    // try reading from steps auto-estimate
+    var steps = parseInt(document.getElementById('pa-steps-in').value)||0;
+    if (steps) distRaw = Math.round(steps * 0.000762 * 100) / 100; // always km at this point
+  }
+  // convert to km for storage
+  var distKm = distRaw ? (_distUnit === 'mi' ? Math.round(distRaw * 1.60934 * 100) / 100 : distRaw) : null;
+
   var data = {
     category: 'General', type: type,
     sets: parseInt(document.getElementById('pa-sets').value)||null,
     reps: parseInt(document.getElementById('pa-reps').value)||null,
-    weight_kg: parseFloat(document.getElementById('pa-wkg').value)||null,
+    weight_kg: wSave,
     duration_min: dur,
     distance_km: distKm,
     met_value: met,
