@@ -63,19 +63,20 @@
 .pl-log-del:hover{color:#d93025;}
 .pl-log-empty{font-size:12.5px;color:#9aa0a6;font-style:italic;text-align:center;padding:16px 0;}
 
-/* food search */
-.pl-search-wrap{position:relative;margin-bottom:8px;}
-.pl-search-input{width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:9px 36px 9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;outline:none;transition:border-color .12s;box-sizing:border-box;}
-.pl-search-input:focus{border-color:#1a73e8;}
-.pl-search-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#1a73e8;font-size:16px;line-height:1;}
-.pl-results{display:flex;flex-direction:column;gap:3px;margin-top:4px;max-height:180px;overflow-y:auto;}
-.pl-result{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid #e8eaed;border-radius:7px;cursor:pointer;background:#fafafa;transition:all .12s;}
-.pl-result:hover{border-color:#1a73e8;background:#e8f0fe;}
-.pl-result-name{font-size:12px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-.pl-result-brand{font-size:10.5px;color:#9aa0a6;}
-.pl-result-cal{font-size:12px;font-weight:700;color:#1a73e8;white-space:nowrap;margin-left:8px;}
-.pl-result-est{font-size:9px;color:#fbbc04;margin-left:2px;}
-.pl-search-msg{font-size:11.5px;color:#9aa0a6;font-style:italic;padding:6px 0;text-align:center;}
+/* food name inline search */
+.pl-fname-wrap{position:relative;}
+.pl-fname-wrap .pl-search-icon{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#1a73e8;font-size:15px;line-height:1;padding:0;}
+.pl-fname-wrap .pl-input{padding-right:28px;}
+.pl-fname-dropdown{position:absolute;top:calc(100% + 3px);left:0;right:0;background:#fff;border:1px solid #dadce0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;display:none;}
+.pl-fname-dropdown.open{display:block;}
+.pl-fname-result{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f1f3f4;}
+.pl-fname-result:last-child{border-bottom:none;}
+.pl-fname-result:hover{background:#e8f0fe;}
+.pl-fname-result-left{flex:1;min-width:0;}
+.pl-fname-result-name{font-size:12px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-fname-result-sub{font-size:10.5px;color:#9aa0a6;margin-top:1px;}
+.pl-fname-result-cal{font-size:12px;font-weight:700;color:#1a73e8;white-space:nowrap;margin-left:8px;flex-shrink:0;}
+.pl-fname-msg{font-size:11.5px;color:#9aa0a6;font-style:italic;padding:10px;text-align:center;}
 
 /* activity category pills */
 .pl-cat-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
@@ -116,17 +117,8 @@
 </style>
 
 <div class="pl-wrap">
-  <!-- tabs -->
-  <div class="pl-tabs">
-    <button class="pl-tab" data-tab="food"      onclick="plTab('food')">🍽 Food</button>
-    <button class="pl-tab" data-tab="activity"  onclick="plTab('activity')">🏃 Activity</button>
-    <button class="pl-tab" data-tab="healthlog" onclick="plTab('healthlog')">❤️ Health</button>
-    <button class="pl-tab" data-tab="sleep"     onclick="plTab('sleep')">😴 Sleep</button>
-    <button class="pl-tab" data-tab="mood"      onclick="plTab('mood')">😊 Mood</button>
-  </div>
-
   <!-- ═══ FOOD ═══ -->
-  <div class="pl-section" id="pl-food">
+  <div class="pl-section active" id="pl-food">
     <div class="pl-allergy" id="pl-allergy"></div>
 
     <!-- summary -->
@@ -138,18 +130,7 @@
       <div class="pl-sum-item"><div class="pl-sum-val" id="pf-fiber">—</div><div class="pl-sum-lbl">Fiber</div></div>
     </div>
 
-    <!-- search -->
-    <div class="pl-card">
-      <div class="pl-card-title">Search Food</div>
-      <div class="pl-search-wrap">
-        <input class="pl-search-input" id="pf-search" type="text" placeholder='e.g. "chicken breast 100g"'
-          onkeydown="if(event.key==='Enter')plFoodSearch()"/>
-        <button class="pl-search-btn" onclick="plFoodSearch()">🔍</button>
-      </div>
-      <div id="pf-results" class="pl-results"></div>
-    </div>
-
-    <!-- add form -->
+    <!-- add form (Search integrated into Food Name) -->
     <div class="pl-card">
       <div class="pl-card-title">
         Add Food
@@ -164,7 +145,16 @@
               <option value="PM">PM (Lunch/Dinner/Late Night)</option>
             </select>
           </div>
-          <div class="pl-field"><label>Food Name *</label><input class="pl-input" id="pf-name" type="text" placeholder="e.g. Oatmeal"/></div>
+          <div class="pl-field">
+            <label>Food Name * <span style="font-weight:400;color:#1a73e8;font-size:9px;">— type &amp; press Enter or 🔍</span></label>
+            <div class="pl-fname-wrap">
+              <input class="pl-input" id="pf-name" type="text" placeholder='e.g. "chicken breast 100g"'
+                onkeydown="if(event.key==='Enter'){event.preventDefault();plFoodSearch();}"
+                oninput="plFoodNameInput()"/>
+              <button class="pl-search-icon" onclick="plFoodSearch()" title="Search food">🔍</button>
+              <div class="pl-fname-dropdown" id="pf-fname-dropdown"></div>
+            </div>
+          </div>
         </div>
         <div class="pl-row c4">
           <div class="pl-field"><label>Calories</label><input class="pl-input" id="pf-cal-in" type="number" placeholder="0" min="0"/></div>
@@ -203,11 +193,11 @@
     <div class="pl-card">
       <div class="pl-card-title">Add Activity</div>
       <div class="pl-cat-row" id="pa-cats">
-        <button class="pl-cat-btn active" data-cat="Cardio"      onclick="plActCat(this)">🏃 Cardio</button>
-        <button class="pl-cat-btn"        data-cat="Strength"    onclick="plActCat(this)">🏋️ Strength</button>
-        <button class="pl-cat-btn"        data-cat="Flexibility" onclick="plActCat(this)">🧘 Flexibility</button>
-        <button class="pl-cat-btn"        data-cat="HIIT"        onclick="plActCat(this)">⚡ HIIT</button>
-        <button class="pl-cat-btn"        data-cat="Other"       onclick="plActCat(this)">➕ Other</button>
+        <button class="pl-cat-btn active" data-cat="Cardio"      onclick="plActCat(this)">Cardio</button>
+        <button class="pl-cat-btn"        data-cat="Strength"    onclick="plActCat(this)">Strength</button>
+        <button class="pl-cat-btn"        data-cat="Flexibility" onclick="plActCat(this)">Flexibility</button>
+        <button class="pl-cat-btn"        data-cat="HIIT"        onclick="plActCat(this)">HIIT</button>
+        <button class="pl-cat-btn"        data-cat="Other"       onclick="plActCat(this)">Other</button>
       </div>
       <div class="pl-form">
         <div class="pl-row c2">
@@ -350,7 +340,7 @@
     <!-- monthly chart -->
     <div class="pl-card">
       <div class="pl-card-title">Monthly Sleep Chart</div>
-      <div class="pl-chart" id="ps-chart"><div class="pl-search-msg">Loading chart…</div></div>
+      <div class="pl-chart" id="ps-chart"><div class="pl-fname-msg">Loading chart…</div></div>
     </div>
 
     <div class="pl-card">
@@ -418,7 +408,7 @@ var _mood     = '';
 var _energy   = 0;
 var _customFormOpen = false;
 
-// MET reference (WebMD)
+// MET reference
 var MET = {
   running:8.0, run:8.0, jogging:7.0, walking:3.5, walk:3.5,
   cycling:6.0, biking:6.0, swimming:6.0, yoga:3.0, pilates:3.0,
@@ -428,16 +418,14 @@ var MET = {
   rowing:7.0, stretching:2.5, 'spin class':6.8, crossfit:8.0, other:4.0,
 };
 
-// ── AM/PM auto from current hour ───────────────────────────────────────
+// ── AM/PM auto ────────────────────────────────────────────────────────
 function autoMealTime() {
   var h = new Date().getHours();
-  // AM: 05:00–14:59 | PM: 15:00–04:59 (Late Night → PM)
   return (h >= 5 && h < 15) ? 'AM' : 'PM';
 }
 
 // ── init ──────────────────────────────────────────────────────────────
 function init() {
-  // auto-set meal time
   var mealSel = document.getElementById('pf-meal');
   if (mealSel) {
     var auto = autoMealTime();
@@ -460,18 +448,23 @@ function init() {
       }
     }
   } catch(e) {}
-  // load profile for auto-calcs
+  // load profile
   fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){ if(d) _profile = d; })
     .catch(function(){});
+
+  // close dropdown on outside click
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('pf-name') && document.getElementById('pf-name').closest('.pl-fname-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      plCloseFoodDropdown();
+    }
+  });
 }
 
 // ── tab switching ─────────────────────────────────────────────────────
 window.plTab = function(tab) {
-  document.querySelectorAll('.pl-tab').forEach(function(b){
-    b.classList.toggle('active', b.dataset.tab === tab);
-  });
   document.querySelectorAll('.pl-section').forEach(function(s){ s.classList.remove('active'); });
   var map = { food:'pl-food', activity:'pl-activity', healthlog:'pl-healthlog', sleep:'pl-sleep', mood:'pl-mood' };
   var el = document.getElementById(map[tab]);
@@ -503,13 +496,10 @@ function loadData(tab) {
     .catch(function(){});
 }
 
-// ── Overview refresh in index.html ────────────────────────────────────
+// ── Overview refresh ──────────────────────────────────────────────────
 function refreshOverview() {
-  // call index.html's global refreshOverviewData() if it exists
   try {
-    if (typeof window.refreshOverviewData === 'function') {
-      window.refreshOverviewData();
-    }
+    if (typeof window.refreshOverviewData === 'function') window.refreshOverviewData();
   } catch(e) {}
 }
 
@@ -544,38 +534,58 @@ function setStatus(id, msg, type) {
   el.className = 'pl-status' + (type ? ' '+type : '');
 }
 
-// ── FOOD ──────────────────────────────────────────────────────────────
+// ── FOOD — inline search in Food Name ────────────────────────────────
+function plCloseFoodDropdown() {
+  var dd = document.getElementById('pf-fname-dropdown');
+  if (dd) { dd.innerHTML=''; dd.classList.remove('open'); }
+}
+
+// called on input — only clears stale dropdown if user edits text
+window.plFoodNameInput = function() {
+  // If the user starts typing again after a selection, clear autofilled fields
+  // (optional UX: clear nutrition fields so they aren't misleading)
+  // We do NOT auto-search here — only on Enter/icon click (B안)
+};
+
 window.plFoodSearch = function() {
-  var q = (document.getElementById('pf-search').value||'').trim();
+  var q = (document.getElementById('pf-name').value||'').trim();
   if (!q) return;
-  var res = document.getElementById('pf-results');
-  res.innerHTML = '<div class="pl-search-msg"><span class="pl-spin"></span>Searching…</div>';
+  var dd = document.getElementById('pf-fname-dropdown');
+  dd.innerHTML = '<div class="pl-fname-msg"><span class="pl-spin"></span>Searching…</div>';
+  dd.classList.add('open');
+
   fetch(BACKEND + '/api/health/food/search', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ query:q })
   })
     .then(function(r){ return r.json(); })
     .then(function(d){
-      res.innerHTML = '';
+      dd.innerHTML = '';
       var foods = d.foods || [];
-      if (!foods.length) { res.innerHTML = '<div class="pl-search-msg">No results found.</div>'; return; }
+      if (!foods.length) {
+        dd.innerHTML = '<div class="pl-fname-msg">No results found.</div>';
+        return;
+      }
       foods.forEach(function(f){
         var item = document.createElement('div');
-        item.className = 'pl-result';
+        item.className = 'pl-fname-result';
         item.innerHTML =
-          '<div style="flex:1;min-width:0;">' +
-            '<div class="pl-result-name">' + (f.food_name||'') + '</div>' +
-            '<div class="pl-result-brand">' + (f.brand_name||f.serving_unit||'') + '</div>' +
+          '<div class="pl-fname-result-left">' +
+            '<div class="pl-fname-result-name">' + (f.food_name||'') + '</div>' +
+            '<div class="pl-fname-result-sub">' + (f.brand_name||f.serving_unit||f.source||'') + '</div>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;flex-shrink:0;">' +
-            '<span class="pl-result-cal">' + Math.round(f.calories_kcal||0) + ' kcal</span>' +
-            (f.calories_estimated ? '<span class="pl-result-est" title="Estimated">~</span>' : '') +
-          '</div>';
-        item.onclick = function(){ plFoodFill(f); res.innerHTML=''; };
-        res.appendChild(item);
+          '<span class="pl-fname-result-cal">' + Math.round(f.calories_kcal||0) + ' kcal</span>';
+        item.onclick = function(){
+          plFoodFill(f);
+          plCloseFoodDropdown();
+        };
+        dd.appendChild(item);
       });
+      dd.classList.add('open');
     })
-    .catch(function(){ res.innerHTML='<div class="pl-search-msg">Search failed.</div>'; });
+    .catch(function(){
+      dd.innerHTML = '<div class="pl-fname-msg">Search failed.</div>';
+    });
 };
 
 function plFoodFill(f) {
@@ -591,6 +601,7 @@ window.plFoodClear = function() {
   ['pf-name','pf-cal-in','pf-pro-in','pf-carb-in','pf-fat-in','pf-fiber-in','pf-notes'].forEach(function(id){
     document.getElementById(id).value = '';
   });
+  plCloseFoodDropdown();
   setStatus('pf-status','','');
 };
 
@@ -615,7 +626,6 @@ window.plFoodSave = function() {
 };
 
 function renderFoodLog(items, summary) {
-  // summary bar
   if (summary) {
     document.getElementById('pf-cal').textContent   = Math.round(summary.total_calories_kcal||0);
     document.getElementById('pf-pro').textContent   = (summary.total_protein_g||0)+'g';
@@ -625,18 +635,17 @@ function renderFoodLog(items, summary) {
   }
   var el = document.getElementById('pf-log');
   if (!items.length) { el.innerHTML='<div class="pl-log-empty">No food logged today.</div>'; return; }
-  // group by AM / PM
   var am = items.filter(function(f){ return f.meal_time==='AM'; });
   var pm = items.filter(function(f){ return f.meal_time!=='AM'; });
   var html = '';
   if (am.length) {
     html += '<div class="pl-slot-header">☀️ AM</div><div class="pl-log-list" style="margin-bottom:8px;">';
-    am.forEach(function(f,i){ html += foodItem(f, items.indexOf(f)); });
+    am.forEach(function(f){ html += foodItem(f, items.indexOf(f)); });
     html += '</div>';
   }
   if (pm.length) {
     html += '<div class="pl-slot-header">🌙 PM / Late Night</div><div class="pl-log-list">';
-    pm.forEach(function(f,i){ html += foodItem(f, items.indexOf(f)); });
+    pm.forEach(function(f){ html += foodItem(f, items.indexOf(f)); });
     html += '</div>';
   }
   el.innerHTML = html;
@@ -684,7 +693,7 @@ window.plActMETHint = function() {
 window.plActAutoCalc = function() {
   var met = parseFloat(document.getElementById('pa-met').value);
   var dur = parseFloat(document.getElementById('pa-dur-in').value);
-  if (!met) { // try from type
+  if (!met) {
     var type = (document.getElementById('pa-type').value||'').toLowerCase();
     Object.keys(MET).forEach(function(k){ if (type.indexOf(k) >= 0 && !met) met = MET[k]; });
   }
@@ -807,7 +816,6 @@ window.plVitalsSave = function() {
 };
 
 function renderVitalsLog(items, customItems) {
-  // vitals
   var el = document.getElementById('ph-log');
   if (!items.length) { el.innerHTML='<div class="pl-log-empty">No vitals logged today.</div>'; }
   else {
@@ -828,7 +836,6 @@ function renderVitalsLog(items, customItems) {
     html += '</div>';
     el.innerHTML = html;
   }
-  // custom items
   var cel = document.getElementById('ph-custom-log');
   if (!customItems || !customItems.length) {
     cel.innerHTML='<div class="pl-log-empty">No custom items today. Tap + to add.</div>';
@@ -847,7 +854,6 @@ function renderVitalsLog(items, customItems) {
   }
 }
 
-// custom form
 window.plCustomToggleForm = function() {
   _customFormOpen = !_customFormOpen;
   var f = document.getElementById('ph-custom-form');
@@ -943,18 +949,15 @@ function renderSleepLog(items) {
   el.innerHTML=html;
 }
 
-// monthly sleep chart
 function loadSleepChart() {
   var now = new Date();
-  var ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period=monthly&tab=sleep', { credentials:'include' })
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
       var chartEl = document.getElementById('ps-chart');
       if (!chartEl) return;
       var items = d ? (d.sleep||[]) : [];
-      if (!items.length) { chartEl.innerHTML='<div class="pl-search-msg">No sleep data this month.</div>'; return; }
-      // group by date, take last entry per day
+      if (!items.length) { chartEl.innerHTML='<div class="pl-fname-msg">No sleep data this month.</div>'; return; }
       var byDate = {};
       items.forEach(function(s){ byDate[s.stamp_date] = s; });
       var days = Object.keys(byDate).sort();
@@ -972,17 +975,14 @@ function loadSleepChart() {
           '<div class="pl-chart-val">'+(hr?hr.toFixed(1):'—')+'</div>' +
         '</div>';
       });
-      // goal line hint
-      var goalPct = Math.min(100,(goalHr/10)*100);
       chartEl.innerHTML =
         '<div style="position:relative;">' +
-          '<div style="position:absolute;top:'+(100-goalPct)+'%;width:100%;border-top:1.5px dashed #1a73e8;opacity:.5;pointer-events:none;"></div>' +
+          '<div style="position:absolute;top:'+(100-Math.min(100,(goalHr/10)*100))+'%;width:100%;border-top:1.5px dashed #1a73e8;opacity:.5;pointer-events:none;"></div>' +
           '<div class="pl-chart-bars">'+bars.join('')+'</div>' +
         '</div>' +
-        '<div class="pl-chart-avg">Monthly avg: '+avg.toFixed(1)+'h · Goal: '+goalHr+'h' +
-          ' <span style="display:inline-block;width:10px;height:2px;border-top:2px dashed #1a73e8;vertical-align:middle;"></span></div>';
+        '<div class="pl-chart-avg">Monthly avg: '+avg.toFixed(1)+'h · Goal: '+goalHr+'h</div>';
     })
-    .catch(function(){ document.getElementById('ps-chart').innerHTML='<div class="pl-search-msg">Could not load chart.</div>'; });
+    .catch(function(){ document.getElementById('ps-chart').innerHTML='<div class="pl-fname-msg">Could not load chart.</div>'; });
 }
 
 // ── MOOD ──────────────────────────────────────────────────────────────
