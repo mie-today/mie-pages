@@ -20,6 +20,14 @@
 .pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;flex-shrink:0;}
 .pl-card-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 
+/* foldable form cards */
+.pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;line-height:1;padding:2px 5px;border-radius:4px;transition:all .12s;font-family:sans-serif;display:flex;align-items:center;gap:3px;}
+.pl-fold-btn:hover{background:#f1f3f4;color:#5f6368;}
+.pl-fold-body{transition:none;overflow:hidden;}
+.pl-fold-body.collapsed{display:none;}
+.pl-card-title.foldable{cursor:pointer;user-select:none;}
+.pl-card-title.foldable:hover .pl-fold-btn{color:#1a73e8;}
+
 /* allergy banner */
 .pl-allergy{background:#fef7e0;border:1px solid #fbbc04;border-radius:8px;padding:8px 13px;font-size:13.5px;color:#b06000;font-weight:500;display:none;flex-shrink:0;}
 .pl-allergy.show{display:block;}
@@ -166,10 +174,14 @@
 
     <!-- add form (Search integrated into Food Name) -->
     <div class="pl-card">
-      <div class="pl-card-title">
+      <div class="pl-card-title foldable" onclick="plToggleFold('pf-fold')">
         Add Food
-        <span style="font-size:10px;background:#e8f0fe;color:#1a73e8;border-radius:4px;padding:1px 6px;font-weight:600;" id="pf-meal-badge">AM</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;background:#e8f0fe;color:#1a73e8;border-radius:4px;padding:1px 6px;font-weight:600;" id="pf-meal-badge">AM</span>
+          <button class="pl-fold-btn" id="pf-fold-btn" onclick="event.stopPropagation();plToggleFold('pf-fold')">▾ Hide</button>
+        </div>
       </div>
+      <div class="pl-fold-body" id="pf-fold">
       <div class="pl-form">
         <div class="pl-edit-banner" id="pf-edit-banner">
           ✏️ Editing: <span id="pf-edit-label" style="font-weight:400;"></span>
@@ -214,7 +226,7 @@
           <span class="pl-cal-note">Visibility: Private</span>
         </div>
         <div class="pl-status" id="pf-status"></div>
-      </div>
+      </div><!-- end pl-fold-body -->
     </div>
 
     <!-- log -->
@@ -234,8 +246,11 @@
     </div>
 
     <div class="pl-card">
-      <div class="pl-card-title">Add Activity</div>
-      <div class="pl-form">
+      <div class="pl-card-title foldable" onclick="plToggleFold('pa-fold')">
+        Add Activity
+        <button class="pl-fold-btn" id="pa-fold-btn" onclick="event.stopPropagation();plToggleFold('pa-fold')">▾ Hide</button>
+      </div>
+      <div class="pl-fold-body" id="pa-fold">
         <div class="pl-edit-banner" id="pa-edit-banner">
           ✏️ Editing: <span id="pa-edit-label" style="font-weight:400;"></span>
           <button class="pl-edit-banner-cancel" onclick="plActCancelEdit()">✕ Cancel</button>
@@ -286,7 +301,7 @@
           <span class="pl-cal-note">Visibility: Private</span>
         </div>
         <div class="pl-status" id="pa-status"></div>
-      </div>
+      </div><!-- end pl-fold-body -->
     </div>
 
     <div class="pl-card">
@@ -298,8 +313,11 @@
   <!-- ═══ HEALTH VITALS ═══ -->
   <div class="pl-section" id="pl-healthlog">
     <div class="pl-card">
-      <div class="pl-card-title">Body Metrics</div>
-      <div class="pl-form">
+      <div class="pl-card-title foldable" onclick="plToggleFold('ph-metrics-fold')">
+        Body Metrics
+        <button class="pl-fold-btn" id="ph-metrics-fold-btn" onclick="event.stopPropagation();plToggleFold('ph-metrics-fold')">▾ Hide</button>
+      </div>
+      <div class="pl-fold-body" id="ph-metrics-fold">
         <div class="pl-row c3">
           <!-- Weight with kg/lb pill -->
           <div class="pl-field">
@@ -334,11 +352,15 @@
           <div class="pl-field"><label>Muscle Mass (manual)</label><input class="pl-input" id="ph-mmkg" type="number" placeholder="Auto if blank" step="0.1"/></div>
           <div class="pl-field"><label>Lean Mass <span style="color:#1a73e8;font-weight:400;">(Boer)</span></label><input class="pl-input" id="ph-lean" type="text" placeholder="—" readonly/></div>
         </div>
-      </div>
+      </div><!-- end pl-fold-body: ph-metrics-fold -->
     </div>
 
     <div class="pl-card">
-      <div class="pl-card-title">Vitals</div>
+      <div class="pl-card-title foldable" onclick="plToggleFold('ph-vitals-fold')">
+        Vitals
+        <button class="pl-fold-btn" id="ph-vitals-fold-btn" onclick="event.stopPropagation();plToggleFold('ph-vitals-fold')">▾ Hide</button>
+      </div>
+      <div class="pl-fold-body" id="ph-vitals-fold">
       <div class="pl-form">
         <div class="pl-edit-banner" id="ph-edit-banner">
           ✏️ Editing: <span id="ph-edit-label" style="font-weight:400;"></span>
@@ -379,6 +401,7 @@
         </div>
         <div class="pl-status" id="ph-status"></div>
       </div>
+      </div><!-- end pl-fold-body: ph-vitals-fold -->
     </div>
 
     <!-- custom items -->
@@ -414,8 +437,11 @@
   <!-- ═══ SLEEP ═══ -->
   <div class="pl-section" id="pl-sleep">
     <div class="pl-card">
-      <div class="pl-card-title">Log Sleep</div>
-      <div class="pl-form">
+      <div class="pl-card-title foldable" onclick="plToggleFold('ps-fold')">
+        Log Sleep
+        <button class="pl-fold-btn" id="ps-fold-btn" onclick="event.stopPropagation();plToggleFold('ps-fold')">▾ Hide</button>
+      </div>
+      <div class="pl-fold-body" id="ps-fold">
         <div class="pl-edit-banner" id="ps-edit-banner">
           ✏️ Editing: <span id="ps-edit-label" style="font-weight:400;"></span>
           <button class="pl-edit-banner-cancel" onclick="plSleepCancelEdit()">✕ Cancel</button>
@@ -451,7 +477,7 @@
           <span class="pl-cal-note">Visibility: Private</span>
         </div>
         <div class="pl-status" id="ps-status"></div>
-      </div>
+      </div><!-- end pl-fold-body: ps-fold -->
     </div>
 
     <!-- monthly chart -->
@@ -469,7 +495,11 @@
   <!-- ═══ MOOD ═══ -->
   <div class="pl-section" id="pl-mood">
     <div class="pl-card">
-      <div class="pl-card-title">How are you feeling?</div>
+      <div class="pl-card-title foldable" onclick="plToggleFold('pm-fold')">
+        How are you feeling?
+        <button class="pl-fold-btn" id="pm-fold-btn" onclick="event.stopPropagation();plToggleFold('pm-fold')">▾ Hide</button>
+      </div>
+      <div class="pl-fold-body" id="pm-fold">
       <div class="pl-form">
         <div class="pl-edit-banner" id="pm-edit-banner">
           ✏️ Editing: <span id="pm-edit-label" style="font-weight:400;"></span>
@@ -512,6 +542,7 @@
         </div>
         <div class="pl-status" id="pm-status"></div>
       </div>
+      </div><!-- end pl-fold-body: pm-fold -->
     </div>
 
     <div class="pl-card">
@@ -592,6 +623,17 @@ function init() {
     }
   });
 }
+
+// ── fold/unfold form cards ─────────────────────────────────────────────
+window.plToggleFold = function(bodyId) {
+  var body = document.getElementById(bodyId);
+  if (!body) return;
+  var isCollapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !isCollapsed);
+  // update button label — find btn by convention: bodyId + '-btn'
+  var btn = document.getElementById(bodyId + '-btn');
+  if (btn) btn.textContent = isCollapsed ? '▾ Hide' : '▸ Show';
+};
 
 // ── tab switching ─────────────────────────────────────────────────────
 window.plTab = function(tab) {
