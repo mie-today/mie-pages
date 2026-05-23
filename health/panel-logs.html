@@ -251,13 +251,40 @@
       <div class="pl-card-title">Body Metrics</div>
       <div class="pl-form">
         <div class="pl-row c3">
-          <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="ph-wkg" type="number" placeholder="70.4" step="0.1" oninput="plVitalsCalc()"/></div>
+          <!-- Weight with kg/lb pill -->
+          <div class="pl-field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+              <label style="margin-bottom:0;">Weight</label>
+              <div class="pl-unit-pill-row">
+                <button class="pl-unit-pill active" id="ph-wunit-kg" onclick="plSetHealthWeightUnit('kg')">kg</button>
+                <button class="pl-unit-pill" id="ph-wunit-lb" onclick="plSetHealthWeightUnit('lb')">lb</button>
+              </div>
+            </div>
+            <input class="pl-input" id="ph-wkg" type="number" placeholder="70.4" step="0.1" oninput="plVitalsCalc()"/>
+          </div>
           <div class="pl-field"><label>BMI <span style="color:#1a73e8;font-weight:400;">(auto)</span></label><input class="pl-input" id="ph-bmi" type="text" placeholder="—" readonly/></div>
           <div class="pl-field"><label>Body Fat % (manual)</label><input class="pl-input" id="ph-bfpct" type="number" placeholder="Auto if blank" step="0.1" oninput="plVitalsCalc()"/></div>
         </div>
-        <div class="pl-row c2">
-          <div class="pl-field"><label>Muscle Mass kg (manual)</label><input class="pl-input" id="ph-mmkg" type="number" placeholder="Auto if blank" step="0.1"/></div>
-          <div class="pl-field"><label>Lean Mass kg <span style="color:#1a73e8;font-weight:400;">(Boer)</span></label><input class="pl-input" id="ph-lean" type="text" placeholder="—" readonly/></div>
+        <div class="pl-row c3">
+          <!-- Height with cm / ft·in pill -->
+          <div class="pl-field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+              <label style="margin-bottom:0;">Height</label>
+              <div class="pl-unit-pill-row">
+                <button class="pl-unit-pill active" id="ph-hunit-cm" onclick="plSetHealthHeightUnit('cm')">cm</button>
+                <button class="pl-unit-pill" id="ph-hunit-ft" onclick="plSetHealthHeightUnit('ft')">ft</button>
+              </div>
+            </div>
+            <!-- cm mode -->
+            <input class="pl-input" id="ph-hcm" type="number" placeholder="170" step="0.1" oninput="plVitalsCalc()" style="display:block;"/>
+            <!-- ft·in mode (hidden by default) -->
+            <div id="ph-hft-wrap" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+              <input class="pl-input" id="ph-hft" type="number" placeholder="5" min="0" max="8" step="1" oninput="plVitalsCalc()"/>
+              <input class="pl-input" id="ph-hin" type="number" placeholder="7" min="0" max="11" step="1" oninput="plVitalsCalc()"/>
+            </div>
+          </div>
+          <div class="pl-field"><label>Muscle Mass (manual)</label><input class="pl-input" id="ph-mmkg" type="number" placeholder="Auto if blank" step="0.1"/></div>
+          <div class="pl-field"><label>Lean Mass <span style="color:#1a73e8;font-weight:400;">(Boer)</span></label><input class="pl-input" id="ph-lean" type="text" placeholder="—" readonly/></div>
         </div>
       </div>
     </div>
@@ -275,7 +302,17 @@
           <div class="pl-field"><label>Glucose (mg/dL)</label><input class="pl-input" id="ph-glu" type="number" placeholder="95" min="0"/></div>
         </div>
         <div class="pl-row c3">
-          <div class="pl-field"><label>Temperature (°C)</label><input class="pl-input" id="ph-temp" type="number" placeholder="36.6" step="0.1"/></div>
+          <!-- Temperature with °C/°F pill -->
+          <div class="pl-field">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+              <label style="margin-bottom:0;">Temperature</label>
+              <div class="pl-unit-pill-row">
+                <button class="pl-unit-pill active" id="ph-tunit-c" onclick="plSetTempUnit('c')">°C</button>
+                <button class="pl-unit-pill" id="ph-tunit-f" onclick="plSetTempUnit('f')">°F</button>
+              </div>
+            </div>
+            <input class="pl-input" id="ph-temp" type="number" placeholder="36.6" step="0.1"/>
+          </div>
           <div class="pl-field"><label>Cholesterol (mg/dL)</label><input class="pl-input" id="ph-chol" type="number" placeholder="180" min="0"/></div>
           <div class="pl-field"><label>Notes</label><input class="pl-input" id="ph-notes" type="text" placeholder="Optional"/></div>
         </div>
@@ -461,6 +498,7 @@ function init() {
   } catch(e) {}
   // set distance label based on current unit pref
   plInitUnitPills();
+  plInitHealthUnitPills();
 
   // load profile
   fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
@@ -685,9 +723,10 @@ var _weightUnit = 'kg'; // 'kg' | 'lb'
 window.plSetUnitPref = function(pref) {
   _unitPref = pref;
   localStorage.setItem('mie_unit', pref);
-  // B안: global pref sets pill defaults
+  // B안: global pref sets all pill defaults
   plSetDistUnit(pref === 'us' ? 'mi' : 'km');
   plSetWeightUnit(pref === 'us' ? 'lb' : 'kg');
+  plInitHealthUnitPills();
 };
 
 window.plSetDistUnit = function(unit) {
@@ -861,33 +900,107 @@ function renderActLog(items, summary) {
 }
 
 // ── VITALS ────────────────────────────────────────────────────────────
+var _healthWeightUnit = 'kg'; // 'kg' | 'lb'
+var _healthHeightUnit = 'cm'; // 'cm' | 'ft'
+var _tempUnit         = 'c';  // 'c'  | 'f'
+
+window.plSetHealthWeightUnit = function(unit) {
+  _healthWeightUnit = unit;
+  document.getElementById('ph-wunit-kg').classList.toggle('active', unit==='kg');
+  document.getElementById('ph-wunit-lb').classList.toggle('active', unit==='lb');
+  var ph = document.getElementById('ph-wkg');
+  if (ph) ph.placeholder = unit === 'lb' ? '155' : '70.4';
+  plVitalsCalc();
+};
+
+window.plSetHealthHeightUnit = function(unit) {
+  _healthHeightUnit = unit;
+  document.getElementById('ph-hunit-cm').classList.toggle('active', unit==='cm');
+  document.getElementById('ph-hunit-ft').classList.toggle('active', unit==='ft');
+  var cmEl  = document.getElementById('ph-hcm');
+  var ftWrap = document.getElementById('ph-hft-wrap');
+  if (cmEl)   cmEl.style.display   = unit === 'cm' ? 'block' : 'none';
+  if (ftWrap) ftWrap.style.display = unit === 'ft' ? 'grid'  : 'none';
+  plVitalsCalc();
+};
+
+window.plSetTempUnit = function(unit) {
+  _tempUnit = unit;
+  document.getElementById('ph-tunit-c').classList.toggle('active', unit==='c');
+  document.getElementById('ph-tunit-f').classList.toggle('active', unit==='f');
+  var el = document.getElementById('ph-temp');
+  if (el) el.placeholder = unit === 'f' ? '98.6' : '36.6';
+};
+
+// sync health unit pills when global pref changes
+function plInitHealthUnitPills() {
+  var isUS = _unitPref === 'us';
+  plSetHealthWeightUnit(isUS ? 'lb' : 'kg');
+  plSetHealthHeightUnit(isUS ? 'ft' : 'cm');
+  plSetTempUnit(isUS ? 'f' : 'c');
+}
+
+// helper: get height in cm from current unit inputs
+function plGetHeightCm() {
+  if (_healthHeightUnit === 'cm') {
+    return parseFloat(document.getElementById('ph-hcm').value) || null;
+  } else {
+    var ft = parseFloat(document.getElementById('ph-hft').value) || 0;
+    var inch = parseFloat(document.getElementById('ph-hin').value) || 0;
+    var total = ft * 12 + inch;
+    return total > 0 ? Math.round(total * 2.54 * 10) / 10 : null;
+  }
+}
+
+// helper: get weight in kg from current unit input
+function plGetWeightKg() {
+  var raw = parseFloat(document.getElementById('ph-wkg').value) || null;
+  if (!raw) return null;
+  return _healthWeightUnit === 'lb' ? Math.round(raw / 2.20462 * 10) / 10 : raw;
+}
+
 window.plVitalsCalc = function() {
-  var wkg = parseFloat(document.getElementById('ph-wkg').value);
-  var hcm = _profile && _profile.baseline ? (_profile.baseline.height_cm||null) : null;
+  var wkg = plGetWeightKg();
+  var hcm = plGetHeightCm() || (_profile && _profile.baseline ? (_profile.baseline.height_cm||null) : null);
   var sex = _profile && _profile.baseline ? (_profile.baseline.sex||'Female') : 'Female';
   if (wkg && hcm) {
-    document.getElementById('ph-bmi').value = (wkg/Math.pow(hcm/100,2)).toFixed(1);
-    var lean = sex.toLowerCase()==='male'
+    document.getElementById('ph-bmi').value = (wkg / Math.pow(hcm/100, 2)).toFixed(1);
+    var lean = sex.toLowerCase() === 'male'
       ? 0.407*wkg + 0.267*hcm - 19.2
       : 0.252*wkg + 0.473*hcm - 48.3;
-    document.getElementById('ph-lean').value = lean.toFixed(1)+' kg';
+    document.getElementById('ph-lean').value = lean.toFixed(1) + ' kg';
+  } else {
+    document.getElementById('ph-bmi').value = '';
+    document.getElementById('ph-lean').value = '';
   }
 };
 
 window.plVitalsClear = function() {
-  ['ph-wkg','ph-bfpct','ph-mmkg','ph-bpsys','ph-bpdia','ph-hr','ph-spo2','ph-glu','ph-temp','ph-chol','ph-notes'].forEach(function(id){
-    document.getElementById(id).value='';
+  ['ph-wkg','ph-hcm','ph-hft','ph-hin','ph-bfpct','ph-mmkg',
+   'ph-bpsys','ph-bpdia','ph-hr','ph-spo2','ph-glu','ph-temp','ph-chol','ph-notes'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('ph-bmi').value='';
-  document.getElementById('ph-lean').value='';
+  document.getElementById('ph-bmi').value  = '';
+  document.getElementById('ph-lean').value = '';
   setStatus('ph-status','','');
 };
 
 window.plVitalsSave = function() {
   var sex = _profile&&_profile.baseline ? (_profile.baseline.sex||'') : '';
-  var hcm = _profile&&_profile.baseline ? (_profile.baseline.height_cm||null) : null;
+
+  // weight: convert lb→kg if needed
+  var wkg = plGetWeightKg();
+
+  // height: from input fields (overrides profile if provided)
+  var hcm = plGetHeightCm() || (_profile&&_profile.baseline ? (_profile.baseline.height_cm||null) : null);
+
+  // temperature: convert °F→°C if needed
+  var tempRaw = parseFloat(document.getElementById('ph-temp').value)||null;
+  var tempC = tempRaw ? (_tempUnit === 'f' ? Math.round((tempRaw - 32) * 5/9 * 10) / 10 : tempRaw) : null;
+
   var data = {
-    weight_kg: parseFloat(document.getElementById('ph-wkg').value)||null,
+    weight_kg: wkg,
+    height_cm: hcm,
     manual_body_fat_pct: document.getElementById('ph-bfpct').value.trim(),
     manual_muscle_mass_kg: document.getElementById('ph-mmkg').value.trim(),
     blood_pressure_sys: parseFloat(document.getElementById('ph-bpsys').value)||null,
@@ -895,10 +1008,10 @@ window.plVitalsSave = function() {
     heart_rate_bpm: parseFloat(document.getElementById('ph-hr').value)||null,
     spo2_pct: parseFloat(document.getElementById('ph-spo2').value)||null,
     glucose_mgdl: parseFloat(document.getElementById('ph-glu').value)||null,
-    temperature_c: parseFloat(document.getElementById('ph-temp').value)||null,
+    temperature_c: tempC,
     cholesterol_mgdl: parseFloat(document.getElementById('ph-chol').value)||null,
     notes: document.getElementById('ph-notes').value.trim(),
-    sex: sex, height_cm: hcm,
+    sex: sex,
   };
   saveLog('health', data, 'ph-save-btn', 'ph-status', function(){
     plVitalsClear();
