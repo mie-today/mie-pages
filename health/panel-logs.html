@@ -78,10 +78,7 @@
 .pl-fname-result-cal{font-size:12px;font-weight:700;color:#1a73e8;white-space:nowrap;margin-left:8px;flex-shrink:0;}
 .pl-fname-msg{font-size:11.5px;color:#9aa0a6;font-style:italic;padding:10px;text-align:center;}
 
-/* activity category pills */
-.pl-cat-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
-.pl-cat-btn{border:1.5px solid #e0e0e0;background:#fff;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;color:#5f6368;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
-.pl-cat-btn.active{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
+/* activity category — hidden, value set via JS default */
 
 /* quality/energy picker */
 .pl-picker-row{display:flex;gap:5px;margin-bottom:8px;}
@@ -192,24 +189,15 @@
 
     <div class="pl-card">
       <div class="pl-card-title">Add Activity</div>
-      <div class="pl-cat-row" id="pa-cats">
-        <button class="pl-cat-btn active" data-cat="Cardio"      onclick="plActCat(this)">Cardio</button>
-        <button class="pl-cat-btn"        data-cat="Strength"    onclick="plActCat(this)">Strength</button>
-        <button class="pl-cat-btn"        data-cat="Flexibility" onclick="plActCat(this)">Flexibility</button>
-        <button class="pl-cat-btn"        data-cat="HIIT"        onclick="plActCat(this)">HIIT</button>
-        <button class="pl-cat-btn"        data-cat="Other"       onclick="plActCat(this)">Other</button>
-      </div>
       <div class="pl-form">
         <div class="pl-row c2">
           <div class="pl-field"><label>Activity Type *</label><input class="pl-input" id="pa-type" type="text" placeholder="e.g. Running" oninput="plActMETHint()"/></div>
           <div class="pl-field"><label>Duration (min)</label><input class="pl-input" id="pa-dur-in" type="number" placeholder="0" min="0" oninput="plActAutoCalc()"/></div>
         </div>
-        <div id="pa-strength-fields" style="display:none;">
-          <div class="pl-row c3">
-            <div class="pl-field"><label>Sets</label><input class="pl-input" id="pa-sets" type="number" placeholder="3" min="0"/></div>
-            <div class="pl-field"><label>Reps</label><input class="pl-input" id="pa-reps" type="number" placeholder="15" min="0"/></div>
-            <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="pa-wkg" type="number" placeholder="30" min="0" step="0.5"/></div>
-          </div>
+        <div class="pl-row c3">
+          <div class="pl-field"><label>Sets</label><input class="pl-input" id="pa-sets" type="number" placeholder="3" min="0"/></div>
+          <div class="pl-field"><label>Reps</label><input class="pl-input" id="pa-reps" type="number" placeholder="15" min="0"/></div>
+          <div class="pl-field"><label>Weight (kg)</label><input class="pl-input" id="pa-wkg" type="number" placeholder="30" min="0" step="0.5"/></div>
         </div>
         <div class="pl-row c3">
           <div class="pl-field"><label>MET Value <span id="pa-met-hint" style="font-weight:400;color:#1a73e8;"></span></label><input class="pl-input" id="pa-met" type="number" placeholder="e.g. 8.0" step="0.1" oninput="plActAutoCalc()"/></div>
@@ -217,7 +205,7 @@
           <div class="pl-field"><label>Steps</label><input class="pl-input" id="pa-steps-in" type="number" placeholder="0" min="0"/></div>
         </div>
         <div class="pl-row c2">
-          <div class="pl-field"><label>Distance (km)</label><input class="pl-input" id="pa-dist-in" type="number" placeholder="0" step="0.01" min="0"/></div>
+          <div class="pl-field"><label id="pa-dist-label">Distance (km)</label><input class="pl-input" id="pa-dist-in" type="number" placeholder="0" step="0.01" min="0"/></div>
           <div class="pl-field"><label>Notes</label><input class="pl-input" id="pa-notes" type="text" placeholder="Optional"/></div>
         </div>
         <div class="pl-btn-row">
@@ -448,6 +436,9 @@ function init() {
       }
     }
   } catch(e) {}
+  // set distance label based on current unit pref
+  plUpdateDistLabel();
+
   // load profile
   fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
     .then(function(r){ return r.ok ? r.json() : null; })
@@ -664,13 +655,18 @@ function foodItem(f, idx) {
 }
 
 // ── ACTIVITY ──────────────────────────────────────────────────────────
-window.plActCat = function(btn) {
-  document.querySelectorAll('.pl-cat-btn').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  _actCat = btn.dataset.cat;
-  var sf = document.getElementById('pa-strength-fields');
-  if (sf) sf.style.display = _actCat==='Strength' ? 'block' : 'none';
-  plActAutoCalc();
+// unit toggle: km ↔ mile driven by _unitPref
+function plUpdateDistLabel() {
+  var lbl = document.getElementById('pa-dist-label');
+  if (!lbl) return;
+  lbl.textContent = _unitPref === 'us' ? 'Distance (mi)' : 'Distance (km)';
+}
+
+// call whenever unit pref changes (also call from init)
+window.plSetUnitPref = function(pref) {
+  _unitPref = pref;
+  localStorage.setItem('mie_unit', pref);
+  plUpdateDistLabel();
 };
 
 window.plActMETHint = function() {
@@ -719,13 +715,17 @@ window.plActSave = function() {
   var wkg = (_profile && _profile.baseline) ? (_profile.baseline.weight_kg||null) : null;
   var cal = parseFloat(document.getElementById('pa-cal-in').value)||null;
   if (!cal && met && dur && wkg) cal = Math.round(met * wkg * dur / 60);
+  // distance: convert mile→km if US unit
+  var distRaw = parseFloat(document.getElementById('pa-dist-in').value)||null;
+  var distKm = distRaw ? (_unitPref === 'us' ? distRaw * 1.60934 : distRaw) : null;
+  if (distKm) distKm = Math.round(distKm * 100) / 100;
   var data = {
-    category: _actCat, type: type,
+    category: 'General', type: type,
     sets: parseInt(document.getElementById('pa-sets').value)||null,
     reps: parseInt(document.getElementById('pa-reps').value)||null,
     weight_kg: parseFloat(document.getElementById('pa-wkg').value)||null,
     duration_min: dur,
-    distance_km: parseFloat(document.getElementById('pa-dist-in').value)||null,
+    distance_km: distKm,
     met_value: met,
     calories_burned_kcal: cal,
     steps: parseInt(document.getElementById('pa-steps-in').value)||null,
