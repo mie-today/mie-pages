@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* ── Women's Health Panel — CSS ── */
+:root {
+  --w-period: #e91e63;
+  --w-period-light: #fce4ec;
+  --w-period-mid: #f48fb1;
+  --w-ovulation: #ce93d8;
+  --w-ovulation-light: #f3e5f5;
+  --w-today: #1a73e8;
+  --w-pregnancy: #f3e5f5;
+  --primary: #1a73e8;
+  --text: #202124;
+  --subtext: #5f6368;
+  --bg: #f0f2f5;
+  --card-bg: #fff;
+  --border: #e8eaed;
+  --radius: 10px;
+}
+
+/* ── Wrap & Layout ── */
+.w-wrap {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0 0 80px;
+  min-height: 100vh;
+}
+.w-wrap.pregnancy-mode {
+  --w-period: #9c27b0;
+  background: linear-gradient(180deg, #fdf6ff 0%, var(--bg) 120px);
+}
+
+/* ── Header ── */
+.w-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.w-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.w-nav-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--subtext);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.w-nav-btn:hover { background: var(--bg); }
+.w-month-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 130px;
+  text-align: center;
+}
+.w-pregnancy-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtext);
+}
+.w-toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+}
+.w-toggle-switch input { display: none; }
+.w-toggle-track {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.w-toggle-thumb {
+  position: absolute;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform .2s;
+  pointer-events: none;
+}
+.w-toggle-switch input:checked ~ .w-toggle-track { background: #9c27b0; }
+.w-toggle-switch input:checked ~ .w-toggle-track ~ .w-toggle-thumb { transform: translateX(16px); }
+
+/* ── Summary Bar ── */
+.w-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+.w-stat-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.w-stat-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--w-period);
+  line-height: 1;
+}
+.w-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-top: 3px;
+}
+.pregnancy-mode .w-stat-num { color: #9c27b0; }
+
+/* ── Calendar ── */
+/* Summary bar padding=16px, gap=8px between 3 equal cards.
+   Inner card edge = 16px + (card_width — but visually the gap creates a slight inset).
+   Using padding 20px aligns calendar edges just inside the summary bar border. */
+.w-cal-section {
+  padding: 12px 20px;
+}
+.w-cal-dow-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.w-cal-dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--subtext);
+  padding: 4px 0;
+  text-transform: uppercase;
+}
+.w-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.w-cal-day {
+  border-radius: 8px;
+  padding: 4px 3px;
+  min-height: 58px;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.w-cal-day:hover { opacity: .85; transform: scale(.97); }
+.w-cal-day.other-month { opacity: .3; pointer-events: none; }
+.w-cal-day.period { background: var(--w-period); }
+.w-cal-day.period-expected { background: var(--w-period-light); }
+.w-cal-day.ovulation-expected { background: var(--w-ovulation-light); }
+.w-cal-day.today { outline: 2px solid var(--w-today); outline-offset: -2px; }
+.w-cal-day.period .w-day-num { color: #fff; }
+.w-day-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.w-day-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* ── Daily View ── */
+.w-daily-view {
+  display: none;
+}
+.w-daily-view.active {
+  display: block;
+}
+.w-calendar-view.hidden {
+  display: none;
+}
+
+.w-daily-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.w-back-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.w-daily-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.w-daily-actions {
+  display: flex;
+  gap: 8px;
+}
+.w-icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.w-icon-btn:hover { background: var(--bg); }
+
+.w-daily-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.w-note-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+.w-note-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  resize: none;
+  min-height: 72px;
+  background: transparent;
+  line-height: 1.5;
+}
+.w-note-textarea::placeholder { color: #bdc1c6; }
+
+/* ── Item Grid ── */
+.w-item-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.w-item-btn {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 6px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.w-item-btn:hover { border-color: #aaa; }
+.w-item-btn.logged {
+  border-color: var(--primary);
+  background: #e8f0fe;
+}
+.w-item-btn.logged-period {
+  border-color: var(--w-period);
+  background: #fce4ec;
+}
+.w-item-btn.logged-ov {
+  border-color: #9c27b0;
+  background: var(--w-ovulation-light);
+}
+.w-item-icon {
+  font-size: 26px;
+  display: block;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+.w-item-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--subtext);
+  line-height: 1.2;
+}
+.w-item-sub {
+  font-size: 9px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* ── Save Row ── */
+.w-save-row {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.w-cal-check-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--subtext);
+  cursor: pointer;
+}
+.w-cal-check-label input { accent-color: var(--primary); }
+.w-btn-save {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.w-btn-save:hover { background: #1557b0; }
+.w-btn-save.saved { background: #34a853; }
+
+/* ── Toast ── */
+.w-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: all .25s;
+  z-index: 300;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.w-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── Popup ── */
+.w-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.w-popup-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.w-popup {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  transform: translateY(30px);
+  transition: transform .25s cubic-bezier(.32,.72,0,1);
+}
+.w-popup-overlay.open .w-popup {
+  transform: translateY(0);
+}
+.w-popup-handle {
+  width: 36px; height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+.w-popup-inner {
+  padding: 14px 18px 24px;
+}
+.w-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.w-popup-close {
+  float: right;
+  background: var(--bg);
+  border: none;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 28px;
+  text-align: center;
+  margin-top: -4px;
+}
+
+/* Popup internals */
+.w-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+.w-field-label:first-child { margin-top: 0; }
+.w-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.w-chip {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtext);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.w-chip:hover { border-color: #aaa; }
+.w-chip.selected {
+  background: #e8f0fe;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.w-chip.selected.pink {
+  background: #fce4ec;
+  border-color: var(--w-period);
+  color: var(--w-period);
+}
+.w-chip.selected.purple {
+  background: var(--w-ovulation-light);
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.w-severity-row {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 8px;
+}
+.w-sev-btn {
+  flex: 1;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.w-sev-btn.sel { background: var(--w-period); border-color: var(--w-period); color: #fff; }
+
+.w-symptom-item {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.w-symptom-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+
+.w-number-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.w-number-row label { font-size: 13px; color: var(--text); flex: 1; }
+.w-num-input {
+  width: 64px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+.w-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.w-check-row input { accent-color: var(--primary); width: 16px; height: 16px; }
+
+.w-med-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.w-med-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.w-med-name { font-size: 13px; font-weight: 600; }
+.w-taken-btn {
+  background: var(--border);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--subtext);
+  transition: all .15s;
+}
+.w-taken-btn.taken { background: #34a853; color: #fff; }
+
+.w-text-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+.w-text-input:focus { outline: none; border-color: var(--primary); }
+.w-time-input {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+.w-date-input {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.w-kick-counter {
+  text-align: center;
+  padding: 8px 0;
+}
+.w-kick-num {
+  font-size: 56px;
+  font-weight: 800;
+  color: var(--w-period);
+  line-height: 1;
+}
+.w-kick-goal { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
+.w-kick-btn {
+  background: var(--w-period);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .1s;
+}
+.w-kick-btn:active { transform: scale(.94); }
+.w-kick-btn.done { background: #34a853; }
+.w-kick-sub { font-size: 11px; color: var(--subtext); margin-top: 8px; }
+
+.w-bp-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.w-bp-field { flex: 1; }
+.w-bp-field label { display: block; font-size: 11px; font-weight: 700; color: var(--subtext); margin-bottom: 4px; }
+.w-bp-unit {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--subtext);
+  align-self: flex-end;
+}
+
+.w-popup-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.w-popup-save {
+  flex: 1;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.w-popup-cancel {
+  background: var(--bg);
+  color: var(--subtext);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.w-hidden { display: none !important; }
+.w-select-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: #fff;
+  box-sizing: border-box;
+}
+.w-select-input:focus { outline: none; border-color: var(--primary); }
+
+.w-other-input-wrap { margin-top: 6px; }
+
+/* Counter rows (Sex / Morning Sickness) */
+.w-counter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  padding: 8px 0;
+}
+.w-counter-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  color: var(--text);
+  line-height: 1;
+}
+.w-counter-btn:hover { border-color: var(--primary); color: var(--primary); background: #e8f0fe; }
+.w-counter-val {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text);
+  min-width: 48px;
+  text-align: center;
+}
+
+/* Mood picker grid */
+.w-mood-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.w-mood-pick {
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.w-mood-pick:hover, .w-mood-pick.selected {
+  border-color: var(--primary);
+  background: #e8f0fe;
+}
+
+/* Energy row */
+.w-energy-row {
+  display: flex;
+  gap: 6px;
+}
+.w-energy-pick {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 10px;
+  color: var(--subtext);
+  font-weight: 600;
+}
+.w-energy-pick:hover, .w-energy-pick.selected {
+  border-color: var(--primary);
+  background: #e8f0fe;
+  color: var(--primary);
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- VIEW 1: CALENDAR -->
+<!-- ══════════════════════════════════════════ -->
+<div class="w-wrap" id="wWrap">
+
+  <div class="w-calendar-view" id="wCalView">
+
+    <!-- Header -->
+    <div class="w-header">
+      <div class="w-month-nav">
+        <button class="w-nav-btn" id="wPrevMonth">‹</button>
+        <div class="w-month-label" id="wMonthLabel">May 2026</div>
+        <button class="w-nav-btn" id="wNextMonth">›</button>
+      </div>
+      <label class="w-pregnancy-toggle">
+        Pregnancy
+        <div class="w-toggle-switch">
+          <input type="checkbox" id="wPregnancyToggle">
+          <div class="w-toggle-track"></div>
+          <div class="w-toggle-thumb"></div>
+        </div>
+      </label>
+    </div>
+
+    <!-- Summary Bar -->
+    <div class="w-summary-bar" id="wSummaryBar">
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatA">—</div>
+        <div class="w-stat-label" id="wStatALabel">Day of Cycle</div>
+      </div>
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatB">—</div>
+        <div class="w-stat-label" id="wStatBLabel">Days to Period</div>
+      </div>
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatC">—</div>
+        <div class="w-stat-label" id="wStatCLabel">Days to Ovulation</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="w-cal-section">
+      <div class="w-cal-dow-row">
+        <div class="w-cal-dow">Sun</div>
+        <div class="w-cal-dow">Mon</div>
+        <div class="w-cal-dow">Tue</div>
+        <div class="w-cal-dow">Wed</div>
+        <div class="w-cal-dow">Thu</div>
+        <div class="w-cal-dow">Fri</div>
+        <div class="w-cal-dow">Sat</div>
+      </div>
+      <div class="w-cal-grid" id="wCalGrid"></div>
+    </div>
+
+  </div><!-- /wCalView -->
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- VIEW 2: DAILY DIARY -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="w-daily-view" id="wDailyView">
+
+    <div class="w-daily-header">
+      <button class="w-back-btn" id="wBackBtn">‹ Back</button>
+      <div class="w-daily-title" id="wDailyTitle">27 May 2026</div>
+      <div class="w-daily-actions">
+        <button class="w-icon-btn" id="wAddCalBtn" title="Add to Calendar">📅</button>
+        <button class="w-icon-btn" id="wDeleteBtn" title="Delete">🗑</button>
+      </div>
+    </div>
+
+    <div class="w-daily-body">
+
+      <!-- Note -->
+      <div class="w-note-card">
+        <div style="font-size:11px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Note</div>
+        <textarea class="w-note-textarea" id="wNote" placeholder="How are you feeling today?" rows="3"></textarea>
+      </div>
+
+      <!-- Item Grid -->
+      <div class="w-item-grid" id="wItemGrid">
+        <!-- populated by JS -->
+      </div>
+
+      <!-- Save Row -->
+      <div class="w-save-row">
+        <label class="w-cal-check-label">
+          <input type="checkbox" id="wAddToCal"> Add to Calendar
+        </label>
+        <button class="w-btn-save" id="wSaveBtn">Save Day</button>
+      </div>
+
+    </div>
+  </div><!-- /wDailyView -->
+
+</div><!-- /wWrap -->
+
+<!-- ══════════════════════════════════════════ -->
+<!-- POPUP OVERLAY -->
+<!-- ══════════════════════════════════════════ -->
+<div class="w-popup-overlay" id="wPopupOverlay">
+  <div class="w-popup" id="wPopup">
+    <div class="w-popup-handle"></div>
+    <div class="w-popup-inner" id="wPopupInner">
+      <!-- dynamic content -->
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="w-toast" id="wToast"></div>
+
+<script>
+(function() {
+'use strict';
+
+// ── Constants ────────────────────────────────────────────────
+const BACKEND = 'https://api.mie.today';
+
+// ── State ──────────────────────────────────────────────────────
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+let state = {
+  viewMonth: new Date(TODAY.getFullYear(), TODAY.getMonth(), 1),
+  currentDate: null,
+  pregnancyMode: localStorage.getItem('mie_womens_mode') === 'pregnancy',
+  dayData: {},       // the day currently being edited
+  popup: null,
+  kickStartTime: null,
+};
+
+// ── Helpers ────────────────────────────────────────────────────
+function fmt(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function daysBetween(a, b) {
+  const da = typeof a === 'string' ? parseDate(a) : a;
+  const db = typeof b === 'string' ? parseDate(b) : b;
+  return Math.round((db - da) / 86400000);
+}
+function addDays(d, n) {
+  const r = typeof d === 'string' ? parseDate(d) : new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+function humanDate(dateStr) {
+  const d = parseDate(dateStr);
+  const month = d.toLocaleDateString('en-US', { month: 'long' });
+  const day = d.getDate();
+  const year = d.getFullYear();
+  return `${month} ${day} ${year}`;
+}
+
+// ── Storage ────────────────────────────────────────────────────
+function loadDay(dateStr) {
+  try {
+    const raw = localStorage.getItem('mie_womens_' + dateStr);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveDay(dateStr, data) {
+  localStorage.setItem('mie_womens_' + dateStr, JSON.stringify(data));
+}
+function deleteDay(dateStr) {
+  localStorage.removeItem('mie_womens_' + dateStr);
+}
+function getAllKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('mie_womens_20')) keys.push(k.replace('mie_womens_',''));
+  }
+  return keys.sort();
+}
+
+// ── Cycle calculations ──────────────────────────────────────────
+function findLastPeriodStart(beforeDate) {
+  const todayStr = fmt(beforeDate || TODAY);
+  const keys = getAllKeys().filter(k => k <= todayStr);
+  for (let i = keys.length-1; i >= 0; i--) {
+    const d = loadDay(keys[i]);
+    if (d && d.period_start) return keys[i];
+  }
+  return null;
+}
+function getUserCycleLength() {
+  const keys = getAllKeys();
+  const starts = keys.map(k => loadDay(k)).filter(d => d && d.period_start).map(d => d.date).sort();
+  if (starts.length < 2) return 28;
+  const diffs = [];
+  for (let i = 1; i < starts.length; i++) diffs.push(daysBetween(starts[i-1], starts[i]));
+  return Math.round(diffs.reduce((a,b) => a+b, 0) / diffs.length);
+}
+function updateSummaryBar() {
+  const lps = findLastPeriodStart();
+  const isPreg = state.pregnancyMode;
+  const A = document.getElementById('wStatA');
+  const B = document.getElementById('wStatB');
+  const C = document.getElementById('wStatC');
+  const al = document.getElementById('wStatALabel');
+  const bl = document.getElementById('wStatBLabel');
+  const cl = document.getElementById('wStatCLabel');
+
+  if (isPreg) {
+    if (lps) {
+      const weeks = Math.floor(daysBetween(lps, TODAY) / 7);
+      const due = addDays(lps, 280);
+      const dLeft = daysBetween(TODAY, due);
+      A.textContent = `${weeks}w`;
+      B.textContent = fmt(due).slice(5).replace('-','/');
+      C.textContent = dLeft > 0 ? dLeft : '🎉';
+    } else {
+      A.textContent = '—'; B.textContent = '—'; C.textContent = '—';
+    }
+    al.textContent = 'Week Pregnant';
+    bl.textContent = 'Due Date';
+    cl.textContent = 'Days Left';
+  } else {
+    if (lps) {
+      const cl2 = getUserCycleLength();
+      const doc = daysBetween(lps, TODAY) + 1;
+      const nextPeriod = addDays(lps, cl2);
+      const dtp = daysBetween(TODAY, nextPeriod);
+      const ovDate = addDays(nextPeriod, -14);
+      const dto = daysBetween(TODAY, ovDate);
+      A.textContent = doc;
+      B.textContent = dtp >= 0 ? dtp : 0;
+      C.textContent = dto >= 0 ? dto : 0;
+    } else {
+      A.textContent = '—'; B.textContent = '—'; C.textContent = '—';
+    }
+    al.textContent = 'Day of Cycle';
+    bl.textContent = 'Days to Period';
+    cl.textContent = 'Days to Ovulation';
+  }
+}
+
+// ── Day icons for calendar ──────────────────────────────────────
+function getDayIcons(data) {
+  if (!data) return [];
+  const icons = [];
+  if (data.period_start || data.period_end) icons.push('🔴');
+  if (data.sex && data.sex.had_sex) icons.push('💜');
+  if (data.symptoms && data.symptoms.length) icons.push('⚡');
+  if (data.medications && data.medications.some(m => m.taken)) icons.push('💊');
+  if (data.ovulation) icons.push('🌸');
+  if ((data.ovulation_test && data.ovulation_test.result === 'Positive') ||
+      (data.pregnancy_test && data.pregnancy_test.result === 'Positive')) icons.push('✅');
+  if (data.cervical_mucus && data.cervical_mucus.feeling) icons.push('💧');
+  if (data.fetal_movement && data.fetal_movement.count) icons.push('👶');
+  if (data.clinic_visit && data.clinic_visit.type) icons.push('🏥');
+  if (data.baby_kick && data.baby_kick.count) icons.push('👣');
+  if (data.blood_pressure && data.blood_pressure.systolic) icons.push('❤️');
+  return icons;
+}
+
+// ── Predicted period dates ──────────────────────────────────────
+function getPredictedPeriodDates() {
+  const lps = findLastPeriodStart();
+  if (!lps) return { periodDates: new Set(), ovulationDate: null };
+  const cl = getUserCycleLength();
+  const periodLen = 5;
+  const nextStart = addDays(lps, cl);
+  const periodDates = new Set();
+  for (let i = 0; i < periodLen; i++) periodDates.add(fmt(addDays(nextStart, i)));
+  const ovDate = addDays(nextStart, -14);
+  return { periodDates, ovulationDate: fmt(ovDate) };
+}
+
+// ── Render calendar ─────────────────────────────────────────────
+function renderCalendar() {
+  const grid = document.getElementById('wCalGrid');
+  const label = document.getElementById('wMonthLabel');
+  const vm = state.viewMonth;
+  label.textContent = vm.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+  const firstDay = new Date(vm.getFullYear(), vm.getMonth(), 1).getDay();
+  const daysInMonth = new Date(vm.getFullYear(), vm.getMonth()+1, 0).getDate();
+
+  const { periodDates, ovulationDate } = getPredictedPeriodDates();
+
+  // Get actual period days
+  const actualPeriodDays = new Set();
+  getAllKeys().forEach(k => {
+    const d = loadDay(k);
+    if (d && (d.period_start || d.period_end)) actualPeriodDays.add(k);
+    // fill between start and end
+  });
+  // Fill period ranges
+  const periodRanges = [];
+  const allKeys = getAllKeys().sort();
+  let inPeriod = false, pStart = null;
+  allKeys.forEach(k => {
+    const d = loadDay(k);
+    if (d && d.period_start) { inPeriod = true; pStart = k; }
+    if (inPeriod) { actualPeriodDays.add(k); }
+    if (d && d.period_end) { inPeriod = false; }
+  });
+
+  grid.innerHTML = '';
+
+  // Prev month fillers
+  const prevMonthDays = new Date(vm.getFullYear(), vm.getMonth(), 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const cell = document.createElement('div');
+    cell.className = 'w-cal-day other-month';
+    cell.innerHTML = `<span class="w-day-num">${prevMonthDays - i}</span>`;
+    grid.appendChild(cell);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = fmt(new Date(vm.getFullYear(), vm.getMonth(), d));
+    const dayData = loadDay(dateStr);
+    const dayDate = new Date(vm.getFullYear(), vm.getMonth(), d);
+    dayDate.setHours(0,0,0,0);
+
+    const cell = document.createElement('div');
+    let cls = 'w-cal-day';
+
+    if (actualPeriodDays.has(dateStr)) cls += ' period';
+    else if (periodDates.has(dateStr)) cls += ' period-expected';
+    else if (dateStr === ovulationDate) cls += ' ovulation-expected';
+
+    if (dayDate.getTime() === TODAY.getTime()) cls += ' today';
+    cell.className = cls;
+
+    const icons = getDayIcons(dayData);
+    cell.innerHTML = `<span class="w-day-num">${d}</span><div class="w-day-icons">${icons.join('')}</div>`;
+    cell.addEventListener('click', () => openDailyView(dateStr));
+    grid.appendChild(cell);
+  }
+
+  // Next month fillers
+  const total = firstDay + daysInMonth;
+  const remain = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remain; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'w-cal-day other-month';
+    cell.innerHTML = `<span class="w-day-num">${i}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+// ── Open Daily View ────────────────────────────────────────────
+function openDailyView(dateStr) {
+  state.currentDate = dateStr;
+  const saved = loadDay(dateStr) || {
+    date: dateStr,
+    mode: state.pregnancyMode ? 'pregnancy' : 'period',
+    note: '',
+    period_start: false,
+    period_end: false,
+    ovulation: false,
+    sex: { had_sex: false, condom: false, internal_ejaculation: false, masturbation: false, count: 0, orgasm_count: 0 },
+    symptoms: [],
+    medications: [],
+    cervical_mucus: { feeling: null, color: null, type: null },
+    ovulation_test: { result: null, time: null },
+    pregnancy_test: { result: null, time: null },
+    fetal_movement: { count: 0, time: null, intensity: null },
+    clinic_visit: { type: null, note: '', next_appointment: null },
+    baby_kick: { count: 0, start_time: null },
+    blood_pressure: { systolic: null, diastolic: null, note: '' },
+    add_to_calendar: false,
+    calendar_visibility: 'private'
+  };
+  state.dayData = saved;
+
+  document.getElementById('wDailyTitle').textContent = humanDate(dateStr);
+  document.getElementById('wNote').value = saved.note || '';
+  document.getElementById('wAddToCal').checked = !!saved.add_to_calendar;
+
+  document.getElementById('wCalView').classList.add('hidden');
+  document.getElementById('wDailyView').classList.add('active');
+
+  renderItemGrid();
+}
+
+// ── Close Daily View ───────────────────────────────────────────
+function closeDailyView() {
+  document.getElementById('wDailyView').classList.remove('active');
+  document.getElementById('wCalView').classList.remove('hidden');
+  renderCalendar();
+  updateSummaryBar();
+  state.currentDate = null;
+}
+
+// ── Render Item Grid ───────────────────────────────────────────
+function renderItemGrid() {
+  const grid = document.getElementById('wItemGrid');
+  const d = state.dayData;
+  const preg = state.pregnancyMode;
+
+  let items;
+  if (!preg) {
+    items = [
+      { key:'period_start', icon:'🔴', label:'Period Start', type:'toggle-period' },
+      { key:'period_end',   icon:'🔴', label:'Period End',   type:'toggle-period' },
+      { key:'ovulation',    icon:'🌸', label:'Ovulation',    type:'toggle-ov' },
+      { key:'sex',          icon:'💜', label:'Sex',          type:'popup-sex' },
+      { key:'symptoms',     icon:'⚡', label:'Symptoms',     type:'popup-symptoms' },
+      { key:'medications',  icon:'💊', label:'Medication',   type:'popup-medication' },
+      { key:'cervical_mucus', icon:'💧', label:'Cervical Mucus', type:'popup-cm' },
+      { key:'ovulation_test', icon:'🔬', label:'Ovulation Test', type:'popup-ov-test' },
+      { key:'pregnancy_test', icon:'🤰', label:'Pregnancy Test', type:'popup-preg-test' },
+    ];
+  } else {
+    items = [
+      { key:'fetal_movement',   icon:'👶', label:'Baby Movement',    type:'popup-fetal' },
+      { key:'baby_kick',        icon:'👣', label:'Baby Kicks',       type:'popup-kick' },
+      { key:'morning_sickness', icon:'🤢', label:'Morning Sickness', type:'popup-morning-sickness' },
+      { key:'cervical_mucus',   icon:'💧', label:'Cervical Mucus',   type:'popup-cm' },
+      { key:'sex',              icon:'💜', label:'Sex',              type:'popup-sex' },
+      { key:'symptoms',         icon:'⚡', label:'Symptoms',         type:'popup-symptoms' },
+      { key:'medications',      icon:'💊', label:'Medication',       type:'popup-medication' },
+      { key:'blood_pressure',   icon:'🩺', label:'Blood Pressure',   type:'popup-bp' },
+      { key:'mood',             icon:'🌈', label:'Mood',             type:'popup-mood' },
+    ];
+  }
+
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const btn = document.createElement('div');
+
+    if (item.type === 'spacer') {
+      btn.style.cssText = 'visibility:hidden';
+      grid.appendChild(btn);
+      return;
+    }
+
+    btn.className = 'w-item-btn';
+    const logged = isLogged(item.key, d);
+    if (logged) {
+      if (item.type === 'toggle-period') btn.classList.add('logged-period');
+      else if (item.type === 'toggle-ov') btn.classList.add('logged-ov');
+      else btn.classList.add('logged');
+    }
+
+    const subText = getSubText(item.key, d);
+    btn.innerHTML = `<span class="w-item-icon">${item.icon}</span><span class="w-item-label">${item.label}</span>${subText ? `<span class="w-item-sub">${subText}</span>` : ''}`;
+
+    btn.addEventListener('click', () => handleItemClick(item));
+    grid.appendChild(btn);
+  });
+}
+
+function isLogged(key, d) {
+  if (!d) return false;
+  if (key === 'period_start') return !!d.period_start;
+  if (key === 'period_end') return !!d.period_end;
+  if (key === 'ovulation') return !!d.ovulation;
+  if (key === 'sex') return d.sex && d.sex.had_sex;
+  if (key === 'symptoms') return d.symptoms && d.symptoms.length > 0;
+  if (key === 'medications') return d.medications && d.medications.some(m => m.taken);
+  if (key === 'cervical_mucus') return d.cervical_mucus && !!d.cervical_mucus.feeling;
+  if (key === 'ovulation_test') return d.ovulation_test && !!d.ovulation_test.result;
+  if (key === 'pregnancy_test') return d.pregnancy_test && !!d.pregnancy_test.result;
+  if (key === 'fetal_movement') return d.fetal_movement && d.fetal_movement.count > 0;
+  if (key === 'clinic_visit') return d.clinic_visit && !!d.clinic_visit.type;
+  if (key === 'baby_kick') return d.baby_kick && d.baby_kick.count > 0;
+  if (key === 'blood_pressure') return d.blood_pressure && !!d.blood_pressure.systolic;
+  if (key === 'morning_sickness') return d.morning_sickness && (d.morning_sickness.count > 0 || !!d.morning_sickness.severity);
+  if (key === 'mood') return d.womens_mood && !!d.womens_mood.mood;
+  return false;
+}
+
+function getSubText(key, d) {
+  if (!d) return '';
+  if (key === 'symptoms' && d.symptoms && d.symptoms.length) return `${d.symptoms.length} logged`;
+  if (key === 'medications' && d.medications) {
+    const t = d.medications.filter(m => m.taken).length;
+    if (t) return `${t} taken`;
+  }
+  if (key === 'ovulation_test' && d.ovulation_test && d.ovulation_test.result) return d.ovulation_test.result;
+  if (key === 'pregnancy_test' && d.pregnancy_test && d.pregnancy_test.result) return d.pregnancy_test.result;
+  if (key === 'baby_kick' && d.baby_kick && d.baby_kick.count) return `${d.baby_kick.count} kicks`;
+  if (key === 'blood_pressure' && d.blood_pressure && d.blood_pressure.systolic) return `${d.blood_pressure.systolic}/${d.blood_pressure.diastolic}`;
+  if (key === 'fetal_movement' && d.fetal_movement && d.fetal_movement.count) return `${d.fetal_movement.count} times`;
+  if (key === 'morning_sickness' && d.morning_sickness && d.morning_sickness.count) return `${d.morning_sickness.count}x`;
+  if (key === 'mood' && d.womens_mood && d.womens_mood.mood) return d.womens_mood.mood;
+  return '';
+}
+
+function handleItemClick(item) {
+  const d = state.dayData;
+  if (item.type === 'toggle-period') {
+    if (item.key === 'period_start') {
+      if (d.period_start) { if (!confirm('Remove Period Start mark?')) return; }
+      d.period_start = !d.period_start;
+    } else {
+      if (d.period_end) { if (!confirm('Remove Period End mark?')) return; }
+      d.period_end = !d.period_end;
+    }
+    renderItemGrid();
+    return;
+  }
+  if (item.type === 'toggle-ov') {
+    if (d.ovulation) { if (!confirm('Remove Ovulation mark?')) return; }
+    d.ovulation = !d.ovulation;
+    renderItemGrid();
+    return;
+  }
+  // Popup
+  openPopup(item.type);
+}
+
+// ── Popups ─────────────────────────────────────────────────────
+function openPopup(type) {
+  state.popup = type;
+  const inner = document.getElementById('wPopupInner');
+  inner.innerHTML = buildPopupHTML(type);
+  attachPopupListeners(type);
+  document.getElementById('wPopupOverlay').classList.add('open');
+}
+
+function closePopup() {
+  document.getElementById('wPopupOverlay').classList.remove('open');
+  state.popup = null;
+}
+
+function buildPopupHTML(type) {
+  const d = state.dayData;
+  let html = '';
+
+  const header = (title) => `
+    <div class="w-popup-title">${title}<button class="w-popup-close" id="wPopupClose">✕</button></div>`;
+
+  if (type === 'popup-sex') {
+    const s = d.sex || {};
+    const condomVal = s.condom === true ? 'Yes' : s.condom === false && s.had_sex ? 'No' : 'No Record';
+    html = header('Sex 💜') + `
+      <div class="w-field-label">Sex</div>
+      <div class="w-counter-row" id="pSexCounterRow">
+        <button class="w-counter-btn" id="pSexMinus">−</button>
+        <span class="w-counter-val" id="pSexCount">${s.count || 0}</span>
+        <button class="w-counter-btn" id="pSexPlus">+</button>
+      </div>
+      <div id="pSexSub" style="${(s.count||0) > 0 || s.had_sex ? '' : 'display:none'}">
+        <div class="w-field-label" style="margin-top:12px">Time</div>
+        <input type="time" class="w-time-input" id="pSexTime" value="${s.time||''}">
+        <div class="w-field-label" style="margin-top:12px">Condom</div>
+        <div class="w-chip-row" id="pCondomChips">
+          <div class="w-chip${condomVal==='No Record'?' selected':''}" data-val="No Record">No Record</div>
+          <div class="w-chip${condomVal==='No'?' selected':''}" data-val="No">No</div>
+          <div class="w-chip${condomVal==='Yes'?' selected':''}" data-val="Yes">Yes</div>
+        </div>
+        <div class="w-field-label" style="margin-top:12px">Orgasm</div>
+        <div class="w-counter-row">
+          <button class="w-counter-btn" id="pOrgasmMinus">−</button>
+          <span class="w-counter-val" id="pOrgasmCount">${s.orgasm_count || 0}</span>
+          <button class="w-counter-btn" id="pOrgasmPlus">+</button>
+        </div>
+        <div class="w-field-label" style="margin-top:12px">Masturbation</div>
+        <div class="w-counter-row">
+          <button class="w-counter-btn" id="pMastMinus">−</button>
+          <span class="w-counter-val" id="pMastCount">${s.masturbation_count || 0}</span>
+          <button class="w-counter-btn" id="pMastPlus">+</button>
+        </div>
+      </div>
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-symptoms') {
+    const symptoms = ['Cramps','Headache','Bloating','Fatigue','Nausea','Back Pain',
+      'Breast Tenderness','Mood Swings','Acne','Spotting','Hot Flashes','Insomnia','Other'];
+    const selected = d.symptoms || [];
+    const selNames = selected.map(s => s.name);
+    html = header('Symptoms ⚡') + `<div class="w-chip-row" id="pSymChips">` +
+      symptoms.map(s => `<div class="w-chip${selNames.includes(s)?' selected pink':''}" data-sym="${s}">${s}</div>`).join('') +
+      `</div><div id="pSymSeverities">` +
+      selected.map(s => buildSeverityRow(s.name, s.severity)).join('') +
+      `</div><div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-medication') {
+    const meds = ['Iron','Folic Acid','Vitamin D','Calcium','Magnesium',
+      'Prenatal Vitamins','Birth Control Pill','Pain Reliever','Antibiotic'];
+    const saved = d.medications || [];
+    const savedMap = {};
+    saved.forEach(m => savedMap[m.name] = m.taken);
+    html = header('Medication 💊') + `<div class="w-med-list">` +
+      meds.map(m => `<div class="w-med-row">
+        <span class="w-med-name">${m}</span>
+        <button class="w-taken-btn${savedMap[m]?' taken':''}" data-med="${m}">${savedMap[m]?'Taken ✓':'Not Taken'}</button>
+      </div>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Other (custom)</div>
+      <input class="w-text-input" id="pMedOther" placeholder="e.g. Metformin" value="">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-cm') {
+    const cm = d.cervical_mucus || {};
+    const opt = (group, val, cur, cls) =>
+      `<div class="w-chip${cur===val?' selected '+(cls||''):''}" data-group="${group}" data-val="${val}">${val}</div>`;
+    html = header('Cervical Mucus 💧') +
+      `<div class="w-field-label">Feeling</div><div class="w-chip-row" id="pCmFeeling">` +
+      ['Dry','Wet','Damp','Damp-Slick','Oily'].map(v => opt('feeling',v,cm.feeling)).join('') + `</div>` +
+      `<div class="w-field-label">Color</div><div class="w-chip-row" id="pCmColor">` +
+      ['N/A','White','Turbid','Turbid-Pure','Transparent'].map(v => opt('color',v,cm.color)).join('') + `</div>` +
+      `<div class="w-field-label">Type</div><div class="w-chip-row" id="pCmType">` +
+      ['No Type','Thick','Sticky-Clotted','Stretchy','Slick-Glutinous','Like an Egg White'].map(v => opt('type',v,cm.type)).join('') + `</div>` +
+      `<div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-ov-test') {
+    const ot = d.ovulation_test || {};
+    html = header('Ovulation Test 🔬') +
+      `<div class="w-field-label">Result</div><div class="w-chip-row" id="pOvResult">` +
+      ['Positive','Negative','Maybe'].map(v => `<div class="w-chip${ot.result===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pOvTime" value="${ot.time||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-preg-test') {
+    const pt = d.pregnancy_test || {};
+    html = header('Pregnancy Test 🤰') +
+      `<div class="w-field-label">Result</div><div class="w-chip-row" id="pPtResult">` +
+      ['Positive','Negative'].map(v => `<div class="w-chip${pt.result===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pPtTime" value="${pt.time||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-fetal') {
+    const fm = d.fetal_movement || {};
+    html = header('Fetal Movement 👶') +
+      `<div class="w-number-row"><label>Count (times)</label><input class="w-num-input" type="number" id="pFmCount" min="0" value="${fm.count||0}"></div>
+      <div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pFmTime" value="${fm.time||''}">
+      <div class="w-field-label">Intensity</div>
+      <div class="w-chip-row" id="pFmIntensity">` +
+      ['Weak','Normal','Strong'].map(v => `<div class="w-chip${fm.intensity===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-clinic') {
+    const cv = d.clinic_visit || {};
+    html = header('Clinic Visit 🏥') +
+      `<div class="w-field-label">Visit Type</div>
+      <select class="w-select-input" id="pCvType">
+        <option value="">Select…</option>` +
+      ['Regular Checkup','Ultrasound','Blood Test','Emergency','Other'].map(v =>
+        `<option value="${v}"${cv.type===v?' selected':''}>${v}</option>`).join('') +
+      `</select>
+      <div class="w-field-label">Notes</div>
+      <input class="w-text-input" id="pCvNote" placeholder="Notes…" value="${cv.note||''}">
+      <div class="w-field-label">Next Appointment</div>
+      <input type="date" class="w-date-input" id="pCvNext" value="${cv.next_appointment||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-kick') {
+    const bk = d.baby_kick || { count: 0, start_time: null };
+    const done = bk.count >= 10;
+    html = header('Baby Kick Counter 👣') +
+      `<div class="w-kick-counter">
+        <div class="w-kick-num" id="pKickNum">${bk.count || 0}</div>
+        <div class="w-kick-goal">${done ? '✅ Goal reached!' : 'Goal: 10 kicks'}</div>
+        <button class="w-kick-btn${done?' done':''}" id="pKickBtn">+ 1 Kick</button>
+        <div class="w-kick-sub" id="pKickSub">${bk.start_time ? 'Started: '+bk.start_time : 'Tap to start counting'}</div>
+      </div>
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-bp') {
+    const bp = d.blood_pressure || {};
+    html = header('Blood Pressure 🩺') +
+      `<div class="w-bp-row">
+        <div class="w-bp-field"><label>Systolic</label><input class="w-num-input" type="number" id="pBpSys" style="width:100%;box-sizing:border-box" value="${bp.systolic||''}" placeholder="120"></div>
+        <div class="w-bp-field"><label>Diastolic</label><input class="w-num-input" type="number" id="pBpDia" style="width:100%;box-sizing:border-box" value="${bp.diastolic||''}" placeholder="80"></div>
+        <div class="w-bp-unit">mmHg</div>
+      </div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pBpNote" placeholder="Optional note…" value="${bp.note||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-mood') {
+    const wm = d.womens_mood || {};
+    const moods = [
+      {m:'Amazing',e:'🤩'},{m:'Happy',e:'😊'},{m:'Calm',e:'😌'},{m:'Neutral',e:'😐'},
+      {m:'Tired',e:'😴'},{m:'Anxious',e:'😰'},{m:'Sad',e:'😢'},{m:'Angry',e:'😠'},
+      {m:'Stressed',e:'😫'},{m:'Grateful',e:'🙏'}
+    ];
+    html = header('Mood 🌈') +
+      `<div class="w-field-label">How are you feeling?</div>
+      <div class="w-mood-pick-grid" id="pMoodGrid">` +
+      moods.map(({m,e}) => `<button class="w-mood-pick${wm.mood===m?' selected':''}" data-mood="${m}"><span style="font-size:24px">${e}</span><div style="font-size:10px;margin-top:3px;color:var(--subtext)">${m}</div></button>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Energy Level</div>
+      <div class="w-energy-row" id="pEnergyRow">` +
+      [['Very Low','⚡'],['Low','🔋'],['Medium','⚡'],['High','🔥'],['Peak','💥']].map(([lbl,ico],i) =>
+        `<button class="w-energy-pick${wm.energy_level===(i+1)?' selected':''}" data-energy="${i+1}"><span style="font-size:18px">${ico}</span><div style="font-size:10px;margin-top:2px">${lbl}</div></button>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pMoodNotes" placeholder="What's on your mind?" value="${wm.notes||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-morning-sickness') {
+    const ms = d.morning_sickness || {};
+    html = header('Morning Sickness 🤢') +
+      `<div class="w-field-label">Times today</div>
+      <div class="w-counter-row">
+        <button class="w-counter-btn" id="pMsMinus">−</button>
+        <span class="w-counter-val" id="pMsCount">${ms.count || 0}</span>
+        <button class="w-counter-btn" id="pMsPlus">+</button>
+      </div>
+      <div class="w-field-label" style="margin-top:12px">Severity</div>
+      <div class="w-chip-row" id="pMsIntensity">` +
+      ['Mild','Moderate','Severe'].map(v => `<div class="w-chip${ms.severity===v?' selected pink':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pMsNote" placeholder="e.g. after breakfast…" value="${ms.note||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+  }
+
+  return html;
+}
+
+function buildSeverityRow(name, current) {
+  const btns = [1,2,3,4,5].map(n =>
+    `<button class="w-sev-btn${current===n?' sel':''}" data-name="${name}" data-sev="${n}">${n}</button>`).join('');
+  return `<div class="w-symptom-item"><div class="w-symptom-name">${name}</div><div class="w-severity-row">${btns}</div></div>`;
+}
+
+function attachPopupListeners(type) {
+  // Close buttons
+  document.getElementById('wPopupClose')?.addEventListener('click', closePopup);
+  document.getElementById('wPopupCancel')?.addEventListener('click', closePopup);
+
+  const saveBtn = document.getElementById('wPopupSave');
+
+  if (type === 'popup-sex') {
+    // Counter helpers
+    function counterSetup(minusId, plusId, valId, min = 0) {
+      const minusBtn = document.getElementById(minusId);
+      const plusBtn  = document.getElementById(plusId);
+      const valEl    = document.getElementById(valId);
+      if (!minusBtn || !plusBtn || !valEl) return;
+      minusBtn.addEventListener('click', () => {
+        const cur = parseInt(valEl.textContent) || 0;
+        if (cur > min) valEl.textContent = cur - 1;
+        if (valId === 'pSexCount') toggleSexSub();
+      });
+      plusBtn.addEventListener('click', () => {
+        valEl.textContent = (parseInt(valEl.textContent) || 0) + 1;
+        if (valId === 'pSexCount') toggleSexSub();
+      });
+    }
+    function toggleSexSub() {
+      const count = parseInt(document.getElementById('pSexCount')?.textContent) || 0;
+      const sub = document.getElementById('pSexSub');
+      if (sub) sub.style.display = count > 0 ? '' : 'none';
+    }
+    // Condom chip
+    document.getElementById('pCondomChips')?.addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pCondomChips .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    counterSetup('pSexMinus', 'pSexPlus', 'pSexCount');
+    counterSetup('pOrgasmMinus', 'pOrgasmPlus', 'pOrgasmCount');
+    counterSetup('pMastMinus', 'pMastPlus', 'pMastCount');
+    saveBtn.addEventListener('click', () => {
+      const count = parseInt(document.getElementById('pSexCount')?.textContent) || 0;
+      const orgasmCount = parseInt(document.getElementById('pOrgasmCount')?.textContent) || 0;
+      const mastCount = parseInt(document.getElementById('pMastCount')?.textContent) || 0;
+      const condomSel = document.querySelector('#pCondomChips .w-chip.selected')?.dataset.val || 'No Record';
+      state.dayData.sex = {
+        had_sex: count > 0 || mastCount > 0,
+        count,
+        orgasm_count: orgasmCount,
+        masturbation_count: mastCount,
+        condom: condomSel === 'Yes' ? true : condomSel === 'No' ? false : null,
+        time: document.getElementById('pSexTime')?.value || null,
+      };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-symptoms') {
+    // Chip toggle
+    document.getElementById('pSymChips').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      const sym = chip.dataset.sym;
+      chip.classList.toggle('selected');
+      chip.classList.toggle('pink', chip.classList.contains('selected'));
+      const sev = document.getElementById('pSymSeverities');
+      if (chip.classList.contains('selected')) {
+        const existing = state.dayData.symptoms?.find(s => s.name === sym);
+        sev.insertAdjacentHTML('beforeend', buildSeverityRow(sym, existing?.severity || 3));
+      } else {
+        // remove severity row
+        [...sev.querySelectorAll('.w-symptom-item')].forEach(el => {
+          if (el.querySelector('.w-symptom-name')?.textContent === sym) el.remove();
+        });
+      }
+    });
+    // Severity buttons
+    document.getElementById('pSymSeverities').addEventListener('click', e => {
+      const btn = e.target.closest('.w-sev-btn');
+      if (!btn) return;
+      const name = btn.dataset.name;
+      const sev = parseInt(btn.dataset.sev);
+      const row = btn.closest('.w-severity-row');
+      row.querySelectorAll('.w-sev-btn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+    saveBtn.addEventListener('click', () => {
+      const chips = [...document.querySelectorAll('#pSymChips .w-chip.selected')];
+      const symptoms = chips.map(c => {
+        const name = c.dataset.sym;
+        const row = [...document.querySelectorAll('#pSymSeverities .w-symptom-item')]
+          .find(el => el.querySelector('.w-symptom-name')?.textContent === name);
+        const selSev = row?.querySelector('.w-sev-btn.sel');
+        return { name, severity: selSev ? parseInt(selSev.dataset.sev) : 3 };
+      });
+      state.dayData.symptoms = symptoms;
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-medication') {
+    document.querySelectorAll('.w-taken-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('taken');
+        btn.textContent = btn.classList.contains('taken') ? 'Taken ✓' : 'Not Taken';
+      });
+    });
+    saveBtn.addEventListener('click', () => {
+      const meds = [...document.querySelectorAll('.w-taken-btn')].map(btn => ({
+        name: btn.dataset.med,
+        taken: btn.classList.contains('taken')
+      }));
+      const other = document.getElementById('pMedOther')?.value.trim();
+      if (other) meds.push({ name: other, taken: true });
+      state.dayData.medications = meds;
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-cm') {
+    document.getElementById('wPopupInner').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip[data-group]');
+      if (!chip) return;
+      const grp = chip.dataset.group;
+      document.querySelectorAll(`[data-group="${grp}"]`).forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const get = (grp) => document.querySelector(`[data-group="${grp}"].selected`)?.dataset.val || null;
+      state.dayData.cervical_mucus = { feeling: get('feeling'), color: get('color'), type: get('type') };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-ov-test') {
+    document.getElementById('pOvResult').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pOvResult .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.ovulation_test = {
+        result: document.querySelector('#pOvResult .w-chip.selected')?.dataset.val || null,
+        time: document.getElementById('pOvTime')?.value || null
+      };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-preg-test') {
+    document.getElementById('pPtResult').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pPtResult .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.pregnancy_test = {
+        result: document.querySelector('#pPtResult .w-chip.selected')?.dataset.val || null,
+        time: document.getElementById('pPtTime')?.value || null
+      };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-fetal') {
+    document.getElementById('pFmIntensity').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pFmIntensity .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.fetal_movement = {
+        count: parseInt(document.getElementById('pFmCount')?.value) || 0,
+        time: document.getElementById('pFmTime')?.value || null,
+        intensity: document.querySelector('#pFmIntensity .w-chip.selected')?.dataset.val || null
+      };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-clinic') {
+    saveBtn.addEventListener('click', () => {
+      state.dayData.clinic_visit = {
+        type: document.getElementById('pCvType')?.value || null,
+        note: document.getElementById('pCvNote')?.value || '',
+        next_appointment: document.getElementById('pCvNext')?.value || null
+      };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-kick') {
+    // Initialize temp kick count from current data
+    let kickCount = state.dayData.baby_kick?.count || 0;
+    let kickStart = state.dayData.baby_kick?.start_time || null;
+
+    document.getElementById('pKickBtn').addEventListener('click', () => {
+      if (!kickStart) {
+        const now = new Date();
+        kickStart = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        document.getElementById('pKickSub').textContent = 'Started: ' + kickStart;
+      }
+      kickCount++;
+      document.getElementById('pKickNum').textContent = kickCount;
+      const btn = document.getElementById('pKickBtn');
+      if (kickCount >= 10) {
+        btn.classList.add('done');
+        btn.textContent = '✅ Done!';
+        document.querySelector('.w-kick-goal').textContent = '✅ Goal reached!';
+      }
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.baby_kick = { count: kickCount, start_time: kickStart };
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-bp') {
+    saveBtn.addEventListener('click', () => {
+      const sys = parseInt(document.getElementById('pBpSys')?.value) || null;
+      const dia = parseInt(document.getElementById('pBpDia')?.value) || null;
+      const note = document.getElementById('pBpNote')?.value || '';
+      state.dayData.blood_pressure = { systolic: sys, diastolic: dia, note };
+      // Dual-write to panel-logs health tab
+      if (sys && dia) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'health',
+            data: { blood_pressure_sys: sys, blood_pressure_dia: dia, notes: note,
+                    source: 'womens', date: state.currentDate }
+          })
+        }).catch(() => {});
+      }
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-mood') {
+    // Mood chip selection
+    document.getElementById('pMoodGrid').addEventListener('click', e => {
+      const btn = e.target.closest('.w-mood-pick');
+      if (!btn) return;
+      document.querySelectorAll('.w-mood-pick').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+    document.getElementById('pEnergyRow').addEventListener('click', e => {
+      const btn = e.target.closest('.w-energy-pick');
+      if (!btn) return;
+      document.querySelectorAll('.w-energy-pick').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const moodBtn = document.querySelector('.w-mood-pick.selected');
+      const energyBtn = document.querySelector('.w-energy-pick.selected');
+      const notes = document.getElementById('pMoodNotes')?.value || '';
+      const moodVal = moodBtn?.dataset.mood || null;
+      const energyVal = energyBtn ? parseInt(energyBtn.dataset.energy) : null;
+      state.dayData.womens_mood = { mood: moodVal, energy_level: energyVal, notes };
+      // Dual-write to panel-logs mood tab
+      if (moodVal) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'mood',
+            data: { mood: moodVal, energy_level: energyVal, notes,
+                    source: 'womens', date: state.currentDate }
+          })
+        }).catch(() => {});
+      }
+      closePopup(); renderItemGrid();
+    });
+
+  } else if (type === 'popup-morning-sickness') {
+    // Counter for times
+    const msMinusBtn = document.getElementById('pMsMinus');
+    const msPlusBtn  = document.getElementById('pMsPlus');
+    const msValEl    = document.getElementById('pMsCount');
+    if (msMinusBtn && msPlusBtn && msValEl) {
+      msMinusBtn.addEventListener('click', () => {
+        const cur = parseInt(msValEl.textContent) || 0;
+        if (cur > 0) msValEl.textContent = cur - 1;
+      });
+      msPlusBtn.addEventListener('click', () => {
+        msValEl.textContent = (parseInt(msValEl.textContent) || 0) + 1;
+      });
+    }
+    document.getElementById('pMsIntensity').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pMsIntensity .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const count = parseInt(document.getElementById('pMsCount')?.textContent) || 0;
+      const severity = document.querySelector('#pMsIntensity .w-chip.selected')?.dataset.val || null;
+      const note = document.getElementById('pMsNote')?.value || '';
+      state.dayData.morning_sickness = { count, severity, note };
+      closePopup(); renderItemGrid();
+    });
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('wToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Save Day ───────────────────────────────────────────────────
+function saveDayHandler() {
+  if (!state.currentDate) return;
+  const d = state.dayData;
+  d.note = document.getElementById('wNote').value;
+  d.add_to_calendar = document.getElementById('wAddToCal').checked;
+  d.calendar_visibility = 'private';
+  d.mode = state.pregnancyMode ? 'pregnancy' : 'period';
+  d.date = state.currentDate;
+  saveDay(state.currentDate, d);
+  const btn = document.getElementById('wSaveBtn');
+  btn.textContent = 'Saved ✓';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = 'Save Day'; btn.classList.remove('saved'); }, 1800);
+  showToast('Day saved');
+}
+
+// ── Init & Events ──────────────────────────────────────────────
+function init() {
+  // Pregnancy toggle
+  const toggle = document.getElementById('wPregnancyToggle');
+  toggle.checked = state.pregnancyMode;
+  document.getElementById('wWrap').classList.toggle('pregnancy-mode', state.pregnancyMode);
+
+  toggle.addEventListener('change', () => {
+    state.pregnancyMode = toggle.checked;
+    localStorage.setItem('mie_womens_mode', state.pregnancyMode ? 'pregnancy' : 'period');
+    document.getElementById('wWrap').classList.toggle('pregnancy-mode', state.pregnancyMode);
+    updateSummaryBar();
+    renderCalendar();
+    if (state.currentDate) renderItemGrid();
+  });
+
+  // Month nav
+  document.getElementById('wPrevMonth').addEventListener('click', () => {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth()-1, 1);
+    renderCalendar();
+  });
+  document.getElementById('wNextMonth').addEventListener('click', () => {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth()+1, 1);
+    renderCalendar();
+  });
+
+  // Back
+  document.getElementById('wBackBtn').addEventListener('click', closeDailyView);
+
+  // Save
+  document.getElementById('wSaveBtn').addEventListener('click', saveDayHandler);
+
+  // Delete
+  document.getElementById('wDeleteBtn').addEventListener('click', () => {
+    if (!state.currentDate) return;
+    if (!confirm('Delete all data for this day?')) return;
+    deleteDay(state.currentDate);
+    state.dayData = {};
+    showToast('Deleted');
+    renderItemGrid();
+  });
+
+  // Add to cal button (placeholder)
+  document.getElementById('wAddCalBtn').addEventListener('click', () => {
+    showToast('Calendar sync available after backend setup');
+  });
+
+  // Popup overlay close on backdrop
+  document.getElementById('wPopupOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('wPopupOverlay')) closePopup();
+  });
+
+  renderCalendar();
+  updateSummaryBar();
+}
+
+// ── Public API for index.html ──────────────────────────────────
+window.onPanelLoad = function(v) {
+  init();
+};
+
+// Auto-init if not loaded via injection
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
