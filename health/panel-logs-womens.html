@@ -1079,18 +1079,24 @@ function updateSummaryBar() {
 function getDayIcons(data) {
   if (!data) return [];
   const icons = [];
+  if (data.note && data.note.trim()) icons.push('📝');
   if (data.period_start || data.period_end) icons.push('🔴');
   if (data.sex && data.sex.had_sex) icons.push('💜');
   if (data.symptoms && data.symptoms.length) icons.push('⚡');
   if (data.medications && data.medications.some(m => m.taken)) icons.push('💊');
   if (data.ovulation) icons.push('🌸');
-  if ((data.ovulation_test && data.ovulation_test.result === 'Positive') ||
-      (data.pregnancy_test && data.pregnancy_test.result === 'Positive')) icons.push('✅');
+  // Positive test → ✅, any other recorded result → show test icon
+  if (data.pregnancy_test && data.pregnancy_test.result === 'Positive') icons.push('✅');
+  else if (data.pregnancy_test && data.pregnancy_test.result) icons.push('🤰');
+  if (data.ovulation_test && data.ovulation_test.result === 'Positive') icons.push('✅');
+  else if (data.ovulation_test && data.ovulation_test.result) icons.push('🔬');
   if (data.cervical_mucus && data.cervical_mucus.feeling) icons.push('💧');
   if (data.fetal_movement && data.fetal_movement.count) icons.push('👶');
   if (data.clinic_visit && data.clinic_visit.type) icons.push('🏥');
   if (data.baby_kick && data.baby_kick.count) icons.push('👣');
   if (data.blood_pressure && data.blood_pressure.systolic) icons.push('❤️');
+  if (data.morning_sickness && data.morning_sickness.count) icons.push('🤢');
+  if (data.womens_mood && data.womens_mood.mood) icons.push('🌈');
   return icons;
 }
 
@@ -1913,18 +1919,22 @@ function autoSaveAndReturn() {
 
 function saveDayHandler() {
   if (!state.currentDate) return;
-  const d = state.dayData;
-  d.note = document.getElementById('wNote').value;
-  d.add_to_calendar = document.getElementById('wAddToCal').checked;
-  d.calendar_visibility = 'private';
-  d.mode = state.pregnancyMode ? 'pregnancy' : 'period';
-  d.date = state.currentDate;
-  saveDay(state.currentDate, d);
-  const btn = document.getElementById('wSaveBtn');
-  btn.textContent = 'Saved ✓';
-  btn.classList.add('saved');
-  showToast('Day saved');
-  setTimeout(() => { closeDailyView(); }, 800);
+  try {
+    const d = state.dayData;
+    const noteEl = document.getElementById('wNote');
+    const calEl  = document.getElementById('wAddToCal');
+    d.note               = noteEl ? noteEl.value : (d.note || '');
+    d.add_to_calendar    = calEl  ? calEl.checked : false;
+    d.calendar_visibility = 'private';
+    d.mode = state.pregnancyMode ? 'pregnancy' : 'period';
+    d.date = state.currentDate;
+    saveDay(state.currentDate, d);
+    showToast('Saved ✓');
+  } catch(e) {
+    console.error('saveDayHandler error:', e);
+  }
+  // Always navigate back regardless of errors above
+  closeDailyView();
 }
 
 // ── Init & Events ──────────────────────────────────────────────
