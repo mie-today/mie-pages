@@ -1981,15 +1981,24 @@ function init() {
 }
 
 // ── Public API for index.html ──────────────────────────────────
-window.onPanelLoad = function(v) {
+// Guard against double-init: onPanelLoad + auto-init both firing
+// causes event listeners to register twice → 2-month skip bug
+let _wInitDone = false;
+function safeInit() {
+  if (_wInitDone) return;
+  _wInitDone = true;
   init();
+}
+
+window.onPanelLoad = function(v) {
+  safeInit();
 };
 
-// Auto-init if not loaded via injection
+// Auto-init when loaded standalone (not via injection)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', safeInit);
 } else {
-  init();
+  safeInit();
 }
 
 })();
