@@ -101,7 +101,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .rows-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow-y:auto;overflow-x:hidden;}
 .panel-view{flex:1;min-height:0;display:none;flex-direction:column;background:#fff;border:1px solid #e8eaed;border-radius:10px;overflow:hidden;}
 .panel-view.active{display:flex;}
-/* ── Panel header: Overview btn + title on same line, left-aligned ── */
 .panel-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1f3f4;}
 .panel-back{display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:#1a73e8;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;padding:4px 8px;border-radius:6px;transition:background .12s;flex-shrink:0;}
 .panel-back:hover{background:#e8f0fe;}
@@ -326,8 +325,123 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
 .spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin2 .7s linear infinite;}
 @keyframes spin2{to{transform:rotate(360deg);}}
-@media(max-width:1000px){html,body{overflow:auto;}#app{height:auto;min-height:100vh;overflow:visible;}.app-body{flex-direction:column;overflow:visible;height:auto;}.task-sidebar{flex:none;width:100%;}.content-area{flex-direction:column;overflow:visible;height:auto;padding:8px;}.health-centre,.right-col{flex:0 0 auto;width:100%;}.rows-wrap{overflow:visible;height:auto;}.hrow,.hrow-overview,.hrow-health-food{height:auto;flex-direction:column;}.health-summary-card,.food-summary-card{flex:0 0 auto;width:100%;}.three-col{grid-template-columns:1fr;}}
-@media(max-width:480px){.topbar{padding:0 12px;}.content-area{padding:6px;}}
+
+/* ── MOBILE: mirrors finance.html approach exactly ── */
+@media(max-width:900px){
+  /* Unwind fixed-height app shell — let page scroll naturally */
+  html,body{height:auto;overflow:auto;}
+  #app{height:auto;min-height:100vh;overflow:visible;display:flex;flex-direction:column;}
+
+  /* Topbar: hide clock/weather on narrow screens */
+  .tb-meta{display:none;}
+
+  /* App body: stack vertically */
+  .app-body{flex-direction:column;overflow:visible;height:auto;}
+
+  /* Sidebar: collapse to a horizontal strip at the top */
+  .task-sidebar{
+    flex:none;width:100%;min-width:unset;
+    border-right:none;border-bottom:1px solid #e0e0e0;
+    flex-direction:row;flex-wrap:wrap;
+    padding:6px 8px;gap:4px;
+    overflow:visible;
+    /* disable the collapse toggle on mobile — not useful */
+  }
+  .task-sidebar.collapsed{flex-basis:auto;min-width:unset;}
+  .sidebar-toggle{display:none;}
+  /* sidebar nav becomes a horizontal scrolling pill strip */
+  .sidebar-nav{
+    flex:none;width:100%;
+    display:flex;flex-direction:row;flex-wrap:wrap;
+    gap:2px;padding:0;overflow-x:auto;overflow-y:visible;
+    transition:none;
+  }
+  .sidebar-nav::-webkit-scrollbar{display:none;}
+  .sidebar-sec-row{display:none;}/* hide section headers on mobile */
+  .tl-sep{display:none;}
+  .tl-item{
+    flex:0 0 auto;width:auto;padding:5px 10px;
+    font-size:11px;border-radius:20px;
+    border:1px solid #e0e0e0;
+  }
+  .tl-hide-btn{display:none !important;}
+  .sidebar-stats{display:none;}/* hide stats strip on mobile */
+  .sidebar-footer{display:none;}/* hide settings panel on mobile */
+
+  /* Content area: stack vertically, no overflow clipping */
+  .content-area{
+    flex-direction:column;overflow:visible;
+    height:auto;padding:8px 10px 16px;gap:10px;
+    align-items:stretch;
+  }
+
+  /* Main health column and right column: full width */
+  .health-centre{flex:none;width:100%;overflow:visible;}
+  .right-col{flex:none;width:100%;overflow:visible;}
+
+  /* rows-wrap: remove fixed height, let content flow */
+  .rows-wrap{overflow:visible;height:auto;flex:none;}
+
+  /* overview row: stack vertically */
+  .hrow-overview{flex-direction:column;}
+
+  /* health+food row: stack vertically */
+  .hrow-health-food{
+    flex-direction:column;height:auto;min-height:unset;
+    align-items:stretch;
+  }
+  .health-summary-card,.food-summary-card{
+    flex:none;width:100%;min-width:unset;
+  }
+
+  /* three-col grid: single column on mobile */
+  .three-col{grid-template-columns:1fr;}
+
+  /* hrow: let it flow */
+  .hrow{flex:none;height:auto;overflow:visible;}
+
+  /* overview card: allow wrapping of cal+macro */
+  .cal-macro-row{flex-wrap:wrap;}
+  .cal-third{flex:0 0 100%;padding-right:0;margin-bottom:8px;}
+  .ov-divider{display:none;}
+  .macros-two-thirds{flex:0 0 100%;}
+
+  /* activity row: stack the icons and body metrics */
+  .activity-body-row{flex-wrap:wrap;}
+  .icons-sixty{flex:0 0 100%;flex-wrap:wrap;height:auto;padding:6px 0;gap:8px;}
+  .body-forty{flex:0 0 100%;height:auto;padding:6px 0;border-top:1px solid #f1f3f4;}
+  .metric-item{flex:0 0 18%;}
+  .bc-item{flex:1;}
+
+  /* panel view: full width, reasonable min-height */
+  .panel-view{
+    min-height:60vh;
+    border-radius:10px;
+    overflow:visible;
+  }
+  .panel-body{overflow:visible;height:auto;}
+
+  /* top-row controls: allow wrapping */
+  .top-row{flex-wrap:wrap;gap:8px;}
+  .date-nav{flex-wrap:wrap;gap:4px;}
+
+  /* hide YTD on very small screens to save space */
+  .ytd-btn{display:none;}
+
+  /* modal: full-width on mobile */
+  .modal-box{padding:16px;}
+  .f-row2,.f-row3{grid-template-columns:1fr;}
+}
+
+@media(max-width:480px){
+  .topbar{padding:0 12px;}
+  .content-area{padding:6px 6px 14px;}
+  .tb-brand,.tb-slash,.tb-page{display:none;}
+  .metric-item{flex:0 0 28%;}
+  .period-select{font-size:11px;padding:4px 6px;}
+  .unit-btn{font-size:11px;padding:4px 8px;}
+  .add-fab{font-size:11px;padding:4px 10px;}
+}
 </style>
 </head>
 <body>
@@ -373,12 +487,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview
         </button>
         <div class="tl-sep"></div>
-        <div class="sidebar-sec-row">
-          <span class="sidebar-sec">Logs</span>
-          <!-- + removed per request -->
-        </div>
+        <div class="sidebar-sec-row"><span class="sidebar-sec">Logs</span></div>
         <div id="logs-items">
-          <!-- Alphabetical: Activity, Body, Food, Mood, Sleep, Women's -->
           <button class="tl-item" id="nav-activity" onclick="setView('activity',this)" data-key="activity"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,9 4,5 7,8 10,3 13,6 15,4" stroke-linecap="round" stroke-linejoin="round"/></svg>Activity<button class="tl-hide-btn" onclick="hideItem(event,'activity')">–</button></button>
           <button class="tl-item" id="nav-healthlog" onclick="setView('healthlog',this)" data-key="healthlog"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a3 3 0 00-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 00-3-3z"/></svg>Body<button class="tl-hide-btn" onclick="hideItem(event,'healthlog')">–</button></button>
           <button class="tl-item" id="nav-food" onclick="setView('food',this)" data-key="food"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v5c0 2 1.5 3 3 3s3-1 3-3V2" stroke-linecap="round"/><line x1="6" y1="10" x2="6" y2="14" stroke-linecap="round"/><path d="M11 2c0 0 2 1 2 4s-2 4-2 4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>Food<button class="tl-hide-btn" onclick="hideItem(event,'food')">–</button></button>
@@ -392,7 +502,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           <button class="sidebar-sec-add" onclick="openSecAddModal('trackers')">+</button>
         </div>
         <div id="trackers-items">
-          <!-- Period removed — moved to Women's Log -->
           <button class="tl-item" id="nav-water" onclick="setView('water',this)" data-key="water"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 8 3 11a5 5 0 0010 0C13 8 8 2 8 2z"/></svg>Water<button class="tl-hide-btn" onclick="hideItem(event,'water')">–</button></button>
           <button class="tl-item" id="nav-medication" onclick="setView('medication',this)" data-key="medication"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="1" width="6" height="14" rx="3"/><line x1="5" y1="8" x2="11" y2="8"/></svg>Medication<button class="tl-hide-btn" onclick="hideItem(event,'medication')">–</button></button>
         </div>
@@ -462,7 +571,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
       <div class="health-centre">
         <div class="top-row">
           <div class="page-title">💪 Health</div>
-          <div style="display:flex;align-items:center;gap:6px;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <div class="date-nav">
               <button class="nav-arrow" onclick="changeDate(-1)">&#8249;</button>
               <div class="picker-wrap" id="picker-wrap">
@@ -484,7 +593,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                 </div>
               </div>
               <button class="nav-arrow" onclick="changeDate(1)">&#8250;</button>
-              <!-- ✅ CHANGE #3: default → daily -->
               <select class="period-select" id="period-select" onchange="onPeriodChange(this.value)">
                 <option value="daily" selected>Daily</option>
                 <option value="weekly">Weekly</option>
@@ -493,7 +601,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
               </select>
               <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
             </div>
-            <!-- ✅ CHANGE #3&#4: unit-btn and add-fab hidden when in panel view (controlled by JS) -->
             <button class="unit-btn active" id="unit-btn" onclick="toggleUnit()">US / Metrics</button>
             <button class="add-fab" id="add-fab" onclick="openAddModal()">+ Add</button>
           </div>
@@ -525,7 +632,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                 <div class="icons-sixty">
                   <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:#e8f5e9;">🔥</div><div class="metric-val">1,862</div><div class="metric-label">Cals</div></div>
                   <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:#e3f2fd;">👟</div><div class="metric-val">11,256</div><div class="metric-label">Steps</div></div>
-                  <!-- ✅ CHANGE #A: distance metric item with id for unit toggle -->
                   <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:#f3e5f5;">📍</div><div class="metric-val" id="dist-display">8.89</div><div class="metric-label" id="dist-label">km</div></div>
                   <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:#fff3e0;">🏋️</div><div class="metric-val">862</div><div class="metric-label">Active Cal</div></div>
                   <div class="metric-item" onclick="setView('water',document.getElementById('nav-water'))"><div class="metric-icon" style="background:#e0f7fa;">💧</div><div class="metric-val" id="water-display">1200</div><div class="metric-label" id="water-label">ml</div></div>
@@ -618,7 +724,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
           </div>
         </div>
 
-        <!-- ✅ CHANGE #1&#2: Panel header — Overview btn + title left-aligned, no emoji in title -->
         <div class="panel-view" id="panel-view">
           <div class="panel-header">
             <button class="panel-back" onclick="setView('overview',document.getElementById('nav-overview'))">
@@ -747,9 +852,7 @@ function init(){
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var now=new Date(),currentMonth=now.getMonth(),currentYear=now.getFullYear(),currentDay=now.getDate();
-var ytdActive=false,selectedType='food',unitMetric=true; // ✅ default metric (US/Metrics btn = showing metric)
-
-// ✅ CHANGE #3: default period = daily
+var ytdActive=false,selectedType='food',unitMetric=true;
 var currentPeriod='daily';
 
 function startClock(){function tick(){var n=new Date(),d=document.getElementById('wb-date'),t=document.getElementById('wb-time');if(d)d.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});if(t)t.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
@@ -760,18 +863,15 @@ function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitu
 var toastTmr=null;
 function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
 
-// ✅ CHANGE #B: renderDate handles daily/weekly/monthly/yearly display
 function renderDate(){
   var d=new Date(currentYear,currentMonth,currentDay);
   var dp=document.getElementById('date-display');
   if(!dp)return;
   if(ytdActive){dp.textContent='Jan 01 '+currentYear+' – Today';return;}
-
   if(currentPeriod==='daily'){
     dp.textContent=MONTHS_SHORT[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' '+d.getFullYear();
   } else if(currentPeriod==='weekly'){
-    // week: Mon–Sun containing currentDay
-    var dow=d.getDay(); // 0=Sun
+    var dow=d.getDay();
     var diffToMon=(dow===0)?-6:(1-dow);
     var mon=new Date(d); mon.setDate(d.getDate()+diffToMon);
     var sun=new Date(mon); sun.setDate(mon.getDate()+6);
@@ -784,22 +884,13 @@ function renderDate(){
   }
 }
 
-// ✅ CHANGE #B: changeDate moves by period unit
 function changeDate(dir){
   if(ytdActive)return;
   var d=new Date(currentYear,currentMonth,currentDay);
-  if(currentPeriod==='daily'){
-    d.setDate(d.getDate()+dir);
-  } else if(currentPeriod==='weekly'){
-    d.setDate(d.getDate()+(dir*7));
-  } else if(currentPeriod==='monthly'){
-    d.setMonth(d.getMonth()+dir);
-    // keep day in valid range for new month
-    var maxDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-    if(d.getDate()>maxDay)d.setDate(maxDay);
-  } else if(currentPeriod==='yearly'){
-    d.setFullYear(d.getFullYear()+dir);
-  }
+  if(currentPeriod==='daily'){d.setDate(d.getDate()+dir);}
+  else if(currentPeriod==='weekly'){d.setDate(d.getDate()+(dir*7));}
+  else if(currentPeriod==='monthly'){d.setMonth(d.getMonth()+dir);var maxDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();if(d.getDate()>maxDay)d.setDate(maxDay);}
+  else if(currentPeriod==='yearly'){d.setFullYear(d.getFullYear()+dir);}
   var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
   if(d<oneYearAgo)d=new Date(oneYearAgo);
   if(d>today)d=new Date(today);
@@ -807,70 +898,36 @@ function changeDate(dir){
   renderDate();
 }
 
-function onPeriodChange(period){
-  currentPeriod=period;
-  ytdActive=false;
-  document.getElementById('ytd-btn').classList.remove('active');
-  renderDate();
-  toast(period.charAt(0).toUpperCase()+period.slice(1));
-}
+function onPeriodChange(period){currentPeriod=period;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();toast(period.charAt(0).toUpperCase()+period.slice(1));}
+function toggleYTD(){ytdActive=!ytdActive;var btn=document.getElementById('ytd-btn');btn.classList.toggle('active',ytdActive);if(ytdActive){renderDate();var sel=document.getElementById('period-select');if(sel)sel.value='monthly';currentPeriod='monthly';toast('Showing '+currentYear+' YTD');}else{renderDate();}}
 
-function toggleYTD(){
-  ytdActive=!ytdActive;
-  var btn=document.getElementById('ytd-btn');
-  btn.classList.toggle('active',ytdActive);
-  if(ytdActive){
-    renderDate();
-    var sel=document.getElementById('period-select');
-    if(sel)sel.value='monthly';
-    currentPeriod='monthly';
-    toast('Showing '+currentYear+' YTD');
-  } else {
-    renderDate();
-  }
-}
+var _distKm=8.89;
 
-// ✅ CHANGE #A: distance values in both units (base: km)
-var _distKm=8.89; // 5.52 miles = 8.88 km
-
-// ✅ CHANGE #A+#6: toggleUnit now also converts distance, and calls plSetUnitPref
 function toggleUnit(){
   unitMetric=!unitMetric;
   var btn=document.getElementById('unit-btn');
   btn.textContent=unitMetric?'US / Metrics':'Metrics / US';
-
   if(unitMetric){
-    // Metric display
     document.getElementById('weight-display').textContent='70.4 kg';
     document.getElementById('weight-sub').textContent='155.10 lb';
     document.getElementById('muscle-display').textContent='42.5 kg';
     document.getElementById('fat-display').textContent='25.2 kg';
     document.getElementById('water-display').textContent='1200';
     document.getElementById('water-label').textContent='ml';
-    // ✅ distance in km
-    var distEl=document.getElementById('dist-display');
-    var distLbl=document.getElementById('dist-label');
-    if(distEl)distEl.textContent=_distKm.toFixed(2);
-    if(distLbl)distLbl.textContent='km';
+    var distEl=document.getElementById('dist-display');var distLbl=document.getElementById('dist-label');
+    if(distEl)distEl.textContent=_distKm.toFixed(2);if(distLbl)distLbl.textContent='km';
   } else {
-    // US/Imperial display
     document.getElementById('weight-display').textContent='155.1 lb';
     document.getElementById('weight-sub').textContent='70.4 kg';
     document.getElementById('muscle-display').textContent='93.7 lb';
     document.getElementById('fat-display').textContent='55.6 lb';
     document.getElementById('water-display').textContent='40.6';
     document.getElementById('water-label').textContent='fl oz';
-    // ✅ distance in miles
-    var distElUS=document.getElementById('dist-display');
-    var distLblUS=document.getElementById('dist-label');
-    if(distElUS)distElUS.textContent=(_distKm/1.60934).toFixed(2);
-    if(distLblUS)distLblUS.textContent='mi';
+    var distElUS=document.getElementById('dist-display');var distLblUS=document.getElementById('dist-label');
+    if(distElUS)distElUS.textContent=(_distKm/1.60934).toFixed(2);if(distLblUS)distLblUS.textContent='mi';
   }
-
-  // ✅ CHANGE #6: propagate to panel-logs pills
   var pref=unitMetric?'metric':'us';
   if(typeof window.plSetUnitPref==='function') window.plSetUnitPref(pref);
-
   toast('Switched to '+(unitMetric?'Metric':'US')+' units');
 }
 
@@ -883,26 +940,7 @@ function togglePicker(e){e.stopPropagation();if(ytdActive)return;var popup=docum
 function closePicker(){document.getElementById('picker-popup').classList.remove('open');}
 document.addEventListener('click',function(e){var wrap=document.getElementById('picker-wrap');if(wrap&&!wrap.contains(e.target))closePicker();});
 
-/* ✅ CHANGE #1&#2&#3&#4: VIEW ROUTING — panel title without emoji, hide/show unit-btn & add-fab */
-// Panel labels without emoji (clean text only)
-var PANEL_LABELS={
-  food:'Food Log',
-  activity:'Activity',
-  healthlog:'Body Log',
-  sleep:'Sleep',
-  mood:'Mood',
-  womens:"Women's Log",
-  period:'Period Tracker',
-  water:'Water Tracker',
-  medication:'Medication Tracker',
-  insurance:'Insurance Info',
-  medrec:'Medication Records',
-  history:'Medical History',
-  myinfo:'My Info',
-  goals:'Goals'
-};
-
-// Views that are "panel" mode (hide unit-btn + add-fab)
+var PANEL_LABELS={food:'Food Log',activity:'Activity',healthlog:'Body Log',sleep:'Sleep',mood:'Mood',womens:"Women's Log",period:'Period Tracker',water:'Water Tracker',medication:'Medication Tracker',insurance:'Insurance Info',medrec:'Medication Records',history:'Medical History',myinfo:'My Info',goals:'Goals'};
 var PANEL_VIEWS=['food','activity','healthlog','sleep','mood','womens','period','water','medication','insurance','medrec','history','myinfo','goals'];
 
 function setView(v,btn){
@@ -912,36 +950,19 @@ function setView(v,btn){
   var pv=document.getElementById('panel-view');
   var unitBtn=document.getElementById('unit-btn');
   var addFab=document.getElementById('add-fab');
-
   if(v==='overview'){
-    rw.style.display='flex';
-    pv.classList.remove('active');
-    // ✅ restore unit-btn and add-fab on overview
-    if(unitBtn)unitBtn.style.display='';
-    if(addFab)addFab.style.display='';
+    rw.style.display='flex';pv.classList.remove('active');
+    if(unitBtn)unitBtn.style.display='';if(addFab)addFab.style.display='';
   } else {
-    rw.style.display='none';
-    pv.classList.add('active');
+    rw.style.display='none';pv.classList.add('active');
     var title=document.getElementById('panel-title');
     if(title)title.textContent=PANEL_LABELS[v]||v;
-    // ✅ hide unit-btn and add-fab in panel views
-    if(PANEL_VIEWS.indexOf(v)>=0){
-      if(unitBtn)unitBtn.style.display='none';
-      if(addFab)addFab.style.display='none';
-    }
+    if(PANEL_VIEWS.indexOf(v)>=0){if(unitBtn)unitBtn.style.display='none';if(addFab)addFab.style.display='none';}
     loadPanelContent(v);
   }
 }
 
-// 패널 파일 라우팅 맵
-var PANEL_FILE_MAP={
-  food:'panel-logs.html',activity:'panel-logs.html',
-  healthlog:'panel-logs.html',sleep:'panel-logs.html',mood:'panel-logs.html',
-  womens:'panel-logs-womens.html',
-  period:'panel-trackers.html',water:'panel-trackers.html',medication:'panel-trackers.html',
-  insurance:'panel-records.html',medrec:'panel-records.html',history:'panel-records.html',
-  myinfo:'panel-infogoal.html',goals:'panel-infogoal.html'
-};
+var PANEL_FILE_MAP={food:'panel-logs.html',activity:'panel-logs.html',healthlog:'panel-logs.html',sleep:'panel-logs.html',mood:'panel-logs.html',womens:'panel-logs-womens.html',period:'panel-trackers.html',water:'panel-trackers.html',medication:'panel-trackers.html',insurance:'panel-records.html',medrec:'panel-records.html',history:'panel-records.html',myinfo:'panel-infogoal.html',goals:'panel-infogoal.html'};
 
 function loadPanelContent(v){
   var body=document.getElementById('panel-body');
@@ -954,15 +975,8 @@ function loadPanelContent(v){
     .then(function(html){
       body.innerHTML=html;
       var scripts=body.querySelectorAll('script');
-      scripts.forEach(function(oldScript){
-        var newScript=document.createElement('script');
-        if(oldScript.src){newScript.src=oldScript.src;}
-        else{newScript.textContent=oldScript.textContent;}
-        document.head.appendChild(newScript);
-        document.head.removeChild(newScript);
-      });
+      scripts.forEach(function(oldScript){var newScript=document.createElement('script');if(oldScript.src){newScript.src=oldScript.src;}else{newScript.textContent=oldScript.textContent;}document.head.appendChild(newScript);document.head.removeChild(newScript);});
       if(typeof window.onPanelLoad==='function')window.onPanelLoad(v);
-      // ✅ CHANGE #6: sync unit pref to panel after load
       var pref=unitMetric?'metric':'us';
       if(typeof window.plSetUnitPref==='function')window.plSetUnitPref(pref);
     })
@@ -971,39 +985,32 @@ function loadPanelContent(v){
 
 function toggleSidebar(){document.getElementById('task-sidebar').classList.toggle('collapsed');}
 
-/* Hide items */
 var _hiddenItems={};
 function hideItem(e,key){e.stopPropagation();_hiddenItems[key]=true;try{localStorage.setItem('mie_hidden_items',JSON.stringify(_hiddenItems));}catch(ex){}var btn=document.getElementById('nav-'+key);if(btn)btn.style.display='none';toast('Hidden. Use [+] to restore.');}
 function applyHiddenItems(){try{var raw=localStorage.getItem('mie_hidden_items');if(raw)_hiddenItems=JSON.parse(raw);}catch(ex){}Object.keys(_hiddenItems).forEach(function(key){if(_hiddenItems[key]){var btn=document.getElementById('nav-'+key);if(btn)btn.style.display='none';}});}
 
-/* Section add */
 var _secAddTarget='';
 function openSecAddModal(section){_secAddTarget=section;var titles={logs:'Add to Logs',trackers:'Add to Trackers',records:'Add to Records'};document.getElementById('sec-add-title').textContent=titles[section]||'Add Item';document.getElementById('sec-add-name').value='';document.getElementById('sec-add-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('sec-add-name').focus();},60);}
 function closeSecAddModal(){document.getElementById('sec-add-modal').classList.add('hidden');}
 function saveSecAdd(){var name=document.getElementById('sec-add-name').value.trim();if(!name)return;var key=name.toLowerCase().replace(/\s+/g,'-'),container=document.getElementById(_secAddTarget+'-items');if(!container){closeSecAddModal();return;}var btn=document.createElement('button');btn.className='tl-item';btn.id='nav-'+key;var icons={logs:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/></svg>',trackers:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>',records:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="5" x2="12" y2="5"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="4" y1="11" x2="9" y2="11"/></svg>'};btn.innerHTML=(icons[_secAddTarget]||'')+name+'<button class="tl-hide-btn" onclick="hideItem(event,\''+key+'\')" title="Hide">–</button>';btn.onclick=function(){setView(key,btn);};container.appendChild(btn);closeSecAddModal();toast(name+' added');}
 document.getElementById('sec-add-modal').addEventListener('click',function(e){if(e.target===this)closeSecAddModal();});
 
-/* Notes */
 function addNote(){var list=document.getElementById('notes-list'),item=document.createElement('div');item.className='note-item';item.innerHTML='<span class="note-bullet">•</span><span class="note-text" contenteditable="true"></span><button class="note-del" onclick="delNote(this)">×</button>';list.appendChild(item);item.querySelector('.note-text').focus();}
 function delNote(btn){var item=btn.parentElement;item.style.transition='opacity .15s';item.style.opacity='0';setTimeout(function(){item.remove();},150);}
 
-/* Water cups */
 var waterCups=0,WATER_GOAL_CUPS=8;
 function initWaterCups(){try{waterCups=parseInt(localStorage.getItem('mie_water_cups_today')||'0');}catch(e){}renderWaterCups();}
 function renderWaterCups(){var container=document.getElementById('water-cups');if(!container)return;container.innerHTML='';for(var i=0;i<WATER_GOAL_CUPS;i++){var cup=document.createElement('span');cup.className='yn-cup'+(i<waterCups?' filled':'');cup.textContent='🥤';cup.title='Cup '+(i+1)+' ('+(8*(i+1))+'oz)';(function(idx){cup.onclick=function(){waterCups=waterCups===idx+1?idx:idx+1;try{localStorage.setItem('mie_water_cups_today',waterCups);}catch(e){}renderWaterCups();};})(i);container.appendChild(cup);}var total=document.getElementById('water-cups-total');if(total)total.textContent=(waterCups*8)+' / '+(WATER_GOAL_CUPS*8)+' oz';}
 
-/* Yes/No */
 var _ynState={};
 function toggleYesNo(el,key){_ynState[key]=!_ynState[key];el.classList.toggle('checked',_ynState[key]);try{localStorage.setItem('mie_yn_'+key,_ynState[key]?'1':'0');}catch(e){}}
 
-/* Settings */
 function toggleSettings(){var body=document.getElementById('settings-body'),arrow=document.getElementById('settings-arrow');body.classList.toggle('open');arrow.classList.toggle('open');}
 function calcAll(){var dob=document.getElementById('sf-dob').value,sex=document.getElementById('sf-sex').value,hcm=parseFloat(document.getElementById('sf-height-cm').value),wkg=parseFloat(document.getElementById('sf-weight-kg').value),act=parseFloat(document.getElementById('sf-activity').value)||1.55,goal=document.getElementById('sf-goal').value||'maintain',tkg=parseFloat(document.getElementById('sf-target-kg').value),months=parseFloat(document.getElementById('sf-goal-months').value)||4,resultsDiv=document.getElementById('sf-results');if(!dob||!sex||!hcm||!wkg){resultsDiv.style.display='none';return;}resultsDiv.style.display='flex';var today=new Date(),bd=new Date(dob),age=today.getFullYear()-bd.getFullYear()-((today.getMonth()<bd.getMonth()||(today.getMonth()===bd.getMonth()&&today.getDate()<bd.getDate()))?1:0);document.getElementById('res-age').textContent=age+' yrs';var hm=hcm/100,bmi=wkg/(hm*hm);document.getElementById('res-bmi').textContent=bmi.toFixed(1);var bmiTag=document.getElementById('res-bmi-tag');if(bmi<18.5){bmiTag.textContent='Underweight';bmiTag.className='sf-result-tag underweight';}else if(bmi<25){bmiTag.textContent='Normal';bmiTag.className='sf-result-tag normal';}else if(bmi<30){bmiTag.textContent='Overweight';bmiTag.className='sf-result-tag overweight';}else{bmiTag.textContent='Obese';bmiTag.className='sf-result-tag obese';}var bmr=(sex==='Male')?(10*wkg+6.25*hcm-5*age+5):(10*wkg+6.25*hcm-5*age-161);document.getElementById('res-bmr').textContent=Math.round(bmr)+' kcal';var tdee=bmr*act;document.getElementById('res-tdee').textContent=Math.round(tdee)+' kcal';var intakeCal=tdee,exerciseCal=0;if(!isNaN(tkg)&&goal!=='maintain'){var delta=tkg-wkg,totalKcal=delta*7700,days=months*30.44,dailyDelta=totalKcal/days;intakeCal=Math.round(tdee+dailyDelta*0.6);exerciseCal=Math.round(Math.abs(dailyDelta*0.4));document.getElementById('res-wt-delta').textContent=(delta>0?'+':'')+delta.toFixed(1)+' kg';document.getElementById('res-pace').textContent=Math.abs(delta/months).toFixed(2)+' kg/mo';}else{intakeCal=Math.round(tdee);exerciseCal=0;document.getElementById('res-wt-delta').textContent='—';document.getElementById('res-pace').textContent='Maintain';}document.getElementById('res-intake').textContent=intakeCal+' kcal';document.getElementById('res-exercise').textContent=exerciseCal>0?exerciseCal+' kcal':'0 kcal';document.getElementById('cal-goal-display').textContent='/ '+intakeCal.toLocaleString()+' goal';}
 function saveProfile(){var ids=['sf-dob','sf-sex','sf-blood','sf-allergies','sf-emcontact','sf-height-cm','sf-weight-kg','sf-activity','sf-goal','sf-goal-months','sf-target-kg'],data={};ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}calcAll();updateAllergyBanners();var s=document.getElementById('sf-saved');s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);toast('Profile saved!','success');}
 function loadProfile(){try{var raw=localStorage.getItem('mie_health_profile');if(!raw)return;var data=JSON.parse(raw);Object.keys(data).forEach(function(id){var el=document.getElementById(id);if(el)el.value=data[id];});calcAll();}catch(e){}updateAllergyBanners();}
 function updateAllergyBanners(){var val=(document.getElementById('sf-allergies')||{}).value||'';document.querySelectorAll('.allergy-banner').forEach(function(b){b.classList.toggle('hidden',!val.trim());if(val.trim())b.innerHTML='⚠️ Allergies: '+val;});}
 
-/* Health Tasks */
 var _healthTasks=[],_healthTaskLists=[];
 function loadHealthTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){_healthTasks=[];_healthTaskLists=[];}else{_healthTaskLists=Array.isArray(data.lists)?data.lists:[];var raw=Array.isArray(data.tasks)?data.tasks:[];var healthList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});var healthListId=healthList?healthList.id:null;_healthTasks=raw.filter(function(t){return healthListId&&(t.listId||t.taskListId)===healthListId;}).map(function(t){return Object.assign({},t,{listId:healthListId,_pending:false});});}renderHealthTasks();}).catch(function(){_healthTasks=[];renderHealthTasks();});}
 function fmtHealthDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now2=new Date();now2.setHours(0,0,0,0);var diff=Math.round((dt-now2)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
@@ -1028,12 +1035,7 @@ filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});document.querySelector('.tag-chip[data-tag="@health"]').classList.add('selected');}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){sndBtn.disabled=false;setTimeout(function(){sndSt.textContent='';},3000);});});
 
 function navigate(mod){window.location.href='/dashboard?mod='+mod;}
-
-// ✅ Also expose refreshOverviewData for panel-logs to call after save
-window.refreshOverviewData = function() {
-  // Future: reload overview metrics from backend
-  // For now: no-op placeholder
-};
+window.refreshOverviewData=function(){};
 
 init();
 </script>
