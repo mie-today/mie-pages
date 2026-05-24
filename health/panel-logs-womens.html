@@ -144,11 +144,18 @@
    So calendar padding = 16px + 4px = 20px each side. This makes the calendar
    body slightly narrower than the full summary bar width. */
 .w-cal-section {
-  padding: 8px 20px 0;
+  padding: 6px 16px 4px;
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
+}
+.w-cal-inner {
+  margin: 0 4px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 .w-cal-dow-row {
@@ -168,10 +175,11 @@
 .w-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
-  gap: 3px;
+  gap: 2px;
   flex: 1;
   min-height: 0;
+  /* rows auto-sized to fill available height */
+  align-content: stretch;
 }
 .w-cal-day {
   border-radius: 7px;
@@ -183,6 +191,7 @@
   flex-direction: column;
   align-items: center;
   overflow: hidden;
+  min-height: 0;
 }
 .w-cal-day:hover { opacity: .85; transform: scale(.97); }
 .w-cal-day.other-month { opacity: .3; pointer-events: none; }
@@ -838,16 +847,18 @@
 
     <!-- Calendar -->
     <div class="w-cal-section">
-      <div class="w-cal-dow-row">
-        <div class="w-cal-dow">Sun</div>
-        <div class="w-cal-dow">Mon</div>
-        <div class="w-cal-dow">Tue</div>
-        <div class="w-cal-dow">Wed</div>
-        <div class="w-cal-dow">Thu</div>
-        <div class="w-cal-dow">Fri</div>
-        <div class="w-cal-dow">Sat</div>
+      <div class="w-cal-inner">
+        <div class="w-cal-dow-row">
+          <div class="w-cal-dow">Sun</div>
+          <div class="w-cal-dow">Mon</div>
+          <div class="w-cal-dow">Tue</div>
+          <div class="w-cal-dow">Wed</div>
+          <div class="w-cal-dow">Thu</div>
+          <div class="w-cal-dow">Fri</div>
+          <div class="w-cal-dow">Sat</div>
+        </div>
+        <div class="w-cal-grid" id="wCalGrid"></div>
       </div>
-      <div class="w-cal-grid" id="wCalGrid"></div>
     </div>
 
   </div><!-- /wCalView -->
@@ -1879,20 +1890,17 @@ function saveDayHandler() {
 }
 
 // ── Init & Events ──────────────────────────────────────────────
-function fitToContainer() {
-  // Make wrap fill its injected container without overflow
-  const wrap = document.getElementById('wWrap');
-  if (!wrap) return;
-  const parent = wrap.parentElement;
-  if (parent) {
-    const parentH = parent.clientHeight || window.innerHeight;
-    wrap.style.height = parentH + 'px';
-  }
-}
-
 function init() {
-  fitToContainer();
-  window.addEventListener('resize', fitToContainer);
+  // Ensure parent container is positioned so position:absolute inset:0 works
+  const wrap = document.getElementById('wWrap');
+  if (wrap && wrap.parentElement) {
+    const p = wrap.parentElement;
+    const cs = getComputedStyle(p);
+    if (cs.position === 'static') p.style.position = 'relative';
+    if (cs.overflow === 'visible') p.style.overflow = 'hidden';
+    // Force height if parent has no intrinsic height
+    if (p.clientHeight < 100) p.style.height = '100%';
+  }
 
   // Pregnancy toggle
   const toggle = document.getElementById('wPregnancyToggle');
