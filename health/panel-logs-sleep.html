@@ -1,0 +1,509 @@
+<!-- panel-logs-sleep.html — MIE Health · Sleep Log Panel -->
+<!-- Standalone panel: inject into #panel-body via loadPanelContent() -->
+<style>
+/* ── Sleep Panel Styles ── */
+.pl-wrap{display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;}
+
+/* ── Cards ── */
+.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;margin-bottom:10px;flex-shrink:0;}
+.pl-card-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+
+/* ── Foldable ── */
+.pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;line-height:1;padding:2px 5px;border-radius:4px;transition:all .12s;font-family:sans-serif;display:flex;align-items:center;gap:3px;}
+.pl-fold-btn:hover{background:#f1f3f4;color:#5f6368;}
+.pl-fold-body{overflow:hidden;}
+.pl-fold-body.collapsed{display:none;}
+.pl-card-title.foldable{cursor:pointer;user-select:none;}
+
+/* ── Edit banner ── */
+.pl-edit-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:7px;padding:7px 11px;font-size:12.5px;color:#856404;font-weight:600;margin-bottom:8px;display:none;align-items:center;justify-content:space-between;}
+.pl-edit-banner.show{display:flex;}
+.pl-edit-banner-cancel{background:none;border:none;cursor:pointer;color:#856404;font-size:13px;font-weight:700;padding:0 2px;line-height:1;}
+
+/* ── Form ── */
+.pl-form{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 13px;}
+.pl-row{display:grid;gap:8px;margin-bottom:10px;align-items:end;}
+.pl-row.c2{grid-template-columns:1fr 1fr;}
+.pl-row.c1{grid-template-columns:1fr;}
+.pl-field{display:flex;flex-direction:column;}
+.pl-field label{display:block;font-size:11.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.pl-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;transition:border-color .12s;box-sizing:border-box;}
+.pl-input:focus{border-color:#1a73e8;}
+.pl-input[readonly]{background:#f1f3f4;color:#5f6368;}
+.pl-textarea{width:100%;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;transition:border-color .12s;box-sizing:border-box;resize:vertical;min-height:70px;line-height:1.5;}
+.pl-textarea:focus{border-color:#1a73e8;}
+
+/* ── Sleep quality / energy picker ── */
+.pl-picker-row{display:flex;gap:5px;margin-bottom:10px;}
+.pl-pick-btn{flex:1;border:1.5px solid #e0e0e0;background:#fff;border-radius:7px;padding:7px 3px;font-size:12.5px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;color:#5f6368;}
+.pl-pick-btn .pick-icon{font-size:20px;display:block;line-height:1.2;}
+.pl-pick-btn .pick-lbl{font-size:10.5px;display:block;margin-top:2px;}
+.pl-pick-btn.active{border-color:#1a73e8;background:#e8f0fe;color:#1a73e8;}
+
+/* ── Notes wide ── */
+.pl-notes-wide{margin-bottom:10px;}
+.pl-notes-wide label{display:block;font-size:11.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+
+/* ── Buttons ── */
+.pl-btn-row{display:flex;gap:6px;margin-top:8px;}
+.pl-btn-save{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
+.pl-btn-save:hover{background:#1765cc;}
+.pl-btn-save:disabled{background:#a8c7fa;cursor:not-allowed;}
+.pl-btn-cancel{background:#f1f3f4;color:#5f6368;border:1px solid #e0e0e0;border-radius:6px;padding:9px 16px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.pl-status{font-size:12.5px;text-align:center;min-height:16px;margin-top:5px;}
+.pl-status.ok{color:#1e8e3e;}.pl-status.err{color:#d93025;}
+
+/* ── Add to Calendar row ── */
+.pl-cal-row{display:flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;background:#e8f0fe;border-radius:7px;border:1px solid #c5d8fb;}
+.pl-cal-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#1a73e8;flex-shrink:0;}
+.pl-cal-row label{font-size:12.5px;color:#1a73e8;font-weight:600;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;flex:1;}
+.pl-cal-row .pl-cal-note{font-size:11px;color:#5f6368;white-space:nowrap;}
+
+/* ── Log list ── */
+.pl-log-list{display:flex;flex-direction:column;gap:5px;}
+.pl-log-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #e8eaed;border-radius:8px;background:#fff;transition:background .1s;}
+.pl-log-item:hover{background:#f8f9fa;}
+.pl-log-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.pl-log-main{flex:1;min-width:0;}
+.pl-log-name{font-size:14px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-log-sub{font-size:12.5px;color:#5f6368;margin-top:2px;}
+.pl-log-empty{font-size:14px;color:#5f6368;font-style:italic;text-align:center;padding:18px 0;}
+.pl-log-actions{display:flex;gap:3px;opacity:0;transition:opacity .12s;flex-shrink:0;}
+.pl-log-item:hover .pl-log-actions{opacity:1;}
+.pl-log-edit{background:none;border:1px solid #dadce0;border-radius:5px;cursor:pointer;color:#5f6368;font-size:12px;padding:3px 7px;line-height:1.4;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.pl-log-edit:hover{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
+.pl-log-del{background:none;border:1px solid #dadce0;border-radius:5px;cursor:pointer;color:#5f6368;font-size:12px;padding:3px 7px;line-height:1.4;font-family:'DM Sans',sans-serif;transition:all .12s;}
+.pl-log-del:hover{border-color:#d93025;color:#d93025;background:#fce8e6;}
+
+/* ── Chart ── */
+.pl-chart{padding:8px 0 4px;}
+.pl-chart-bars{display:flex;gap:3px;align-items:flex-end;height:70px;}
+.pl-chart-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;}
+.pl-chart-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .3s;}
+.pl-chart-date{font-size:10px;color:#5f6368;}
+.pl-chart-val{font-size:10.5px;font-weight:600;color:#202124;}
+.pl-chart-avg{font-size:12.5px;color:#5f6368;margin-top:5px;text-align:center;}
+.pl-fname-msg{font-size:13px;color:#5f6368;font-style:italic;padding:11px;text-align:center;}
+
+/* ══════════════════════════════
+   MOBILE FIXES
+══════════════════════════════ */
+@media(max-width:900px){
+  /* ── Bedtime / Wake Time: stack vertically on mobile ── */
+  .pl-sleep-time-row{
+    grid-template-columns:1fr !important; /* stack instead of side-by-side */
+  }
+
+  /* ── Time input: full width, larger touch target ── */
+  .pl-input[type="time"]{
+    width:100%;
+    font-size:16px;      /* prevents iOS auto-zoom on focus */
+    padding:10px 12px;
+    box-sizing:border-box;
+  }
+
+  /* ── Sleep quality: allow emoji buttons to wrap if needed ── */
+  .pl-picker-row{
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .pl-pick-btn{
+    flex:0 0 calc(20% - 4px); /* 5 per row, slightly smaller */
+    min-width:0;
+    padding:6px 2px;
+  }
+  .pl-pick-btn .pick-icon{font-size:18px;}
+  .pl-pick-btn .pick-lbl{font-size:9.5px;}
+
+  /* ── Add to Calendar row: allow note to wrap ── */
+  .pl-cal-row{flex-wrap:wrap;}
+  .pl-cal-row .pl-cal-note{width:100%;padding-left:22px;margin-top:2px;}
+
+  /* ── Log items: stack actions below on very small screens ── */
+  .pl-log-actions{opacity:1;} /* always visible on mobile (no hover) */
+}
+
+@media(max-width:480px){
+  .pl-card{padding:12px 12px;}
+  .pl-form{padding:10px 11px;}
+  .pl-btn-save,.pl-btn-cancel{font-size:13px;padding:8px;}
+}
+</style>
+
+<div class="pl-wrap">
+
+  <!-- ── Log Sleep Form ── -->
+  <div class="pl-card">
+    <div class="pl-card-title foldable" onclick="psToggleFold()">
+      Log Sleep
+      <button class="pl-fold-btn" id="ps-fold-btn" onclick="event.stopPropagation();psToggleFold()">▸ Show</button>
+    </div>
+    <div class="pl-fold-body collapsed" id="ps-fold">
+      <div class="pl-form">
+
+        <div class="pl-edit-banner" id="ps-edit-banner">
+          ✏️ Editing: <span id="ps-edit-label" style="font-weight:400;"></span>
+          <button class="pl-edit-banner-cancel" onclick="psSleepCancelEdit()">✕ Cancel</button>
+        </div>
+
+        <!-- Bedtime + Wake Time: c2 on desktop, c1 on mobile -->
+        <div class="pl-row c2 pl-sleep-time-row">
+          <div class="pl-field">
+            <label>Bedtime</label>
+            <input class="pl-input" type="time" id="ps-bed" oninput="psSleepCalc()"/>
+          </div>
+          <div class="pl-field">
+            <label>Wake Time</label>
+            <input class="pl-input" type="time" id="ps-wake" oninput="psSleepCalc()"/>
+          </div>
+        </div>
+
+        <!-- Duration auto -->
+        <div class="pl-row c1">
+          <div class="pl-field">
+            <label>Duration <span style="color:#1a73e8;font-weight:400;">(auto)</span></label>
+            <input class="pl-input" id="ps-dur" type="text" placeholder="—" readonly/>
+          </div>
+        </div>
+
+        <!-- Sleep Quality -->
+        <div class="pl-field" style="margin-bottom:10px;">
+          <label>Sleep Quality</label>
+          <div class="pl-picker-row">
+            <button class="pl-pick-btn" data-q="1" onclick="psSetQ(1)"><span class="pick-icon">😴</span><span class="pick-lbl">Poor</span></button>
+            <button class="pl-pick-btn" data-q="2" onclick="psSetQ(2)"><span class="pick-icon">😐</span><span class="pick-lbl">Fair</span></button>
+            <button class="pl-pick-btn" data-q="3" onclick="psSetQ(3)"><span class="pick-icon">🙂</span><span class="pick-lbl">Good</span></button>
+            <button class="pl-pick-btn" data-q="4" onclick="psSetQ(4)"><span class="pick-icon">😊</span><span class="pick-lbl">Great</span></button>
+            <button class="pl-pick-btn" data-q="5" onclick="psSetQ(5)"><span class="pick-icon">🌟</span><span class="pick-lbl">Excellent</span></button>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="pl-notes-wide">
+          <label>Notes</label>
+          <textarea class="pl-textarea" id="ps-notes" placeholder="e.g. vivid dreams, woke up at 3am…"></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="psSleepClear()">Clear</button>
+          <button class="pl-btn-save" id="ps-save-btn" onclick="psSleepSave()">Log Sleep</button>
+        </div>
+
+        <!-- Add to Calendar -->
+        <div class="pl-cal-row">
+          <input type="checkbox" id="ps-cal-chk"/>
+          <label for="ps-cal-chk">Add to Calendar</label>
+          <span class="pl-cal-note">Visibility: Private</span>
+        </div>
+
+        <div class="pl-status" id="ps-status"></div>
+      </div><!-- /pl-form -->
+    </div><!-- /ps-fold -->
+  </div><!-- /card -->
+
+  <!-- ── Monthly Chart ── -->
+  <div class="pl-card">
+    <div class="pl-card-title">Monthly Sleep Chart</div>
+    <div class="pl-chart" id="ps-chart">
+      <div class="pl-fname-msg">Loading chart…</div>
+    </div>
+  </div>
+
+  <!-- ── Recent Log ── -->
+  <div class="pl-card">
+    <div class="pl-card-title">Recent Sleep Log</div>
+    <div id="ps-log"></div>
+  </div>
+
+</div><!-- /pl-wrap -->
+
+<script>
+(function(){
+'use strict';
+
+var BACKEND = 'https://api.mie.today';
+
+// ── State ──────────────────────────────────────────────────────
+var _sleepQ    = 0;
+var _editIdx   = -1;
+var _sleepItems = [];
+var _profile   = null;
+var _unitPref  = localStorage.getItem('mie_unit') || 'metric';
+
+// ── Helpers ────────────────────────────────────────────────────
+function setStatus(id, msg, type){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'pl-status' + (type ? ' ' + type : '');
+}
+
+function todayStr(){
+  return new Date().toISOString().slice(0,10);
+}
+
+// ── Fold/unfold ────────────────────────────────────────────────
+window.psToggleFold = function(){
+  var body = document.getElementById('ps-fold');
+  var btn  = document.getElementById('ps-fold-btn');
+  if(!body) return;
+  var collapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !collapsed);
+  if(btn) btn.textContent = collapsed ? '▾ Hide' : '▸ Show';
+};
+
+// ── Sleep quality picker ───────────────────────────────────────
+window.psSetQ = function(q){
+  _sleepQ = q;
+  document.querySelectorAll('.pl-pick-btn[data-q]').forEach(function(b){
+    b.classList.toggle('active', parseInt(b.dataset.q) === q);
+  });
+};
+
+// ── Duration auto-calc ─────────────────────────────────────────
+window.psSleepCalc = function(){
+  var bed  = document.getElementById('ps-bed').value;
+  var wake = document.getElementById('ps-wake').value;
+  var dur  = document.getElementById('ps-dur');
+  if(!bed || !wake || !dur){ if(dur) dur.value = ''; return; }
+  var bp = bed.split(':').map(Number);
+  var wp = wake.split(':').map(Number);
+  var mins = (wp[0]*60+wp[1]) - (bp[0]*60+bp[1]);
+  if(mins < 0) mins += 1440;
+  var h = Math.floor(mins/60), m = mins % 60;
+  dur.value = h + 'h ' + m + 'm (' + mins + ' min)';
+};
+
+// ── Clear form ─────────────────────────────────────────────────
+window.psSleepClear = function(){
+  document.getElementById('ps-bed').value  = '';
+  document.getElementById('ps-wake').value = '';
+  document.getElementById('ps-dur').value  = '';
+  document.getElementById('ps-notes').value = '';
+  _sleepQ = 0;
+  document.querySelectorAll('.pl-pick-btn[data-q]').forEach(function(b){ b.classList.remove('active'); });
+  setStatus('ps-status','','');
+};
+
+// ── Cancel edit ────────────────────────────────────────────────
+window.psSleepCancelEdit = function(){
+  _editIdx = -1;
+  psSleepClear();
+  var btn = document.getElementById('ps-save-btn');
+  if(btn) btn.textContent = 'Log Sleep';
+  var banner = document.getElementById('ps-edit-banner');
+  if(banner) banner.classList.remove('show');
+};
+
+// ── Save ───────────────────────────────────────────────────────
+window.psSleepSave = function(){
+  var bed  = document.getElementById('ps-bed').value;
+  var wake = document.getElementById('ps-wake').value;
+  if(!bed || !wake){ setStatus('ps-status','Bedtime and wake time required.','err'); return; }
+
+  var btn = document.getElementById('ps-save-btn');
+  if(btn) btn.disabled = true;
+  setStatus('ps-status','Saving…','');
+
+  var data = {
+    bedtime:      bed,
+    wake_time:    wake,
+    quality_1to5: _sleepQ || null,
+    notes:        document.getElementById('ps-notes').value.trim(),
+    add_to_calendar: document.getElementById('ps-cal-chk').checked,
+    calendar_visibility: 'private',
+  };
+
+  var endpoint = _editIdx >= 0
+    ? BACKEND + '/api/me/health/log/edit'
+    : BACKEND + '/api/me/health/log';
+  var body = _editIdx >= 0
+    ? { tab:'sleep', row_idx:_editIdx, data:data, unit_pref:_unitPref }
+    : { tab:'sleep', data:data, unit_pref:_unitPref };
+
+  fetch(endpoint, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){
+        setStatus('ps-status', _editIdx >= 0 ? '✅ Updated!' : '✅ Logged!', 'ok');
+        _editIdx = -1;
+        if(btn) btn.textContent = 'Log Sleep';
+        var banner = document.getElementById('ps-edit-banner');
+        if(banner) banner.classList.remove('show');
+        psSleepClear();
+        loadData();
+        // notify overview
+        if(typeof window.refreshOverviewData === 'function') window.refreshOverviewData();
+      } else {
+        setStatus('ps-status', '❌ ' + (d.message||'Error'), 'err');
+      }
+    })
+    .catch(function(){ setStatus('ps-status','❌ Network error','err'); })
+    .finally(function(){ if(btn) btn.disabled = false; });
+};
+
+// ── Edit ───────────────────────────────────────────────────────
+window.psEditSleep = function(idx){
+  var s = _sleepItems[idx];
+  if(!s) return;
+  _editIdx = idx;
+  document.getElementById('ps-bed').value   = s.bedtime   || '';
+  document.getElementById('ps-wake').value  = s.wake_time || '';
+  document.getElementById('ps-notes').value = s.notes     || '';
+  psSleepCalc();
+  if(s.quality_1to5) psSetQ(s.quality_1to5);
+  var banner = document.getElementById('ps-edit-banner');
+  var label  = document.getElementById('ps-edit-label');
+  if(banner) banner.classList.add('show');
+  if(label)  label.textContent = (s.bedtime||'?') + ' → ' + (s.wake_time||'?');
+  var btn = document.getElementById('ps-save-btn');
+  if(btn) btn.textContent = 'Update Sleep';
+  // open the fold if collapsed
+  var fold = document.getElementById('ps-fold');
+  var foldBtn = document.getElementById('ps-fold-btn');
+  if(fold && fold.classList.contains('collapsed')){
+    fold.classList.remove('collapsed');
+    if(foldBtn) foldBtn.textContent = '▾ Hide';
+  }
+  btn.scrollIntoView({ behavior:'smooth', block:'center' });
+};
+
+// ── Delete ─────────────────────────────────────────────────────
+window.psDelSleep = function(idx){
+  if(!confirm('Delete this sleep entry? This cannot be undone.')) return;
+  fetch(BACKEND+'/api/me/health/log/delete',{
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ tab:'sleep', row_idx:idx })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.ok) loadData(); })
+    .catch(function(){});
+};
+
+// ── Render log list ────────────────────────────────────────────
+function renderSleepLog(items){
+  _sleepItems = items;
+  var el = document.getElementById('ps-log');
+  if(!el) return;
+  if(!items || !items.length){
+    el.innerHTML = '<div class="pl-log-empty">No sleep logged today.</div>';
+    return;
+  }
+  var ql = ['','😴 Poor','😐 Fair','🙂 Good','😊 Great','🌟 Excellent'];
+  var html = '<div class="pl-log-list">';
+  items.slice(-5).reverse().forEach(function(s, idx){
+    var parts = [];
+    if(s.duration_hr) parts.push(s.duration_hr + 'h');
+    if(s.quality_1to5) parts.push(ql[s.quality_1to5]);
+    if(s.notes) parts.push(s.notes);
+    html += '<div class="pl-log-item">'
+      + '<div class="pl-log-dot" style="background:#7c4dff;"></div>'
+      + '<div class="pl-log-main">'
+        + '<div class="pl-log-name">' + (s.bedtime||'?') + ' → ' + (s.wake_time||'?') + '</div>'
+        + '<div class="pl-log-sub">' + parts.join(' · ') + '</div>'
+      + '</div>'
+      + '<div class="pl-log-actions">'
+        + '<button class="pl-log-edit" onclick="psEditSleep(' + idx + ')">Edit</button>'
+        + '<button class="pl-log-del"  onclick="psDelSleep(' + idx + ')">Delete</button>'
+      + '</div>'
+    + '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── Monthly chart ──────────────────────────────────────────────
+function loadSleepChart(){
+  var chartEl = document.getElementById('ps-chart');
+  if(!chartEl) return;
+  var now = new Date();
+  fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period=monthly&tab=sleep', { credentials:'include' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      var items = d ? (d.sleep||[]) : [];
+      if(!items.length){
+        chartEl.innerHTML = '<div class="pl-fname-msg">No sleep data this month.</div>';
+        return;
+      }
+      var byDate = {};
+      items.forEach(function(s){ byDate[s.stamp_date] = s; });
+      var days = Object.keys(byDate).sort();
+      var goalHr = _profile && _profile.goal ? (_profile.goal.sleep_goal_hr||8) : 8;
+      var avg = days.reduce(function(sum,d){ return sum + (byDate[d].duration_hr||0); }, 0) / days.length;
+      var bars = days.map(function(d){
+        var hr  = byDate[d].duration_hr || 0;
+        var pct = Math.min(100, (hr/10)*100);
+        var col = hr>=7 ? '#34a853' : hr>=6 ? '#fbbc04' : '#ea4335';
+        return '<div class="pl-chart-bar-wrap">'
+          + '<div style="height:60px;width:100%;display:flex;align-items:flex-end;">'
+            + '<div class="pl-chart-bar" style="background:'+col+';height:'+pct+'%;width:100%;"></div>'
+          + '</div>'
+          + '<div class="pl-chart-date">' + d.slice(8) + '</div>'
+          + '<div class="pl-chart-val">'  + (hr ? hr.toFixed(1) : '—') + '</div>'
+        + '</div>';
+      });
+      // goal line as % of max (10h)
+      var goalPct = Math.min(100, (goalHr/10)*100);
+      chartEl.innerHTML =
+        '<div style="position:relative;">'
+          + '<div style="position:absolute;top:' + (100-goalPct) + '%;width:100%;border-top:1.5px dashed #1a73e8;opacity:.5;pointer-events:none;"></div>'
+          + '<div class="pl-chart-bars">' + bars.join('') + '</div>'
+        + '</div>'
+        + '<div class="pl-chart-avg">Monthly avg: ' + avg.toFixed(1) + 'h · Goal: ' + goalHr + 'h</div>';
+    })
+    .catch(function(){ chartEl.innerHTML = '<div class="pl-fname-msg">Could not load chart.</div>'; });
+}
+
+// ── Load today's data ──────────────────────────────────────────
+function loadData(){
+  fetch(BACKEND + '/api/me/health?date=' + todayStr() + '&period=daily&tab=sleep', { credentials:'include' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d) return;
+      renderSleepLog(d.sleep || []);
+    })
+    .catch(function(){});
+}
+
+// ── Load profile for chart goal line ──────────────────────────
+function loadProfile(){
+  fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if(d) _profile = d; })
+    .catch(function(){});
+}
+
+// ── Unit pref sync from index.html ────────────────────────────
+window.plSetUnitPref = function(pref){
+  _unitPref = pref;
+  localStorage.setItem('mie_unit', pref);
+};
+
+// ── Panel init ─────────────────────────────────────────────────
+function init(){
+  loadProfile();
+  loadData();
+  loadSleepChart();
+}
+
+// ── Public API: called by index.html after injection ───────────
+window.onPanelLoad = function(v){
+  // Only init if this panel is actually being shown
+  if(v === 'sleep') init();
+};
+
+// Auto-init when opened standalone
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
