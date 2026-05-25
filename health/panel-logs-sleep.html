@@ -21,7 +21,7 @@
 .pl-edit-banner-cancel{background:none;border:none;cursor:pointer;color:#856404;font-size:13px;font-weight:700;padding:0 2px;line-height:1;}
 
 /* ── Form ── */
-.pl-form{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 13px;}
+.pl-form{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 13px;overflow:hidden;}
 .pl-row{display:grid;gap:8px;margin-bottom:10px;align-items:end;}
 .pl-row.c2{grid-template-columns:1fr 1fr;}
 .pl-row.c1{grid-template-columns:1fr;}
@@ -91,15 +91,31 @@
 @media(max-width:900px){
   /* ── Bedtime / Wake Time: stack vertically on mobile ── */
   .pl-sleep-time-row{
-    grid-template-columns:1fr !important; /* stack instead of side-by-side */
+    grid-template-columns:1fr !important;
+    /* Contain children so time inputs cannot overflow the card */
+    overflow:hidden;
   }
 
-  /* ── Time input: full width, larger touch target ── */
-  .pl-input[type="time"]{
+  /* Force each field to be exactly as wide as its parent cell */
+  .pl-sleep-time-row .pl-field{
     width:100%;
-    font-size:16px;      /* prevents iOS auto-zoom on focus */
+    min-width:0;
+    overflow:hidden;
+  }
+
+  /* ── Time input: match Duration box width exactly ── */
+  .pl-input[type="time"]{
+    /* Kill iOS Safari's internal min-width on <input type=time> */
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    /* Prevent the AM/PM spinner from pushing width */
+    -webkit-appearance:none;
+    appearance:none;
+    font-size:16px;   /* prevent iOS auto-zoom on focus */
     padding:10px 12px;
-    box-sizing:border-box;
+    display:block;
   }
 
   /* ── Sleep quality: allow emoji buttons to wrap if needed ── */
