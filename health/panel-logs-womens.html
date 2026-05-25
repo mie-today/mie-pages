@@ -2036,10 +2036,11 @@ function init() {
 }
 
 // ── Public API — guard against double-init ──────────────────────
-let _wInitDone = false;
+// Use window._wInitDone so index.html can reset it between panel switches
+window._wInitDone = window._wInitDone || false;
 function safeInit() {
-  if (_wInitDone) return;
-  _wInitDone = true;
+  if (window._wInitDone) return;
+  window._wInitDone = true;
   init();
 }
 
