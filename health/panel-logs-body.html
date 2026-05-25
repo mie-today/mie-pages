@@ -1,51 +1,48 @@
-<!-- panel-logs-body.html — MIE Health · Body Log Panel -->
-<!-- Standalone panel: inject into #panel-body via loadPanelContent() -->
+<!-- panel-logs-body.html — MIE Health · Body & Vitals Panel -->
 <style>
-/* ── Base styles ── */
 .pl-wrap{display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;}
 
-.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;margin-bottom:10px;flex-shrink:0;}
+/* ── Cards ── */
+.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;margin-bottom:10px;}
 .pl-card-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 .pl-card-title.foldable{cursor:pointer;user-select:none;}
-
-/* Fold button */
-.pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;line-height:1;padding:2px 5px;border-radius:4px;transition:all .12s;font-family:sans-serif;display:flex;align-items:center;gap:3px;}
+.pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;padding:2px 5px;border-radius:4px;font-family:sans-serif;display:flex;align-items:center;gap:3px;transition:all .12s;}
 .pl-fold-btn:hover{background:#f1f3f4;color:#5f6368;}
-.pl-fold-body{overflow:hidden;}
 .pl-fold-body.collapsed{display:none;}
 
-/* Edit banner */
-.pl-edit-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:7px;padding:7px 11px;font-size:12.5px;color:#856404;font-weight:600;margin-bottom:8px;display:none;align-items:center;justify-content:space-between;}
+/* ── Edit banner ── */
+.pl-edit-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:7px;padding:7px 11px;font-size:12.5px;color:#856404;font-weight:600;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;}
 .pl-edit-banner.show{display:flex;}
-.pl-edit-banner-cancel{background:none;border:none;cursor:pointer;color:#856404;font-size:13px;font-weight:700;padding:0 2px;line-height:1;}
+.pl-edit-banner-cancel{background:none;border:none;cursor:pointer;color:#856404;font-size:13px;font-weight:700;padding:0 2px;}
 
-/* Form */
+/* ── Form ── */
 .pl-form{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 13px;overflow:hidden;}
-.pl-row{display:grid;gap:8px;margin-bottom:10px;align-items:end;}
-.pl-row.c2{grid-template-columns:1fr 1fr;}
-.pl-row.c3{grid-template-columns:1fr 1fr 1fr;}
-.pl-row.c4{grid-template-columns:1fr 1fr 1fr 1fr;}
+
+/* ── Grid ── */
+/* Desktop: 3 col | Mobile: 2 col */
+.pb-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:10px;
+}
+
+/* ── Field ── */
 .pl-field{display:flex;flex-direction:column;min-width:0;}
-.pl-field label{display:block;font-size:11.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.pl-field label{display:block;font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .pl-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;transition:border-color .12s;box-sizing:border-box;}
 .pl-input:focus{border-color:#1a73e8;}
 .pl-input[readonly]{background:#f1f3f4;color:#5f6368;}
-.pl-select{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;cursor:pointer;box-sizing:border-box;}
-.pl-textarea{width:100%;border:1px solid #dadce0;border-radius:6px;padding:8px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;resize:vertical;min-height:60px;line-height:1.5;box-sizing:border-box;}
-.pl-textarea:focus{border-color:#1a73e8;}
 
-/* Unit pill toggle (kg/lb, cm/ft, °C/°F) */
+/* ── Unit pill header (label + pills on same row) ── */
 .pl-field-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-.pl-field-header label{font-size:11.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin:0;}
-.pl-unit-pill-row{display:flex;gap:3px;}
-.pl-unit-pill{border:1.5px solid #dadce0;background:#fff;border-radius:20px;padding:2px 9px;font-size:10.5px;font-weight:700;color:#5f6368;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;line-height:1.6;}
+.pl-field-header label{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin:0;white-space:nowrap;}
+.pl-unit-pill-row{display:flex;gap:2px;flex-shrink:0;}
+.pl-unit-pill{border:1.5px solid #dadce0;background:#fff;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700;color:#5f6368;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;line-height:1.6;}
 .pl-unit-pill.active{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
 
-/* ft/in dual input */
-.pl-ft-wrap{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
-
-/* Buttons */
-.pl-btn-row{display:flex;gap:6px;margin-top:8px;}
+/* ── Buttons ── */
+.pl-btn-row{display:flex;gap:6px;margin-top:10px;}
 .pl-btn-save{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
 .pl-btn-save:hover{background:#1765cc;}
 .pl-btn-save:disabled{background:#a8c7fa;cursor:not-allowed;}
@@ -53,82 +50,88 @@
 .pl-status{font-size:12.5px;text-align:center;min-height:16px;margin-top:5px;}
 .pl-status.ok{color:#1e8e3e;}.pl-status.err{color:#d93025;}
 
-/* Add to Calendar */
+/* ── Add to Calendar ── */
 .pl-cal-row{display:flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;background:#e8f0fe;border-radius:7px;border:1px solid #c5d8fb;flex-wrap:wrap;}
 .pl-cal-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#1a73e8;flex-shrink:0;}
 .pl-cal-row label{font-size:12.5px;color:#1a73e8;font-weight:600;cursor:pointer;margin:0;flex:1;}
-.pl-cal-row .pl-cal-note{font-size:11px;color:#5f6368;white-space:nowrap;}
+.pl-cal-row .pl-cal-note{font-size:11px;color:#5f6368;}
 
-/* Log list */
+/* ── Custom items form ── */
+.pb-custom-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+.pb-custom-add-btn{width:100%;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;margin-top:4px;}
+.pb-custom-add-btn:hover{background:#1765cc;}
+.pb-custom-add-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
+
+/* ── Log list ── */
 .pl-log-list{display:flex;flex-direction:column;gap:5px;}
 .pl-log-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid #e8eaed;border-radius:8px;background:#fff;transition:background .1s;}
 .pl-log-item:hover{background:#f8f9fa;}
 .pl-log-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .pl-log-main{flex:1;min-width:0;}
 .pl-log-name{font-size:14px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pl-log-sub{font-size:12.5px;color:#5f6368;margin-top:2px;}
+.pl-log-sub{font-size:12.5px;color:#5f6368;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-log-val{font-size:13px;font-weight:700;color:#ff9800;white-space:nowrap;flex-shrink:0;}
 .pl-log-empty{font-size:14px;color:#5f6368;font-style:italic;text-align:center;padding:18px 0;}
-.pl-log-actions{display:flex;gap:3px;opacity:0;transition:opacity .12s;flex-shrink:0;}
-.pl-log-item:hover .pl-log-actions{opacity:1;}
+.pl-log-actions{display:flex;gap:3px;flex-shrink:0;}
 .pl-log-edit,.pl-log-del{background:none;border:1px solid #dadce0;border-radius:5px;cursor:pointer;color:#5f6368;font-size:12px;padding:3px 7px;line-height:1.4;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .pl-log-edit:hover{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
 .pl-log-del:hover{border-color:#d93025;color:#d93025;background:#fce8e6;}
 
-/* Custom items add row */
-.pl-custom-add-row{display:flex;gap:6px;margin-bottom:8px;}
+/* ── Weight trend chart ── */
+.pb-chart-wrap{padding:4px 0 6px;}
+.pb-chart-bars{display:flex;gap:3px;align-items:flex-end;height:80px;}
+.pb-chart-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;}
+.pb-chart-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;background:#1a73e8;transition:height .3s;}
+.pb-chart-date{font-size:9.5px;color:#9aa0a6;text-align:center;}
+.pb-chart-val{font-size:10px;font-weight:600;color:#202124;text-align:center;}
+.pb-chart-avg{font-size:12px;color:#5f6368;margin-top:6px;text-align:center;}
+.pb-chart-empty{font-size:13px;color:#5f6368;font-style:italic;text-align:center;padding:14px 0;}
+
+/* ── Log section separator ── */
+.pb-log-section-label{font-size:10px;font-weight:700;color:#9aa0a6;text-transform:uppercase;letter-spacing:.06em;padding:8px 2px 4px;border-bottom:1px solid #f1f3f4;margin-bottom:6px;}
 
 /* ══════════════════════════════
-   MOBILE — 3→2 column grid fix
-   Body Metrics: 3col → 2col
-   Vitals: 3col → 2col
+   MOBILE: 3col → 2col
 ══════════════════════════════ */
 @media(max-width:900px){
-  /* Body Metrics & Vitals: 3 columns → 2 columns */
-  .pb-metrics-grid,
-  .pb-vitals-grid{
-    grid-template-columns:1fr 1fr !important;
-  }
-
-  /* Temperature row inside vitals: keep 2 col */
-  .pb-temp-row{
-    grid-template-columns:1fr 1fr !important;
-  }
-
-  /* Unit pills: slightly smaller */
-  .pl-unit-pill{font-size:10px;padding:2px 7px;}
-
-  /* Log actions always visible on mobile (no hover) */
+  .pb-grid{grid-template-columns:repeat(2,1fr);}
+  .pb-custom-grid{grid-template-columns:repeat(2,1fr);}
+  /* Always show log actions on mobile (no hover) */
   .pl-log-actions{opacity:1;}
-
-  /* Custom form rows: stack to 1 col */
-  .pb-custom-row{grid-template-columns:1fr !important;}
-
-  /* Inputs: prevent iOS zoom */
-  .pl-input,.pl-select,.pl-textarea{font-size:16px;}
+  /* Prevent iOS zoom on inputs */
+  .pl-input{font-size:16px;}
 }
-
 @media(max-width:480px){
   .pl-card{padding:12px;}
   .pl-form{padding:10px 11px;}
   .pl-btn-save,.pl-btn-cancel{font-size:13px;padding:8px;}
+  .pb-chart-bars{height:60px;}
 }
 </style>
 
 <div class="pl-wrap">
 
-  <!-- ══ BODY METRICS ══ -->
+  <!-- ══════════════════════════════════════════
+       CARD 1: Body & Vitals (foldable, starts collapsed)
+  ══════════════════════════════════════════ -->
   <div class="pl-card">
-    <div class="pl-card-title foldable" onclick="pbToggleFold('pb-metrics-fold')">
-      Body Metrics
-      <button class="pl-fold-btn" id="pb-metrics-fold-btn"
-              onclick="event.stopPropagation();pbToggleFold('pb-metrics-fold')">▸ Show</button>
+    <div class="pl-card-title foldable" onclick="pbToggleFold('pb-bv-fold')">
+      Body &amp; Vitals
+      <button class="pl-fold-btn" id="pb-bv-fold-btn"
+              onclick="event.stopPropagation();pbToggleFold('pb-bv-fold')">▸ Show</button>
     </div>
-    <div class="pl-fold-body collapsed" id="pb-metrics-fold">
+    <div class="pl-fold-body collapsed" id="pb-bv-fold">
       <div class="pl-form">
-        <!-- 3→2 col grid on mobile via .pb-metrics-grid -->
-        <div class="pl-row c3 pb-metrics-grid">
 
-          <!-- Weight -->
+        <div class="pl-edit-banner" id="pb-edit-banner">
+          ✏️ Editing: <span id="pb-edit-label" style="font-weight:400;"></span>
+          <button class="pl-edit-banner-cancel" onclick="pbCancelEdit()">✕ Cancel</button>
+        </div>
+
+        <!-- 3col desktop / 2col mobile grid -->
+        <div class="pb-grid">
+
+          <!-- Weight (with kg/lb toggle) -->
           <div class="pl-field">
             <div class="pl-field-header">
               <label>Weight</label>
@@ -137,95 +140,41 @@
                 <button class="pl-unit-pill"        id="pb-wunit-lb" onclick="pbSetWeightUnit('lb')">lb</button>
               </div>
             </div>
-            <input class="pl-input" type="number" id="pb-wkg" placeholder="70.4" step="0.1" oninput="pbVitalsCalc()"/>
+            <input class="pl-input" type="number" id="pb-weight"
+                   placeholder="70.4" step="0.1"/>
           </div>
 
-          <!-- BMI auto -->
-          <div class="pl-field">
-            <label>BMI <span style="color:#1a73e8;font-weight:400;">(auto)</span></label>
-            <input class="pl-input" id="pb-bmi" type="text" placeholder="—" readonly/>
-          </div>
-
-          <!-- Body Fat % -->
-          <div class="pl-field">
-            <label>Body Fat % <span style="color:#9aa0a6;font-weight:400;text-transform:none;">(manual)</span></label>
-            <input class="pl-input" type="number" id="pb-bfpct" placeholder="Auto if blank" step="0.1" oninput="pbVitalsCalc()"/>
-          </div>
-
-          <!-- Height -->
-          <div class="pl-field">
-            <div class="pl-field-header">
-              <label>Height</label>
-              <div class="pl-unit-pill-row">
-                <button class="pl-unit-pill active" id="pb-hunit-cm" onclick="pbSetHeightUnit('cm')">cm</button>
-                <button class="pl-unit-pill"        id="pb-hunit-ft" onclick="pbSetHeightUnit('ft')">ft</button>
-              </div>
-            </div>
-            <input class="pl-input" type="number" id="pb-hcm" placeholder="170" step="0.1"
-                   oninput="pbVitalsCalc()" style="display:block;"/>
-            <div id="pb-hft-wrap" class="pl-ft-wrap" style="display:none;">
-              <input class="pl-input" type="number" id="pb-hft" placeholder="5" min="0" max="8" step="1" oninput="pbVitalsCalc()"/>
-              <input class="pl-input" type="number" id="pb-hin" placeholder="7" min="0" max="11" step="1" oninput="pbVitalsCalc()"/>
-            </div>
-          </div>
-
-          <!-- Muscle Mass -->
-          <div class="pl-field">
-            <label>Muscle Mass <span style="color:#9aa0a6;font-weight:400;text-transform:none;">(manual)</span></label>
-            <input class="pl-input" type="number" id="pb-mmkg" placeholder="Auto if blank" step="0.1"/>
-          </div>
-
-          <!-- Lean Mass auto -->
-          <div class="pl-field">
-            <label>Lean Mass <span style="color:#1a73e8;font-weight:400;">(Boer)</span></label>
-            <input class="pl-input" id="pb-lean" type="text" placeholder="—" readonly/>
-          </div>
-
-        </div><!-- /pb-metrics-grid -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ VITALS ══ -->
-  <div class="pl-card">
-    <div class="pl-card-title foldable" onclick="pbToggleFold('pb-vitals-fold')">
-      Vitals
-      <button class="pl-fold-btn" id="pb-vitals-fold-btn"
-              onclick="event.stopPropagation();pbToggleFold('pb-vitals-fold')">▸ Show</button>
-    </div>
-    <div class="pl-fold-body collapsed" id="pb-vitals-fold">
-      <div class="pl-form">
-
-        <div class="pl-edit-banner" id="pb-edit-banner">
-          ✏️ Editing: <span id="pb-edit-label" style="font-weight:400;"></span>
-          <button class="pl-edit-banner-cancel" onclick="pbVitalsCancelEdit()">✕ Cancel</button>
-        </div>
-
-        <!-- 3→2 col on mobile via .pb-vitals-grid -->
-        <div class="pl-row c3 pb-vitals-grid">
-
+          <!-- BP Systolic -->
           <div class="pl-field">
             <label>BP Systolic</label>
             <input class="pl-input" type="number" id="pb-bpsys" placeholder="120" min="0"/>
           </div>
+
+          <!-- BP Diastolic -->
           <div class="pl-field">
             <label>BP Diastolic</label>
             <input class="pl-input" type="number" id="pb-bpdia" placeholder="80" min="0"/>
           </div>
+
+          <!-- Heart Rate -->
           <div class="pl-field">
             <label>Heart Rate (bpm)</label>
             <input class="pl-input" type="number" id="pb-hr" placeholder="72" min="0"/>
           </div>
+
+          <!-- SpO2 -->
           <div class="pl-field">
             <label>SpO2 (%)</label>
             <input class="pl-input" type="number" id="pb-spo2" placeholder="98" min="0" max="100"/>
           </div>
+
+          <!-- Glucose -->
           <div class="pl-field">
             <label>Glucose (mg/dL)</label>
             <input class="pl-input" type="number" id="pb-glu" placeholder="95" min="0"/>
           </div>
 
-          <!-- Temperature with unit pill -->
+          <!-- Temperature with °C/°F toggle -->
           <div class="pl-field">
             <div class="pl-field-header">
               <label>Temp</label>
@@ -237,20 +186,17 @@
             <input class="pl-input" type="number" id="pb-temp" placeholder="36.6" step="0.1"/>
           </div>
 
+          <!-- Cholesterol -->
           <div class="pl-field">
             <label>Cholesterol (mg/dL)</label>
             <input class="pl-input" type="number" id="pb-chol" placeholder="180" min="0"/>
           </div>
-          <div class="pl-field">
-            <label>Notes</label>
-            <input class="pl-input" type="text" id="pb-notes" placeholder="Optional"/>
-          </div>
 
-        </div><!-- /pb-vitals-grid -->
+        </div><!-- /pb-grid -->
 
         <div class="pl-btn-row">
-          <button class="pl-btn-cancel" onclick="pbVitalsClear()">Clear</button>
-          <button class="pl-btn-save" id="pb-save-btn" onclick="pbVitalsSave()">Save Vitals</button>
+          <button class="pl-btn-cancel" onclick="pbClearForm()">Clear</button>
+          <button class="pl-btn-save" id="pb-save-btn" onclick="pbSave()">Save</button>
         </div>
         <div class="pl-cal-row">
           <input type="checkbox" id="pb-cal-chk"/>
@@ -258,11 +204,14 @@
           <span class="pl-cal-note">Visibility: Private</span>
         </div>
         <div class="pl-status" id="pb-status"></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ══ CUSTOM ITEMS — foldable, default collapsed ══ -->
+      </div><!-- /pl-form -->
+    </div><!-- /pb-bv-fold -->
+  </div><!-- /card 1 -->
+
+  <!-- ══════════════════════════════════════════
+       CARD 2: Custom Items (foldable, starts collapsed)
+  ══════════════════════════════════════════ -->
   <div class="pl-card">
     <div class="pl-card-title foldable" onclick="pbToggleFold('pb-custom-fold')">
       Custom Items
@@ -270,32 +219,40 @@
               onclick="event.stopPropagation();pbToggleFold('pb-custom-fold')">▸ Show</button>
     </div>
     <div class="pl-fold-body collapsed" id="pb-custom-fold">
-      <div id="pb-custom-form-wrap" style="margin-bottom:8px;">
-        <div class="pl-form">
-          <div class="pl-row c3 pb-custom-row">
-            <div class="pl-field"><label>Item Name *</label><input class="pl-input" id="pb-cname" type="text" placeholder="e.g. HbA1c"/></div>
-            <div class="pl-field"><label>Value *</label><input class="pl-input" id="pb-cval" type="text" placeholder="e.g. 5.4"/></div>
-            <div class="pl-field"><label>Unit</label><input class="pl-input" id="pb-cunit" type="text" placeholder="e.g. %, mg/dL"/></div>
-          </div>
-          <div class="pl-field" style="margin-bottom:8px;">
-            <label>Notes</label>
-            <input class="pl-input" id="pb-cnotes" type="text" placeholder="Optional"/>
-          </div>
-          <div class="pl-btn-row">
-            <button class="pl-btn-save" id="pb-csave-btn" onclick="pbCustomSave()">Add Item</button>
-          </div>
-          <div class="pl-status" id="pb-cstatus"></div>
+      <div class="pl-form">
+        <div class="pb-custom-grid">
+          <div class="pl-field"><label>Item Name *</label><input class="pl-input" id="pb-cname" type="text" placeholder="e.g. HbA1c"/></div>
+          <div class="pl-field"><label>Value *</label><input class="pl-input" id="pb-cval" type="text" placeholder="e.g. 5.4"/></div>
+          <div class="pl-field"><label>Unit</label><input class="pl-input" id="pb-cunit" type="text" placeholder="%, mg/dL…"/></div>
         </div>
+        <div class="pl-field" style="margin-bottom:8px;">
+          <label>Notes</label>
+          <input class="pl-input" id="pb-cnotes" type="text" placeholder="Optional"/>
+        </div>
+        <button class="pb-custom-add-btn" id="pb-csave-btn" onclick="pbCustomSave()">+ Add Item</button>
+        <div class="pl-status" id="pb-cstatus"></div>
       </div>
-      <div id="pb-custom-log"></div>
+      <div id="pb-custom-log" style="margin-top:8px;"></div>
     </div>
-  </div>
+  </div><!-- /card 2 -->
 
-  <!-- ══ RECENT VITALS LOG ══ -->
+  <!-- ══════════════════════════════════════════
+       CARD 3: Recent Weight Trend + Vitals Log
+  ══════════════════════════════════════════ -->
   <div class="pl-card">
-    <div class="pl-card-title">Recent Vitals</div>
-    <div id="pb-log"></div>
-  </div>
+    <div class="pl-card-title">Recent Weight &amp; Vitals</div>
+
+    <!-- Weight trend mini chart -->
+    <div class="pb-log-section-label">Weight Trend (last 30 days)</div>
+    <div class="pb-chart-wrap" id="pb-weight-chart">
+      <div class="pb-chart-empty">Loading…</div>
+    </div>
+
+    <!-- Vitals log list -->
+    <div class="pb-log-section-label" style="margin-top:10px;">Vitals Log</div>
+    <div id="pb-log"><div class="pl-log-empty">Loading…</div></div>
+
+  </div><!-- /card 3 -->
 
 </div><!-- /pl-wrap -->
 
@@ -308,13 +265,10 @@ var _unitPref = localStorage.getItem('mie_unit') || 'metric';
 var _profile  = null;
 var _editIdx  = -1;
 var _healthItems = [];
+var _weightUnit  = 'kg';
+var _tempUnit    = 'c';
 
-// ── Unit state ──────────────────────────────────────────────────
-var _weightUnit = 'kg';
-var _heightUnit = 'cm';
-var _tempUnit   = 'c';
-
-// ── Helpers ─────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────
 function setStatus(id, msg, type){
   var el = document.getElementById(id);
   if(!el) return;
@@ -322,146 +276,109 @@ function setStatus(id, msg, type){
   el.className = 'pl-status' + (type ? ' ' + type : '');
 }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+function val(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+function setVal(id, v){ var el=document.getElementById(id); if(el) el.value=v||''; }
 
 // ── Fold/unfold ──────────────────────────────────────────────────
 window.pbToggleFold = function(bodyId){
-  var body = document.getElementById(bodyId);
-  var btn  = document.getElementById(bodyId + '-btn');
+  var body   = document.getElementById(bodyId);
+  var btn    = document.getElementById(bodyId + '-btn');
   if(!body) return;
-  var collapsed = body.classList.contains('collapsed');
-  body.classList.toggle('collapsed', !collapsed);
-  if(btn) btn.textContent = collapsed ? '▾ Hide' : '▸ Show';
+  var isCollapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !isCollapsed);
+  if(btn) btn.textContent = isCollapsed ? '▾ Hide' : '▸ Show';
 };
 
-// ── Unit toggles ────────────────────────────────────────────────
+// ── Unit toggles ─────────────────────────────────────────────────
 window.pbSetWeightUnit = function(unit){
   _weightUnit = unit;
-  document.getElementById('pb-wunit-kg').classList.toggle('active', unit === 'kg');
-  document.getElementById('pb-wunit-lb').classList.toggle('active', unit === 'lb');
-  var el = document.getElementById('pb-wkg');
-  if(el) el.placeholder = unit === 'lb' ? '155' : '70.4';
-  pbVitalsCalc();
-};
-
-window.pbSetHeightUnit = function(unit){
-  _heightUnit = unit;
-  document.getElementById('pb-hunit-cm').classList.toggle('active', unit === 'cm');
-  document.getElementById('pb-hunit-ft').classList.toggle('active', unit === 'ft');
-  var cmEl   = document.getElementById('pb-hcm');
-  var ftWrap = document.getElementById('pb-hft-wrap');
-  if(cmEl)   cmEl.style.display   = unit === 'cm' ? 'block' : 'none';
-  if(ftWrap) ftWrap.style.display = unit === 'ft' ? 'grid'  : 'none';
-  pbVitalsCalc();
+  document.getElementById('pb-wunit-kg').classList.toggle('active', unit==='kg');
+  document.getElementById('pb-wunit-lb').classList.toggle('active', unit==='lb');
+  var el = document.getElementById('pb-weight');
+  if(el) el.placeholder = unit==='lb' ? '155' : '70.4';
 };
 
 window.pbSetTempUnit = function(unit){
   _tempUnit = unit;
-  document.getElementById('pb-tunit-c').classList.toggle('active', unit === 'c');
-  document.getElementById('pb-tunit-f').classList.toggle('active', unit === 'f');
+  document.getElementById('pb-tunit-c').classList.toggle('active', unit==='c');
+  document.getElementById('pb-tunit-f').classList.toggle('active', unit==='f');
   var el = document.getElementById('pb-temp');
-  if(el) el.placeholder = unit === 'f' ? '98.6' : '36.6';
+  if(el) el.placeholder = unit==='f' ? '98.6' : '36.6';
 };
 
-// ── BMI / Lean Mass auto-calc ────────────────────────────────────
-function pbGetWeightKg(){
-  var raw = parseFloat(document.getElementById('pb-wkg').value) || null;
+// ── Get weight in kg (for storage) ───────────────────────────────
+function getWeightKg(){
+  var raw = parseFloat(val('pb-weight')) || null;
   if(!raw) return null;
-  return _weightUnit === 'lb' ? Math.round(raw / 2.20462 * 10) / 10 : raw;
-}
-function pbGetHeightCm(){
-  if(_heightUnit === 'cm'){
-    return parseFloat(document.getElementById('pb-hcm').value) || null;
-  }
-  var ft   = parseFloat(document.getElementById('pb-hft').value) || 0;
-  var inch = parseFloat(document.getElementById('pb-hin').value) || 0;
-  var total = ft * 12 + inch;
-  return total > 0 ? Math.round(total * 2.54 * 10) / 10 : null;
+  return _weightUnit==='lb' ? Math.round(raw/2.20462*10)/10 : raw;
 }
 
-window.pbVitalsCalc = function(){
-  var wkg = pbGetWeightKg();
-  var hcm = pbGetHeightCm() ||
-    (_profile && _profile.baseline ? (_profile.baseline.height_cm||null) : null);
-  var sex = _profile && _profile.baseline ? (_profile.baseline.sex||'Female') : 'Female';
-  var bmiEl  = document.getElementById('pb-bmi');
-  var leanEl = document.getElementById('pb-lean');
-  if(wkg && hcm){
-    var bmi = wkg / Math.pow(hcm/100, 2);
-    if(bmiEl)  bmiEl.value  = bmi.toFixed(1);
-    var lean = sex.toLowerCase() === 'male'
-      ? 0.407*wkg + 0.267*hcm - 19.2
-      : 0.252*wkg + 0.473*hcm - 48.3;
-    if(leanEl) leanEl.value = lean.toFixed(1) + ' kg';
-  } else {
-    if(bmiEl)  bmiEl.value  = '';
-    if(leanEl) leanEl.value = '';
-  }
-};
+// ── Get temp in °C (for storage) ─────────────────────────────────
+function getTempC(){
+  var raw = parseFloat(val('pb-temp')) || null;
+  if(!raw) return null;
+  return _tempUnit==='f' ? Math.round((raw-32)*5/9*10)/10 : raw;
+}
 
-// ── Clear vitals form ────────────────────────────────────────────
-window.pbVitalsClear = function(){
-  ['pb-wkg','pb-hcm','pb-hft','pb-hin','pb-bfpct','pb-mmkg',
-   'pb-bpsys','pb-bpdia','pb-hr','pb-spo2','pb-glu','pb-temp','pb-chol','pb-notes'].forEach(function(id){
-    var el = document.getElementById(id); if(el) el.value = '';
-  });
-  var bmi = document.getElementById('pb-bmi');   if(bmi)  bmi.value  = '';
-  var lm  = document.getElementById('pb-lean');  if(lm)   lm.value   = '';
+// ── Clear form ───────────────────────────────────────────────────
+window.pbClearForm = function(){
+  ['pb-weight','pb-bpsys','pb-bpdia','pb-hr',
+   'pb-spo2','pb-glu','pb-temp','pb-chol'].forEach(function(id){ setVal(id,''); });
   setStatus('pb-status','','');
 };
 
-// ── Cancel vitals edit ───────────────────────────────────────────
-window.pbVitalsCancelEdit = function(){
+// ── Cancel edit ──────────────────────────────────────────────────
+window.pbCancelEdit = function(){
   _editIdx = -1;
-  pbVitalsClear();
+  pbClearForm();
   var btn = document.getElementById('pb-save-btn');
-  if(btn) btn.textContent = 'Save Vitals';
+  if(btn) btn.textContent = 'Save';
   var banner = document.getElementById('pb-edit-banner');
   if(banner) banner.classList.remove('show');
 };
 
-// ── Save vitals ──────────────────────────────────────────────────
-window.pbVitalsSave = function(){
-  var sex = _profile && _profile.baseline ? (_profile.baseline.sex||'') : '';
-  var wkg = pbGetWeightKg();
-  var hcm = pbGetHeightCm() ||
-    (_profile && _profile.baseline ? (_profile.baseline.height_cm||null) : null);
+// ── Save ─────────────────────────────────────────────────────────
+window.pbSave = function(){
+  var wkg = getWeightKg();
+  var sys = parseFloat(val('pb-bpsys'))||null;
+  var dia = parseFloat(val('pb-bpdia'))||null;
 
-  // Temperature: convert °F → °C for storage
-  var tempRaw = parseFloat(document.getElementById('pb-temp').value) || null;
-  var tempC = tempRaw
-    ? (_tempUnit === 'f' ? Math.round((tempRaw - 32) * 5/9 * 10) / 10 : tempRaw)
-    : null;
+  // Need at least one value
+  if(!wkg && !sys && !dia &&
+     !parseFloat(val('pb-hr')) && !parseFloat(val('pb-spo2')) &&
+     !parseFloat(val('pb-glu')) && !parseFloat(val('pb-temp')) &&
+     !parseFloat(val('pb-chol'))){
+    setStatus('pb-status','Enter at least one value.','err');
+    return;
+  }
 
+  var sex = _profile&&_profile.baseline ? (_profile.baseline.sex||'') : '';
   var data = {
-    weight_kg:            wkg,
-    height_cm:            hcm,
-    manual_body_fat_pct:  (document.getElementById('pb-bfpct').value||'').trim() || null,
-    manual_muscle_mass_kg:(document.getElementById('pb-mmkg').value||'').trim()  || null,
-    blood_pressure_sys:   parseFloat(document.getElementById('pb-bpsys').value)  || null,
-    blood_pressure_dia:   parseFloat(document.getElementById('pb-bpdia').value)  || null,
-    heart_rate_bpm:       parseFloat(document.getElementById('pb-hr').value)     || null,
-    spo2_pct:             parseFloat(document.getElementById('pb-spo2').value)   || null,
-    glucose_mgdl:         parseFloat(document.getElementById('pb-glu').value)    || null,
-    temperature_c:        tempC,
-    cholesterol_mgdl:     parseFloat(document.getElementById('pb-chol').value)   || null,
-    notes:                document.getElementById('pb-notes').value.trim(),
-    sex:                  sex,
-    add_to_calendar:      document.getElementById('pb-cal-chk').checked,
-    calendar_visibility:  'private',
+    weight_kg:         wkg,
+    blood_pressure_sys:sys,
+    blood_pressure_dia:dia,
+    heart_rate_bpm:    parseFloat(val('pb-hr'))   ||null,
+    spo2_pct:          parseFloat(val('pb-spo2')) ||null,
+    glucose_mgdl:      parseFloat(val('pb-glu'))  ||null,
+    temperature_c:     getTempC(),
+    cholesterol_mgdl:  parseFloat(val('pb-chol')) ||null,
+    sex:               sex,
+    add_to_calendar:   document.getElementById('pb-cal-chk').checked,
+    calendar_visibility:'private',
   };
 
   var btn = document.getElementById('pb-save-btn');
   if(btn) btn.disabled = true;
   setStatus('pb-status','Saving…','');
 
-  var endpoint = _editIdx >= 0
-    ? BACKEND + '/api/me/health/log/edit'
-    : BACKEND + '/api/me/health/log';
-  var body = _editIdx >= 0
-    ? { tab:'health', row_idx:_editIdx, data:data, unit_pref:_unitPref }
-    : { tab:'health', data:data, unit_pref:_unitPref };
+  var endpoint = _editIdx>=0
+    ? BACKEND+'/api/me/health/log/edit'
+    : BACKEND+'/api/me/health/log';
+  var body = _editIdx>=0
+    ? {tab:'health', row_idx:_editIdx, data:data, unit_pref:_unitPref}
+    : {tab:'health', data:data, unit_pref:_unitPref};
 
-  fetch(endpoint, {
+  fetch(endpoint,{
     method:'POST', credentials:'include',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(body)
@@ -469,232 +386,293 @@ window.pbVitalsSave = function(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok){
-        setStatus('pb-status', _editIdx >= 0 ? '✅ Updated!' : '✅ Saved!', 'ok');
+        setStatus('pb-status', _editIdx>=0 ? '✅ Updated!' : '✅ Saved!', 'ok');
         _editIdx = -1;
-        if(btn) btn.textContent = 'Save Vitals';
-        var banner = document.getElementById('pb-edit-banner');
-        if(banner) banner.classList.remove('show');
-        pbVitalsClear();
+        if(btn) btn.textContent = 'Save';
+        document.getElementById('pb-edit-banner').classList.remove('show');
+        pbClearForm();
         loadData();
-        if(typeof window.refreshOverviewData === 'function') window.refreshOverviewData();
+        if(typeof window.refreshOverviewData==='function') window.refreshOverviewData();
       } else {
-        setStatus('pb-status','❌ ' + (d.message||'Error'),'err');
+        setStatus('pb-status','❌ '+(d.message||'Error'),'err');
       }
     })
     .catch(function(){ setStatus('pb-status','❌ Network error','err'); })
-    .finally(function(){ if(btn) btn.disabled = false; });
+    .finally(function(){ if(btn) btn.disabled=false; });
 };
 
-// ── Edit vitals ──────────────────────────────────────────────────
-window.pbEditVitals = function(idx){
+// ── Edit ─────────────────────────────────────────────────────────
+window.pbEdit = function(idx){
   var h = _healthItems[idx];
   if(!h) return;
   _editIdx = idx;
-  if(h.weight_kg)         document.getElementById('pb-wkg').value    = h.weight_kg;
-  if(h.height_cm)         document.getElementById('pb-hcm').value    = h.height_cm;
-  if(h.blood_pressure_sys)document.getElementById('pb-bpsys').value  = h.blood_pressure_sys;
-  if(h.blood_pressure_dia)document.getElementById('pb-bpdia').value  = h.blood_pressure_dia;
-  if(h.heart_rate_bpm)    document.getElementById('pb-hr').value     = h.heart_rate_bpm;
-  if(h.spo2_pct)          document.getElementById('pb-spo2').value   = h.spo2_pct;
-  if(h.glucose_mgdl)      document.getElementById('pb-glu').value    = h.glucose_mgdl;
-  if(h.temperature_c)     document.getElementById('pb-temp').value   = h.temperature_c;
-  if(h.cholesterol_mgdl)  document.getElementById('pb-chol').value   = h.cholesterol_mgdl;
-  if(h.notes)             document.getElementById('pb-notes').value  = h.notes;
-  pbVitalsCalc();
+
+  // Weight: display in current unit
+  if(h.weight_kg){
+    var wDisplay = _weightUnit==='lb'
+      ? Math.round(h.weight_kg*2.20462*10)/10
+      : h.weight_kg;
+    setVal('pb-weight', wDisplay);
+  }
+  if(h.blood_pressure_sys)setVal('pb-bpsys', h.blood_pressure_sys);
+  if(h.blood_pressure_dia)setVal('pb-bpdia', h.blood_pressure_dia);
+  if(h.heart_rate_bpm)    setVal('pb-hr',    h.heart_rate_bpm);
+  if(h.spo2_pct)          setVal('pb-spo2',  h.spo2_pct);
+  if(h.glucose_mgdl)      setVal('pb-glu',   h.glucose_mgdl);
+  if(h.temperature_c){
+    var tDisplay = _tempUnit==='f'
+      ? Math.round((h.temperature_c*9/5+32)*10)/10
+      : h.temperature_c;
+    setVal('pb-temp', tDisplay);
+  }
+  if(h.cholesterol_mgdl)  setVal('pb-chol',  h.cholesterol_mgdl);
+
   var banner = document.getElementById('pb-edit-banner');
   var label  = document.getElementById('pb-edit-label');
   if(banner) banner.classList.add('show');
-  if(label)  label.textContent = h.stamp_date || '';
+  if(label)  label.textContent = h.stamp_date||'';
+
   var btn = document.getElementById('pb-save-btn');
-  if(btn) btn.textContent = 'Update Vitals';
-  // Open vitals fold if collapsed
-  var fold = document.getElementById('pb-vitals-fold');
-  var foldBtn = document.getElementById('pb-vitals-fold-btn');
+  if(btn) btn.textContent = 'Update';
+
+  // Open fold if collapsed
+  var fold    = document.getElementById('pb-bv-fold');
+  var foldBtn = document.getElementById('pb-bv-fold-btn');
   if(fold && fold.classList.contains('collapsed')){
     fold.classList.remove('collapsed');
     if(foldBtn) foldBtn.textContent = '▾ Hide';
   }
-  btn.scrollIntoView({ behavior:'smooth', block:'center' });
+  btn.scrollIntoView({behavior:'smooth', block:'center'});
 };
 
-// ── Delete vitals ────────────────────────────────────────────────
-window.pbDelVitals = function(idx){
+// ── Delete ────────────────────────────────────────────────────────
+window.pbDelete = function(idx){
   if(!confirm('Delete this entry?')) return;
   fetch(BACKEND+'/api/me/health/log/delete',{
     method:'POST', credentials:'include',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ tab:'health', row_idx:idx })
+    body: JSON.stringify({tab:'health', row_idx:idx})
   })
     .then(function(r){ return r.json(); })
-    .then(function(d){ if(d.ok){ loadData(); if(typeof window.refreshOverviewData==='function') window.refreshOverviewData(); }})
+    .then(function(d){
+      if(d.ok){
+        loadData();
+        if(typeof window.refreshOverviewData==='function') window.refreshOverviewData();
+      }
+    })
     .catch(function(){});
 };
 
-// ── Custom items ─────────────────────────────────────────────────
+// ── Custom Items ──────────────────────────────────────────────────
 window.pbCustomSave = function(){
-  var name = (document.getElementById('pb-cname').value||'').trim();
-  var val  = (document.getElementById('pb-cval').value||'').trim();
-  if(!name||!val){ setStatus('pb-cstatus','Item name and value are required.','err'); return; }
+  var name = val('pb-cname');
+  var cv   = val('pb-cval');
+  if(!name||!cv){ setStatus('pb-cstatus','Name and value required.','err'); return; }
   var data = {
     item_name: name,
-    value:     val,
-    unit:      document.getElementById('pb-cunit').value.trim(),
-    notes:     document.getElementById('pb-cnotes').value.trim(),
+    value:     cv,
+    unit:      val('pb-cunit'),
+    notes:     val('pb-cnotes'),
   };
   var btn = document.getElementById('pb-csave-btn');
   if(btn) btn.disabled = true;
   setStatus('pb-cstatus','Saving…','');
-  fetch(BACKEND+'/api/me/health/log', {
+  fetch(BACKEND+'/api/me/health/log',{
     method:'POST', credentials:'include',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ tab:'custom', data:data, unit_pref:_unitPref })
+    body: JSON.stringify({tab:'custom', data:data, unit_pref:_unitPref})
   })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok){
         setStatus('pb-cstatus','✅ Added!','ok');
-        ['pb-cname','pb-cval','pb-cunit','pb-cnotes'].forEach(function(id){
-          var el = document.getElementById(id); if(el) el.value = '';
-        });
+        ['pb-cname','pb-cval','pb-cunit','pb-cnotes'].forEach(function(id){ setVal(id,''); });
         loadData();
       } else {
-        setStatus('pb-cstatus','❌ ' + (d.message||'Error'),'err');
+        setStatus('pb-cstatus','❌ '+(d.message||'Error'),'err');
       }
     })
     .catch(function(){ setStatus('pb-cstatus','❌ Network error','err'); })
-    .finally(function(){ if(btn) btn.disabled = false; });
+    .finally(function(){ if(btn) btn.disabled=false; });
 };
 
-window.pbDelCustom = function(idx){
-  if(!confirm('Delete this custom item?')) return;
+window.pbCustomDelete = function(idx){
+  if(!confirm('Delete this item?')) return;
   fetch(BACKEND+'/api/me/health/log/delete',{
     method:'POST', credentials:'include',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ tab:'custom', row_idx:idx })
+    body: JSON.stringify({tab:'custom', row_idx:idx})
   })
     .then(function(r){ return r.json(); })
     .then(function(d){ if(d.ok) loadData(); })
     .catch(function(){});
 };
 
-// ── Render vitals log ────────────────────────────────────────────
-function renderVitalsLog(items, customItems){
+// ── Render log ────────────────────────────────────────────────────
+function renderLog(items, customItems){
   _healthItems = items;
+
+  // Vitals log
   var el = document.getElementById('pb-log');
-  if(!el) return;
-
-  if(!items || !items.length){
-    el.innerHTML = '<div class="pl-log-empty">No vitals logged today.</div>';
-  } else {
-    var html = '<div class="pl-log-list">';
-    items.slice(-5).reverse().forEach(function(h, idx){
-      var parts = [];
-      if(h.weight_kg)         parts.push('⚖ ' + h.weight_kg + 'kg');
-      if(h.bmi)               parts.push('BMI ' + h.bmi);
-      if(h.blood_pressure_sys)parts.push('BP '  + h.blood_pressure_sys + '/' + h.blood_pressure_dia);
-      if(h.heart_rate_bpm)    parts.push('❤ '  + h.heart_rate_bpm + ' bpm');
-      if(h.glucose_mgdl)      parts.push('🩸 ' + h.glucose_mgdl + ' mg/dL');
-      html += '<div class="pl-log-item">'
-        + '<div class="pl-log-dot" style="background:#ea4335;"></div>'
-        + '<div class="pl-log-main">'
-          + '<div class="pl-log-name">' + (h.stamp_date||'') + '</div>'
-          + '<div class="pl-log-sub">'  + parts.join(' · ') + '</div>'
-        + '</div>'
-        + '<div class="pl-log-actions">'
-          + '<button class="pl-log-edit" onclick="pbEditVitals(' + idx + ')">Edit</button>'
-          + '<button class="pl-log-del"  onclick="pbDelVitals('  + idx + ')">Delete</button>'
-        + '</div>'
-      + '</div>';
-    });
-    html += '</div>';
-    el.innerHTML = html;
+  if(el){
+    if(!items||!items.length){
+      el.innerHTML = '<div class="pl-log-empty">No vitals logged today.</div>';
+    } else {
+      var html = '<div class="pl-log-list">';
+      items.slice(-8).reverse().forEach(function(h, idx){
+        var parts=[];
+        if(h.weight_kg)          parts.push('⚖ '+(_weightUnit==='lb'
+          ? Math.round(h.weight_kg*2.20462*10)/10+'lb'
+          : h.weight_kg+'kg'));
+        if(h.blood_pressure_sys) parts.push('BP '+h.blood_pressure_sys+'/'+h.blood_pressure_dia);
+        if(h.heart_rate_bpm)     parts.push('❤ '+h.heart_rate_bpm+' bpm');
+        if(h.spo2_pct)           parts.push('O₂ '+h.spo2_pct+'%');
+        if(h.glucose_mgdl)       parts.push('🩸 '+h.glucose_mgdl);
+        html += '<div class="pl-log-item">'
+          +'<div class="pl-log-dot" style="background:#ea4335;"></div>'
+          +'<div class="pl-log-main">'
+            +'<div class="pl-log-name">'+(h.stamp_date||'')+'</div>'
+            +'<div class="pl-log-sub">'+parts.join(' · ')+'</div>'
+          +'</div>'
+          +'<div class="pl-log-actions">'
+            +'<button class="pl-log-edit" onclick="pbEdit('+idx+')">Edit</button>'
+            +'<button class="pl-log-del"  onclick="pbDelete('+idx+')">Del</button>'
+          +'</div>'
+        +'</div>';
+      });
+      html += '</div>';
+      el.innerHTML = html;
+    }
   }
 
-  // Custom items
+  // Custom items log
   var cel = document.getElementById('pb-custom-log');
-  if(!cel) return;
-  if(!customItems || !customItems.length){
-    cel.innerHTML = '<div class="pl-log-empty" style="font-size:12px;padding:10px 0;">No custom items yet.</div>';
-  } else {
-    var chtml = '<div class="pl-log-list">';
-    customItems.forEach(function(c, idx){
-      chtml += '<div class="pl-log-item">'
-        + '<div class="pl-log-dot" style="background:#ff9800;"></div>'
-        + '<div class="pl-log-main">'
-          + '<div class="pl-log-name">' + (c.item_name||'') + '</div>'
-          + '<div class="pl-log-sub">'  + (c.notes||'')     + '</div>'
-        + '</div>'
-        + '<span style="font-size:13px;font-weight:700;color:#ff9800;white-space:nowrap;">'
-          + (c.value||'') + (c.unit ? ' ' + c.unit : '') + '</span>'
-        + '<div class="pl-log-actions">'
-          + '<button class="pl-log-del" onclick="pbDelCustom(' + idx + ')">Delete</button>'
-        + '</div>'
-      + '</div>';
-    });
-    chtml += '</div>';
-    cel.innerHTML = chtml;
+  if(cel){
+    if(!customItems||!customItems.length){
+      cel.innerHTML='<div class="pl-log-empty" style="font-size:12px;padding:8px 0;">No custom items yet.</div>';
+    } else {
+      var chtml='<div class="pl-log-list">';
+      customItems.forEach(function(c,idx){
+        chtml+='<div class="pl-log-item">'
+          +'<div class="pl-log-dot" style="background:#ff9800;"></div>'
+          +'<div class="pl-log-main">'
+            +'<div class="pl-log-name">'+(c.item_name||'')+'</div>'
+            +'<div class="pl-log-sub">'+(c.notes||'')+'</div>'
+          +'</div>'
+          +'<span class="pl-log-val">'+(c.value||'')+(c.unit?' '+c.unit:'')+'</span>'
+          +'<div class="pl-log-actions">'
+            +'<button class="pl-log-del" onclick="pbCustomDelete('+idx+')">Del</button>'
+          +'</div>'
+        +'</div>';
+      });
+      chtml+='</div>';
+      cel.innerHTML=chtml;
+    }
   }
 }
 
-// ── Load data ────────────────────────────────────────────────────
+// ── Weight trend chart (last 30 days) ────────────────────────────
+function renderWeightChart(items){
+  var chartEl = document.getElementById('pb-weight-chart');
+  if(!chartEl) return;
+
+  // Filter to entries that have weight
+  var weightItems = items.filter(function(h){ return h.weight_kg; });
+  if(!weightItems.length){
+    chartEl.innerHTML='<div class="pb-chart-empty">No weight data this month.</div>';
+    return;
+  }
+
+  // Sort by date, take last 14 entries max for readability
+  weightItems.sort(function(a,b){ return (a.stamp_date||'').localeCompare(b.stamp_date||''); });
+  var display = weightItems.slice(-14);
+
+  var weights = display.map(function(h){
+    return _weightUnit==='lb' ? Math.round(h.weight_kg*2.20462*10)/10 : h.weight_kg;
+  });
+  var minW = Math.min.apply(null, weights);
+  var maxW = Math.max.apply(null, weights);
+  var range = maxW - minW || 1;
+  var avg   = weights.reduce(function(s,w){ return s+w; },0) / weights.length;
+  var unit  = _weightUnit==='lb' ? 'lb' : 'kg';
+
+  var bars = display.map(function(h, i){
+    var w   = weights[i];
+    var pct = Math.max(10, Math.round(((w-minW)/range)*85 + 10)); // 10–95%
+    var col = '#1a73e8';
+    var dateLabel = (h.stamp_date||'').slice(5); // MM-DD
+    return '<div class="pb-chart-bar-wrap">'
+      +'<div class="pb-chart-val">'+w+'</div>'
+      +'<div style="height:60px;width:100%;display:flex;align-items:flex-end;">'
+        +'<div class="pb-chart-bar" style="height:'+pct+'%;background:'+col+';width:100%;"></div>'
+      +'</div>'
+      +'<div class="pb-chart-date">'+dateLabel+'</div>'
+    +'</div>';
+  });
+
+  chartEl.innerHTML =
+    '<div class="pb-chart-bars">'+bars.join('')+'</div>'
+    +'<div class="pb-chart-avg">Avg: '+avg.toFixed(1)+' '+unit
+      +' · Min: '+minW+' · Max: '+maxW+'</div>';
+}
+
+// ── Load data ─────────────────────────────────────────────────────
 function loadData(){
-  fetch(BACKEND + '/api/me/health?date=' + todayStr() + '&period=daily&tab=health', { credentials:'include' })
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){
-      if(!d) return;
-      renderVitalsLog(d.health||[], d.custom||[]);
-    })
+  // Today's log
+  fetch(BACKEND+'/api/me/health?date='+todayStr()+'&period=daily&tab=health',{credentials:'include'})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){ if(d) renderLog(d.health||[], d.custom||[]); })
     .catch(function(){});
+
+  // Monthly data for weight trend
+  var now = new Date();
+  fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period=monthly&tab=health',{credentials:'include'})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){ if(d) renderWeightChart(d.health||[]); })
+    .catch(function(){
+      var chartEl=document.getElementById('pb-weight-chart');
+      if(chartEl) chartEl.innerHTML='<div class="pb-chart-empty">Could not load chart.</div>';
+    });
 }
 
-// ── Load profile (for height fallback & sex for Boer formula) ───
+// ── Load profile ──────────────────────────────────────────────────
 function loadProfile(){
-  fetch(BACKEND + '/api/me/health/profile', { credentials:'include' })
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){
-      if(!d) return;
-      _profile = d;
-      // Pre-fill height from profile if available
-      if(d.baseline && d.baseline.height_cm){
-        var hEl = document.getElementById('pb-hcm');
-        if(hEl && !hEl.value) hEl.placeholder = d.baseline.height_cm;
-      }
-    })
+  fetch(BACKEND+'/api/me/health/profile',{credentials:'include'})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){ if(d) _profile=d; })
     .catch(function(){});
 }
 
-// ── Unit pref sync from index.html ───────────────────────────────
+// ── Unit pref sync from index.html ────────────────────────────────
 window.plSetUnitPref = function(pref){
   _unitPref = pref;
   localStorage.setItem('mie_unit', pref);
-  var isUS = pref === 'us';
-  pbSetWeightUnit(isUS ? 'lb' : 'kg');
-  pbSetHeightUnit(isUS ? 'ft' : 'cm');
-  pbSetTempUnit(isUS ? 'f' : 'c');
+  var isUS = pref==='us';
+  pbSetWeightUnit(isUS?'lb':'kg');
+  pbSetTempUnit(isUS?'f':'c');
+  // Re-render chart with new unit
+  if(_healthItems.length) renderWeightChart(_healthItems);
 };
 
-// ── Init unit pills from stored pref ────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────
 function initUnitPills(){
-  var isUS = _unitPref === 'us';
-  pbSetWeightUnit(isUS ? 'lb' : 'kg');
-  pbSetHeightUnit(isUS ? 'ft' : 'cm');
-  pbSetTempUnit(isUS ? 'f' : 'c');
+  var isUS = _unitPref==='us';
+  pbSetWeightUnit(isUS?'lb':'kg');
+  pbSetTempUnit(isUS?'f':'c');
 }
 
-// ── Panel init ───────────────────────────────────────────────────
 function init(){
   initUnitPills();
   loadProfile();
   loadData();
 }
 
-// ── Public API: called by index.html after injection ─────────────
+// ── Public API ────────────────────────────────────────────────────
 window.onPanelLoad = function(v){
-  if(v === 'healthlog') init();
+  if(v==='healthlog') init();
 };
 
-// Auto-init when standalone
-if(document.readyState === 'loading'){
+if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
