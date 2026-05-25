@@ -94,6 +94,38 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
 .ytd-btn:hover{background:#e8f0fe;}
 .ytd-btn.active{background:#1a73e8;color:#fff;}
 .period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:8px;padding:5px 10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
+
+/* ── Custom period dropdown (mobile) ── */
+.period-custom-wrap{position:relative;display:none;}  /* hidden on desktop */
+.period-custom-btn{
+  border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;
+  border-radius:8px;padding:4px 8px;
+  font-size:12px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;gap:4px;
+  white-space:nowrap;
+  /* Fixed width — never changes regardless of selected option */
+  width:72px;justify-content:space-between;
+}
+.period-custom-btn-label{flex:1;text-align:left;}
+.period-custom-arrow{font-size:9px;line-height:1;flex-shrink:0;}
+.period-custom-menu{
+  position:absolute;top:calc(100% + 4px);left:0;
+  background:#fff;border:1px solid #e0e0e0;
+  border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.14);
+  z-index:500;overflow:hidden;min-width:100%;
+  display:none;
+}
+.period-custom-menu.open{display:block;}
+.period-custom-option{
+  display:block;width:100%;padding:9px 14px;
+  font-size:13px;font-weight:500;color:#202124;
+  font-family:'DM Sans',sans-serif;
+  background:none;border:none;cursor:pointer;text-align:left;
+  transition:background .12s;
+}
+.period-custom-option:hover{background:#f1f3f4;}
+.period-custom-option.active{color:#1a73e8;font-weight:700;background:#e8f0fe;}
 .unit-btn{border:1.5px solid #e0e0e0;background:#fff;color:#5f6368;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;}
 .unit-btn.active{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
 .add-fab{display:flex;align-items:center;gap:5px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(26,115,232,.3);transition:background .15s;}
@@ -498,8 +530,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   /* top-row controls */
   .top-row{flex-wrap:wrap;gap:8px;}
   .date-nav{flex-wrap:wrap;gap:4px;}
+  /* Custom period dropdown: visible on mobile, native select hidden */
+  .period-custom-wrap{display:inline-block;}
+  .period-select{display:none !important;}
   /* Shrink period select on mobile to keep controls on one line */
-  .period-select{font-size:11px;padding:4px 6px;width:100px;min-width:unset;}
   /* unit-btn: compact kg/lb chip on mobile */
   .unit-btn{font-size:11px;padding:4px 8px;min-width:unset;width:auto;}
 
@@ -514,7 +548,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   .topbar{padding:0 12px;}
   .content-area{padding:6px 6px 20px;}
   .metric-item{flex:0 0 28%;}
-  .period-select{font-size:11px;padding:4px 6px;width:100px;min-width:unset;}
+  .period-select{font-size:11px;padding:4px 6px;width:66px;min-width:unset;}
   /* unit-btn: show as kg/lb toggle chip — compact */
   .unit-btn{font-size:11px;padding:4px 8px;min-width:unset;width:auto;}
 
@@ -738,12 +772,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
                 </div>
               </div>
               <button class="nav-arrow" onclick="changeDate(1)">&#8250;</button>
-              <select class="period-select" id="period-select" onchange="onPeriodChange(this.value)">
+              <!-- Hidden native select — kept for JS value sync -->
+              <select class="period-select" id="period-select" onchange="onPeriodChange(this.value)" style="display:none;">
                 <option value="daily" selected>Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
               </select>
+              <!-- Custom dropdown: fixed width, never resizes -->
+              <div class="period-custom-wrap" id="period-custom-wrap">
+                <button class="period-custom-btn" id="period-custom-btn" onclick="periodDropToggle(event)">
+                  <span class="period-custom-btn-label" id="period-custom-label">Daily</span>
+                  <span class="period-custom-arrow">▼</span>
+                </button>
+                <div class="period-custom-menu" id="period-custom-menu">
+                  <button class="period-custom-option active" data-val="daily" onclick="periodDropSelect('daily',this)">Daily</button>
+                  <button class="period-custom-option" data-val="weekly" onclick="periodDropSelect('weekly',this)">Weekly</button>
+                  <button class="period-custom-option" data-val="monthly" onclick="periodDropSelect('monthly',this)">Monthly</button>
+                  <button class="period-custom-option" data-val="yearly" onclick="periodDropSelect('yearly',this)">Yearly</button>
+                </div>
+              </div>
               <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
             </div>
             <button class="unit-btn active" id="unit-btn" onclick="toggleUnit()">US / Metrics</button>
@@ -1059,8 +1107,30 @@ function changeDate(dir){
   renderDate();
 }
 
-function onPeriodChange(period){currentPeriod=period;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();toast(period.charAt(0).toUpperCase()+period.slice(1));}
-function toggleYTD(){ytdActive=!ytdActive;var btn=document.getElementById('ytd-btn');btn.classList.toggle('active',ytdActive);if(ytdActive){renderDate();var sel=document.getElementById('period-select');if(sel)sel.value='monthly';currentPeriod='monthly';toast('Showing '+currentYear+' YTD');}else{renderDate();}}
+function onPeriodChange(period){
+  currentPeriod=period;ytdActive=false;
+  document.getElementById('ytd-btn').classList.remove('active');
+  renderDate();
+  toast(period.charAt(0).toUpperCase()+period.slice(1));
+  // sync native select value
+  var sel=document.getElementById('period-select');
+  if(sel)sel.value=period;
+}
+function toggleYTD(){
+  ytdActive=!ytdActive;
+  var btn=document.getElementById('ytd-btn');
+  btn.classList.toggle('active',ytdActive);
+  if(ytdActive){
+    renderDate();
+    var sel=document.getElementById('period-select');
+    if(sel)sel.value='monthly';
+    currentPeriod='monthly';
+    periodDropSelect('monthly',null);
+    toast('Showing '+currentYear+' YTD');
+  } else {
+    renderDate();
+  }
+}
 
 var _distKm=8.89;
 
@@ -1257,28 +1327,55 @@ function mobNavSelect(view, btn) {
 // Also sync mobile menu when desktop setView is called
 var _origSetView = null; // patched below after setView is defined
 
+/* ── Custom period dropdown JS ── */
+var _periodDropOpen = false;
+var PERIOD_LABELS = {daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly'};
+
+function periodDropToggle(e){
+  e.stopPropagation();
+  _periodDropOpen = !_periodDropOpen;
+  var menu = document.getElementById('period-custom-menu');
+  var arrow = document.querySelector('.period-custom-arrow');
+  if(menu) menu.classList.toggle('open', _periodDropOpen);
+  if(arrow) arrow.textContent = _periodDropOpen ? '▲' : '▼';
+}
+
+function periodDropSelect(val, btn){
+  // Update label
+  var label = document.getElementById('period-custom-label');
+  if(label) label.textContent = PERIOD_LABELS[val] || val;
+  // Update active state on options
+  document.querySelectorAll('.period-custom-option').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('data-val') === val);
+  });
+  // Close menu
+  _periodDropOpen = false;
+  var menu = document.getElementById('period-custom-menu');
+  var arrow = document.querySelector('.period-custom-arrow');
+  if(menu) menu.classList.remove('open');
+  if(arrow) arrow.textContent = '▼';
+  // Trigger actual period change
+  onPeriodChange(val);
+}
+
+// Close custom dropdown on outside click
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('period-custom-wrap');
+  if(wrap && !wrap.contains(e.target)){
+    _periodDropOpen = false;
+    var menu = document.getElementById('period-custom-menu');
+    var arrow = document.querySelector('.period-custom-arrow');
+    if(menu) menu.classList.remove('open');
+    if(arrow) arrow.textContent = '▼';
+  }
+});
+
 function navigate(mod){window.location.href='/dashboard?mod='+mod;}
 window.refreshOverviewData=function(){};
 
 init();
 
-/* ── Swap period-select labels to D/W/M/Y on mobile ── */
-(function(){
-  var SHORT = { daily:'Day', weekly:'Week', monthly:'Month', yearly:'Year' };
-  var LONG  = { daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly' };
-  function applyPeriodLabels(){
-    var sel = document.getElementById('period-select');
-    if(!sel) return;
-    var isMobile = window.innerWidth <= 900;
-    Array.from(sel.options).forEach(function(opt){
-      var v = opt.value;
-      opt.text = isMobile ? (SHORT[v]||v) : (LONG[v]||v);
-    });
-  }
-  // Run on load and on resize
-  applyPeriodLabels();
-  window.addEventListener('resize', applyPeriodLabels);
-})();
+/* period label swap removed — now using custom dropdown */
 
 /* ── Sync unit-btn label to kg/lb on mobile, full text on desktop ── */
 (function(){
