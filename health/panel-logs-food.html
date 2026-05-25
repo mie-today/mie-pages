@@ -1,0 +1,722 @@
+<!-- panel-logs-food.html — MIE Health · Food Log Panel -->
+<style>
+.pl-wrap{display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;}
+
+/* ── Cards ── */
+.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.pl-card-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.pl-card-title.foldable{cursor:pointer;user-select:none;}
+.pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;padding:2px 5px;border-radius:4px;font-family:sans-serif;display:flex;align-items:center;gap:3px;transition:all .12s;}
+.pl-fold-btn:hover{background:#f1f3f4;color:#5f6368;}
+.pl-fold-body.collapsed{display:none;}
+
+/* ── Form ── */
+.pl-form{background:#f8f9fa;border:1px solid #e8eaed;border-radius:8px;padding:12px 13px;overflow:hidden;}
+.pl-field{display:flex;flex-direction:column;min-width:0;}
+.pl-field label{display:block;font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.pl-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;transition:border-color .12s;box-sizing:border-box;}
+.pl-input:focus{border-color:#1a73e8;}
+.pl-select{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:#202124;background:#fff;outline:none;cursor:pointer;box-sizing:border-box;}
+
+/* ── Food search ── */
+.pf-fname-wrap{position:relative;}
+.pf-search-icon{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#1a73e8;font-size:16px;line-height:1;padding:0;}
+.pf-fname-wrap .pl-input{padding-right:30px;}
+.pf-fname-dropdown{position:absolute;top:calc(100%+3px);left:0;right:0;background:#fff;border:1px solid #dadce0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:200;max-height:210px;overflow-y:auto;display:none;}
+.pf-fname-dropdown.open{display:block;}
+.pf-result{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f1f3f4;}
+.pf-result:last-child{border-bottom:none;}
+.pf-result:hover{background:#e8f0fe;}
+.pf-result-left{flex:1;min-width:0;}
+.pf-result-name{font-size:13.5px;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pf-result-sub{font-size:12px;color:#5f6368;margin-top:1px;}
+.pf-result-cal{font-size:13.5px;font-weight:700;color:#1a73e8;white-space:nowrap;margin-left:8px;flex-shrink:0;}
+.pf-msg{font-size:13px;color:#5f6368;font-style:italic;padding:11px;text-align:center;}
+
+/* ── Form grid ── */
+.pf-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.pf-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;}
+.pf-grid-2-1{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* ── Buttons ── */
+.pl-btn-row{display:flex;gap:6px;margin-top:10px;}
+.pl-btn-save{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .12s;}
+.pl-btn-save:hover{background:#1765cc;}
+.pl-btn-save:disabled{background:#a8c7fa;cursor:not-allowed;}
+.pl-btn-cancel{background:#f1f3f4;color:#5f6368;border:1px solid #e0e0e0;border-radius:6px;padding:9px 16px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.pl-status{font-size:12.5px;text-align:center;min-height:16px;margin-top:5px;}
+.pl-status.ok{color:#1e8e3e;}.pl-status.err{color:#d93025;}
+
+/* ── Add to Calendar ── */
+.pl-cal-row{display:flex;align-items:center;gap:7px;margin-top:8px;padding:7px 10px;background:#e8f0fe;border-radius:7px;border:1px solid #c5d8fb;flex-wrap:wrap;}
+.pl-cal-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#1a73e8;flex-shrink:0;}
+.pl-cal-row label{font-size:12.5px;color:#1a73e8;font-weight:600;cursor:pointer;margin:0;flex:1;}
+.pl-cal-row .pl-cal-note{font-size:11px;color:#5f6368;}
+
+/* ── Edit banner ── */
+.pl-edit-banner{background:#fff3cd;border:1px solid #ffc107;border-radius:7px;padding:7px 11px;font-size:12.5px;color:#856404;font-weight:600;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;}
+.pl-edit-banner.show{display:flex;}
+.pl-edit-banner-cancel{background:none;border:none;cursor:pointer;color:#856404;font-size:13px;font-weight:700;padding:0 2px;}
+
+/* ── Summary bar ── */
+.pf-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:14px;}
+.pf-sum-item{background:#f8f9fa;border-radius:8px;padding:8px 6px;text-align:center;}
+.pf-sum-val{font-size:15px;font-weight:700;color:#202124;}
+.pf-sum-lbl{font-size:11px;color:#5f6368;margin-top:2px;}
+
+/* ── Today's food log: 2-col AM/PM ── */
+.pf-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pf-log-total{font-size:13px;font-weight:700;color:#1e8e3e;}
+
+.pf-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pf-col{background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;padding:12px 14px;min-height:120px;}
+.pf-col-header{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e8eaed;}
+.pf-col-empty{font-size:13px;color:#bdc1c6;font-style:italic;text-align:center;padding:18px 0;}
+
+.pf-entry{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #f1f3f4;}
+.pf-entry:last-child{border-bottom:none;}
+.pf-entry-left{flex:1;min-width:0;}
+.pf-entry-name{font-size:13.5px;font-weight:600;color:#202124;line-height:1.3;}
+.pf-entry-macros{font-size:11.5px;color:#9aa0a6;margin-top:2px;}
+.pf-entry-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.pf-entry-cal{font-size:13.5px;font-weight:700;color:#1a73e8;white-space:nowrap;}
+.pf-entry-actions{display:flex;gap:2px;opacity:0;transition:opacity .12s;}
+.pf-entry:hover .pf-entry-actions{opacity:1;}
+.pf-entry-edit,.pf-entry-del{background:none;border:1px solid #dadce0;border-radius:4px;cursor:pointer;color:#5f6368;font-size:11px;padding:2px 6px;font-family:'DM Sans',sans-serif;transition:all .12s;line-height:1.4;}
+.pf-entry-edit:hover{border-color:#1a73e8;color:#1a73e8;background:#e8f0fe;}
+.pf-entry-del:hover{border-color:#d93025;color:#d93025;background:#fce8e6;}
+
+/* ── Chart card ── */
+.pf-chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pf-chart-period-select{border:1.5px solid #1a73e8;background:#fff;color:#1a73e8;border-radius:7px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;}
+.pf-chart-wrap{position:relative;width:100%;overflow:hidden;}
+.pf-chart-canvas{width:100%;display:block;}
+.pf-chart-empty{font-size:13px;color:#5f6368;font-style:italic;text-align:center;padding:24px 0;}
+.pf-chart-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#5f6368;margin-bottom:8px;}
+.pf-chart-legend-dot{width:12px;height:8px;border-radius:2px;background:#a8c7fa;flex-shrink:0;}
+
+/* ════════════════════════════════
+   MOBILE
+════════════════════════════════ */
+@media(max-width:900px){
+  .pf-grid-4{grid-template-columns:1fr 1fr;}
+  .pf-grid-2-1{grid-template-columns:1fr;}
+  .pf-summary{grid-template-columns:repeat(3,1fr);}
+  .pf-entry-actions{opacity:1;}
+  .pl-input,.pl-select{font-size:16px;}
+}
+@media(max-width:480px){
+  .pl-card{padding:12px;}
+  .pl-form{padding:10px 11px;}
+  .pf-cols{grid-template-columns:1fr;} /* stack AM/PM on very small */
+  .pf-summary{grid-template-columns:repeat(3,1fr);}
+  .pl-btn-save,.pl-btn-cancel{font-size:13px;padding:8px;}
+}
+</style>
+
+<div class="pl-wrap">
+
+  <!-- ══ CARD 1: Add Food (foldable, default collapsed) ══ -->
+  <div class="pl-card">
+    <div class="pl-card-title foldable" onclick="pfToggleFold()">
+      Add Food
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;background:#e8f0fe;color:#1a73e8;border-radius:4px;padding:1px 6px;font-weight:600;" id="pf-meal-badge">AM</span>
+        <button class="pl-fold-btn" id="pf-fold-btn"
+                onclick="event.stopPropagation();pfToggleFold()">▸ Show</button>
+      </div>
+    </div>
+    <div class="pl-fold-body collapsed" id="pf-fold">
+      <div class="pl-form">
+
+        <div class="pl-edit-banner" id="pf-edit-banner">
+          ✏️ Editing: <span id="pf-edit-label" style="font-weight:400;"></span>
+          <button class="pl-edit-banner-cancel" onclick="pfCancelEdit()">✕ Cancel</button>
+        </div>
+
+        <!-- Meal time + Food name -->
+        <div class="pf-grid-2" style="margin-bottom:10px;">
+          <div class="pl-field">
+            <label>Meal Time</label>
+            <select class="pl-select" id="pf-meal">
+              <option value="AM">AM (Breakfast / Morning)</option>
+              <option value="PM">PM (Lunch / Dinner / Late)</option>
+            </select>
+          </div>
+          <div class="pl-field">
+            <label>Food Name * <span style="font-weight:400;color:#9aa0a6;text-transform:none;font-size:9px;">type & press Enter or 🔍</span></label>
+            <div class="pf-fname-wrap">
+              <input class="pl-input" id="pf-name" type="text" placeholder='e.g. "chicken breast 100g"'
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();pfSearch();}"
+                     oninput="pfNameInput()"/>
+              <button class="pf-search-icon" onclick="pfSearch()" title="Search">🔍</button>
+              <div class="pf-fname-dropdown" id="pf-dropdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Macros: 4-col desktop, 2-col mobile -->
+        <div class="pf-grid-4">
+          <div class="pl-field"><label>Calories</label><input class="pl-input" id="pf-cal" type="number" placeholder="0" min="0"/></div>
+          <div class="pl-field"><label>Protein (g)</label><input class="pl-input" id="pf-pro" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Carbs (g)</label><input class="pl-input" id="pf-carb" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Fat (g)</label><input class="pl-input" id="pf-fat" type="number" placeholder="0" min="0" step="0.1"/></div>
+        </div>
+
+        <!-- Fiber + Notes -->
+        <div class="pf-grid-2-1">
+          <div class="pl-field"><label>Fiber (g)</label><input class="pl-input" id="pf-fiber" type="number" placeholder="0" min="0" step="0.1"/></div>
+          <div class="pl-field"><label>Notes</label><input class="pl-input" id="pf-notes" type="text" placeholder="Optional"/></div>
+        </div>
+
+        <div class="pl-btn-row">
+          <button class="pl-btn-cancel" onclick="pfClear()">Clear</button>
+          <button class="pl-btn-save" id="pf-save-btn" onclick="pfSave()">Add Food</button>
+        </div>
+        <div class="pl-cal-row">
+          <input type="checkbox" id="pf-cal-chk"/>
+          <label for="pf-cal-chk">Add to Calendar</label>
+          <span class="pl-cal-note">Visibility: Private</span>
+        </div>
+        <div class="pl-status" id="pf-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CARD 2: Today's Food Log ══ -->
+  <div class="pl-card">
+
+    <!-- Summary macros bar -->
+    <div class="pf-summary" id="pf-summary">
+      <div class="pf-sum-item"><div class="pf-sum-val" id="pfs-cal">—</div><div class="pf-sum-lbl">kcal</div></div>
+      <div class="pf-sum-item"><div class="pf-sum-val" id="pfs-pro">—</div><div class="pf-sum-lbl">Protein</div></div>
+      <div class="pf-sum-item"><div class="pf-sum-val" id="pfs-carb">—</div><div class="pf-sum-lbl">Carbs</div></div>
+      <div class="pf-sum-item"><div class="pf-sum-val" id="pfs-fat">—</div><div class="pf-sum-lbl">Fat</div></div>
+      <div class="pf-sum-item"><div class="pf-sum-val" id="pfs-fiber">—</div><div class="pf-sum-lbl">Fiber</div></div>
+    </div>
+
+    <!-- AM / PM 2-column -->
+    <div class="pf-log-header">
+      <span class="pl-card-title" style="margin-bottom:0;">Today's Food Log</span>
+      <span class="pf-log-total" id="pf-log-total">— cal logged</span>
+    </div>
+
+    <div class="pf-cols">
+      <div class="pf-col">
+        <div class="pf-col-header">☀️ AM — Breakfast & Morning</div>
+        <div id="pf-am-list"><div class="pf-col-empty">Nothing logged yet</div></div>
+      </div>
+      <div class="pf-col">
+        <div class="pf-col-header">🌙 PM — Lunch, Dinner & Late</div>
+        <div id="pf-pm-list"><div class="pf-col-empty">Nothing logged yet</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ CARD 3: Calorie Line Chart ══ -->
+  <div class="pl-card">
+    <div class="pf-chart-header">
+      <div class="pl-card-title" style="margin-bottom:0;">Calorie Intake</div>
+      <select class="pf-chart-period-select" id="pf-chart-period" onchange="pfLoadChart()">
+        <option value="weekly">Weekly</option>
+        <option value="monthly" selected>Monthly</option>
+      </select>
+    </div>
+    <div class="pf-chart-legend">
+      <div class="pf-chart-legend-dot"></div>
+      Total Calories per Day
+    </div>
+    <div class="pf-chart-wrap">
+      <canvas id="pf-chart-canvas" class="pf-chart-canvas" height="220"></canvas>
+    </div>
+    <div id="pf-chart-msg" class="pf-chart-empty" style="display:none;">No data for this period.</div>
+  </div>
+
+</div><!-- /pl-wrap -->
+
+<script>
+(function(){
+'use strict';
+
+var BACKEND  = 'https://api.mie.today';
+var _unitPref = localStorage.getItem('mie_unit') || 'metric';
+var _editIdx  = -1;
+var _foodItems = [];
+
+// ── Helpers ──────────────────────────────────────────────────────
+function setStatus(id, msg, type){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'pl-status' + (type ? ' '+type : '');
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function val(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+function setVal(id, v){ var el=document.getElementById(id); if(el) el.value=(v||''); }
+function numVal(id){ return parseFloat(val(id))||null; }
+
+// ── Auto meal time on init ────────────────────────────────────────
+function autoMealTime(){
+  var h = new Date().getHours();
+  var meal = (h>=5 && h<15) ? 'AM' : 'PM';
+  var sel = document.getElementById('pf-meal');
+  if(sel) sel.value = meal;
+  var badge = document.getElementById('pf-meal-badge');
+  if(badge) badge.textContent = meal;
+  if(sel) sel.addEventListener('change', function(){
+    if(badge) badge.textContent = this.value;
+  });
+}
+
+// ── Fold ──────────────────────────────────────────────────────────
+window.pfToggleFold = function(){
+  var body = document.getElementById('pf-fold');
+  var btn  = document.getElementById('pf-fold-btn');
+  if(!body) return;
+  var collapsed = body.classList.contains('collapsed');
+  body.classList.toggle('collapsed', !collapsed);
+  if(btn) btn.textContent = collapsed ? '▾ Hide' : '▸ Show';
+};
+
+// ── Food search ───────────────────────────────────────────────────
+window.pfNameInput = function(){ /* trigger on Enter or icon */ };
+
+window.pfSearch = function(){
+  var q = val('pf-name');
+  if(!q) return;
+  var dd = document.getElementById('pf-dropdown');
+  dd.innerHTML = '<div class="pf-msg">Searching…</div>';
+  dd.classList.add('open');
+
+  fetch(BACKEND+'/api/health/food/search',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({query:q})
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var foods = d.foods || [];
+      dd.innerHTML = '';
+      if(!foods.length){ dd.innerHTML='<div class="pf-msg">No results.</div>'; return; }
+      foods.forEach(function(f){
+        var item = document.createElement('div');
+        item.className = 'pf-result';
+        item.innerHTML =
+          '<div class="pf-result-left">'
+            +'<div class="pf-result-name">'+(f.food_name||'')+'</div>'
+            +'<div class="pf-result-sub">'+(f.brand_name||f.serving_unit||f.source||'')+'</div>'
+          +'</div>'
+          +'<span class="pf-result-cal">'+Math.round(f.calories_kcal||0)+' kcal</span>';
+        item.onclick = function(){
+          pfFill(f);
+          pfCloseDropdown();
+        };
+        dd.appendChild(item);
+      });
+    })
+    .catch(function(){ dd.innerHTML='<div class="pf-msg">Search failed.</div>'; });
+};
+
+function pfFill(f){
+  setVal('pf-name',  f.food_name||'');
+  setVal('pf-cal',   Math.round(f.calories_kcal||0));
+  setVal('pf-pro',   f.protein_g||0);
+  setVal('pf-carb',  f.carbs_g||0);
+  setVal('pf-fat',   f.fat_g||0);
+  setVal('pf-fiber', f.fiber_g||0);
+}
+
+function pfCloseDropdown(){
+  var dd = document.getElementById('pf-dropdown');
+  if(dd){ dd.innerHTML=''; dd.classList.remove('open'); }
+}
+
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('pf-name');
+  if(wrap && !wrap.closest('.pf-fname-wrap').contains(e.target)) pfCloseDropdown();
+});
+
+// ── Clear ─────────────────────────────────────────────────────────
+window.pfClear = function(){
+  ['pf-name','pf-cal','pf-pro','pf-carb','pf-fat','pf-fiber','pf-notes']
+    .forEach(function(id){ setVal(id,''); });
+  pfCloseDropdown();
+  setStatus('pf-status','','');
+};
+
+// ── Cancel edit ───────────────────────────────────────────────────
+window.pfCancelEdit = function(){
+  _editIdx = -1;
+  pfClear();
+  var btn = document.getElementById('pf-save-btn');
+  if(btn) btn.textContent = 'Add Food';
+  var banner = document.getElementById('pf-edit-banner');
+  if(banner) banner.classList.remove('show');
+};
+
+// ── Save ──────────────────────────────────────────────────────────
+window.pfSave = function(){
+  var name = val('pf-name');
+  if(!name){ setStatus('pf-status','Food name is required.','err'); return; }
+
+  var data = {
+    meal_time:     val('pf-meal'),
+    food_name:     name,
+    calories_kcal: numVal('pf-cal')||0,
+    protein_g:     numVal('pf-pro')||0,
+    carbs_g:       numVal('pf-carb')||0,
+    fat_g:         numVal('pf-fat')||0,
+    fiber_g:       numVal('pf-fiber')||0,
+    notes:         val('pf-notes'),
+    source:        'Manual',
+    add_to_calendar: document.getElementById('pf-cal-chk').checked,
+    calendar_visibility: 'private',
+  };
+
+  var btn = document.getElementById('pf-save-btn');
+  if(btn) btn.disabled = true;
+  setStatus('pf-status','Saving…','');
+
+  var endpoint = _editIdx>=0
+    ? BACKEND+'/api/me/health/log/edit'
+    : BACKEND+'/api/me/health/log';
+  var body = _editIdx>=0
+    ? {tab:'food', row_idx:_editIdx, data:data, unit_pref:_unitPref}
+    : {tab:'food', data:data, unit_pref:_unitPref};
+
+  fetch(endpoint,{
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){
+        setStatus('pf-status', _editIdx>=0 ? '✅ Updated!' : '✅ Added!', 'ok');
+        _editIdx = -1;
+        if(btn) btn.textContent = 'Add Food';
+        document.getElementById('pf-edit-banner').classList.remove('show');
+        pfClear();
+        loadData();
+        if(typeof window.refreshOverviewData==='function') window.refreshOverviewData();
+      } else {
+        setStatus('pf-status','❌ '+(d.message||'Error'),'err');
+      }
+    })
+    .catch(function(){ setStatus('pf-status','❌ Network error','err'); })
+    .finally(function(){ if(btn) btn.disabled=false; });
+};
+
+// ── Edit ──────────────────────────────────────────────────────────
+window.pfEdit = function(idx){
+  var f = _foodItems[idx];
+  if(!f) return;
+  _editIdx = idx;
+  setVal('pf-meal',  f.meal_time||'AM');
+  setVal('pf-name',  f.food_name||'');
+  setVal('pf-cal',   f.calories_kcal||'');
+  setVal('pf-pro',   f.protein_g||'');
+  setVal('pf-carb',  f.carbs_g||'');
+  setVal('pf-fat',   f.fat_g||'');
+  setVal('pf-fiber', f.fiber_g||'');
+  setVal('pf-notes', f.notes||'');
+  var badge = document.getElementById('pf-meal-badge');
+  if(badge) badge.textContent = f.meal_time||'AM';
+  var banner = document.getElementById('pf-edit-banner');
+  var label  = document.getElementById('pf-edit-label');
+  if(banner) banner.classList.add('show');
+  if(label)  label.textContent = f.food_name||'';
+  var btn = document.getElementById('pf-save-btn');
+  if(btn) btn.textContent = 'Update Food';
+  // Open fold
+  var fold = document.getElementById('pf-fold');
+  var foldBtn = document.getElementById('pf-fold-btn');
+  if(fold && fold.classList.contains('collapsed')){
+    fold.classList.remove('collapsed');
+    if(foldBtn) foldBtn.textContent = '▾ Hide';
+  }
+  btn.scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+// ── Delete ────────────────────────────────────────────────────────
+window.pfDelete = function(idx){
+  if(!confirm('Delete this food entry?')) return;
+  fetch(BACKEND+'/api/me/health/log/delete',{
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({tab:'food', row_idx:idx})
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){
+        loadData();
+        if(typeof window.refreshOverviewData==='function') window.refreshOverviewData();
+      }
+    })
+    .catch(function(){});
+};
+
+// ── Render food log ───────────────────────────────────────────────
+function renderFoodLog(items, summary){
+  _foodItems = items;
+
+  // Summary bar
+  if(summary){
+    setVal('pfs-cal',  ''); document.getElementById('pfs-cal').textContent  = Math.round(summary.total_calories_kcal||0);
+    document.getElementById('pfs-pro').textContent  = (summary.total_protein_g||0)+'g';
+    document.getElementById('pfs-carb').textContent = (summary.total_carbs_g||0)+'g';
+    document.getElementById('pfs-fat').textContent  = (summary.total_fat_g||0)+'g';
+    document.getElementById('pfs-fiber').textContent= (summary.total_fiber_g||0)+'g';
+  }
+
+  // Total cal
+  var total = items.reduce(function(s,f){ return s+(f.calories_kcal||0); },0);
+  var totalEl = document.getElementById('pf-log-total');
+  if(totalEl) totalEl.textContent = Math.round(total).toLocaleString()+' cal logged';
+
+  // Split AM / PM
+  var am = items.filter(function(f){ return f.meal_time==='AM'; });
+  var pm = items.filter(function(f){ return f.meal_time!=='AM'; });
+
+  renderMealCol('pf-am-list', am, items);
+  renderMealCol('pf-pm-list', pm, items);
+}
+
+function renderMealCol(colId, mealItems, allItems){
+  var el = document.getElementById(colId);
+  if(!el) return;
+  if(!mealItems.length){
+    el.innerHTML = '<div class="pf-col-empty">Nothing logged yet</div>';
+    return;
+  }
+  el.innerHTML = mealItems.map(function(f){
+    var idx = allItems.indexOf(f);
+    var macros = [];
+    if(f.protein_g)  macros.push('P:'+f.protein_g+'g');
+    if(f.carbs_g)    macros.push('C:'+f.carbs_g+'g');
+    if(f.fat_g)      macros.push('F:'+f.fat_g+'g');
+    return '<div class="pf-entry">'
+      +'<div class="pf-entry-left">'
+        +'<div class="pf-entry-name">'+(f.food_name||'')+'</div>'
+        +(macros.length ? '<div class="pf-entry-macros">'+macros.join(' · ')+'</div>' : '')
+      +'</div>'
+      +'<div class="pf-entry-right">'
+        +'<span class="pf-entry-cal">'+Math.round(f.calories_kcal||0)+' cal</span>'
+        +'<div class="pf-entry-actions">'
+          +'<button class="pf-entry-edit" onclick="pfEdit('+idx+')">Edit</button>'
+          +'<button class="pf-entry-del"  onclick="pfDelete('+idx+')">Del</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+// ── Calorie line chart ────────────────────────────────────────────
+var _chartData = [];
+var _chartPeriod = 'monthly';
+
+window.pfLoadChart = function(){
+  _chartPeriod = document.getElementById('pf-chart-period').value;
+  var now = new Date();
+  var date = now.toISOString().slice(0,10);
+
+  fetch(BACKEND+'/api/me/health?date='+date+'&period='+_chartPeriod+'&tab=food',{credentials:'include'})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){
+      if(!d || !d.food || !d.food.length){
+        showChartEmpty();
+        return;
+      }
+      // Aggregate calories by date
+      var byDate = {};
+      d.food.forEach(function(f){
+        var dt = f.stamp_date || todayStr();
+        byDate[dt] = (byDate[dt]||0) + (f.calories_kcal||0);
+      });
+      var dates = Object.keys(byDate).sort();
+      var cals  = dates.map(function(d){ return Math.round(byDate[d]); });
+      _chartData = {dates:dates, cals:cals};
+      drawChart(dates, cals);
+    })
+    .catch(function(){ showChartEmpty(); });
+};
+
+function showChartEmpty(){
+  var canvas = document.getElementById('pf-chart-canvas');
+  var msg    = document.getElementById('pf-chart-msg');
+  if(canvas) canvas.style.display='none';
+  if(msg)    msg.style.display='block';
+}
+
+function drawChart(dates, cals){
+  var canvas = document.getElementById('pf-chart-canvas');
+  var msg    = document.getElementById('pf-chart-msg');
+  if(!canvas) return;
+
+  if(!dates.length){showChartEmpty();return;}
+  canvas.style.display='block';
+  if(msg) msg.style.display='none';
+
+  // Set canvas size
+  var wrap = canvas.parentElement;
+  var W = wrap ? wrap.clientWidth : 600;
+  var H = 220;
+  canvas.width  = W;
+  canvas.height = H;
+
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  var PAD_L=48, PAD_R=16, PAD_T=16, PAD_B=40;
+  var chartW = W - PAD_L - PAD_R;
+  var chartH = H - PAD_T - PAD_B;
+
+  var maxCal = Math.max.apply(null, cals) || 1;
+  // Round up to nearest 500
+  var yMax = Math.ceil(maxCal/500)*500;
+
+  // Grid lines & Y labels
+  ctx.textAlign   = 'right';
+  ctx.textBaseline= 'middle';
+  ctx.font        = '11px DM Sans,sans-serif';
+  ctx.fillStyle   = '#9aa0a6';
+  ctx.strokeStyle = '#f1f3f4';
+  ctx.lineWidth   = 1;
+  var ySteps = 5;
+  for(var i=0;i<=ySteps;i++){
+    var v   = yMax * (ySteps-i) / ySteps;
+    var y   = PAD_T + chartH * i / ySteps;
+    ctx.beginPath();
+    ctx.moveTo(PAD_L, y);
+    ctx.lineTo(PAD_L+chartW, y);
+    ctx.stroke();
+    ctx.fillText(v.toLocaleString(), PAD_L-6, y);
+  }
+
+  // X labels (show every Nth date to avoid crowding)
+  var n = dates.length;
+  var step = n <= 7 ? 1 : n <= 14 ? 2 : n <= 31 ? Math.ceil(n/7) : Math.ceil(n/6);
+  ctx.textAlign   = 'center';
+  ctx.textBaseline= 'top';
+  ctx.fillStyle   = '#9aa0a6';
+  ctx.font        = '10px DM Sans,sans-serif';
+  dates.forEach(function(d,i){
+    if(i % step !== 0 && i !== n-1) return;
+    var x = PAD_L + chartW * i / Math.max(n-1,1);
+    // Show MM-DD
+    ctx.fillText(d.slice(5), x, H-PAD_B+6);
+  });
+
+  // Line + area fill
+  var pts = dates.map(function(d,i){
+    return {
+      x: PAD_L + chartW * i / Math.max(n-1,1),
+      y: PAD_T + chartH * (1 - cals[i]/yMax)
+    };
+  });
+
+  // Gradient fill
+  var grad = ctx.createLinearGradient(0, PAD_T, 0, PAD_T+chartH);
+  grad.addColorStop(0, 'rgba(168,199,250,0.45)');
+  grad.addColorStop(1, 'rgba(168,199,250,0.02)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, PAD_T+chartH);
+  pts.forEach(function(p){ ctx.lineTo(p.x, p.y); });
+  ctx.lineTo(pts[n-1].x, PAD_T+chartH);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#1a73e8';
+  ctx.lineWidth   = 2;
+  ctx.lineJoin    = 'round';
+  pts.forEach(function(p,i){ i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y); });
+  ctx.stroke();
+
+  // Dots
+  pts.forEach(function(p,i){
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#1a73e8';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+  });
+
+  // Tooltip on hover
+  canvas.onmousemove = function(e){
+    var rect = canvas.getBoundingClientRect();
+    var mx   = (e.clientX - rect.left) * (W/rect.width);
+    // Find nearest point
+    var nearest = null, minDist = 999;
+    pts.forEach(function(p,i){
+      var dist = Math.abs(p.x - mx);
+      if(dist < minDist){ minDist=dist; nearest={p:p, i:i}; }
+    });
+    if(nearest && minDist < 40){
+      // Redraw + highlight
+      drawChart(dates, cals);
+      ctx.beginPath();
+      ctx.arc(nearest.p.x, nearest.p.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#1a73e8';
+      ctx.fill();
+      // Tooltip box
+      var label = dates[nearest.i].slice(5) + '  ' + cals[nearest.i].toLocaleString() + ' kcal';
+      ctx.font = 'bold 12px DM Sans,sans-serif';
+      var tw = ctx.measureText(label).width + 16;
+      var tx = Math.min(nearest.p.x - tw/2, W - tw - 4);
+      tx = Math.max(tx, 4);
+      var ty = nearest.p.y - 34;
+      if(ty < 4) ty = nearest.p.y + 10;
+      ctx.fillStyle = 'rgba(32,33,36,0.85)';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(tx,ty,tw,24,5) : ctx.rect(tx,ty,tw,24);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, tx+tw/2, ty+12);
+    }
+  };
+  canvas.onmouseleave = function(){ drawChart(dates, cals); };
+}
+
+// ── Load data ─────────────────────────────────────────────────────
+function loadData(){
+  fetch(BACKEND+'/api/me/health?date='+todayStr()+'&period=daily&tab=food',{credentials:'include'})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){
+      if(d) renderFoodLog(d.food||[], d.summary||null);
+    })
+    .catch(function(){});
+}
+
+// ── Unit pref sync ────────────────────────────────────────────────
+window.plSetUnitPref = function(pref){
+  _unitPref = pref;
+  localStorage.setItem('mie_unit', pref);
+};
+
+// ── Panel init ────────────────────────────────────────────────────
+function init(){
+  autoMealTime();
+  loadData();
+  pfLoadChart();
+}
+
+window.onPanelLoad = function(v){
+  if(v==='food') init();
+};
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
