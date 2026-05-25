@@ -1202,23 +1202,71 @@ function setView(v,btn){
 
 var PANEL_FILE_MAP={food:'panel-logs.html',activity:'panel-logs.html',healthlog:'panel-logs.html',sleep:'panel-logs.html',mood:'panel-logs.html',womens:'panel-logs-womens.html',period:'panel-trackers.html',water:'panel-trackers.html',medication:'panel-trackers.html',insurance:'panel-records.html',medrec:'panel-records.html',history:'panel-records.html',myinfo:'panel-infogoal.html',goals:'panel-infogoal.html'};
 
+// Track which panel file is currently loaded to avoid stale JS
+var _currentPanelFile = null;
+
 function loadPanelContent(v){
   var body=document.getElementById('panel-body');
   if(!body)return;
   var file=PANEL_FILE_MAP[v];
   if(!file){body.innerHTML='<div style="padding:20px;color:#9aa0a6;">Panel coming soon.</div>';return;}
+
+  // ── Clear stale global functions from previous panel ──
+  // Each panel file exports these globals; wipe them before loading new panel
+  // so a stale onPanelLoad from panel-logs.html can't fire when womens loads.
+  var PANEL_GLOBALS = [
+    'onPanelLoad',       // every panel
+    'plSetUnitPref',     // panel-logs
+    'plTab','plToggleFold','plFoodSearch','plFoodNameInput','plFoodFill',
+    'plFoodClear','plFoodSave','plFoodCancelEdit','plEditFood',
+    'plActClear','plActSave','plActCancelEdit','plEditActivity',
+    'plActMETHint','plActAutoCalc','plActStepsToDistance',
+    'plSetDistUnit','plSetWeightUnit','plSetUnitPref',
+    'plSetHealthWeightUnit','plSetHealthHeightUnit','plSetTempUnit',
+    'plVitalsCalc','plVitalsClear','plVitalsSave','plVitalsCancelEdit','plEditVitals',
+    'plCustomToggleForm','plCustomSave','plDelCustom',
+    'plSetQ','plSleepCalc','plSleepClear','plSleepSave','plSleepCancelEdit','plEditSleep',
+    'plSetMood','plSetE','plMoodClear','plMoodSave','plMoodCancelEdit','plEditMood',
+    'plDel',
+    'refreshOverviewData',
+    // womens panel
+    '_wInitDone',
+  ];
+  // Only clear globals when switching to a DIFFERENT file
+  if(_currentPanelFile && _currentPanelFile !== file){
+    PANEL_GLOBALS.forEach(function(fn){
+      try{ window[fn] = undefined; } catch(e){}
+    });
+    // Reset womens init flag so re-opening womens re-initialises properly
+    window._wInitDone = false;
+  }
+  _currentPanelFile = file;
+
   body.innerHTML='<div style="padding:20px;color:#9aa0a6;font-style:italic;">Loading…</div>';
   fetch('/health/'+file+'?v='+Date.now())
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(function(html){
       body.innerHTML=html;
+      // Execute scripts from injected HTML
       var scripts=body.querySelectorAll('script');
-      scripts.forEach(function(oldScript){var newScript=document.createElement('script');if(oldScript.src){newScript.src=oldScript.src;}else{newScript.textContent=oldScript.textContent;}document.head.appendChild(newScript);document.head.removeChild(newScript);});
-      if(typeof window.onPanelLoad==='function')window.onPanelLoad(v);
+      scripts.forEach(function(oldScript){
+        var newScript=document.createElement('script');
+        if(oldScript.src){newScript.src=oldScript.src;}
+        else{newScript.textContent=oldScript.textContent;}
+        document.head.appendChild(newScript);
+        document.head.removeChild(newScript);
+      });
+      // Call the freshly-loaded panel's onPanelLoad
+      // Guard: only call if the function was just registered by THIS panel's script
+      if(typeof window.onPanelLoad==='function'){
+        window.onPanelLoad(v);
+      }
       var pref=unitMetric?'metric':'us';
       if(typeof window.plSetUnitPref==='function')window.plSetUnitPref(pref);
     })
-    .catch(function(err){body.innerHTML='<div style="padding:20px;color:#d93025;">Failed to load panel: '+err.message+'</div>';});
+    .catch(function(err){
+      body.innerHTML='<div style="padding:20px;color:#d93025;">Failed to load panel: '+err.message+'</div>';
+    });
 }
 
 function toggleSidebar(){if(window.innerWidth>900){document.getElementById('task-sidebar').classList.toggle('collapsed');}}
