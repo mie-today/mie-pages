@@ -498,6 +498,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   /* top-row controls */
   .top-row{flex-wrap:wrap;gap:8px;}
   .date-nav{flex-wrap:wrap;gap:4px;}
+  /* Shrink period select on mobile to keep controls on one line */
+  .period-select{font-size:11px;padding:4px 6px;width:52px;min-width:unset;}
   .ytd-btn{display:none;}
 
   /* modals */
@@ -509,7 +511,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#f0f2f5;color:
   .topbar{padding:0 12px;}
   .content-area{padding:6px 6px 20px;}
   .metric-item{flex:0 0 28%;}
-  .period-select{font-size:11px;padding:4px 6px;}
+  .period-select{font-size:11px;padding:4px 6px;width:52px;min-width:unset;}
   .unit-btn{font-size:11px;padding:4px 8px;}
   .add-fab{font-size:11px;padding:4px 10px;}
   .mob-nav-fixed-row,.mob-nav-grid{grid-template-columns:repeat(3,1fr);}
@@ -1248,6 +1250,24 @@ function navigate(mod){window.location.href='/dashboard?mod='+mod;}
 window.refreshOverviewData=function(){};
 
 init();
+
+/* ── Swap period-select labels to D/W/M/Y on mobile ── */
+(function(){
+  var SHORT = { daily:'D', weekly:'W', monthly:'M', yearly:'Y' };
+  var LONG  = { daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly' };
+  function applyPeriodLabels(){
+    var sel = document.getElementById('period-select');
+    if(!sel) return;
+    var isMobile = window.innerWidth <= 900;
+    Array.from(sel.options).forEach(function(opt){
+      var v = opt.value;
+      opt.text = isMobile ? (SHORT[v]||v) : (LONG[v]||v);
+    });
+  }
+  // Run on load and on resize
+  applyPeriodLabels();
+  window.addEventListener('resize', applyPeriodLabels);
+})();
 </script>
 </body>
 </html>
