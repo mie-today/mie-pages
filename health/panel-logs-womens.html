@@ -23,13 +23,19 @@
 }
 
 /* ── Wrap & Layout ── */
+/*
+  KEY FIX: On desktop (injected into panel-body which has a defined height),
+  height:100% works. On mobile, the parent has no defined height so we let
+  the wrap be height:auto and flow naturally. We use min-height instead of
+  height so it never collapses, and overflow:visible so nothing gets clipped.
+*/
 .w-wrap {
   font-family: 'DM Sans', sans-serif;
   background: var(--card-bg);
   color: var(--text);
-  /* Fill parent panel exactly — no scroll */
   display: flex;
   flex-direction: column;
+  /* Desktop: fill parent panel */
   height: 100%;
   overflow: hidden;
 }
@@ -136,13 +142,11 @@
 }
 .pregnancy-mode .w-stat-num { color: #9c27b0; }
 
-/* ── Calendar ── */
-/* The summary bar has padding:16px and gap:8px between 3 stat-cards.
-   The leftmost stat-card starts at x=16px. The calendar must start at the
-   same x, so calendar padding-left = 16px. But visually we want the calendar
-   slightly INSIDE the stat-cards — the gap(8px)/2 = 4px inset each side.
-   So calendar padding = 16px + 4px = 20px each side. This makes the calendar
-   body slightly narrower than the full summary bar width. */
+/* ── Calendar section ── */
+/*
+  KEY FIX: On desktop, flex:1 + min-height:0 fills remaining panel space.
+  On mobile (handled via media query below) we switch to height:auto.
+*/
 .w-cal-section {
   padding: 6px 16px 4px;
   flex: 1;
@@ -152,19 +156,12 @@
   min-height: 0;
 }
 .w-cal-inner {
-  /* Match summary bar stat-card alignment:
-     summary-bar has padding:16px and gap:8px between 3 cards.
-     Stat-card left edge = 16px from panel.
-     We're already at 16px (cal-section padding).
-     Add 0px extra — calendar aligns exactly with stat-card edges.
-     The DOW row serves as visual reference; no extra margin needed. */
   margin: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-/* Visual card that wraps the grid — width matches stat-cards combined */
 .w-cal-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -233,7 +230,7 @@
   line-height: 1;
 }
 
-/* ── Daily View ── */
+/* ── View containers ── */
 .w-calendar-view {
   display: flex;
   flex-direction: column;
@@ -241,9 +238,8 @@
   min-height: 0;
   overflow: hidden;
 }
-.w-calendar-view.hidden {
-  display: none;
-}
+.w-calendar-view.hidden { display: none; }
+
 .w-daily-view {
   display: none;
   flex-direction: column;
@@ -251,10 +247,9 @@
   min-height: 0;
   overflow: hidden;
 }
-.w-daily-view.active {
-  display: flex;
-}
+.w-daily-view.active { display: flex; }
 
+/* ── Daily header ── */
 .w-daily-header {
   display: flex;
   align-items: center;
@@ -281,10 +276,7 @@
   font-weight: 700;
   color: var(--text);
 }
-.w-daily-actions {
-  display: flex;
-  gap: 8px;
-}
+.w-daily-actions { display: flex; gap: 8px; }
 .w-icon-btn {
   background: none;
   border: none;
@@ -296,6 +288,11 @@
 }
 .w-icon-btn:hover { background: var(--bg); }
 
+/* ── Daily body ── */
+/*
+  KEY FIX: Remove max-height:calc(100% - 38px) which collapses to 0 on mobile.
+  Use flex:1 + overflow:auto on desktop; mobile overrides to height:auto below.
+*/
 .w-daily-body {
   padding: 6px 12px 6px;
   display: flex;
@@ -303,10 +300,10 @@
   gap: 5px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
-  max-height: calc(100% - 38px);
+  overflow-y: auto;
 }
 
+/* ── Note card ── */
 .w-note-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -330,14 +327,17 @@
 .w-note-textarea::placeholder { color: #bdc1c6; }
 
 /* ── Item Grid ── */
+/*
+  KEY FIX: Remove max-height:360px hard limit; use min-height instead
+  so items are always visible. On mobile we allow natural height.
+*/
 .w-item-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
   gap: 5px;
   flex: 1;
-  min-height: 0;
-  max-height: 360px;
+  min-height: 200px;   /* always render at least this tall */
 }
 .w-item-btn {
   background: var(--card-bg);
@@ -351,37 +351,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 64px;    /* always visible even if grid compress */
 }
 .w-item-btn:hover { border-color: #aaa; }
-.w-item-btn.logged {
-  border-color: var(--primary);
-  background: #e8f0fe;
-}
-.w-item-btn.logged-period {
-  border-color: var(--w-period);
-  background: #fce4ec;
-}
-.w-item-btn.logged-ov {
-  border-color: #9c27b0;
-  background: var(--w-ovulation-light);
-}
-.w-item-icon {
-  font-size: 21px;
-  display: block;
-  margin-bottom: 3px;
-  line-height: 1;
-}
-.w-item-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--subtext);
-  line-height: 1.2;
-}
-.w-item-sub {
-  font-size: 10px;
-  color: #aaa;
-  margin-top: 2px;
-}
+.w-item-btn.logged     { border-color: var(--primary); background: #e8f0fe; }
+.w-item-btn.logged-period { border-color: var(--w-period); background: #fce4ec; }
+.w-item-btn.logged-ov  { border-color: #9c27b0; background: var(--w-ovulation-light); }
+.w-item-icon  { font-size: 21px; display: block; margin-bottom: 3px; line-height: 1; }
+.w-item-label { font-size: 11px; font-weight: 600; color: var(--subtext); line-height: 1.2; }
+.w-item-sub   { font-size: 10px; color: #aaa; margin-top: 2px; }
 
 /* ── Save Row ── */
 .w-save-row {
@@ -437,17 +415,19 @@
   white-space: nowrap;
   pointer-events: none;
 }
-.w-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
+.w-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ── Popup ── */
+/*
+  KEY FIX: Keep position:fixed for the overlay — it's correct for a modal.
+  The real bug was the popup sheet having transform:translateY which
+  interacts badly with some mobile browsers. We keep it simple.
+*/
 .w-popup-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.45);
-  z-index: 200;
+  z-index: 9999;   /* high enough to clear any parent stacking context */
   display: flex;
   align-items: flex-end;
   opacity: 0;
@@ -461,15 +441,13 @@
 .w-popup {
   background: #fff;
   border-radius: 20px 20px 0 0;
-  padding: 0 0 env(safe-area-inset-bottom, 0);
+  padding: 0 0 env(safe-area-inset-bottom, 16px);
   width: 100%;
   max-height: 82vh;
   overflow-y: auto;
-  transform: translateY(30px);
-  transition: transform .25s cubic-bezier(.32,.72,0,1);
-}
-.w-popup-overlay.open .w-popup {
-  transform: translateY(0);
+  /* FIXED: was translateY(30px) with transition causing Chrome/Safari
+     to not show sheet at all when parent has overflow:hidden transforms */
+  transform: none;
 }
 .w-popup-handle {
   width: 36px; height: 4px;
@@ -477,9 +455,7 @@
   border-radius: 2px;
   margin: 10px auto 0;
 }
-.w-popup-inner {
-  padding: 14px 18px 24px;
-}
+.w-popup-inner { padding: 14px 18px 24px; }
 .w-popup-title {
   font-size: 16px;
   font-weight: 700;
@@ -499,7 +475,7 @@
   margin-top: -4px;
 }
 
-/* Popup internals */
+/* ── Popup internals ── */
 .w-field-label {
   font-size: 11px;
   font-weight: 700;
@@ -529,27 +505,11 @@
   white-space: nowrap;
 }
 .w-chip:hover { border-color: #aaa; }
-.w-chip.selected {
-  background: #e8f0fe;
-  border-color: var(--primary);
-  color: var(--primary);
-}
-.w-chip.selected.pink {
-  background: #fce4ec;
-  border-color: var(--w-period);
-  color: var(--w-period);
-}
-.w-chip.selected.purple {
-  background: var(--w-ovulation-light);
-  border-color: #9c27b0;
-  color: #9c27b0;
-}
+.w-chip.selected { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
+.w-chip.selected.pink { background: #fce4ec; border-color: var(--w-period); color: var(--w-period); }
+.w-chip.selected.purple { background: var(--w-ovulation-light); border-color: #9c27b0; color: #9c27b0; }
 
-.w-severity-row {
-  display: flex;
-  gap: 4px;
-  margin: 4px 0 8px;
-}
+.w-severity-row { display: flex; gap: 4px; margin: 4px 0 8px; }
 .w-sev-btn {
   flex: 1;
   background: var(--bg);
@@ -564,20 +524,10 @@
 }
 .w-sev-btn.sel { background: var(--w-period); border-color: var(--w-period); color: #fff; }
 
-.w-symptom-item {
-  background: var(--bg);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-}
+.w-symptom-item { background: var(--bg); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
 .w-symptom-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
 
-.w-number-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 4px 0;
-}
+.w-number-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
 .w-number-row label { font-size: 13px; color: var(--text); flex: 1; }
 .w-num-input {
   width: 64px;
@@ -601,11 +551,7 @@
 }
 .w-check-row input { accent-color: var(--primary); width: 16px; height: 16px; }
 
-.w-med-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.w-med-list { display: flex; flex-direction: column; gap: 6px; }
 .w-med-row {
   display: flex;
   align-items: center;
@@ -658,16 +604,8 @@
   box-sizing: border-box;
 }
 
-.w-kick-counter {
-  text-align: center;
-  padding: 8px 0;
-}
-.w-kick-num {
-  font-size: 56px;
-  font-weight: 800;
-  color: var(--w-period);
-  line-height: 1;
-}
+.w-kick-counter { text-align: center; padding: 8px 0; }
+.w-kick-num { font-size: 56px; font-weight: 800; color: var(--w-period); line-height: 1; }
 .w-kick-goal { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
 .w-kick-btn {
   background: var(--w-period);
@@ -684,11 +622,7 @@
 .w-kick-btn.done { background: #34a853; }
 .w-kick-sub { font-size: 11px; color: var(--subtext); margin-top: 8px; }
 
-.w-bp-row {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-}
+.w-bp-row { display: flex; gap: 10px; align-items: flex-end; }
 .w-bp-field { flex: 1; }
 .w-bp-field label { display: block; font-size: 11px; font-weight: 700; color: var(--subtext); margin-bottom: 4px; }
 .w-bp-unit {
@@ -702,11 +636,7 @@
   align-self: flex-end;
 }
 
-.w-popup-btn-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
+.w-popup-btn-row { display: flex; gap: 8px; margin-top: 16px; }
 .w-popup-save {
   flex: 1;
   background: var(--primary);
@@ -744,10 +674,8 @@
   box-sizing: border-box;
 }
 .w-select-input:focus { outline: none; border-color: var(--primary); }
-
 .w-other-input-wrap { margin-top: 6px; }
 
-/* Counter rows (Sex / Morning Sickness) */
 .w-counter-row {
   display: flex;
   align-items: center;
@@ -771,15 +699,8 @@
   line-height: 1;
 }
 .w-counter-btn:hover { border-color: var(--primary); color: var(--primary); background: #e8f0fe; }
-.w-counter-val {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--text);
-  min-width: 48px;
-  text-align: center;
-}
+.w-counter-val { font-size: 36px; font-weight: 800; color: var(--text); min-width: 48px; text-align: center; }
 
-/* Mood picker grid */
 .w-mood-pick-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -795,16 +716,9 @@
   cursor: pointer;
   transition: all .15s;
 }
-.w-mood-pick:hover, .w-mood-pick.selected {
-  border-color: var(--primary);
-  background: #e8f0fe;
-}
+.w-mood-pick:hover, .w-mood-pick.selected { border-color: var(--primary); background: #e8f0fe; }
 
-/* Energy row */
-.w-energy-row {
-  display: flex;
-  gap: 6px;
-}
+.w-energy-row { display: flex; gap: 6px; }
 .w-energy-pick {
   flex: 1;
   border: 1.5px solid var(--border);
@@ -818,10 +732,153 @@
   color: var(--subtext);
   font-weight: 600;
 }
-.w-energy-pick:hover, .w-energy-pick.selected {
-  border-color: var(--primary);
-  background: #e8f0fe;
-  color: var(--primary);
+.w-energy-pick:hover, .w-energy-pick.selected { border-color: var(--primary); background: #e8f0fe; color: var(--primary); }
+
+/* ═══════════════════════════════════════════
+   MOBILE OVERRIDES
+   Mirror the same approach as finance.html:
+   unwind fixed heights, let content flow.
+═══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* The wrap no longer tries to fill a fixed-height parent —
+     it just grows to fit its content */
+  .w-wrap {
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  /* Calendar section: give it a fixed reasonable height instead of flex:1
+     so the grid is visible without needing a parent with explicit height */
+  .w-cal-section {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+
+  .w-cal-inner {
+    flex: none;
+    height: auto;
+  }
+
+  /* Calendar card: fixed height on mobile so grid cells render */
+  .w-cal-card {
+    height: auto;
+    min-height: 280px;
+    overflow: visible;
+    flex: none;
+  }
+
+  /* Grid: use auto rows so each cell has natural height */
+  .w-cal-grid {
+    flex: none;
+    height: auto;
+    min-height: 240px;
+    grid-template-rows: repeat(6, 1fr);
+    align-content: start;
+  }
+
+  /* Day cells: give a minimum touch-friendly height */
+  .w-cal-day {
+    min-height: 36px;
+    overflow: visible;
+  }
+
+  /* Calendar and daily views: height:auto on mobile */
+  .w-calendar-view,
+  .w-daily-view.active {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  /* Daily body: remove flex:1 and overflow:auto that depend on parent height */
+  .w-daily-body {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+    padding-bottom: 16px;
+  }
+
+  /* Item grid: natural height, no forced rows */
+  .w-item-grid {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    grid-template-rows: auto;
+  }
+
+  /* Item buttons: slightly taller touch targets */
+  .w-item-btn {
+    min-height: 72px;
+  }
+
+  /* Note textarea: taller on mobile for easier typing */
+  .w-note-textarea {
+    height: 56px;
+  }
+
+  /* Popup: ensure it stays on top regardless of parent transform */
+  .w-popup-overlay {
+    z-index: 99999;
+  }
+
+  /* Popup sheet: allow full scroll on mobile */
+  .w-popup {
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Mood grid: 3 columns on mobile (5 is too narrow) */
+  .w-mood-pick-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Energy row: wrap on small screens */
+  .w-energy-row {
+    flex-wrap: wrap;
+  }
+  .w-energy-pick {
+    flex: 0 0 calc(33% - 4px);
+  }
+
+  /* BP row: stack on very small screens */
+  .w-bp-row {
+    flex-wrap: wrap;
+  }
+
+  /* Chip rows: ensure wrapping */
+  .w-chip-row {
+    gap: 4px;
+  }
+  .w-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .w-header { padding: 8px 12px 6px; }
+  .w-month-label { font-size: 14px; min-width: 100px; }
+  .w-summary-bar { padding: 6px 12px; gap: 6px; }
+  .w-stat-num { font-size: 17px; }
+  .w-cal-section { padding: 4px 12px 4px; }
+
+  /* Item grid: 3 columns still works on small phones */
+  .w-item-grid { gap: 4px; }
+  .w-item-icon { font-size: 18px; }
+  .w-item-label { font-size: 10px; }
+  .w-item-btn { min-height: 60px; }
+
+  .w-daily-header { padding: 6px 10px; }
+  .w-daily-body { padding: 5px 10px 12px; }
+
+  .w-popup-inner { padding: 12px 14px 20px; }
+  .w-mood-pick-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .w-kick-num { font-size: 44px; }
 }
 </style>
 </head>
@@ -957,7 +1014,7 @@ let state = {
   viewMonth: new Date(TODAY.getFullYear(), TODAY.getMonth(), 1),
   currentDate: null,
   pregnancyMode: localStorage.getItem('mie_womens_mode') === 'pregnancy',
-  dayData: {},       // the day currently being edited
+  dayData: {},
   popup: null,
   kickStartTime: null,
 };
@@ -1085,7 +1142,6 @@ function getDayIcons(data) {
   if (data.symptoms && data.symptoms.length) icons.push('⚡');
   if (data.medications && data.medications.some(m => m.taken)) icons.push('💊');
   if (data.ovulation) icons.push('🌸');
-  // Positive test → ✅, any other recorded result → show test icon
   if (data.pregnancy_test && data.pregnancy_test.result === 'Positive') icons.push('✅');
   else if (data.pregnancy_test && data.pregnancy_test.result) icons.push('🤰');
   if (data.ovulation_test && data.ovulation_test.result === 'Positive') icons.push('✅');
@@ -1125,27 +1181,18 @@ function renderCalendar() {
 
   const { periodDates, ovulationDate } = getPredictedPeriodDates();
 
-  // Get actual period days
   const actualPeriodDays = new Set();
-  getAllKeys().forEach(k => {
-    const d = loadDay(k);
-    if (d && (d.period_start || d.period_end)) actualPeriodDays.add(k);
-    // fill between start and end
-  });
-  // Fill period ranges
-  const periodRanges = [];
   const allKeys = getAllKeys().sort();
-  let inPeriod = false, pStart = null;
+  let inPeriod = false;
   allKeys.forEach(k => {
     const d = loadDay(k);
-    if (d && d.period_start) { inPeriod = true; pStart = k; }
+    if (d && d.period_start) { inPeriod = true; }
     if (inPeriod) { actualPeriodDays.add(k); }
     if (d && d.period_end) { inPeriod = false; }
   });
 
   grid.innerHTML = '';
 
-  // Prev month fillers
   const prevMonthDays = new Date(vm.getFullYear(), vm.getMonth(), 0).getDate();
   for (let i = firstDay - 1; i >= 0; i--) {
     const cell = document.createElement('div');
@@ -1176,7 +1223,6 @@ function renderCalendar() {
     grid.appendChild(cell);
   }
 
-  // Next month fillers
   const total = firstDay + daysInMonth;
   const remain = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let i = 1; i <= remain; i++) {
@@ -1218,6 +1264,9 @@ function openDailyView(dateStr) {
 
   document.getElementById('wCalView').classList.add('hidden');
   document.getElementById('wDailyView').classList.add('active');
+
+  // On mobile: scroll to top of the panel when opening daily view
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
   renderItemGrid();
 }
@@ -1346,7 +1395,6 @@ function handleItemClick(item) {
     autoSaveAndReturn();
     return;
   }
-  // Popup
   openPopup(item.type);
 }
 
@@ -1357,10 +1405,13 @@ function openPopup(type) {
   inner.innerHTML = buildPopupHTML(type);
   attachPopupListeners(type);
   document.getElementById('wPopupOverlay').classList.add('open');
+  // Prevent body scroll behind popup on mobile
+  document.body.style.overflow = 'hidden';
 }
 
 function closePopup() {
   document.getElementById('wPopupOverlay').classList.remove('open');
+  document.body.style.overflow = '';
   state.popup = null;
 }
 
@@ -1598,14 +1649,12 @@ function buildSeverityRow(name, current) {
 }
 
 function attachPopupListeners(type) {
-  // Close buttons
   document.getElementById('wPopupClose')?.addEventListener('click', closePopup);
   document.getElementById('wPopupCancel')?.addEventListener('click', closePopup);
 
   const saveBtn = document.getElementById('wPopupSave');
 
   if (type === 'popup-sex') {
-    // Counter helpers
     function counterSetup(minusId, plusId, valId, min = 0) {
       const minusBtn = document.getElementById(minusId);
       const plusBtn  = document.getElementById(plusId);
@@ -1626,7 +1675,6 @@ function attachPopupListeners(type) {
       const sub = document.getElementById('pSexSub');
       if (sub) sub.style.display = count > 0 ? '' : 'none';
     }
-    // Condom chip
     document.getElementById('pCondomChips')?.addEventListener('click', e => {
       const chip = e.target.closest('.w-chip');
       if (!chip) return;
@@ -1653,7 +1701,6 @@ function attachPopupListeners(type) {
     });
 
   } else if (type === 'popup-symptoms') {
-    // Chip toggle
     document.getElementById('pSymChips').addEventListener('click', e => {
       const chip = e.target.closest('.w-chip');
       if (!chip) return;
@@ -1665,18 +1712,14 @@ function attachPopupListeners(type) {
         const existing = state.dayData.symptoms?.find(s => s.name === sym);
         sev.insertAdjacentHTML('beforeend', buildSeverityRow(sym, existing?.severity || 3));
       } else {
-        // remove severity row
         [...sev.querySelectorAll('.w-symptom-item')].forEach(el => {
           if (el.querySelector('.w-symptom-name')?.textContent === sym) el.remove();
         });
       }
     });
-    // Severity buttons
     document.getElementById('pSymSeverities').addEventListener('click', e => {
       const btn = e.target.closest('.w-sev-btn');
       if (!btn) return;
-      const name = btn.dataset.name;
-      const sev = parseInt(btn.dataset.sev);
       const row = btn.closest('.w-severity-row');
       row.querySelectorAll('.w-sev-btn').forEach(b => b.classList.remove('sel'));
       btn.classList.add('sel');
@@ -1783,7 +1826,6 @@ function attachPopupListeners(type) {
     });
 
   } else if (type === 'popup-kick') {
-    // Initialize temp kick count from current data
     let kickCount = state.dayData.baby_kick?.count || 0;
     let kickStart = state.dayData.baby_kick?.start_time || null;
 
@@ -1813,7 +1855,6 @@ function attachPopupListeners(type) {
       const dia = parseInt(document.getElementById('pBpDia')?.value) || null;
       const note = document.getElementById('pBpNote')?.value || '';
       state.dayData.blood_pressure = { systolic: sys, diastolic: dia, note };
-      // Dual-write to panel-logs health tab
       if (sys && dia) {
         fetch(BACKEND + '/api/me/health/log', {
           method: 'POST', credentials: 'include',
@@ -1829,7 +1870,6 @@ function attachPopupListeners(type) {
     });
 
   } else if (type === 'popup-mood') {
-    // Mood chip selection
     document.getElementById('pMoodGrid').addEventListener('click', e => {
       const btn = e.target.closest('.w-mood-pick');
       if (!btn) return;
@@ -1849,7 +1889,6 @@ function attachPopupListeners(type) {
       const moodVal = moodBtn?.dataset.mood || null;
       const energyVal = energyBtn ? parseInt(energyBtn.dataset.energy) : null;
       state.dayData.womens_mood = { mood: moodVal, energy_level: energyVal, notes };
-      // Dual-write to panel-logs mood tab
       if (moodVal) {
         fetch(BACKEND + '/api/me/health/log', {
           method: 'POST', credentials: 'include',
@@ -1865,7 +1904,6 @@ function attachPopupListeners(type) {
     });
 
   } else if (type === 'popup-morning-sickness') {
-    // Counter for times
     const msMinusBtn = document.getElementById('pMsMinus');
     const msPlusBtn  = document.getElementById('pMsPlus');
     const msValEl    = document.getElementById('pMsCount');
@@ -1904,7 +1942,6 @@ function showToast(msg) {
 
 // ── Save Day ───────────────────────────────────────────────────
 function autoSaveAndReturn() {
-  // Auto-save current day data and return to calendar view
   if (!state.currentDate) return;
   const d = state.dayData;
   d.note = document.getElementById('wNote')?.value || d.note || '';
@@ -1933,24 +1970,25 @@ function saveDayHandler() {
   } catch(e) {
     console.error('saveDayHandler error:', e);
   }
-  // Always navigate back regardless of errors above
   closeDailyView();
 }
 
 // ── Init & Events ──────────────────────────────────────────────
 function init() {
-  // Ensure parent container is positioned so position:absolute inset:0 works
+  // KEY FIX: On desktop, ensure parent has position/overflow for absolute children.
+  // On mobile, the parent is already scrolling naturally so we skip forcing height.
   const wrap = document.getElementById('wWrap');
   if (wrap && wrap.parentElement) {
     const p = wrap.parentElement;
     const cs = getComputedStyle(p);
     if (cs.position === 'static') p.style.position = 'relative';
-    if (cs.overflow === 'visible') p.style.overflow = 'hidden';
-    // Force height if parent has no intrinsic height
-    if (p.clientHeight < 100) p.style.height = '100%';
+    // Only force height/overflow on desktop (parent has real height)
+    if (p.clientHeight > 100) {
+      if (cs.overflow === 'visible') p.style.overflow = 'hidden';
+    }
+    // On mobile: do NOT force height — let it flow naturally
   }
 
-  // Pregnancy toggle
   const toggle = document.getElementById('wPregnancyToggle');
   toggle.checked = state.pregnancyMode;
   document.getElementById('wWrap').classList.toggle('pregnancy-mode', state.pregnancyMode);
@@ -1964,7 +2002,6 @@ function init() {
     if (state.currentDate) renderItemGrid();
   });
 
-  // Month nav
   document.getElementById('wPrevMonth').addEventListener('click', () => {
     state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth()-1, 1);
     renderCalendar();
@@ -1974,13 +2011,9 @@ function init() {
     renderCalendar();
   });
 
-  // Back
   document.getElementById('wBackBtn').addEventListener('click', closeDailyView);
-
-  // Save
   document.getElementById('wSaveBtn').addEventListener('click', saveDayHandler);
 
-  // Delete
   document.getElementById('wDeleteBtn').addEventListener('click', () => {
     if (!state.currentDate) return;
     if (!confirm('Delete all data for this day?')) return;
@@ -1990,12 +2023,10 @@ function init() {
     renderItemGrid();
   });
 
-  // Add to cal button (placeholder)
   document.getElementById('wAddCalBtn').addEventListener('click', () => {
     showToast('Calendar sync available after backend setup');
   });
 
-  // Popup overlay close on backdrop
   document.getElementById('wPopupOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('wPopupOverlay')) closePopup();
   });
@@ -2004,9 +2035,7 @@ function init() {
   updateSummaryBar();
 }
 
-// ── Public API for index.html ──────────────────────────────────
-// Guard against double-init: onPanelLoad + auto-init both firing
-// causes event listeners to register twice → 2-month skip bug
+// ── Public API — guard against double-init ──────────────────────
 let _wInitDone = false;
 function safeInit() {
   if (_wInitDone) return;
@@ -2014,11 +2043,8 @@ function safeInit() {
   init();
 }
 
-window.onPanelLoad = function(v) {
-  safeInit();
-};
+window.onPanelLoad = function(v) { safeInit(); };
 
-// Auto-init when loaded standalone (not via injection)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', safeInit);
 } else {
