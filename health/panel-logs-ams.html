@@ -94,13 +94,87 @@
 .pl-notes-wide label{display:block;font-size:11.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
 
 /* ── Sleep bar chart ── */
-.pl-chart{padding:8px 0 4px;}
-.pl-chart-bars{display:flex;gap:3px;align-items:flex-end;height:70px;}
-.pl-chart-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;}
-.pl-chart-bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .3s;}
-.pl-chart-date{font-size:10px;color:#5f6368;}
-.pl-chart-val{font-size:10.5px;font-weight:600;color:#202124;}
-.pl-chart-avg{font-size:12.5px;color:#5f6368;margin-top:5px;text-align:center;}
+.pl-chart { padding: 4px 0; }
+
+/* Scrollable wrapper so 31 bars never squish */
+.pl-chart-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+/* Inner bar area: fixed per-bar width × num days */
+.pl-chart-inner {
+  position: relative;      /* goal line positions against this */
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 80px;            /* bar drawing area only */
+  min-width: 100%;
+}
+
+/* Goal line: absolutely positioned across the bar area */
+.pl-chart-goal-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed #1a73e8;
+  opacity: .55;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Individual bar column */
+.pl-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 0 16px;          /* min 16px wide, grows to fill but has a minimum */
+  max-width: 32px;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The actual coloured bar */
+.pl-chart-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height .3s;
+  position: relative;
+  z-index: 1;
+}
+/* Empty day bar — faint placeholder */
+.pl-chart-bar.empty {
+  background: #f1f3f4 !important;
+  min-height: 2px;
+}
+
+.pl-chart-date { font-size: 10px; color: #9aa0a6; white-space: nowrap; }
+.pl-chart-date.has-data { color: #5f6368; }
+.pl-chart-val  { font-size: 10px; font-weight: 600; color: #202124; white-space: nowrap; min-height: 13px; }
+
+.pl-chart-avg  { font-size: 12px; color: #5f6368; margin-top: 6px; text-align: center; }
+
+/* Legend row */
+.pl-chart-legend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.pl-chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #5f6368;
+}
+.pl-chart-legend-dot {
+  width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+}
 
 /* ══════════════════════════════
    MOBILE
@@ -121,6 +195,8 @@
     -webkit-appearance:none;appearance:none;
     font-size:16px;padding:10px 12px;display:block;box-sizing:border-box !important;
   }
+  .pl-chart-col { flex: 1 0 14px; max-width: 28px; }
+  .pl-chart-date, .pl-chart-val { font-size: 9px; }
 }
 @media(max-width:480px){
   .pl-card{padding:12px;}
@@ -406,6 +482,14 @@ function setStatus(id, msg, type){
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 function val(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
 function setVal(id, v){ var el=document.getElementById(id); if(el) el.value=(v||''); }
+
+// Normalize any stamp_date from the API to YYYY-MM-DD
+// Handles: "2026-05-25", "2026-05-25 21:55:00", "2026-05-25T21:55:00Z", timestamps
+function normDate(s){
+  if(!s) return null;
+  if(typeof s === 'number') return new Date(s).toISOString().slice(0,10);
+  return String(s).slice(0,10);
+}
 
 // ── Section show/hide ────────────────────────────────────────────
 var SECTIONS = ['activity','sleep','mood'];
@@ -765,39 +849,109 @@ function renderSleepLog(items){
 }
 
 function loadSleepChart(){
-  var chartEl=document.getElementById('ps-chart'); if(!chartEl) return;
-  var now=new Date();
+  var chartEl = document.getElementById('ps-chart');
+  if(!chartEl) return;
+
+  var now = new Date();
+  var yearMonth = now.toISOString().slice(0,7); // "YYYY-MM"
+  var daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+
   fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period=monthly&tab=sleep',{credentials:'include'})
-    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
-      var items=d?(d.sleep||[]):[];
-      if(!items.length){ chartEl.innerHTML='<div class="pl-fname-msg">No sleep data this month.</div>'; return; }
-      var byDate={};
-      items.forEach(function(s){ byDate[s.stamp_date]=s; });
-      var days=Object.keys(byDate).sort();
-      var goalHr=_profile&&_profile.goal?(_profile.goal.sleep_goal_hr||8):8;
-      var avg=days.reduce(function(s,d){ return s+(byDate[d].duration_hr||0); },0)/days.length;
-      var bars=days.map(function(d){
-        var hr=byDate[d].duration_hr||0;
-        var pct=Math.min(100,(hr/10)*100);
-        var col=hr>=7?'#34a853':hr>=6?'#fbbc04':'#ea4335';
-        return '<div class="pl-chart-bar-wrap">'
-          +'<div style="height:60px;width:100%;display:flex;align-items:flex-end;">'
-            +'<div class="pl-chart-bar" style="background:'+col+';height:'+pct+'%;width:100%;"></div>'
-          +'</div>'
-          +'<div class="pl-chart-date">'+d.slice(8)+'</div>'
-          +'<div class="pl-chart-val">'+(hr?hr.toFixed(1):'—')+'</div>'
-        +'</div>';
+      var items = d ? (d.sleep || []) : [];
+
+      if(!items.length){
+        chartEl.innerHTML = '<div class="pl-fname-msg">No sleep data this month.</div>';
+        return;
+      }
+
+      // ── 1. Normalize and bucket by date ──────────────────────────
+      // For multiple entries on the same day, keep the longest sleep
+      var byDate = {};
+      items.forEach(function(s){
+        var dateKey = normDate(s.stamp_date);
+        // Only include entries from this month
+        if(!dateKey || dateKey.slice(0,7) !== yearMonth) return;
+        var hr = parseFloat(s.duration_hr) || 0;
+        if(!byDate[dateKey] || hr > (parseFloat(byDate[dateKey].duration_hr)||0)){
+          byDate[dateKey] = s;
+        }
       });
-      var goalPct=Math.min(100,(goalHr/10)*100);
-      chartEl.innerHTML=
-        '<div style="position:relative;">'
-          +'<div style="position:absolute;top:'+(100-goalPct)+'%;width:100%;border-top:1.5px dashed #1a73e8;opacity:.5;pointer-events:none;"></div>'
-          +'<div class="pl-chart-bars">'+bars.join('')+'</div>'
-        +'</div>'
-        +'<div class="pl-chart-avg">Monthly avg: '+avg.toFixed(1)+'h · Goal: '+goalHr+'h</div>';
+
+      var dataDays = Object.keys(byDate).sort();
+      if(!dataDays.length){
+        chartEl.innerHTML = '<div class="pl-fname-msg">No sleep data this month.</div>';
+        return;
+      }
+
+      // ── 2. Goal & scale ──────────────────────────────────────────
+      var goalHr = (_profile && _profile.goal && _profile.goal.sleep_goal_hr)
+        ? parseFloat(_profile.goal.sleep_goal_hr)
+        : (_profile && _profile.goal && _profile.goal.sleep_goal_min)
+          ? parseFloat(_profile.goal.sleep_goal_min) / 60
+          : 8;
+
+      // Scale max: whichever is greater, 10h or (goalHr + 1), so goal line is always visible
+      var scaleMax = Math.max(10, goalHr + 1);
+
+      // ── 3. Average over days that have data ──────────────────────
+      var totalHr = dataDays.reduce(function(s, dk){ return s + (parseFloat(byDate[dk].duration_hr)||0); }, 0);
+      var avgHr   = totalHr / dataDays.length;
+
+      // ── 4. Build full-month scaffold (only up to today) ──────────
+      var todayDay = now.getDate();
+      var maxDay   = Math.min(daysInMonth, todayDay);
+
+      var cols = [];
+      for(var d = 1; d <= maxDay; d++){
+        var dd     = d < 10 ? '0'+d : ''+d;
+        var dateKey = yearMonth + '-' + dd;
+        var entry  = byDate[dateKey] || null;
+        var hr     = entry ? (parseFloat(entry.duration_hr) || 0) : 0;
+        cols.push({ day: d, dateKey: dateKey, hr: hr, hasData: !!entry });
+      }
+
+      // ── 5. Goal line top% within the 80px bar area ───────────────
+      // top = (1 - goalHr/scaleMax) * 100  → percent from top of bar area
+      var goalPct = Math.max(0, Math.min(100, (1 - goalHr / scaleMax) * 100));
+
+      // ── 6. Render ─────────────────────────────────────────────────
+      var barCols = cols.map(function(c){
+        var barPct = c.hasData ? Math.min(100, (c.hr / scaleMax) * 100) : 0;
+        var col    = c.hr >= goalHr ? '#34a853'
+                   : c.hr >= goalHr * 0.75 ? '#fbbc04'
+                   : c.hr > 0 ? '#ea4335'
+                   : '#f1f3f4';
+        var isEmpty = !c.hasData;
+
+        return '<div class="pl-chart-col">'
+          + '<div class="pl-chart-bar' + (isEmpty ? ' empty' : '') + '" '
+          +   'style="height:' + barPct + '%;background:' + col + ';flex-shrink:0;" '
+          +   'title="' + (c.hasData ? c.hr.toFixed(1)+'h' : 'No data') + '"></div>'
+          + '<div class="pl-chart-date' + (c.hasData ? ' has-data' : '') + '">' + c.day + '</div>'
+          + '<div class="pl-chart-val">' + (c.hasData ? c.hr.toFixed(1) : '') + '</div>'
+          + '</div>';
+      }).join('');
+
+      chartEl.innerHTML =
+        '<div class="pl-chart-scroll">'
+          + '<div class="pl-chart-inner" style="height:80px;">'
+            + '<div class="pl-chart-goal-line" style="top:' + goalPct + '%;"></div>'
+            + barCols
+          + '</div>'
+        + '</div>'
+        + '<div class="pl-chart-legend">'
+          + '<div class="pl-chart-legend-item"><div class="pl-chart-legend-dot" style="background:#34a853;"></div>≥ Goal</div>'
+          + '<div class="pl-chart-legend-item"><div class="pl-chart-legend-dot" style="background:#fbbc04;"></div>75%+ of goal</div>'
+          + '<div class="pl-chart-legend-item"><div class="pl-chart-legend-dot" style="background:#ea4335;"></div>Below</div>'
+          + '<div class="pl-chart-legend-item"><div class="pl-chart-legend-dot" style="background:#1a73e8;border-top:2px dashed #1a73e8;height:0;width:16px;border-radius:0;"></div>Goal (' + goalHr + 'h)</div>'
+        + '</div>'
+        + '<div class="pl-chart-avg">Avg this month: ' + avgHr.toFixed(1) + 'h · Goal: ' + goalHr + 'h · ' + dataDays.length + ' day' + (dataDays.length!==1?'s':'') + ' logged</div>';
     })
-    .catch(function(){ chartEl.innerHTML='<div class="pl-fname-msg">Could not load chart.</div>'; });
+    .catch(function(){
+      chartEl.innerHTML = '<div class="pl-fname-msg">Could not load chart.</div>';
+    });
 }
 
 function loadSleep(){
