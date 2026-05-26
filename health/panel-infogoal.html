@@ -1073,20 +1073,43 @@ function pigApplyView(v){
 /* ── Init ────────────────────────────────────────────────────── */
 async function pigInit(v){
   pigState.view = v;
-  pigApplyView(v);
-  pigEl('pig-root').style.display = '';
 
-  // restore unit prefs from localStorage
+  // ── 1. Show UI immediately — never block on API ──────────────
+  // Restore unit prefs synchronously from localStorage first
   try {
     const saved = JSON.parse(localStorage.getItem('mie_health_profile') || '{}');
-    if(saved._heightUnit) { pigState.heightUnit = saved._heightUnit; pigSetPill('pig-pills-height', saved._heightUnit); if(saved._heightUnit==='ft'){pigShow('pig-height-cm',false);pigShow('pig-ftin',true);} }
+    if(saved._heightUnit) {
+      pigState.heightUnit = saved._heightUnit;
+      pigSetPill('pig-pills-height', saved._heightUnit);
+      if(saved._heightUnit === 'ft'){ pigShow('pig-height-cm', false); pigShow('pig-ftin', true); }
+    }
     if(saved._weightUnit) { pigState.weightUnit = saved._weightUnit; pigSetPill('pig-pills-weight', saved._weightUnit); }
     if(saved._targetWeightUnit) { pigState.targetWeightUnit = saved._targetWeightUnit; pigSetPill('pig-pills-target-weight', saved._targetWeightUnit); }
     if(saved._waterUnit) { pigState.waterUnit = saved._waterUnit; pigSetPill('pig-pills-water', saved._waterUnit); }
   } catch{}
 
-  const data = await pigFetchProfile();
-  pigPopulate(data);
+  // Show root + correct card(s) before any async work
+  pigApplyView(v);
+  pigEl('pig-root').style.display = '';
+
+  // ── 2. Populate from localStorage immediately as fallback ────
+  try {
+    const lsRaw = localStorage.getItem('mie_health_profile');
+    if(lsRaw) {
+      const lsData = JSON.parse(lsRaw);
+      // Only populate if it looks like API shape (has baseline key)
+      if(lsData.baseline || lsData.goal) pigPopulate(lsData);
+    }
+  } catch{}
+
+  // ── 3. Fetch from API and update (may override LS values) ────
+  try {
+    const data = await pigFetchProfile();
+    if(data) pigPopulate(data);
+  } catch(e){
+    // Already showing LS data or empty form — silent fail
+    console.warn('pigInit: API fetch failed', e);
+  }
 }
 
 /* ── onPanelLoad entry point (called by health/index.html) ───── */
