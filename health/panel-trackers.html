@@ -396,6 +396,33 @@
   }
   .pt-check-item.disabled input { display: none; }
 
+  /* Records hint */
+  .pt-records-hint {
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pt-records-hint a {
+    color: #1a73e8;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .pt-records-hint a:hover { text-decoration: underline; }
+  .pt-records-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+  }
+
   /* History list */
   .pt-history-list { list-style: none; }
   .pt-history-item {
@@ -477,18 +504,14 @@
   };
   const SCHEDULE_KEYS = ['morning', 'lunch', 'evening', 'bedtime'];
 
-  // Single source of truth for water
   const ptState = {
-    // water
     waterMl: 0,
     waterGoalMl: 2000,
-    waterUnit: 'ml',       // 'ml' | 'floz'
-    waterHistory: [],      // [{date, total_ml}]
-    // medication
-    medList: [],           // available from records
-    todayMeds: [],         // [{med_name, times_per_day, schedule:[], checks:{morning,lunch,evening,bedtime}}]
-    medHistory: [],        // [{date, med_name, completed, total}]
-    // cleanup
+    waterUnit: 'ml',
+    waterHistory: [],
+    medList: [],    // [{ name, dosage, doctor }] — from panel-records
+    todayMeds: [],
+    medHistory: [],
     listeners: [],
   };
 
@@ -521,6 +544,7 @@
   }
 
   function ptListen(el, ev, fn) {
+    if (!el) return;
     el.addEventListener(ev, fn);
     ptState.listeners.push({ el, ev, fn });
   }
@@ -549,7 +573,6 @@
     return res.json();
   }
 
-  /* debounce for checkbox saves */
   function ptDebounce(fn, ms) {
     let t;
     return function (...args) {
@@ -559,79 +582,47 @@
   }
 
   /* ═══════════════════════════════════════
-     CARD FOLD
+     CARD HELPER
   ═══════════════════════════════════════ */
   function ptMakeCard(id, title, bodyHtml) {
-    return `
-      <div class="pt-card" id="ptcard-${id}">
-        <div class="pt-card-header">
-          <h3>${title}</h3>
-        </div>
-        <div class="pt-card-body" id="ptbody-${id}">
-          ${bodyHtml}
-        </div>
-      </div>`;
+    return '<div class="pt-card" id="ptcard-' + id + '">'
+      + '<div class="pt-card-header"><h3>' + title + '</h3></div>'
+      + '<div class="pt-card-body" id="ptbody-' + id + '">' + bodyHtml + '</div>'
+      + '</div>';
   }
-
-  function ptBindFold(root) { /* foldable disabled */ }
 
   /* ═══════════════════════════════════════
      ██ WATER TRACKER
   ═══════════════════════════════════════ */
 
   function ptWaterHtml() {
-    return `
-      <div class="pt-section">
-        <div class="pt-goal-text" id="pt-goal-chip">🎯 Goal: —</div>
-        <div class="pt-unit-toggle">
-          <button class="pt-unit-btn active" data-unit="ml">ml</button>
-          <button class="pt-unit-btn" data-unit="floz">fl oz</button>
-        </div>
-
-        <!-- Cup UI -->
-        <div class="pt-label">Add by cup <span style="color:#9aa0a6;font-weight:400">(1 cup = 250ml)</span></div>
-        <div class="pt-cup-grid" id="pt-cup-grid">
-          ${[...Array(8)].map((_, i) => `
-            <div class="pt-cup" data-cupidx="${i}" role="button" aria-label="Cup ${i+1}">🥛</div>
-          `).join('')}
-        </div>
-
-        <!-- +/- controls -->
-        <div class="pt-amount-ctrl">
-          <button class="pt-amt-btn" id="pt-minus">−</button>
-          <div class="pt-amount-display">
-            <span id="pt-amt-val">0</span><span class="pt-amount-unit" id="pt-amt-unit">ml</span>
-          </div>
-          <button class="pt-amt-btn" id="pt-plus">+</button>
-        </div>
-
-        <!-- Progress -->
-        <div class="pt-progress-wrap">
-          <div class="pt-progress-bar">
-            <div class="pt-progress-fill red" id="pt-prog-fill" style="width:0%"></div>
-          </div>
-          <div class="pt-progress-meta">
-            <span id="pt-prog-cur">0ml</span>
-            <span id="pt-prog-pct">0%</span>
-          </div>
-        </div>
-
-        <button class="pt-btn-primary" id="pt-log-btn">Save</button>
-        <div class="pt-status" id="pt-water-status"></div>
-      </div>
-
-      <hr class="pt-divider">
-
-      <!-- Monthly chart -->
-      <div class="pt-section">
-        <div class="pt-label">This Month's Intake</div>
-        <div class="pt-chart-wrap">
-          <div class="pt-chart" id="pt-water-chart">
-            <div class="pt-skeleton" style="width:100%;height:80px;border-radius:6px"></div>
-          </div>
-        </div>
-      </div>
-    `;
+    return '<div class="pt-section">'
+      + '<div class="pt-goal-text" id="pt-goal-chip">🎯 Goal: —</div>'
+      + '<div class="pt-unit-toggle">'
+      + '<button class="pt-unit-btn active" data-unit="ml">ml</button>'
+      + '<button class="pt-unit-btn" data-unit="floz">fl oz</button>'
+      + '</div>'
+      + '<div class="pt-label">Add by cup <span style="color:#9aa0a6;font-weight:400">(1 cup = 250ml)</span></div>'
+      + '<div class="pt-cup-grid" id="pt-cup-grid">'
+      + [0,1,2,3,4,5,6,7].map(function(i){ return '<div class="pt-cup" data-cupidx="' + i + '" role="button" aria-label="Cup ' + (i+1) + '">🥛</div>'; }).join('')
+      + '</div>'
+      + '<div class="pt-amount-ctrl">'
+      + '<button class="pt-amt-btn" id="pt-minus">−</button>'
+      + '<div class="pt-amount-display"><span id="pt-amt-val">0</span><span class="pt-amount-unit" id="pt-amt-unit">ml</span></div>'
+      + '<button class="pt-amt-btn" id="pt-plus">+</button>'
+      + '</div>'
+      + '<div class="pt-progress-wrap">'
+      + '<div class="pt-progress-bar"><div class="pt-progress-fill red" id="pt-prog-fill" style="width:0%"></div></div>'
+      + '<div class="pt-progress-meta"><span id="pt-prog-cur">0ml</span><span id="pt-prog-pct">0%</span></div>'
+      + '</div>'
+      + '<button class="pt-btn-primary" id="pt-log-btn">Save</button>'
+      + '<div class="pt-status" id="pt-water-status"></div>'
+      + '</div>'
+      + '<hr class="pt-divider">'
+      + '<div class="pt-section">'
+      + '<div class="pt-label">This Month\'s Intake</div>'
+      + '<div class="pt-chart-wrap"><div class="pt-chart" id="pt-water-chart"><div class="pt-skeleton" style="width:100%;height:80px;border-radius:6px"></div></div></div>'
+      + '</div>';
   }
 
   async function ptWaterLoadProfile() {
@@ -639,55 +630,46 @@
       const res = await fetch(API + '/api/me/health/profile', FETCH_OPTS);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      const h = data?.baseline?.height_cm;
-      const w = data?.baseline?.weight_kg;
-      if (h && w) {
-        const total = (h + w) / 100;
-        ptState.waterGoalMl = Math.round(total * 0.5 * 1000);
-      }
-    } catch (e) {
+      const h = data && data.baseline && data.baseline.height_cm;
+      const w = data && data.baseline && data.baseline.weight_kg;
+      if (h && w) ptState.waterGoalMl = Math.round(((h + w) / 100) * 0.5 * 1000);
+    } catch(e) {
       ptState.waterGoalMl = 2000;
     }
     const chip = document.getElementById('pt-goal-chip');
     if (chip) {
       const oz = (ptState.waterGoalMl / 29.5735).toFixed(1);
-      chip.textContent = `🎯 Goal: ${ptState.waterGoalMl}ml / ${oz}oz`;
+      chip.textContent = '🎯 Goal: ' + ptState.waterGoalMl + 'ml / ' + oz + 'oz';
     }
   }
 
   async function ptWaterLoadToday() {
     const today = ptToday();
     try {
-      const res = await fetch(
-        `${API}/api/me/health?tab=water&period=daily&date=${today}`,
-        FETCH_OPTS
-      );
+      const res = await fetch(API + '/api/me/health?tab=water&period=daily&date=' + today, FETCH_OPTS);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      // Expect data.total_ml or data.entries[]
-      const total = data?.total_ml ?? (data?.entries ?? []).reduce((s, e) => s + (e.amount_ml || 0), 0);
+      const entries = (data && data.entries) ? data.entries : [];
+      const total = (data && data.total_ml != null) ? data.total_ml : entries.reduce(function(s,e){ return s + (e.amount_ml||0); }, 0);
       ptState.waterMl = total;
       ptSaveLocal('mie_water_today', { date: today, ml: total });
-    } catch (e) {
+    } catch(e) {
       const local = ptLoadLocal('mie_water_today');
-      ptState.waterMl = (local?.date === today ? local.ml : 0);
+      ptState.waterMl = (local && local.date === today) ? local.ml : 0;
     }
     ptWaterRender();
   }
 
   async function ptWaterLoadHistory() {
     const now = new Date();
-    const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, '0');
-    const monthStr = `${y}-${m}`;
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
     try {
-      const res = await fetch(
-        `${API}/api/me/health?tab=water&period=monthly&date=${monthStr}-01`,
-        FETCH_OPTS
-      );
+      const res = await fetch(API + '/api/me/health?tab=water&period=monthly&date=' + y + '-' + m + '-01', FETCH_OPTS);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      ptState.waterHistory = data?.days ?? data?.entries ?? [];
-    } catch (e) {
+      ptState.waterHistory = (data && data.days) ? data.days : ((data && data.entries) ? data.entries : []);
+    } catch(e) {
       ptState.waterHistory = [];
     }
     ptWaterRenderChart();
@@ -700,142 +682,111 @@
     const pct = goal > 0 ? Math.min(ml / goal, 1) : 0;
     const color = ptGoalColor(ml, goal);
 
-    // Amount display
     const valEl = document.getElementById('pt-amt-val');
     const unitEl = document.getElementById('pt-amt-unit');
-    if (valEl) {
-      valEl.textContent = unit === 'floz' ? (ml / 29.5735).toFixed(1) : ml;
-      unitEl.textContent = unit === 'floz' ? ' fl oz' : ' ml';
-    }
+    if (valEl) valEl.textContent = unit === 'floz' ? (ml / 29.5735).toFixed(1) : ml;
+    if (unitEl) unitEl.textContent = unit === 'floz' ? ' fl oz' : ' ml';
 
-    // Progress bar
     const fill = document.getElementById('pt-prog-fill');
     const cur = document.getElementById('pt-prog-cur');
     const pctEl = document.getElementById('pt-prog-pct');
-    if (fill) {
-      fill.style.width = (pct * 100).toFixed(1) + '%';
-      fill.className = `pt-progress-fill ${color}`;
-    }
+    if (fill) { fill.style.width = (pct * 100).toFixed(1) + '%'; fill.className = 'pt-progress-fill ' + color; }
     if (cur) cur.textContent = ptFmt(ml, unit);
     if (pctEl) pctEl.textContent = Math.round(pct * 100) + '%';
 
-    // Cup grid (1 cup = 250ml)
     const cups = document.querySelectorAll('.pt-cup');
     const filledCups = Math.floor(ml / 250);
-    cups.forEach((cup, i) => {
-      cup.classList.toggle('filled', i < filledCups);
-    });
+    cups.forEach(function(cup, i){ cup.classList.toggle('filled', i < filledCups); });
 
-    // Goal chip
     const chip = document.getElementById('pt-goal-chip');
     if (chip) {
       const oz = (goal / 29.5735).toFixed(1);
-      chip.textContent = `🎯 Goal: ${goal}ml / ${oz}oz`;
+      chip.textContent = '🎯 Goal: ' + goal + 'ml / ' + oz + 'oz';
     }
   }
 
   function ptWaterRenderChart() {
     const chart = document.getElementById('pt-water-chart');
     if (!chart) return;
-
     const goal = ptState.waterGoalMl;
-    const days = ptState.waterHistory;
+    let days = ptState.waterHistory;
 
     if (!days || days.length === 0) {
-      // Generate last 30 days with 0
       const today = new Date();
-      const arr = [];
-      for (let i = 29; i >= 0; i--) {
+      days = [];
+      for (var i = 29; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        arr.push({ date: d.toISOString().split('T')[0], total_ml: 0 });
+        days.push({ date: d.toISOString().split('T')[0], total_ml: 0 });
       }
-      ptState.waterHistory = arr;
+      ptState.waterHistory = days;
     }
 
-    const entries = ptState.waterHistory.slice(-30);
-    const maxMl = Math.max(goal * 1.1, ...entries.map(e => e.total_ml || 0), 100);
-
+    const entries = days.slice(-30);
+    const maxMl = Math.max(goal * 1.1, Math.max.apply(null, entries.map(function(e){ return e.total_ml || 0; })), 100);
     const goalPct = (goal / maxMl) * 100;
 
-    let html = `<div class="pt-chart-goal-line" style="bottom:${goalPct.toFixed(1)}%"></div>`;
-
-    entries.forEach(entry => {
+    var html = '<div class="pt-chart-goal-line" style="bottom:' + goalPct.toFixed(1) + '%"></div>';
+    entries.forEach(function(entry) {
       const ml = entry.total_ml || 0;
       const h = ((ml / maxMl) * 100).toFixed(1);
       const color = ml === 0 ? 'empty' : ptGoalColor(ml, goal);
-      const dateLabel = (entry.date || '').slice(5); // MM-DD
-      html += `
-        <div class="pt-bar-wrap">
-          <div class="pt-bar ${color}" style="height:${h}%" title="${dateLabel}: ${ml}ml"></div>
-          <span class="pt-bar-label">${dateLabel.slice(3)}</span>
-        </div>`;
+      const dateLabel = (entry.date || '').slice(5);
+      html += '<div class="pt-bar-wrap">'
+        + '<div class="pt-bar ' + color + '" style="height:' + h + '%" title="' + dateLabel + ': ' + ml + 'ml"></div>'
+        + '<span class="pt-bar-label">' + dateLabel.slice(3) + '</span>'
+        + '</div>';
     });
-
     chart.innerHTML = html;
   }
 
   function ptWaterBind(root) {
-    // Unit toggle
-    root.querySelectorAll('.pt-unit-btn').forEach(btn => {
-      ptListen(btn, 'click', () => {
-        root.querySelectorAll('.pt-unit-btn').forEach(b => b.classList.remove('active'));
+    root.querySelectorAll('.pt-unit-btn').forEach(function(btn) {
+      ptListen(btn, 'click', function() {
+        root.querySelectorAll('.pt-unit-btn').forEach(function(b){ b.classList.remove('active'); });
         btn.classList.add('active');
         ptState.waterUnit = btn.dataset.unit;
         ptWaterRender();
       });
     });
 
-    // Cup clicks
-    root.querySelectorAll('.pt-cup').forEach(cup => {
-      ptListen(cup, 'click', () => {
+    root.querySelectorAll('.pt-cup').forEach(function(cup) {
+      ptListen(cup, 'click', function() {
         const idx = parseInt(cup.dataset.cupidx, 10);
-        // Toggle: if clicking a filled cup set ml to idx*250, else (idx+1)*250
         const targetMl = cup.classList.contains('filled') ? idx * 250 : (idx + 1) * 250;
         ptState.waterMl = targetMl;
         ptWaterRender();
       });
     });
 
-    // +/- buttons
-    const plusBtn = document.getElementById('pt-plus');
-    const minusBtn = document.getElementById('pt-minus');
-    if (plusBtn) ptListen(plusBtn, 'click', () => {
-      ptState.waterMl += 10;
-      ptWaterRender();
+    ptListen(document.getElementById('pt-plus'), 'click', function() {
+      ptState.waterMl += 10; ptWaterRender();
     });
-    if (minusBtn) ptListen(minusBtn, 'click', () => {
-      ptState.waterMl = Math.max(0, ptState.waterMl - 10);
-      ptWaterRender();
+    ptListen(document.getElementById('pt-minus'), 'click', function() {
+      ptState.waterMl = Math.max(0, ptState.waterMl - 10); ptWaterRender();
     });
 
-    // Log button
-    const logBtn = document.getElementById('pt-log-btn');
-    if (logBtn) ptListen(logBtn, 'click', async () => {
-      logBtn.disabled = true;
+    ptListen(document.getElementById('pt-log-btn'), 'click', async function() {
+      const logBtn = document.getElementById('pt-log-btn');
+      if (logBtn) logBtn.disabled = true;
       ptSetStatus('pt-water-status', 'Saving…', '');
       const ml = ptState.waterMl;
       try {
-        await ptPost({
-          tab: 'water',
-          data: { amount_ml: ml, note: '' },
-          unit_pref: ptState.waterUnit
-        });
-        ptSaveLocal('mie_water_today', { date: ptToday(), ml });
+        await ptPost({ tab: 'water', data: { amount_ml: ml, note: '' }, unit_pref: ptState.waterUnit });
+        ptSaveLocal('mie_water_today', { date: ptToday(), ml: ml });
         ptSetStatus('pt-water-status', '✓ Saved', 'ok');
         await ptWaterLoadHistory();
-      } catch (e) {
-        ptSaveLocal('mie_water_today', { date: ptToday(), ml });
+      } catch(e) {
+        ptSaveLocal('mie_water_today', { date: ptToday(), ml: ml });
         ptSetStatus('pt-water-status', 'Saved offline — will sync later', 'err');
       } finally {
-        logBtn.disabled = false;
+        if (logBtn) logBtn.disabled = false;
       }
     });
   }
 
   async function ptInitWater(root) {
     root.innerHTML = ptMakeCard('water-today', '💧 Today\'s Hydration', ptWaterHtml());
-    ptBindFold(root);
     ptWaterBind(root);
     await ptWaterLoadProfile();
     await ptWaterLoadToday();
@@ -853,95 +804,130 @@
     4: [['morning', 'lunch', 'evening', 'bedtime']],
   };
 
-  function ptMedAddFormHtml(medOptions) {
-    const optHtml = medOptions.map(m => `<option value="${m}">${m}</option>`).join('');
-    return `
-      <div class="pt-section">
-        <div class="pt-med-add-row">
-          <input class="pt-input" id="pt-med-name-input" list="pt-med-list"
-            placeholder="Medication name" autocomplete="off">
-          <datalist id="pt-med-list">${optHtml}</datalist>
+  /* ── KEY FIX: parse records API response correctly ──
+     Records API returns: [{ id, type, data: { name, dosage, doctor, ... } }]
+     Old code used r.name || r.med_name — both always undefined.
+     Fixed: r.data.name is the correct path.
+  ── */
+  async function ptMedLoadRecords() {
+    // 1. Try localStorage first (written by panel-records.html after save)
+    const cached = ptLoadLocal('mie_med_records');
+    if (Array.isArray(cached) && cached.length > 0) {
+      ptState.medList = cached
+        .map(function(r) {
+          if (r && r.data && r.data.name) return { name: r.data.name, dosage: r.data.dosage || '', doctor: r.data.doctor || '' };
+          if (r && r.name) return { name: r.name, dosage: r.dosage || '', doctor: r.doctor || '' };
+          return null;
+        })
+        .filter(Boolean);
+    }
 
-          <select class="pt-select" id="pt-med-freq">
-            <option value="1">1x / day</option>
-            <option value="2">2x / day</option>
-            <option value="3">3x / day</option>
-            <option value="4">4x / day</option>
-          </select>
+    // 2. Fetch fresh from API and merge
+    try {
+      const res = await fetch(API + '/api/me/health/records?type=medication', FETCH_OPTS);
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data && data.records ? data.records : []);
+      const parsed = items
+        .map(function(r) {
+          // Handle { id, data: { name, dosage, ... } } — the shape panel-records.html saves
+          if (r && r.data && r.data.name) return { name: r.data.name, dosage: r.data.dosage || '', doctor: r.data.doctor || '' };
+          // Fallback: flat shape
+          if (r && r.name) return { name: r.name, dosage: r.dosage || '', doctor: r.doctor || '' };
+          // Fallback: plain string
+          if (typeof r === 'string') return { name: r, dosage: '', doctor: '' };
+          return null;
+        })
+        .filter(Boolean);
 
-          <select class="pt-select" id="pt-med-schedule">
-            <option value="morning">Morning</option>
-          </select>
+      if (parsed.length > 0) {
+        ptState.medList = parsed;
+        // Keep localStorage in sync so next load is instant
+        ptSaveLocal('mie_med_records', items);
+      }
+    } catch(e) {
+      console.warn('[pt] medication records fetch failed:', e);
+      // ptState.medList already set from localStorage above
+    }
+  }
 
-          <button class="pt-btn-add" id="pt-med-add-btn">Add</button>
-        </div>
-        <div class="pt-status" id="pt-med-add-status"></div>
-      </div>
-    `;
+  function ptMedAddFormHtml() {
+    const count = ptState.medList.length;
+    const hintHtml = count > 0
+      ? '<div class="pt-records-hint">💊 <span class="pt-records-count">✓ ' + count + ' from Records</span> — type to search or enter a new name</div>'
+      : '<div class="pt-records-hint">No medications in Records yet. <a href="#" onclick="return false;">Add them in Medication Records</a> to auto-suggest here.</div>';
+
+    const optHtml = ptState.medList.map(function(m) {
+      return '<option value="' + m.name + '">' + m.name + (m.dosage ? ' — ' + m.dosage : '') + '</option>';
+    }).join('');
+
+    return '<div class="pt-section">'
+      + hintHtml
+      + '<div class="pt-med-add-row">'
+      + '<input class="pt-input" id="pt-med-name-input" list="pt-med-datalist" placeholder="Medication name" autocomplete="off">'
+      + '<datalist id="pt-med-datalist">' + optHtml + '</datalist>'
+      + '<select class="pt-select" id="pt-med-freq">'
+      + '<option value="1">1x / day</option>'
+      + '<option value="2">2x / day</option>'
+      + '<option value="3">3x / day</option>'
+      + '<option value="4">4x / day</option>'
+      + '</select>'
+      + '<select class="pt-select" id="pt-med-schedule"><option value="morning">Morning</option></select>'
+      + '<button class="pt-btn-add" id="pt-med-add-btn">Add</button>'
+      + '</div>'
+      + '<div class="pt-status" id="pt-med-add-status"></div>'
+      + '</div>';
   }
 
   function ptMedTodayHtml() {
     if (ptState.todayMeds.length === 0) {
-      return `<div class="pt-empty">No medications added yet.<br>Add one above to get started.</div>`;
+      return '<div class="pt-empty">No medications added yet.<br>Add one above to get started.</div>';
     }
-    return ptState.todayMeds.map((med, idx) => {
-      const checked = SCHEDULE_KEYS.filter(k => med.schedule.includes(k) && med.checks[k]).length;
+    return ptState.todayMeds.map(function(med, idx) {
+      const checked = SCHEDULE_KEYS.filter(function(k){ return med.schedule.includes(k) && med.checks[k]; }).length;
       const total = med.schedule.length;
       const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
       const done = checked === total;
-
-      const checkboxes = SCHEDULE_KEYS.map(k => {
-        const active = med.schedule.includes(k);
-        const isChecked = med.checks[k] ? 'checked' : '';
-        return `<label class="pt-check-item ${active ? '' : 'disabled'}">
-          <input type="checkbox" data-medidx="${idx}" data-slot="${k}" ${isChecked} ${active ? '' : 'disabled'}>
-          ${SCHEDULE_LABELS[k]}
-        </label>`;
-      }).join('');
-
       const barColor = done ? 'green' : pct >= 50 ? 'blue' : 'red';
 
-      return `
-        <div class="pt-med-card ${done ? 'done' : ''}" id="ptmed-${idx}">
-          <div class="pt-med-card-header">
-            <div>
-              <div class="pt-med-name">${med.med_name}</div>
-              <div class="pt-med-freq">${med.times_per_day}x daily · ${med.schedule.map(s => SCHEDULE_LABELS[s]).join(', ')}</div>
-            </div>
-            <button class="pt-med-remove" data-medidx="${idx}" title="삭제">✕</button>
-          </div>
-          <div class="pt-checks">${checkboxes}</div>
-          <div class="pt-progress-bar">
-            <div class="pt-progress-fill ${barColor}" style="width:${pct}%"></div>
-          </div>
-          <div class="pt-progress-meta">
-            <span>${checked}/${total} done</span>
-            <span>${pct}%</span>
-          </div>
-        </div>`;
+      const checkboxes = SCHEDULE_KEYS.map(function(k) {
+        const active = med.schedule.includes(k);
+        const isChecked = med.checks[k] ? 'checked' : '';
+        return '<label class="pt-check-item ' + (active ? '' : 'disabled') + '">'
+          + '<input type="checkbox" data-medidx="' + idx + '" data-slot="' + k + '" ' + isChecked + ' ' + (active ? '' : 'disabled') + '>'
+          + SCHEDULE_LABELS[k]
+          + '</label>';
+      }).join('');
+
+      return '<div class="pt-med-card ' + (done ? 'done' : '') + '" id="ptmed-' + idx + '">'
+        + '<div class="pt-med-card-header">'
+        + '<div><div class="pt-med-name">' + med.med_name + '</div>'
+        + '<div class="pt-med-freq">' + med.times_per_day + 'x daily · ' + med.schedule.map(function(s){ return SCHEDULE_LABELS[s]; }).join(', ') + '</div></div>'
+        + '<button class="pt-med-remove" data-medidx="' + idx + '" title="Remove">✕</button>'
+        + '</div>'
+        + '<div class="pt-checks">' + checkboxes + '</div>'
+        + '<div class="pt-progress-bar"><div class="pt-progress-fill ' + barColor + '" style="width:' + pct + '%"></div></div>'
+        + '<div class="pt-progress-meta"><span>' + checked + '/' + total + ' done</span><span>' + pct + '%</span></div>'
+        + '</div>';
     }).join('');
   }
 
   function ptMedHistoryHtml() {
     if (ptState.medHistory.length === 0) {
-      return `<div class="pt-empty">No medication history yet.</div>`;
+      return '<div class="pt-empty">No medication history yet.</div>';
     }
-    const items = ptState.medHistory.slice(0, 20).map(entry => {
-      const ratio = `${entry.completed}/${entry.total}`;
+    const items = ptState.medHistory.slice(0, 20).map(function(entry) {
+      const ratio = entry.completed + '/' + entry.total;
       const isPartial = entry.completed < entry.total;
-      return `
-        <li class="pt-history-item">
-          <div>
-            <div>${entry.med_name}</div>
-            <div class="pt-history-date">${entry.date}</div>
-          </div>
-          <span class="pt-history-badge ${isPartial ? 'partial' : ''}">${ratio} done</span>
-        </li>`;
+      return '<li class="pt-history-item">'
+        + '<div><div>' + entry.med_name + '</div><div class="pt-history-date">' + entry.date + '</div></div>'
+        + '<span class="pt-history-badge ' + (isPartial ? 'partial' : '') + '">' + ratio + ' done</span>'
+        + '</li>';
     }).join('');
-    return `<ul class="pt-history-list">${items}</ul>`;
+    return '<ul class="pt-history-list">' + items + '</ul>';
   }
 
-  function ptMedRenderAll(bodyEl) {
+  function ptMedRenderAll() {
     const today = document.getElementById('pt-med-today-body');
     const hist = document.getElementById('pt-med-hist-body');
     if (today) today.innerHTML = ptMedTodayHtml();
@@ -949,58 +935,45 @@
     ptMedBindChecks();
   }
 
-  const ptSaveCheck = ptDebounce(async function (medIdx, slot, val) {
+  const ptSaveCheck = ptDebounce(async function(medIdx, slot, val) {
     const med = ptState.todayMeds[medIdx];
     if (!med) return;
     try {
-      await ptPost({
-        tab: 'medication',
-        data: {
-          med_name: med.med_name,
-          taken_at: slot,
-          taken: val,
-          date: ptToday()
-        }
-      });
+      await ptPost({ tab: 'medication', data: { med_name: med.med_name, taken_at: slot, taken: val, date: ptToday() } });
       ptSaveLocal('mie_med_today', ptState.todayMeds);
-    } catch (e) {
+    } catch(e) {
       ptSaveLocal('mie_med_today', ptState.todayMeds);
     }
   }, 400);
 
   function ptMedBindChecks() {
-    document.querySelectorAll('[data-medidx][data-slot]').forEach(cb => {
-      ptListen(cb, 'change', (e) => {
+    document.querySelectorAll('[data-medidx][data-slot]').forEach(function(cb) {
+      ptListen(cb, 'change', function() {
         const idx = parseInt(cb.dataset.medidx, 10);
         const slot = cb.dataset.slot;
         ptState.todayMeds[idx].checks[slot] = cb.checked;
         ptSaveLocal('mie_med_today', ptState.todayMeds);
-        // Re-render just this card's progress
+        // Re-render just this card's progress (no full re-render)
         const card = document.getElementById('ptmed-' + idx);
         if (card) {
           const med = ptState.todayMeds[idx];
-          const checked = SCHEDULE_KEYS.filter(k => med.schedule.includes(k) && med.checks[k]).length;
+          const checked = SCHEDULE_KEYS.filter(function(k){ return med.schedule.includes(k) && med.checks[k]; }).length;
           const total = med.schedule.length;
           const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
           const done = checked === total;
           card.classList.toggle('done', done);
           const fill = card.querySelector('.pt-progress-fill');
           const meta = card.querySelectorAll('.pt-progress-meta span');
-          if (fill) {
-            const barColor = done ? 'green' : pct >= 50 ? 'blue' : 'red';
-            fill.className = `pt-progress-fill ${barColor}`;
-            fill.style.width = pct + '%';
-          }
-          if (meta[0]) meta[0].textContent = `${checked}/${total} 완료`;
+          if (fill) { fill.className = 'pt-progress-fill ' + (done ? 'green' : pct >= 50 ? 'blue' : 'red'); fill.style.width = pct + '%'; }
+          if (meta[0]) meta[0].textContent = checked + '/' + total + ' done';
           if (meta[1]) meta[1].textContent = pct + '%';
         }
         ptSaveCheck(idx, slot, cb.checked);
       });
     });
 
-    // Remove buttons
-    document.querySelectorAll('.pt-med-remove').forEach(btn => {
-      ptListen(btn, 'click', () => {
+    document.querySelectorAll('.pt-med-remove').forEach(function(btn) {
+      ptListen(btn, 'click', function() {
         const idx = parseInt(btn.dataset.medidx, 10);
         ptState.todayMeds.splice(idx, 1);
         ptSaveLocal('mie_med_today', ptState.todayMeds);
@@ -1013,120 +986,86 @@
     const sel = document.getElementById('pt-med-schedule');
     if (!sel) return;
     const combos = SCHEDULE_COMBOS[freq] || SCHEDULE_COMBOS[1];
-    sel.innerHTML = combos.map(combo =>
-      `<option value="${combo.join(',')}">${combo.map(k => SCHEDULE_LABELS[k]).join(' + ')}</option>`
-    ).join('');
-  }
-
-  async function ptMedLoadRecords() {
-    try {
-      const res = await fetch(API + '/api/me/health/records?type=medication', FETCH_OPTS);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      ptState.medList = (data?.records || data || []).map(r => r.name || r.med_name || r).filter(Boolean);
-    } catch (e) {
-      ptState.medList = [];
-    }
+    sel.innerHTML = combos.map(function(combo) {
+      return '<option value="' + combo.join(',') + '">' + combo.map(function(k){ return SCHEDULE_LABELS[k]; }).join(' + ') + '</option>';
+    }).join('');
   }
 
   async function ptMedLoadHistory() {
     try {
-      const res = await fetch(
-        `${API}/api/me/health?tab=medication&period=weekly&date=${ptToday()}`,
-        FETCH_OPTS
-      );
+      const res = await fetch(API + '/api/me/health?tab=medication&period=weekly&date=' + ptToday(), FETCH_OPTS);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      ptState.medHistory = data?.entries ?? data?.history ?? [];
-    } catch (e) {
+      ptState.medHistory = (data && data.entries) ? data.entries : ((data && data.history) ? data.history : []);
+    } catch(e) {
       ptState.medHistory = [];
     }
   }
 
   async function ptInitMedication(root) {
+    // Load records first so datalist is populated before render
+    await ptMedLoadRecords();
+
     root.innerHTML =
-      ptMakeCard('med-add', '💊 Add Medication', ptMedAddFormHtml([])) +
+      ptMakeCard('med-add', '💊 Add Medication', ptMedAddFormHtml()) +
       ptMakeCard('med-today', "Today's Doses", '<div id="pt-med-today-body"><div class="pt-skeleton" style="height:60px"></div></div>') +
       ptMakeCard('med-history', 'History (Last 7 Days)', '<div id="pt-med-hist-body"><div class="pt-skeleton"></div></div>');
 
-    ptBindFold(root);
-
-    // Load saved meds from localStorage first
+    // Restore today's meds from localStorage
     const saved = ptLoadLocal('mie_med_today');
     if (Array.isArray(saved)) ptState.todayMeds = saved;
 
-    // Freq change → update schedule options
+    // Freq → schedule options
     const freqSel = document.getElementById('pt-med-freq');
     if (freqSel) {
       ptMedUpdateScheduleOptions(1);
-      ptListen(freqSel, 'change', () => ptMedUpdateScheduleOptions(parseInt(freqSel.value, 10)));
+      ptListen(freqSel, 'change', function(){ ptMedUpdateScheduleOptions(parseInt(freqSel.value, 10)); });
     }
 
     // Add button
-    const addBtn = document.getElementById('pt-med-add-btn');
-    if (addBtn) ptListen(addBtn, 'click', async () => {
+    ptListen(document.getElementById('pt-med-add-btn'), 'click', async function() {
+      const addBtn = document.getElementById('pt-med-add-btn');
       const nameInput = document.getElementById('pt-med-name-input');
-      const freqSel = document.getElementById('pt-med-freq');
-      const schedSel = document.getElementById('pt-med-schedule');
-      const name = (nameInput?.value || '').trim();
-      if (!name) {
-        ptSetStatus('pt-med-add-status', 'Enter a medication name', 'err');
-        return;
-      }
-      const freq = parseInt(freqSel?.value || '1', 10);
-      const schedule = (schedSel?.value || 'morning').split(',');
-      const newMed = {
-        med_name: name,
-        times_per_day: freq,
-        schedule,
-        checks: {}
-      };
-      SCHEDULE_KEYS.forEach(k => { newMed.checks[k] = false; });
-
-      addBtn.disabled = true;
+      const freqEl = document.getElementById('pt-med-freq');
+      const schedEl = document.getElementById('pt-med-schedule');
+      const name = (nameInput && nameInput.value || '').trim();
+      if (!name) { ptSetStatus('pt-med-add-status', 'Enter a medication name', 'err'); return; }
+      const freq = parseInt((freqEl && freqEl.value) || '1', 10);
+      const schedule = ((schedEl && schedEl.value) || 'morning').split(',');
+      const newMed = { med_name: name, times_per_day: freq, schedule: schedule, checks: {} };
+      SCHEDULE_KEYS.forEach(function(k){ newMed.checks[k] = false; });
+      if (addBtn) addBtn.disabled = true;
       ptSetStatus('pt-med-add-status', 'Saving…', '');
       try {
-        await ptPost({
-          tab: 'medication',
-          data: { med_name: name, times_per_day: freq, schedule }
-        });
+        await ptPost({ tab: 'medication', data: { med_name: name, times_per_day: freq, schedule: schedule } });
         ptState.todayMeds.push(newMed);
         ptSaveLocal('mie_med_today', ptState.todayMeds);
         if (nameInput) nameInput.value = '';
         ptSetStatus('pt-med-add-status', '✓ Added', 'ok');
         ptMedRenderAll();
-      } catch (e) {
+      } catch(e) {
         ptState.todayMeds.push(newMed);
         ptSaveLocal('mie_med_today', ptState.todayMeds);
         ptSetStatus('pt-med-add-status', 'Saved offline', 'err');
         ptMedRenderAll();
       } finally {
-        addBtn.disabled = false;
+        if (addBtn) addBtn.disabled = false;
       }
     });
 
-    // Async load
-    await Promise.all([ptMedLoadRecords(), ptMedLoadHistory()]);
-
-    // Update datalist with loaded records
-    const dl = document.getElementById('pt-med-list');
-    if (dl) dl.innerHTML = ptState.medList.map(m => `<option value="${m}">`).join('');
-
+    // Load history async (doesn't block render)
+    ptMedLoadHistory().then(function(){ ptMedRenderAll(); });
     ptMedRenderAll();
   }
 
   /* ═══════════════════════════════════════
      PUBLIC API
   ═══════════════════════════════════════ */
-  window.onPanelLoad = async function (v) {
-    // Cleanup previous listeners to prevent accumulation on revisit
+  window.onPanelLoad = async function(v) {
     ptCleanup();
-
     if (v !== 'water' && v !== 'medication') return;
-
     const root = document.getElementById('pt-root');
     if (!root) return;
-
     if (v === 'water') {
       await ptInitWater(root);
     } else {
@@ -1134,10 +1073,9 @@
     }
   };
 
-  window.plSetUnitPref = function (pref) {
+  window.plSetUnitPref = function(pref) {
     ptState.waterUnit = (pref === 'us') ? 'floz' : 'ml';
-    // Sync toggle buttons if visible
-    document.querySelectorAll('.pt-unit-btn').forEach(btn => {
+    document.querySelectorAll('.pt-unit-btn').forEach(function(btn){
       btn.classList.toggle('active', btn.dataset.unit === ptState.waterUnit);
     });
     ptWaterRender();
