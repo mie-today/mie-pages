@@ -643,20 +643,17 @@
           <button class="pr-btn pr-btn-secondary pr-btn-sm" id="pr-ins-edit-btn">
             ${editMode ? 'Cancel' : 'Edit'}
           </button>
-          ${editMode ? `<button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-ins-save-btn">Save</button>` : ''}
+          ${editMode ? '<button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-ins-save-btn">Save</button>' : ''}
         </div>`;
 
       // Fixed fields
       let fixedHTML = '<div class="pr-fields-grid">';
       INS_FIELDS.forEach(f => {
         const val = data[f.key] || '';
-        fixedHTML += `<div class="pr-field">
-          <span class="pr-label">${f.label}</span>
-          ${editMode
-            ? `<input class="pr-input" id="pr-ins-${f.key}" type="${f.key === 'effective_date' ? 'date' : 'text'}" value="${prEsc(val)}" placeholder="${f.label}">`
-            : `<div class="pr-field-value ${val ? '' : 'pr-empty'}">${val ? prEsc(val) : '—'}</div>`
-          }
-        </div>`;
+        const inputEl = editMode
+          ? '<input class="pr-input" id="pr-ins-' + f.key + '" type="' + (f.key === 'effective_date' ? 'date' : 'text') + '" value="' + prEsc(val) + '" placeholder="' + f.label + '">'
+          : '<div class="pr-field-value ' + (val ? '' : 'pr-empty') + '">' + (val ? prEsc(val) : '—') + '</div>';
+        fixedHTML += '<div class="pr-field"><span class="pr-label">' + f.label + '</span>' + inputEl + '</div>';
       });
       fixedHTML += '</div>';
 
@@ -682,12 +679,10 @@
       }
 
       // Notes
-      const notesHTML = `<hr class="pr-divider">
-        <div class="pr-section-title">Notes</div>
-        ${editMode
-          ? `<textarea class="pr-textarea" id="pr-ins-notes" placeholder="Add any notes about your insurance…">${prEsc(notes)}</textarea>`
-          : `<div class="pr-field-value ${notes ? '' : 'pr-empty'}" style="white-space:pre-wrap;">${notes ? prEsc(notes) : 'No notes added.'}</div>`
-        }`;
+      const notesInput = editMode
+        ? '<textarea class="pr-textarea" id="pr-ins-notes" placeholder="Add any notes about your insurance…">' + prEsc(notes) + '</textarea>'
+        : '<div class="pr-field-value ' + (notes ? '' : 'pr-empty') + '" style="white-space:pre-wrap;">' + (notes ? prEsc(notes) : 'No notes added.') + '</div>';
+      const notesHTML = '<hr class="pr-divider"><div class="pr-section-title">Notes</div>' + notesInput;
 
       root.innerHTML = prMakeCard('🏥', 'Insurance Info',
         fixedHTML + customHTML + notesHTML, headerExtra);
@@ -826,23 +821,22 @@
         listHTML = '<div class="pr-med-list">';
         activeMeds.forEach(m => {
           const d = m.data || {};
-          listHTML += `
-            <div class="pr-med-card" id="pr-med-${m.id}">
-              <div class="pr-med-icon">💊</div>
-              <div class="pr-med-info">
-                <div class="pr-med-name">${prEsc(d.name || 'Unnamed')}</div>
-                <div class="pr-med-meta">
-                  ${d.dosage ? `<span>📐 ${prEsc(d.dosage)}</span>` : ''}
-                  ${d.doctor ? `<span>👨‍⚕️ ${prEsc(d.doctor)}</span>` : ''}
-                  ${d.start_date ? `<span>📅 ${prEsc(d.start_date)}</span>` : ''}
-                </div>
-                ${d.notes ? `<div class="pr-med-notes">${prEsc(d.notes)}</div>` : ''}
-              </div>
-              <div class="pr-med-actions">
-                <button class="pr-btn pr-btn-ghost pr-btn-sm pr-med-edit" data-id="${m.id}" title="Edit">✏️</button>
-                <button class="pr-btn pr-btn-danger-ghost pr-btn-sm pr-med-del" data-id="${m.id}" title="Delete">🗑</button>
-              </div>
-            </div>`;
+          listHTML += '<div class="pr-med-card" id="pr-med-' + m.id + '">'
+          + '<div class="pr-med-icon">💊</div>'
+          + '<div class="pr-med-info">'
+          + '<div class="pr-med-name">' + prEsc(d.name || 'Unnamed') + '</div>'
+          + '<div class="pr-med-meta">'
+          + (d.dosage    ? '<span>📐 ' + prEsc(d.dosage) + '</span>' : '')
+          + (d.doctor    ? '<span>Dr. ' + prEsc(d.doctor) + '</span>' : '')
+          + (d.start_date ? '<span>📅 ' + prEsc(d.start_date) + '</span>' : '')
+          + '</div>'
+          + (d.notes ? '<div class="pr-med-notes">' + prEsc(d.notes) + '</div>' : '')
+          + '</div>'
+          + '<div class="pr-med-actions">'
+          + '<button class="pr-btn pr-btn-ghost pr-btn-sm pr-med-edit" data-id="' + m.id + '" title="Edit">✏️</button>'
+          + '<button class="pr-btn pr-btn-danger-ghost pr-btn-sm pr-med-del" data-id="' + m.id + '" title="Delete">🗑</button>'
+          + '</div>'
+          + '</div>';
         });
         listHTML += '</div>';
       } else {
@@ -1068,7 +1062,7 @@
                   <span class="pr-badge ${badgeCls}">${prEsc(d.event_type || 'Other')}</span>
                   <span class="pr-event-title">${prEsc(d.title || '')}</span>
                 </div>
-                ${d.description ? `<div class="pr-event-desc">${prEsc(d.description)}</div>` : ''}
+                ${d.description ? '<div class="pr-event-desc">' + prEsc(d.description) + '</div>' : ''}
               </div>
               <div class="pr-event-actions">
                 <button class="pr-btn pr-btn-ghost pr-btn-sm pr-ev-edit" data-id="${e.id}" title="Edit">✏️</button>
@@ -1278,11 +1272,22 @@
   ───────────────────────────────────────────── */
   window.onPanelLoad = function(v) {
     console.log('[pr] onPanelLoad called with v =', v);
-    // Guard
-    if (v !== 'insurance' && v !== 'medication' && v !== 'history') {
-      console.warn('[pr] onPanelLoad: invalid v, returning. Got:', v);
+
+    // Normalize aliases from index.html
+    const ALIAS = {
+      'insurance': 'insurance',
+      'medrec':    'medication',
+      'medication':'medication',
+      'history':   'history',
+      'medhistory':'history',
+    };
+    const normalized = ALIAS[v] || null;
+
+    if (!normalized) {
+      console.warn('[pr] onPanelLoad: unrecognized v, returning. Got:', v);
       return;
     }
+    console.log('[pr] normalized to:', normalized);
 
     // Cleanup previous listeners
     prCleanup();
@@ -1294,9 +1299,9 @@
     if (toast) toast.classList.remove('pr-toast-visible');
 
     // Render
-    if (v === 'insurance')  prInitInsurance();
-    if (v === 'medication') prInitMedication();
-    if (v === 'history')    prInitHistory();
+    if (normalized === 'insurance')  prInitInsurance();
+    if (normalized === 'medication') prInitMedication();
+    if (normalized === 'history')    prInitHistory();
   };
 
 })();
