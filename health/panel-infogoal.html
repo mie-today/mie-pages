@@ -263,6 +263,16 @@
 
 /* Empty cell spacer */
 .pig-spacer { visibility: hidden; }
+
+/* Auto-hint label shown below calculated fields */
+.pig-hint {
+  font-size: 10px;
+  color: #1a73e8;
+  margin-top: 2px;
+  min-height: 14px;
+  font-style: italic;
+  letter-spacing: .01em;
+}
 </style>
 </head>
 <body>
@@ -423,7 +433,7 @@
         <!-- Goal Type -->
         <div class="pig-field" id="pig-field-goal-type">
           <span class="pig-label">Goal Type</span>
-          <select class="pig-select" id="pig-goal-type" onchange="pigCalcPace()">
+          <select class="pig-select" id="pig-goal-type" onchange="pigCalcPace();pigCalcGoalHints()">
             <option value="">Select…</option>
             <option value="lose">Lose Weight</option>
             <option value="maintain">Maintain</option>
@@ -453,12 +463,14 @@
         <div class="pig-field" id="pig-field-daily-cal">
           <span class="pig-label">Daily Cal Intake (kcal)</span>
           <input type="number" class="pig-input" id="pig-daily-cal" placeholder="—" min="0">
+          <span class="pig-hint" id="pig-hint-daily-cal"></span>
         </div>
 
         <!-- Daily Exercise Cal -->
         <div class="pig-field" id="pig-field-exercise-cal">
           <span class="pig-label">Daily Exercise Cal (kcal)</span>
           <input type="number" class="pig-input" id="pig-exercise-cal" placeholder="—" min="0">
+          <span class="pig-hint" id="pig-hint-exercise-cal"></span>
         </div>
 
         <!-- Weekly Pace -->
@@ -477,6 +489,7 @@
               <button class="pig-pill" data-unit="floz" onclick="pigSetWaterUnit('floz')">fl oz</button>
             </div>
           </div>
+          <span class="pig-hint" id="pig-hint-water"></span>
         </div>
 
         <!-- Sleep Goal -->
@@ -642,6 +655,7 @@ function pigSetWaterUnit(unit){
   }
   pigState.waterUnit = unit;
   pigSetPill('pig-pills-water', unit);
+  pigCalcGoalHints();
 }
 
 /* ── DOB / Age ───────────────────────────────────────────────── */
@@ -682,6 +696,7 @@ function pigCalcBMR(){
   bmr = Math.round(bmr);
   pigEl('pig-bmr').value = bmr;
   pigEl('pig-tdee').value = activity ? Math.round(bmr * activity) : '';
+  pigCalcGoalHints();
 }
 
 function pigWeightInKg(){
@@ -719,6 +734,7 @@ function pigCalcPace(){
     pace = +pace.toFixed(2);
   }
   pigEl('pig-weekly-pace').value = `${pace > 0 ? '+' : ''}${pace.toFixed(2)} ${unit}/wk`;
+  pigCalcGoalHints();
 }
 
 /* ── Validation ──────────────────────────────────────────────── */
@@ -836,6 +852,7 @@ function pigPopulate(data){
   if(!isNaN(sleepMin) && sleepMin > 0) pigEl('pig-sleep').value = +(sleepMin/60).toFixed(1);
 
   pigCalcPace();
+  pigCalcGoalHints();
 }
 
 /* ── Collect ─────────────────────────────────────────────────── */
@@ -932,7 +949,65 @@ async function pigSaveGoals(){
   }
 }
 
-/* ── Summary ─────────────────────────────────────────────────── */
+/* ── Goal placeholder hints (auto-calc, non-overwriting) ─────── */
+function pigCalcGoalHints(){
+  const tdee      = parseFloat(pigEl('pig-tdee').value) || null;
+  const goalType  = pigEl('pig-goal-type').value;
+  const weightKg  = pigWeightInKg();
+  const targetKg  = pigTargetWeightInKg();
+  const dur       = parseFloat(pigEl('pig-duration').value) || null;
+
+  // ── Daily Cal Intake hint ────────────────────────────────────
+  let calHint = '';
+  if(tdee && goalType){
+    let suggested;
+    if(goalType === 'lose')     suggested = Math.round(tdee - 500);
+    else if(goalType === 'gain') suggested = Math.round(tdee + 400);
+    else                         suggested = Math.round(tdee); // maintain
+    // clamp to safe minimum
+    suggested = Math.max(suggested, 1200);
+    calHint = `Suggested: ${suggested.toLocaleString()} kcal/day`;
+  }
+  pigEl('pig-hint-daily-cal').textContent = calHint;
+  // also update placeholder so it reads naturally when field is empty
+  pigEl('pig-daily-cal').placeholder = calHint ? calHint.replace('Suggested: ','') : '—';
+
+  // ── Daily Exercise Cal hint ──────────────────────────────────
+  // Derived from required weekly deficit/surplus beyond diet alone:
+  // total weekly energy change = diffKg × 7700 kcal
+  // weekly dietary contribution = (tdee − dailyCal) × 7  [but we suggest a split]
+  // Simple heuristic: exercise covers ~30% of the weekly energy gap
+  let exHint = '';
+  if(weightKg && targetKg && dur && tdee && goalType && goalType !== 'maintain'){
+    const totalKcal   = (targetKg - weightKg) * 7700; // signed
+    const weeklyKcal  = totalKcal / (dur * 4.33);
+    // dietary component already covered by 500 kcal deficit above
+    const exercisePart = Math.abs(Math.round(weeklyKcal * 0.3 / 7));
+    if(exercisePart > 0){
+      exHint = `Suggested: ${exercisePart.toLocaleString()} kcal/day`;
+    }
+  } else if(goalType === 'maintain' && tdee){
+    exHint = 'Suggested: 200–400 kcal/day';
+  }
+  pigEl('pig-hint-exercise-cal').textContent = exHint;
+  pigEl('pig-exercise-cal').placeholder = exHint ? exHint.replace('Suggested: ','') : '—';
+
+  // ── Water Goal hint ──────────────────────────────────────────
+  // Standard formula: body weight (kg) × 35 ml/kg
+  let waterHint = '';
+  if(weightKg){
+    const ml = Math.round(weightKg * 35);
+    if(pigState.waterUnit === 'floz'){
+      waterHint = `Suggested: ${pigMlToFloz(ml)} fl oz/day`;
+    } else {
+      waterHint = `Suggested: ${ml.toLocaleString()} ml/day`;
+    }
+  }
+  pigEl('pig-hint-water').textContent = waterHint;
+  pigEl('pig-water').placeholder = waterHint ? waterHint.replace('Suggested: ','') : '—';
+}
+
+
 function pigUpdateSummary(){
   const weightKg = pigWeightInKg();
   const heightCm = parseFloat(pigEl('pig-height-cm').value) || null;
