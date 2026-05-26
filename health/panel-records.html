@@ -444,6 +444,7 @@
   ───────────────────────────────────────────── */
   const prListeners = []; // { el, type, fn }
   function prOn(el, type, fn) {
+    if (!el) { console.warn('[pr] prOn: element is null for event', type); return; }
     el.addEventListener(type, fn);
     prListeners.push({ el, type, fn });
   }
@@ -620,8 +621,16 @@
           data = record.data || {};
           lsSet('mie_insurance', data);
         }
-      } catch {}
-      render(data);
+      } catch (eFetch) {
+        console.warn('[pr] insurance fetch failed, using localStorage:', eFetch);
+      }
+      try {
+        render(data);
+      } catch (eRender) {
+        console.error('[pr] insurance render() threw:', eRender);
+        const rootEl = document.getElementById('pr-root');
+        if (rootEl) rootEl.innerHTML = '<div style="padding:24px;color:#d93025;font-size:13px;">Render error: ' + eRender.message + '</div>';
+      }
     }
 
     function render(data) {
@@ -775,7 +784,9 @@
      MEDICATION
   ═══════════════════════════════════════════ */
   function prInitMedication() {
+    console.log('[pr] prInitMedication() called');
     const root = document.getElementById('pr-root');
+    if (!root) { console.error('[pr] #pr-root not found in DOM'); return; }
     root.innerHTML = '<div style="padding:32px;text-align:center;color:#9aa0a6;font-size:13px;">Loading…</div>';
 
     let meds = []; // [{ id, data }]
@@ -789,10 +800,17 @@
         const items = Array.isArray(res) ? res : (res.records || []);
         meds = items;
         lsSet('mie_med_records', meds);
-      } catch {
+      } catch (eFetch) {
+        console.warn('[pr] medication fetch failed, using localStorage:', eFetch);
         meds = local;
       }
-      render();
+      try {
+        render();
+      } catch (eRender) {
+        console.error('[pr] medication render() threw:', eRender);
+        const rootEl = document.getElementById('pr-root');
+        if (rootEl) rootEl.innerHTML = '<div style="padding:24px;color:#d93025;font-size:13px;">Render error: ' + eRender.message + '</div>';
+      }
     }
 
     function render() {
@@ -1011,11 +1029,18 @@
         } else {
           notes = lsGet('mie_history_notes') || '';
         }
-      } catch {
+      } catch (eFetch) {
+        console.warn('[pr] history fetch failed, using localStorage:', eFetch);
         events = [];
         notes = lsGet('mie_history_notes') || '';
       }
-      render();
+      try {
+        render();
+      } catch (eRender) {
+        console.error('[pr] history render() threw:', eRender);
+        const rootEl = document.getElementById('pr-root');
+        if (rootEl) rootEl.innerHTML = '<div style="padding:24px;color:#d93025;font-size:13px;">Render error: ' + eRender.message + '</div>';
+      }
     }
 
     function render() {
@@ -1252,8 +1277,12 @@
      Public API
   ───────────────────────────────────────────── */
   window.onPanelLoad = function(v) {
+    console.log('[pr] onPanelLoad called with v =', v);
     // Guard
-    if (v !== 'insurance' && v !== 'medication' && v !== 'history') return;
+    if (v !== 'insurance' && v !== 'medication' && v !== 'history') {
+      console.warn('[pr] onPanelLoad: invalid v, returning. Got:', v);
+      return;
+    }
 
     // Cleanup previous listeners
     prCleanup();
