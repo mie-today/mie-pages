@@ -12,7 +12,7 @@
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     color: #202124;
-    padding: 16px;
+    padding: 4px 16px 16px;
     max-width: 720px;
     margin: 0 auto;
   }
@@ -22,14 +22,14 @@
     background: #fff;
     border: 1px solid #e8eaed;
     border-radius: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     overflow: hidden;
   }
   .pt-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
+    padding: 10px 16px;
   }
   .pt-card-header h3 {
     font-size: 15px;
@@ -597,7 +597,6 @@
         </div>
 
         <!-- +/- controls -->
-        <div class="pt-label">직접 입력 (10ml 단위)</div>
         <div class="pt-amount-ctrl">
           <button class="pt-amt-btn" id="pt-minus">−</button>
           <div class="pt-amount-display">
@@ -617,7 +616,1154 @@
           </div>
         </div>
 
-        <button class="pt-btn-primary" id="pt-log-btn">💧 수분 기록하기</button>
+        <button class="pt-btn-primary" id="pt-log-btn">Save</button>
+        <div class="pt-status" id="pt-water-status"></div>
+      </div>
+
+      <hr class="pt-divider">
+
+      <!-- Monthly chart -->
+      <div class="pt-section">
+        <div class="pt-label">이번 달 수분 기록</div>
+        <div class="pt-chart-wrap">
+          <div class="pt-chart" id="pt-water-chart">
+            <div class="pt-skeleton" style="width:100%;height:80px;border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function ptWaterLoadProfile() {
+    try {
+      const res = await fetch(API + '/api/me/health/profile', FETCH_OPTS);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const h = data?.baseline?.height_cm;
+      const w = data?.baseline?.weight_kg;
+      if (h && w) {
+        const total = (h + w) / 100;
+        ptState.waterGoalMl = Math.round(total * 0.5 * 1000);
+      }
+    } catch (e) {
+      ptState.waterGoalMl = 2000;
+    }
+    const chip = document.getElementById('pt-goal-chip');
+    if (chip) {
+      const oz = (ptState.waterGoalMl / 29.5735).toFixed(1);
+      chip.textContent = `🎯 Goal: ${ptState.waterGoalMl}ml / ${oz}oz`;
+    }
+  }
+
+  async function ptWaterLoadToday() {
+    const today = ptToday();
+    try {
+      const res = await fetch(
+        `${API}/api/me/health?tab=water&period=daily&date=${today}`,
+        FETCH_OPTS
+      );
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      // Expect data.total_ml or data.entries[]
+      const total = data?.total_ml ?? (data?.entries ?? []).reduce((s, e) => s + (e.amount_ml || 0), 0);
+      ptState.waterMl = total;
+      ptSaveLocal('mie_water_today', { date: today, ml: total });
+    } catch (e) {
+      const local = ptLoadLocal('mie_water_today');
+      ptState.waterMl = (local?.date === today ? local.ml : 0);
+    }
+    ptWaterRender();
+  }
+
+  async function ptWaterLoadHistory() {
+    const now = new Date();
+    const y = now.getFullYear(), m = String(now.getMonth() + 1).padStart(2, '0');
+    const monthStr = `${y}-${m}`;
+    try {
+      const res = await fetch(
+        `${API}/api/me/health?tab=water&period=monthly&date=${monthStr}-01`,
+        FETCH_OPTS
+      );
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      ptState.waterHistory = data?.days ?? data?.entries ?? [];
+    } catch (e) {
+      ptState.waterHistory = [];
+    }
+    ptWaterRenderChart();
+  }
+
+  function ptWaterRender() {
+    const ml = ptState.waterMl;
+    const goal = ptState.waterGoalMl;
+    const unit = ptState.waterUnit;
+    const pct = goal > 0 ? Math.min(ml / goal, 1) : 0;
+    const color = ptGoalColor(ml, goal);
+
+    // Amount display
+    const valEl = document.getElementById('pt-amt-val');
+    const unitEl = document.getElementById('pt-amt-unit');
+    if (valEl) {
+      valEl.textContent = unit === 'floz' ? (ml / 29.5735).toFixed(1) : ml;
+      unitEl.textContent = unit === 'floz' ? ' fl oz' : ' ml';
+    }
+
+    // Progress bar
+    const fill = document.getElementById('pt-prog-fill');
+    const cur = document.getElementById('pt-prog-cur');
+    const pctEl = document.getElementById('pt-prog-pct');
+    if (fill) {
+      fill.style.width = (pct * 100).toFixed(1) + '%';
+      fill.className = `pt-progress-fill ${color}`;
+    }
+    if (cur) cur.textContent = ptFmt(ml, unit);
+    if (pctEl) pctEl.textContent = Math.round(pct * 100) + '%';
+
+    // Cup grid (1 cup = 250ml)
+    const cups = document.querySelectorAll('.pt-cup');
+    const filledCups = Math.floor(ml / 250);
+    cups.forEach((cup, i) => {
+      cup.classList.toggle('filled', i < filledCups);
+    });
+
+    // Goal chip
+    const chip = document.getElementById('pt-goal-chip');
+    if (chip) {
+      const oz = (goal / 29.5735).toFixed(1);
+      chip.textContent = `🎯 Goal: ${goal}ml / ${oz}oz`;
+    }
+  }
+
+  function ptWaterRenderChart() {
+    const chart = document.getElementById('pt-water-chart');
+    if (!chart) return;
+
+    const goal = ptState.waterGoalMl;
+    const days = ptState.waterHistory;
+
+    if (!days || days.length === 0) {
+      // Generate last 30 days with 0
+      const today = new Date();
+      const arr = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        arr.push({ date: d.toISOString().split('T')[0], total_ml: 0 });
+      }
+      ptState.waterHistory = arr;
+    }
+
+    const entries = ptState.waterHistory.slice(-30);
+    const maxMl = Math.max(goal * 1.1, ...entries.map(e => e.total_ml || 0), 100);
+
+    const goalPct = (goal / maxMl) * 100;
+
+    let html = `<div class="pt-chart-goal-line" style="bottom:${goalPct.toFixed(1)}%"></div>`;
+
+    entries.forEach(entry => {
+      const ml = entry.total_ml || 0;
+      const h = ((ml / maxMl) * 100).toFixed(1);
+      const color = ml === 0 ? 'empty' : ptGoalColor(ml, goal);
+      const dateLabel = (entry.date || '').slice(5); // MM-DD
+      html += `
+        <div class="pt-bar-wrap">
+          <div class="pt-bar ${color}" style="height:${h}%" title="${dateLabel}: ${ml}ml"></div>
+          <span class="pt-bar-label">${dateLabel.slice(3)}</span>
+        </div>`;
+    });
+
+    chart.innerHTML = html;
+  }
+
+  function ptWaterBind(root) {
+    // Unit toggle
+    root.querySelectorAll('.pt-unit-btn').forEach(btn => {
+      ptListen(btn, 'click', () => {
+        root.querySelectorAll('.pt-unit-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        ptState.waterUnit = btn.dataset.unit;
+        ptWaterRender();
+      });
+    });
+
+    // Cup clicks
+    root.querySelectorAll('.pt-cup').forEach(cup => {
+      ptListen(cup, 'click', () => {
+        const idx = parseInt(cup.dataset.cupidx, 10);
+        // Toggle: if clicking a filled cup set ml to idx*250, else (idx+1)*250
+        const targetMl = cup.classList.contains('filled') ? idx * 250 : (idx + 1) * 250;
+        ptState.waterMl = targetMl;
+        ptWaterRender();
+      });
+    });
+
+    // +/- buttons
+    const plusBtn = document.getElementById('pt-plus');
+    const minusBtn = document.getElementById('pt-minus');
+    if (plusBtn) ptListen(plusBtn, 'click', () => {
+      ptState.waterMl += 10;
+      ptWaterRender();
+    });
+    if (minusBtn) ptListen(minusBtn, 'click', () => {
+      ptState.waterMl = Math.max(0, ptState.waterMl - 10);
+      ptWaterRender();
+    });
+
+    // Log button
+    const logBtn = document.getElementById('pt-log-btn');
+    if (logBtn) ptListen(logBtn, 'click', async () => {
+      logBtn.disabled = true;
+      ptSetStatus('pt-water-status', '저장 중…', '');
+      const ml = ptState.waterMl;
+      try {
+        await ptPost({
+          tab: 'water',
+          data: { amount_ml: ml, note: '' },
+          unit_pref: ptState.waterUnit
+        });
+        ptSaveLocal('mie_water_today', { date: ptToday(), ml });
+        ptSetStatus('pt-water-status', '✓ 저장됐습니다', 'ok');
+        await ptWaterLoadHistory();
+      } catch (e) {
+        ptSaveLocal('mie_water_today', { date: ptToday(), ml });
+        ptSetStatus('pt-water-status', '오프라인 저장됨 — 나중에 동기화됩니다', 'err');
+      } finally {
+        logBtn.disabled = false;
+      }
+    });
+  }
+
+  async function ptInitWater(root) {
+    root.innerHTML = ptMakeCard('water-today', '💧 Today\'s Hydration', ptWaterHtml());
+    ptBindFold(root);
+    ptWaterBind(root);
+    await ptWaterLoadProfile();
+    await ptWaterLoadToday();
+    await ptWaterLoadHistory();
+  }
+
+  /* ═══════════════════════════════════════
+     ██ MEDICATION TRACKER
+  ═══════════════════════════════════════ */
+
+  const SCHEDULE_COMBOS = {
+    1: [['morning'], ['lunch'], ['evening'], ['bedtime']],
+    2: [['morning', 'evening'], ['morning', 'lunch'], ['lunch', 'evening']],
+    3: [['morning', 'lunch', 'evening']],
+    4: [['morning', 'lunch', 'evening', 'bedtime']],
+  };
+
+  function ptMedAddFormHtml(medOptions) {
+    const optHtml = medOptions.map(m => `<option value="${m}">${m}</option>`).join('');
+    return `
+      <div class="pt-section">
+        <div class="pt-label">약 추가</div>
+        <div class="pt-med-add-row">
+          <input class="pt-input" id="pt-med-name-input" list="pt-med-list"
+            placeholder="약 이름 입력 또는 선택" autocomplete="off">
+          <datalist id="pt-med-list">${optHtml}</datalist>
+
+          <select class="pt-select" id="pt-med-freq">
+            <option value="1">1회/일</option>
+            <option value="2">2회/일</option>
+            <option value="3">3회/일</option>
+            <option value="4">4회/일</option>
+          </select>
+
+          <select class="pt-select" id="pt-med-schedule">
+            <option value="morning">아침</option>
+          </select>
+
+          <button class="pt-btn-add" id="pt-med-add-btn">추가</button>
+        </div>
+        <div class="pt-status" id="pt-med-add-status"></div>
+      </div>
+    `;
+  }
+
+  function ptMedTodayHtml() {
+    if (ptState.todayMeds.length === 0) {
+      return `<div class="pt-empty">등록된 약이 없습니다.<br>위에서 약을 추가하세요.</div>`;
+    }
+    return ptState.todayMeds.map((med, idx) => {
+      const checked = SCHEDULE_KEYS.filter(k => med.schedule.includes(k) && med.checks[k]).length;
+      const total = med.schedule.length;
+      const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+      const done = checked === total;
+
+      const checkboxes = SCHEDULE_KEYS.map(k => {
+        const active = med.schedule.includes(k);
+        const isChecked = med.checks[k] ? 'checked' : '';
+        return `<label class="pt-check-item ${active ? '' : 'disabled'}">
+          <input type="checkbox" data-medidx="${idx}" data-slot="${k}" ${isChecked} ${active ? '' : 'disabled'}>
+          ${SCHEDULE_LABELS[k]}
+        </label>`;
+      }).join('');
+
+      const barColor = done ? 'green' : pct >= 50 ? 'blue' : 'red';
+
+      return `
+        <div class="pt-med-card ${done ? 'done' : ''}" id="ptmed-${idx}">
+          <div class="pt-med-card-header">
+            <div>
+              <div class="pt-med-name">${med.med_name}</div>
+              <div class="pt-med-freq">1일 ${med.times_per_day}회 · ${med.schedule.map(s => SCHEDULE_LABELS[s]).join(', ')}</div>
+            </div>
+            <button class="pt-med-remove" data-medidx="${idx}" title="삭제">✕</button>
+          </div>
+          <div class="pt-checks">${checkboxes}</div>
+          <div class="pt-progress-bar">
+            <div class="pt-progress-fill ${barColor}" style="width:${pct}%"></div>
+          </div>
+          <div class="pt-progress-meta">
+            <span>${checked}/${total} 완료</span>
+            <span>${pct}%</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function ptMedHistoryHtml() {
+    if (ptState.medHistory.length === 0) {
+      return `<div class="pt-empty">복용 이력이 없습니다.</div>`;
+    }
+    const items = ptState.medHistory.slice(0, 20).map(entry => {
+      const ratio = `${entry.completed}/${entry.total}`;
+      const isPartial = entry.completed < entry.total;
+      return `
+        <li class="pt-history-item">
+          <div>
+            <div>${entry.med_name}</div>
+            <div class="pt-history-date">${entry.date}</div>
+          </div>
+          <span class="pt-history-badge ${isPartial ? 'partial' : ''}">${ratio} 완료</span>
+        </li>`;
+    }).join('');
+    return `<ul class="pt-history-list">${items}</ul>`;
+  }
+
+  function ptMedRenderAll(bodyEl) {
+    const today = document.getElementById('pt-med-today-body');
+    const hist = document.getElementById('pt-med-hist-body');
+    if (today) today.innerHTML = ptMedTodayHtml();
+    if (hist) hist.innerHTML = ptMedHistoryHtml();
+    ptMedBindChecks();
+  }
+
+  const ptSaveCheck = ptDebounce(async function (medIdx, slot, val) {
+    const med = ptState.todayMeds[medIdx];
+    if (!med) return;
+    try {
+      await ptPost({
+        tab: 'medication',
+        data: {
+          med_name: med.med_name,
+          taken_at: slot,
+          taken: val,
+          date: ptToday()
+        }
+      });
+      ptSaveLocal('mie_med_today', ptState.todayMeds);
+    } catch (e) {
+      ptSaveLocal('mie_med_today', ptState.todayMeds);
+    }
+  }, 400);
+
+  function ptMedBindChecks() {
+    document.querySelectorAll('[data-medidx][data-slot]').forEach(cb => {
+      ptListen(cb, 'change', (e) => {
+        const idx = parseInt(cb.dataset.medidx, 10);
+        const slot = cb.dataset.slot;
+        ptState.todayMeds[idx].checks[slot] = cb.checked;
+        ptSaveLocal('mie_med_today', ptState.todayMeds);
+        // Re-render just this card's progress
+        const card = document.getElementById('ptmed-' + idx);
+        if (card) {
+          const med = ptState.todayMeds[idx];
+          const checked = SCHEDULE_KEYS.filter(k => med.schedule.includes(k) && med.checks[k]).length;
+          const total = med.schedule.length;
+          const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+          const done = checked === total;
+          card.classList.toggle('done', done);
+          const fill = card.querySelector('.pt-progress-fill');
+          const meta = card.querySelectorAll('.pt-progress-meta span');
+          if (fill) {
+            const barColor = done ? 'green' : pct >= 50 ? 'blue' : 'red';
+            fill.className = `pt-progress-fill ${barColor}`;
+            fill.style.width = pct + '%';
+          }
+          if (meta[0]) meta[0].textContent = `${checked}/${total} 완료`;
+          if (meta[1]) meta[1].textContent = pct + '%';
+        }
+        ptSaveCheck(idx, slot, cb.checked);
+      });
+    });
+
+    // Remove buttons
+    document.querySelectorAll('.pt-med-remove').forEach(btn => {
+      ptListen(btn, 'click', () => {
+        const idx = parseInt(btn.dataset.medidx, 10);
+        ptState.todayMeds.splice(idx, 1);
+        ptSaveLocal('mie_med_today', ptState.todayMeds);
+        ptMedRenderAll();
+      });
+    });
+  }
+
+  function ptMedUpdateScheduleOptions(freq) {
+    const sel = document.getElementById('pt-med-schedule');
+    if (!sel) return;
+    const combos = SCHEDULE_COMBOS[freq] || SCHEDULE_COMBOS[1];
+    sel.innerHTML = combos.map(combo =>
+      `<option value="${combo.join(',')}">${combo.map(k => SCHEDULE_LABELS[k]).join(' + ')}</option>`
+    ).join('');
+  }
+
+  async function ptMedLoadRecords() {
+    try {
+      const res = await fetch(API + '/api/me/health/records?type=medication', FETCH_OPTS);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      ptState.medList = (data?.records || data || []).map(r => r.name || r.med_name || r).filter(Boolean);
+    } catch (e) {
+      ptState.medList = [];
+    }
+  }
+
+  async function ptMedLoadHistory() {
+    try {
+      const res = await fetch(
+        `${API}/api/me/health?tab=medication&period=weekly&date=${ptToday()}`,
+        FETCH_OPTS
+      );
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      ptState.medHistory = data?.entries ?? data?.history ?? [];
+    } catch (e) {
+      ptState.medHistory = [];
+    }
+  }
+
+  async function ptInitMedication(root) {
+    root.innerHTML =
+      ptMakeCard('med-add', '💊 약 추가', ptMedAddFormHtml([])) +
+      ptMakeCard('med-today', '오늘 복용 현황', '<div id="pt-med-today-body"><div class="pt-skeleton" style="height:60px"></div></div>') +
+      ptMakeCard('med-history', '복용 이력 (최근 7일)', '<div id="pt-med-hist-body"><div class="pt-skeleton"></div></div>');
+
+    ptBindFold(root);
+
+    // Load saved meds from localStorage first
+    const saved = ptLoadLocal('mie_med_today');
+    if (Array.isArray(saved)) ptState.todayMeds = saved;
+
+    // Freq change → update schedule options
+    const freqSel = document.getElementById('pt-med-freq');
+    if (freqSel) {
+      ptMedUpdateScheduleOptions(1);
+      ptListen(freqSel, 'change', () => ptMedUpdateScheduleOptions(parseInt(freqSel.value, 10)));
+    }
+
+    // Add button
+    const addBtn = document.getElementById('pt-med-add-btn');
+    if (addBtn) ptListen(addBtn, 'click', async () => {
+      const nameInput = document.getElementById('pt-med-name-input');
+      const freqSel = document.getElementById('pt-med-freq');
+      const schedSel = document.getElementById('pt-med-schedule');
+      const name = (nameInput?.value || '').trim();
+      if (!name) {
+        ptSetStatus('pt-med-add-status', '약 이름을 입력하세요', 'err');
+        return;
+      }
+      const freq = parseInt(freqSel?.value || '1', 10);
+      const schedule = (schedSel?.value || 'morning').split(',');
+      const newMed = {
+        med_name: name,
+        times_per_day: freq,
+        schedule,
+        checks: {}
+      };
+      SCHEDULE_KEYS.forEach(k => { newMed.checks[k] = false; });
+
+      addBtn.disabled = true;
+      ptSetStatus('pt-med-add-status', '저장 중…', '');
+      try {
+        await ptPost({
+          tab: 'medication',
+          data: { med_name: name, times_per_day: freq, schedule }
+        });
+        ptState.todayMeds.push(newMed);
+        ptSaveLocal('mie_med_today', ptState.todayMeds);
+        if (nameInput) nameInput.value = '';
+        ptSetStatus('pt-med-add-status', '✓ 추가됐습니다', 'ok');
+        ptMedRenderAll();
+      } catch (e) {
+        ptState.todayMeds.push(newMed);
+        ptSaveLocal('mie_med_today', ptState.todayMeds);
+        ptSetStatus('pt-med-add-status', '오프라인 저장됨', 'err');
+        ptMedRenderAll();
+      } finally {
+        addBtn.disabled = false;
+      }
+    });
+
+    // Async load
+    await Promise.all([ptMedLoadRecords(), ptMedLoadHistory()]);
+
+    // Update datalist with loaded records
+    const dl = document.getElementById('pt-med-list');
+    if (dl) dl.innerHTML = ptState.medList.map(m => `<option value="${m}">`).join('');
+
+    ptMedRenderAll();
+  }
+
+  /* ═══════════════════════════════════════
+     PUBLIC API
+  ═══════════════════════════════════════ */
+  window.onPanelLoad = async function (v) {
+    // Cleanup previous listeners to prevent accumulation on revisit
+    ptCleanup();
+
+    if (v !== 'water' && v !== 'medication') return;
+
+    const root = document.getElementById('pt-root');
+    if (!root) return;
+
+    if (v === 'water') {
+      await ptInitWater(root);
+    } else {
+      await ptInitMedication(root);
+    }
+  };
+
+  window.plSetUnitPref = function (pref) {
+    ptState.waterUnit = (pref === 'us') ? 'floz' : 'ml';
+    // Sync toggle buttons if visible
+    document.querySelectorAll('.pt-unit-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.unit === ptState.waterUnit);
+    });
+    ptWaterRender();
+  };
+
+})();
+</script><!--
+  panel-trackers.html
+  MIE Health — Water & Medication Tracker Panel
+  Injected into #panel-body by loadPanelContent()
+  onPanelLoad(v) called after injection with v = 'water' | 'medication'
+-->
+
+<style>
+  /* ── Reset & Base ── */
+  .pt-root * { box-sizing: border-box; margin: 0; padding: 0; }
+  .pt-root {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #202124;
+    padding: 4px 16px 16px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* ── Cards ── */
+  .pt-card {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .pt-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+  }
+  .pt-card-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #202124;
+  }
+  .pt-card-toggle { display: none; }
+  .pt-card-body { padding: 0 16px 16px; }
+
+  /* ── Labels ── */
+  .pt-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: #5f6368;
+    margin-bottom: 8px;
+  }
+
+  /* ── Progress Bar ── */
+  .pt-progress-wrap { margin: 12px 0 4px; }
+  .pt-progress-bar {
+    height: 8px;
+    background: #e8eaed;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .pt-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .4s ease, background-color .4s;
+  }
+  .pt-progress-fill.red    { background: #ea4335; }
+  .pt-progress-fill.yellow { background: #fbbc04; }
+  .pt-progress-fill.blue   { background: #1a73e8; }
+  .pt-progress-fill.green  { background: #34a853; }
+  .pt-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #5f6368;
+  }
+
+  /* ── Pill Buttons ── */
+  .pt-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .pt-pill {
+    padding: 6px 14px;
+    border: 1.5px solid #dadce0;
+    border-radius: 99px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    background: #fff;
+    color: #202124;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .pt-pill:hover { border-color: #1a73e8; color: #1a73e8; }
+  .pt-pill.active {
+    background: #1a73e8;
+    border-color: #1a73e8;
+    color: #fff;
+  }
+
+  /* ── Divider ── */
+  .pt-divider { border: none; border-top: 1px solid #e8eaed; margin: 14px 0; }
+
+  /* ── Section spacing ── */
+  .pt-section { margin-bottom: 16px; }
+
+  /* ══════════════════════════════
+     WATER TRACKER
+  ══════════════════════════════ */
+
+  /* Cup grid */
+  .pt-cup-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .pt-cup {
+    aspect-ratio: 1;
+    border: 2px solid #dadce0;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: #fff;
+    transition: background .15s, border-color .15s, transform .1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .pt-cup:hover { border-color: #1a73e8; transform: scale(1.05); }
+  .pt-cup.filled {
+    background: #e8f0fe;
+    border-color: #1a73e8;
+  }
+  .pt-cup.filled::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: rgba(26,115,232,.18);
+  }
+
+  /* +/- controls */
+  .pt-amount-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .pt-amt-btn {
+    width: 40px; height: 40px;
+    border: 1.5px solid #dadce0;
+    border-radius: 50%;
+    background: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a73e8;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pt-amt-btn:hover { background: #e8f0fe; border-color: #1a73e8; }
+  .pt-amt-btn:active { background: #d2e3fc; }
+  .pt-amount-display {
+    flex: 1;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a73e8;
+    letter-spacing: -1px;
+  }
+  .pt-amount-unit {
+    font-size: 13px;
+    font-weight: 400;
+    color: #5f6368;
+    margin-left: 2px;
+  }
+
+  /* Unit toggle */
+  .pt-unit-toggle {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid #dadce0;
+    border-radius: 99px;
+    overflow: hidden;
+    width: fit-content;
+    margin-bottom: 14px;
+  }
+  .pt-unit-btn {
+    padding: 5px 14px;
+    border: none;
+    background: #fff;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: #5f6368;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .pt-unit-btn.active { background: #1a73e8; color: #fff; }
+
+  /* Log button */
+  .pt-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .pt-btn-primary:hover { background: #1558b0; }
+  .pt-btn-primary:disabled { opacity: .55; cursor: default; }
+
+  /* Goal display */
+  .pt-goal-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 12px;
+  }
+
+  /* Water chart */
+  .pt-chart-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .pt-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 100px;
+    position: relative;
+    padding-bottom: 20px;
+    min-width: 280px;
+  }
+  .pt-chart-goal-line {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 2px dashed #dadce0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .pt-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    justify-content: flex-end;
+  }
+  .pt-bar {
+    width: 100%;
+    max-width: 28px;
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height .4s ease;
+    position: relative;
+    z-index: 2;
+  }
+  .pt-bar.green  { background: #34a853; }
+  .pt-bar.yellow { background: #fbbc04; }
+  .pt-bar.red    { background: #ea4335; }
+  .pt-bar.empty  { background: #e8eaed; }
+  .pt-bar-label {
+    position: absolute;
+    bottom: 0;
+    font-size: 9px;
+    color: #9aa0a6;
+    white-space: nowrap;
+  }
+
+  /* ══════════════════════════════
+     MEDICATION TRACKER
+  ══════════════════════════════ */
+  .pt-med-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .pt-input {
+    flex: 1;
+    min-width: 120px;
+    height: 40px;
+    border: 1.5px solid #dadce0;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #202124;
+    outline: none;
+    transition: border-color .15s;
+    background: #fff;
+  }
+  .pt-input:focus { border-color: #1a73e8; }
+
+  .pt-select {
+    height: 40px;
+    border: 1.5px solid #dadce0;
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: #202124;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .pt-select:focus { border-color: #1a73e8; }
+
+  .pt-btn-add {
+    height: 40px;
+    padding: 0 16px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .pt-btn-add:hover { background: #1558b0; }
+
+  /* Med card */
+  .pt-med-card {
+    border: 1px solid #e8eaed;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: background .3s, border-color .3s;
+  }
+  .pt-med-card.done {
+    background: #e6f4ea;
+    border-color: #34a853;
+  }
+  .pt-med-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .pt-med-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #202124;
+  }
+  .pt-med-freq {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 1px;
+  }
+  .pt-med-remove {
+    border: none;
+    background: none;
+    color: #9aa0a6;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+  .pt-med-remove:hover { color: #ea4335; }
+  .pt-checks {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .pt-check-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #202124;
+    cursor: pointer;
+  }
+  .pt-check-item input[type=checkbox] {
+    width: 16px; height: 16px;
+    accent-color: #34a853;
+    cursor: pointer;
+  }
+  .pt-check-item.disabled {
+    opacity: .35;
+    pointer-events: none;
+  }
+  .pt-check-item.disabled input { display: none; }
+
+  /* History list */
+  .pt-history-list { list-style: none; }
+  .pt-history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 13px;
+  }
+  .pt-history-item:last-child { border-bottom: none; }
+  .pt-history-date { color: #5f6368; font-size: 12px; }
+  .pt-history-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #e6f4ea;
+    color: #137333;
+  }
+  .pt-history-badge.partial {
+    background: #fef9e6;
+    color: #a56700;
+  }
+
+  /* Empty state */
+  .pt-empty {
+    text-align: center;
+    padding: 20px;
+    color: #9aa0a6;
+    font-size: 13px;
+  }
+
+  /* Status message */
+  .pt-status {
+    font-size: 12px;
+    color: #5f6368;
+    text-align: center;
+    min-height: 18px;
+    margin-top: 6px;
+  }
+  .pt-status.ok  { color: #34a853; }
+  .pt-status.err { color: #ea4335; }
+
+  /* Skeleton loader */
+  .pt-skeleton {
+    background: linear-gradient(90deg, #f1f3f4 25%, #e8eaed 50%, #f1f3f4 75%);
+    background-size: 200% 100%;
+    animation: ptSkel 1.2s infinite;
+    border-radius: 6px;
+    height: 14px;
+    margin-bottom: 8px;
+  }
+  @keyframes ptSkel { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .pt-cup-grid { grid-template-columns: repeat(4, 1fr); }
+    .pt-root { padding: 10px; }
+    .pt-input, .pt-select { font-size: 16px; }
+  }
+</style>
+
+<div class="pt-root" id="pt-root">
+  <!-- content injected by onPanelLoad -->
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ═══════════════════════════════════════
+     CONSTANTS & STATE
+  ═══════════════════════════════════════ */
+  const API = 'https://api.mie.today';
+  const FETCH_OPTS = { credentials: 'include' };
+  const SCHEDULE_LABELS = {
+    morning: '아침', lunch: '점심', evening: '저녁', bedtime: '자기전'
+  };
+  const SCHEDULE_KEYS = ['morning', 'lunch', 'evening', 'bedtime'];
+
+  // Single source of truth for water
+  const ptState = {
+    // water
+    waterMl: 0,
+    waterGoalMl: 2000,
+    waterUnit: 'ml',       // 'ml' | 'floz'
+    waterHistory: [],      // [{date, total_ml}]
+    // medication
+    medList: [],           // available from records
+    todayMeds: [],         // [{med_name, times_per_day, schedule:[], checks:{morning,lunch,evening,bedtime}}]
+    medHistory: [],        // [{date, med_name, completed, total}]
+    // cleanup
+    listeners: [],
+  };
+
+  /* ═══════════════════════════════════════
+     UTILITIES
+  ═══════════════════════════════════════ */
+  function ptToday() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function ptFmt(ml, unit) {
+    if (unit === 'floz') return (ml / 29.5735).toFixed(1) + ' fl oz';
+    return ml + ' ml';
+  }
+
+  function ptGoalColor(current, goal) {
+    const pct = goal > 0 ? current / goal : 0;
+    if (pct >= 1)    return 'green';
+    if (pct >= 0.75) return 'blue';
+    if (pct >= 0.5)  return 'yellow';
+    return 'red';
+  }
+
+  function ptSaveLocal(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function ptLoadLocal(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; }
+  }
+
+  function ptListen(el, ev, fn) {
+    el.addEventListener(ev, fn);
+    ptState.listeners.push({ el, ev, fn });
+  }
+
+  function ptCleanup() {
+    ptState.listeners.forEach(({ el, ev, fn }) => el.removeEventListener(ev, fn));
+    ptState.listeners = [];
+  }
+
+  function ptSetStatus(id, msg, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'pt-status ' + (type || '');
+    if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+  }
+
+  async function ptPost(body) {
+    const res = await fetch(API + '/api/me/health/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      ...FETCH_OPTS
+    });
+    if (!res.ok) throw new Error(res.status);
+    return res.json();
+  }
+
+  /* debounce for checkbox saves */
+  function ptDebounce(fn, ms) {
+    let t;
+    return function (...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  /* ═══════════════════════════════════════
+     CARD FOLD
+  ═══════════════════════════════════════ */
+  function ptMakeCard(id, title, bodyHtml) {
+    return `
+      <div class="pt-card" id="ptcard-${id}">
+        <div class="pt-card-header">
+          <h3>${title}</h3>
+        </div>
+        <div class="pt-card-body" id="ptbody-${id}">
+          ${bodyHtml}
+        </div>
+      </div>`;
+  }
+
+  function ptBindFold(root) { /* foldable disabled */ }
+
+  /* ═══════════════════════════════════════
+     ██ WATER TRACKER
+  ═══════════════════════════════════════ */
+
+  function ptWaterHtml() {
+    return `
+      <div class="pt-section">
+        <div class="pt-goal-text" id="pt-goal-chip">🎯 Goal: —</div>
+        <div class="pt-unit-toggle">
+          <button class="pt-unit-btn active" data-unit="ml">ml</button>
+          <button class="pt-unit-btn" data-unit="floz">fl oz</button>
+        </div>
+
+        <!-- Cup UI -->
+        <div class="pt-label">컵으로 추가 <span style="color:#9aa0a6;font-weight:400">(1컵 = 250ml)</span></div>
+        <div class="pt-cup-grid" id="pt-cup-grid">
+          ${[...Array(8)].map((_, i) => `
+            <div class="pt-cup" data-cupidx="${i}" role="button" aria-label="${i+1}번째 컵">🥛</div>
+          `).join('')}
+        </div>
+
+        <!-- +/- controls -->
+        <div class="pt-amount-ctrl">
+          <button class="pt-amt-btn" id="pt-minus">−</button>
+          <div class="pt-amount-display">
+            <span id="pt-amt-val">0</span><span class="pt-amount-unit" id="pt-amt-unit">ml</span>
+          </div>
+          <button class="pt-amt-btn" id="pt-plus">+</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="pt-progress-wrap">
+          <div class="pt-progress-bar">
+            <div class="pt-progress-fill red" id="pt-prog-fill" style="width:0%"></div>
+          </div>
+          <div class="pt-progress-meta">
+            <span id="pt-prog-cur">0ml</span>
+            <span id="pt-prog-pct">0%</span>
+          </div>
+        </div>
+
+        <button class="pt-btn-primary" id="pt-log-btn">Save</button>
         <div class="pt-status" id="pt-water-status"></div>
       </div>
 
