@@ -1,1 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* ── Panel Info Goal styles (pig-*) ──────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
+.pig-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Card */
+.pig-card {
+  background: #fff;
+  border: 1px solid #e8eaed;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pig-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid #e8eaed;
+  transition: background .15s;
+}
+.pig-card-header:hover { background: #f8f9fa; }
+
+.pig-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #202124;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pig-card-title svg { color: #1a73e8; flex-shrink: 0; }
+
+.pig-chevron {
+  transition: transform .2s;
+  color: #80868b;
+}
+.pig-card.collapsed .pig-chevron { transform: rotate(-90deg); }
+
+.pig-card-body {
+  padding: 20px 18px;
+  transition: none;
+}
+.pig-card.collapsed .pig-card-body { display: none; }
+
+/* DOB row */
+.pig-dob-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.pig-dob-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.pig-dob-row input[type="date"] {
+  border: 1px solid #e8eaed;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #202124;
+  outline: none;
+  width: 170px;
+}
+.pig-dob-row input[type="date"]:focus { border-color: #1a73e8; }
+.pig-age-badge {
+  font-size: 13px;
+  color: #1a73e8;
+  font-weight: 600;
+  background: #e8f0fe;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+/* Grid */
+.pig-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 16px;
+}
+@media (max-width: 640px) {
+  .pig-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.pig-field { display: flex; flex-direction: column; gap: 5px; }
+.pig-field.full { grid-column: 1 / -1; }
+
+.pig-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* Input base */
+.pig-input,
+.pig-select {
+  border: 1px solid #e8eaed;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: #202124;
+  outline: none;
+  width: 100%;
+  background: #fff;
+  transition: border-color .15s;
+}
+@media (max-width: 640px) {
+  .pig-input, .pig-select { font-size: 16px; }
+}
+.pig-input:focus, .pig-select:focus { border-color: #1a73e8; }
+.pig-input.readonly, .pig-input[readonly] {
+  background: #f8f9fa;
+  color: #5f6368;
+  cursor: default;
+}
+.pig-input.error, .pig-select.error { border-color: #d93025 !important; }
+
+/* Unit pill wrapper */
+.pig-input-with-unit {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pig-input-with-unit .pig-input { flex: 1; min-width: 0; }
+
+/* Pill buttons */
+.pig-pills {
+  display: flex;
+  border: 1px solid #e8eaed;
+  border-radius: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f1f3f4;
+}
+.pig-pill {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  padding: 4px 9px;
+  border: none;
+  background: transparent;
+  color: #5f6368;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.pig-pill.active {
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 20px;
+}
+
+/* Height ft+in sub-fields */
+.pig-ftin {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.pig-ftin .pig-input { width: 52px; text-align: center; }
+.pig-ftin span { font-size: 12px; color: #5f6368; }
+
+/* Footer row */
+.pig-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.pig-save-btn {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.pig-save-btn:hover { background: #1557b0; }
+.pig-save-btn:disabled { opacity: .6; cursor: default; }
+.pig-status {
+  font-size: 13px;
+  color: #188038;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity .3s;
+}
+.pig-status.visible { opacity: 1; }
+.pig-status.error { color: #d93025; }
+
+/* Goals summary */
+.pig-summary {
+  margin-top: 18px;
+  background: #f0f4ff;
+  border: 1px solid #c5d6fb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: none;
+}
+.pig-summary.visible { display: block; }
+.pig-summary-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a73e8;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 10px;
+}
+.pig-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .pig-summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.pig-summary-item { display: flex; flex-direction: column; gap: 2px; }
+.pig-summary-item .val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #202124;
+}
+.pig-summary-item .lbl {
+  font-size: 11px;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+/* Separator */
+.pig-sep {
+  height: 1px;
+  background: #e8eaed;
+  margin: 16px 0;
+}
+
+/* Empty cell spacer */
+.pig-spacer { visibility: hidden; }
+</style>
+</head>
+<body>
+
+<div class="pig-wrap" id="pig-root" style="display:none">
+
+  <!-- ── CARD 1: MY INFO ─────────────────────────────────────────── -->
+  <div class="pig-card" id="pig-card-myinfo">
+    <div class="pig-card-header" onclick="pigToggleCard('myinfo')">
+      <span class="pig-card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        My Info
+      </span>
+      <svg class="pig-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+    <div class="pig-card-body">
+
+      <!-- DOB row -->
+      <div class="pig-dob-row">
+        <label for="pig-dob">Date of Birth</label>
+        <input type="date" id="pig-dob" class="pig-input" onchange="pigCalcAge()">
+        <span class="pig-age-badge" id="pig-age-badge" style="display:none"></span>
+      </div>
+
+      <!-- Main grid -->
+      <div class="pig-grid">
+
+        <!-- Height -->
+        <div class="pig-field" id="pig-field-height">
+          <span class="pig-label">Height</span>
+          <div class="pig-input-with-unit">
+            <!-- cm view -->
+            <input type="number" class="pig-input" id="pig-height-cm" placeholder="cm" min="50" max="300" oninput="pigCalcBMR()">
+            <!-- ft+in view -->
+            <div class="pig-ftin" id="pig-ftin" style="display:none">
+              <input type="number" class="pig-input" id="pig-height-ft" placeholder="ft" min="1" max="9" oninput="pigSyncFtin();pigCalcBMR()">
+              <span>ft</span>
+              <input type="number" class="pig-input" id="pig-height-in" placeholder="in" min="0" max="11" oninput="pigSyncFtin();pigCalcBMR()">
+              <span>in</span>
+            </div>
+            <div class="pig-pills" id="pig-pills-height">
+              <button class="pig-pill active" data-unit="cm" onclick="pigSetHeightUnit('cm')">cm</button>
+              <button class="pig-pill" data-unit="ft" onclick="pigSetHeightUnit('ft')">ft</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Starting Weight -->
+        <div class="pig-field" id="pig-field-weight">
+          <span class="pig-label">Starting Weight</span>
+          <div class="pig-input-with-unit">
+            <input type="number" class="pig-input" id="pig-weight" placeholder="—" step="0.1" oninput="pigCalcBMR()">
+            <div class="pig-pills" id="pig-pills-weight">
+              <button class="pig-pill active" data-unit="kg" onclick="pigSetWeightUnit('kg')">kg</button>
+              <button class="pig-pill" data-unit="lb" onclick="pigSetWeightUnit('lb')">lb</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Age (readonly) -->
+        <div class="pig-field">
+          <span class="pig-label">Age</span>
+          <input type="text" class="pig-input readonly" id="pig-age" placeholder="—" readonly>
+        </div>
+
+        <!-- Sex -->
+        <div class="pig-field" id="pig-field-sex">
+          <span class="pig-label">Sex</span>
+          <select class="pig-select" id="pig-sex" onchange="pigCalcBMR()">
+            <option value="">Select…</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <!-- Blood Type -->
+        <div class="pig-field">
+          <span class="pig-label">Blood Type</span>
+          <select class="pig-select" id="pig-blood-type">
+            <option value="">Select…</option>
+            <option>A+</option><option>A−</option>
+            <option>B+</option><option>B−</option>
+            <option>AB+</option><option>AB−</option>
+            <option>O+</option><option>O−</option>
+          </select>
+        </div>
+
+        <!-- Allergies -->
+        <div class="pig-field">
+          <span class="pig-label">Allergies</span>
+          <input type="text" class="pig-input" id="pig-allergies" placeholder="e.g. Peanuts, Shellfish">
+        </div>
+
+        <!-- Activity Level -->
+        <div class="pig-field" id="pig-field-activity">
+          <span class="pig-label">Activity Level</span>
+          <select class="pig-select" id="pig-activity" onchange="pigCalcBMR()">
+            <option value="">Select…</option>
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Light (1–3 days/wk)</option>
+            <option value="1.55">Moderate (3–5 days/wk)</option>
+            <option value="1.725">Active (6–7 days/wk)</option>
+            <option value="1.9">Very Active (2×/day)</option>
+          </select>
+        </div>
+
+        <!-- BMR -->
+        <div class="pig-field">
+          <span class="pig-label">BMR (kcal/day)</span>
+          <input type="text" class="pig-input readonly" id="pig-bmr" placeholder="—" readonly>
+        </div>
+
+        <!-- TDEE -->
+        <div class="pig-field">
+          <span class="pig-label">TDEE (kcal/day)</span>
+          <input type="text" class="pig-input readonly" id="pig-tdee" placeholder="—" readonly>
+        </div>
+
+        <!-- Emergency Contact (full width) -->
+        <div class="pig-field full">
+          <span class="pig-label">Emergency Contact</span>
+          <input type="text" class="pig-input" id="pig-emergency" placeholder="Name · Phone">
+        </div>
+
+      </div><!-- /pig-grid -->
+
+      <div class="pig-footer">
+        <button class="pig-save-btn" id="pig-save-info" onclick="pigSaveInfo()">Save</button>
+        <span class="pig-status" id="pig-status-info"></span>
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card myinfo -->
+
+
+  <!-- ── CARD 2: GOALS ───────────────────────────────────────────── -->
+  <div class="pig-card" id="pig-card-goals">
+    <div class="pig-card-header" onclick="pigToggleCard('goals')">
+      <span class="pig-card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+        </svg>
+        Goals
+      </span>
+      <svg class="pig-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+    <div class="pig-card-body">
+
+      <div class="pig-grid">
+
+        <!-- Goal Type -->
+        <div class="pig-field" id="pig-field-goal-type">
+          <span class="pig-label">Goal Type</span>
+          <select class="pig-select" id="pig-goal-type" onchange="pigCalcPace()">
+            <option value="">Select…</option>
+            <option value="lose">Lose Weight</option>
+            <option value="maintain">Maintain</option>
+            <option value="gain">Gain Weight</option>
+          </select>
+        </div>
+
+        <!-- Target Weight -->
+        <div class="pig-field" id="pig-field-target-weight">
+          <span class="pig-label">Target Weight</span>
+          <div class="pig-input-with-unit">
+            <input type="number" class="pig-input" id="pig-target-weight" placeholder="—" step="0.1" oninput="pigCalcPace()">
+            <div class="pig-pills" id="pig-pills-target-weight">
+              <button class="pig-pill active" data-unit="kg" onclick="pigSetTargetWeightUnit('kg')">kg</button>
+              <button class="pig-pill" data-unit="lb" onclick="pigSetTargetWeightUnit('lb')">lb</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="pig-field" id="pig-field-duration">
+          <span class="pig-label">Duration (months)</span>
+          <input type="number" class="pig-input" id="pig-duration" placeholder="1–36" min="1" max="36" oninput="pigCalcPace()">
+        </div>
+
+        <!-- Daily Calorie Intake -->
+        <div class="pig-field" id="pig-field-daily-cal">
+          <span class="pig-label">Daily Cal Intake (kcal)</span>
+          <input type="number" class="pig-input" id="pig-daily-cal" placeholder="—" min="0">
+        </div>
+
+        <!-- Daily Exercise Cal -->
+        <div class="pig-field" id="pig-field-exercise-cal">
+          <span class="pig-label">Daily Exercise Cal (kcal)</span>
+          <input type="number" class="pig-input" id="pig-exercise-cal" placeholder="—" min="0">
+        </div>
+
+        <!-- Weekly Pace -->
+        <div class="pig-field">
+          <span class="pig-label">Weekly Pace</span>
+          <input type="text" class="pig-input readonly" id="pig-weekly-pace" placeholder="—" readonly>
+        </div>
+
+        <!-- Water Goal -->
+        <div class="pig-field" id="pig-field-water">
+          <span class="pig-label">Water Goal</span>
+          <div class="pig-input-with-unit">
+            <input type="number" class="pig-input" id="pig-water" placeholder="—" min="0">
+            <div class="pig-pills" id="pig-pills-water">
+              <button class="pig-pill active" data-unit="ml" onclick="pigSetWaterUnit('ml')">ml</button>
+              <button class="pig-pill" data-unit="floz" onclick="pigSetWaterUnit('floz')">fl oz</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sleep Goal -->
+        <div class="pig-field" id="pig-field-sleep">
+          <span class="pig-label">Sleep Goal</span>
+          <div class="pig-input-with-unit">
+            <input type="number" class="pig-input" id="pig-sleep" placeholder="—" min="1" max="24" step="0.5">
+            <span style="font-size:13px;color:#5f6368;white-space:nowrap">h</span>
+          </div>
+        </div>
+
+        <!-- Spacer (3rd col on desktop) -->
+        <div class="pig-spacer" aria-hidden="true"></div>
+
+      </div><!-- /pig-grid goals -->
+
+      <div class="pig-footer">
+        <button class="pig-save-btn" id="pig-save-goals" onclick="pigSaveGoals()">Save</button>
+        <span class="pig-status" id="pig-status-goals"></span>
+      </div>
+
+      <!-- Results summary -->
+      <div class="pig-summary" id="pig-summary">
+        <div class="pig-summary-title">Goal Summary</div>
+        <div class="pig-summary-grid">
+          <div class="pig-summary-item">
+            <span class="val" id="pig-s-bmi">—</span>
+            <span class="lbl">BMI</span>
+          </div>
+          <div class="pig-summary-item">
+            <span class="val" id="pig-s-cal">—</span>
+            <span class="lbl">Calories to Goal</span>
+          </div>
+          <div class="pig-summary-item">
+            <span class="val" id="pig-s-date">—</span>
+            <span class="lbl">Est. Completion</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /card-body goals -->
+  </div><!-- /card goals -->
+
+</div><!-- /pig-wrap -->
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   PIG — Panel Info Goal
+   All symbols prefixed pig* to avoid collisions
+══════════════════════════════════════════════════════════════ */
+
+/* ── State ──────────────────────────────────────────────────── */
+const pigState = {
+  heightUnit: 'cm',   // 'cm' | 'ft'
+  weightUnit: 'kg',   // 'kg' | 'lb'
+  targetWeightUnit: 'kg',
+  waterUnit: 'ml',    // 'ml' | 'floz'
+  view: null,         // 'myinfo' | 'goals'
+  loaded: false,
+};
+
+/* ── Helpers ─────────────────────────────────────────────────── */
+const pigEl  = id => document.getElementById(id);
+const pigNum = id => parseFloat(pigEl(id)?.value) || null;
+
+function pigShow(id, show=true){
+  const el = pigEl(id);
+  if(el) el.style.display = show ? '' : 'none';
+}
+
+function pigSetPill(pillsId, unit){
+  pigEl(pillsId)?.querySelectorAll('.pig-pill').forEach(b=>{
+    b.classList.toggle('active', b.dataset.unit === unit);
+  });
+}
+
+/* ── Card fold ───────────────────────────────────────────────── */
+function pigToggleCard(which){
+  pigEl(`pig-card-${which}`)?.classList.toggle('collapsed');
+}
+
+/* ── Unit converters ─────────────────────────────────────────── */
+const pigKgToLb = kg => +(kg * 2.20462).toFixed(1);
+const pigLbToKg = lb => +(lb / 2.20462).toFixed(1);
+const pigCmToIn = cm => cm / 2.54;
+const pigInToCm = i  => +(i * 2.54).toFixed(1);
+const pigMlToFloz = ml => +(ml / 29.5735).toFixed(1);
+const pigFlozToMl = fl => +(fl * 29.5735).toFixed(0);
+
+/* ── Height unit ─────────────────────────────────────────────── */
+function pigSetHeightUnit(unit){
+  if(pigState.heightUnit === unit) return;
+  const cmInput = pigEl('pig-height-cm');
+  const ftInput = pigEl('pig-height-ft');
+  const inInput = pigEl('pig-height-in');
+
+  if(unit === 'ft'){
+    const cm = parseFloat(cmInput.value);
+    if(!isNaN(cm) && cm > 0){
+      const totalIn = pigCmToIn(cm);
+      const ft = Math.floor(totalIn / 12);
+      const inch = +(totalIn % 12).toFixed(1);
+      ftInput.value = ft;
+      inInput.value = inch;
+    }
+    pigShow('pig-height-cm', false);
+    pigShow('pig-ftin', true);
+  } else {
+    const ft = parseFloat(ftInput.value) || 0;
+    const inch = parseFloat(inInput.value) || 0;
+    if(ft > 0 || inch > 0){
+      cmInput.value = pigInToCm(ft*12 + inch);
+    }
+    pigShow('pig-ftin', false);
+    pigShow('pig-height-cm', true);
+  }
+  pigState.heightUnit = unit;
+  pigSetPill('pig-pills-height', unit);
+  pigCalcBMR();
+}
+
+function pigSyncFtin(){
+  // keeps cm in sync when ft/in change (for BMR calc from cm)
+  const ft = parseFloat(pigEl('pig-height-ft').value) || 0;
+  const inch = parseFloat(pigEl('pig-height-in').value) || 0;
+  pigEl('pig-height-cm').value = pigInToCm(ft*12 + inch);
+}
+
+/* ── Weight unit ─────────────────────────────────────────────── */
+function pigSetWeightUnit(unit){
+  if(pigState.weightUnit === unit) return;
+  const el = pigEl('pig-weight');
+  const val = parseFloat(el.value);
+  if(!isNaN(val) && val > 0){
+    el.value = unit === 'lb' ? pigKgToLb(val) : pigLbToKg(val);
+  }
+  pigState.weightUnit = unit;
+  pigSetPill('pig-pills-weight', unit);
+  pigCalcBMR();
+}
+
+/* ── Target weight unit ──────────────────────────────────────── */
+function pigSetTargetWeightUnit(unit){
+  if(pigState.targetWeightUnit === unit) return;
+  const el = pigEl('pig-target-weight');
+  const val = parseFloat(el.value);
+  if(!isNaN(val) && val > 0){
+    el.value = unit === 'lb' ? pigKgToLb(val) : pigLbToKg(val);
+  }
+  pigState.targetWeightUnit = unit;
+  pigSetPill('pig-pills-target-weight', unit);
+  pigCalcPace();
+}
+
+/* ── Water unit ──────────────────────────────────────────────── */
+function pigSetWaterUnit(unit){
+  if(pigState.waterUnit === unit) return;
+  const el = pigEl('pig-water');
+  const val = parseFloat(el.value);
+  if(!isNaN(val) && val > 0){
+    el.value = unit === 'floz' ? pigMlToFloz(val) : pigFlozToMl(val);
+  }
+  pigState.waterUnit = unit;
+  pigSetPill('pig-pills-water', unit);
+}
+
+/* ── DOB / Age ───────────────────────────────────────────────── */
+function pigCalcAge(){
+  const dob = pigEl('pig-dob').value;
+  if(!dob){ pigEl('pig-age').value = ''; pigShow('pig-age-badge', false); pigCalcBMR(); return; }
+  const birth = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if(m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  pigEl('pig-age').value = age;
+  const badge = pigEl('pig-age-badge');
+  badge.textContent = `${age} yrs`;
+  pigShow('pig-age-badge', true);
+  pigCalcBMR();
+}
+
+/* ── BMR / TDEE (Mifflin-St Jeor) ───────────────────────────── */
+function pigCalcBMR(){
+  const weightKg = pigWeightInKg();
+  const heightCm = parseFloat(pigEl('pig-height-cm').value) || null;
+  const age      = parseFloat(pigEl('pig-age').value) || null;
+  const sex      = pigEl('pig-sex').value;
+  const activity = parseFloat(pigEl('pig-activity').value) || null;
+
+  if(!weightKg || !heightCm || !age || !sex || sex === ''){
+    pigEl('pig-bmr').value  = '';
+    pigEl('pig-tdee').value = '';
+    return;
+  }
+
+  let bmr;
+  if(sex === 'male')        bmr = 10*weightKg + 6.25*heightCm - 5*age + 5;
+  else if(sex === 'female') bmr = 10*weightKg + 6.25*heightCm - 5*age - 161;
+  else                      bmr = 10*weightKg + 6.25*heightCm - 5*age - 78; // Other: midpoint
+
+  bmr = Math.round(bmr);
+  pigEl('pig-bmr').value = bmr;
+  pigEl('pig-tdee').value = activity ? Math.round(bmr * activity) : '';
+}
+
+function pigWeightInKg(){
+  const val = parseFloat(pigEl('pig-weight').value);
+  if(isNaN(val) || val <= 0) return null;
+  return pigState.weightUnit === 'lb' ? pigLbToKg(val) : val;
+}
+
+function pigTargetWeightInKg(){
+  const val = parseFloat(pigEl('pig-target-weight').value);
+  if(isNaN(val) || val <= 0) return null;
+  return pigState.targetWeightUnit === 'lb' ? pigLbToKg(val) : val;
+}
+
+/* ── Weekly Pace ─────────────────────────────────────────────── */
+function pigCalcPace(){
+  const startKg  = pigWeightInKg();
+  const targetKg = pigTargetWeightInKg();
+  const dur      = parseFloat(pigEl('pig-duration').value) || null;
+
+  if(!startKg || !targetKg || !dur){
+    pigEl('pig-weekly-pace').value = '';
+    return;
+  }
+  const diffKg = targetKg - startKg;
+  const weeks  = dur * 4.33;
+  let pace = diffKg / weeks;
+  let unit = 'kg';
+
+  // show in same unit as target weight
+  if(pigState.targetWeightUnit === 'lb'){
+    pace = pigKgToLb(pace);
+    unit = 'lb';
+  } else {
+    pace = +pace.toFixed(2);
+  }
+  pigEl('pig-weekly-pace').value = `${pace > 0 ? '+' : ''}${pace.toFixed(2)} ${unit}/wk`;
+}
+
+/* ── Validation ──────────────────────────────────────────────── */
+function pigValidate(fields){
+  let ok = true;
+  fields.forEach(id=>{
+    const el = pigEl(id);
+    if(!el) return;
+    const empty = el.value === '' || el.value === null;
+    el.classList.toggle('error', empty);
+    if(empty) ok = false;
+  });
+  return ok;
+}
+
+function pigClearErrors(fields){
+  fields.forEach(id => pigEl(id)?.classList.remove('error'));
+}
+
+/* ── Status flash ────────────────────────────────────────────── */
+let pigStatusTimer = null;
+function pigFlashStatus(id, msg, isError=false){
+  const el = pigEl(id);
+  el.textContent = msg;
+  el.classList.toggle('error', isError);
+  el.classList.add('visible');
+  clearTimeout(pigStatusTimer);
+  pigStatusTimer = setTimeout(()=> el.classList.remove('visible'), 3500);
+}
+
+/* ── API ─────────────────────────────────────────────────────── */
+async function pigFetchProfile(){
+  try {
+    const r = await fetch('https://api.mie.today/api/me/health/profile', { credentials: 'include' });
+    if(!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch(e){
+    // fallback localStorage
+    try { return JSON.parse(localStorage.getItem('mie_health_profile') || 'null'); } catch{ return null; }
+  }
+}
+
+async function pigPostProfile(body){
+  const payload = JSON.stringify(body);
+  // persist localStorage backup
+  try {
+    const existing = JSON.parse(localStorage.getItem('mie_health_profile') || '{}');
+    localStorage.setItem('mie_health_profile', JSON.stringify({...existing, ...body}));
+  } catch{}
+
+  const r = await fetch('https://api.mie.today/api/me/health/profile', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+  });
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+/* ── Populate ────────────────────────────────────────────────── */
+function pigPopulate(data){
+  if(!data) return;
+  const { baseline = {}, goal = {} } = data;
+
+  /* Baseline */
+  if(baseline.dob){
+    pigEl('pig-dob').value = baseline.dob;
+    pigCalcAge();
+  }
+
+  const wKg = parseFloat(baseline.weight_kg);
+  if(!isNaN(wKg) && wKg > 0){
+    if(pigState.weightUnit === 'lb') pigEl('pig-weight').value = pigKgToLb(wKg);
+    else pigEl('pig-weight').value = wKg;
+  }
+
+  const hCm = parseFloat(baseline.height_cm);
+  if(!isNaN(hCm) && hCm > 0){
+    pigEl('pig-height-cm').value = hCm;
+    if(pigState.heightUnit === 'ft'){
+      const totalIn = pigCmToIn(hCm);
+      pigEl('pig-height-ft').value = Math.floor(totalIn/12);
+      pigEl('pig-height-in').value = +(totalIn%12).toFixed(1);
+    }
+  }
+
+  if(baseline.sex)               pigEl('pig-sex').value = baseline.sex;
+  if(baseline.blood_type)        pigEl('pig-blood-type').value = baseline.blood_type;
+  if(baseline.allergies)         pigEl('pig-allergies').value = baseline.allergies;
+  if(baseline.emergency_contact) pigEl('pig-emergency').value = baseline.emergency_contact;
+  if(baseline.activity_level)    pigEl('pig-activity').value = baseline.activity_level;
+  pigCalcBMR();
+
+  /* Goal */
+  if(goal.goal_type)      pigEl('pig-goal-type').value = goal.goal_type;
+
+  const twKg = parseFloat(goal.target_weight_kg);
+  if(!isNaN(twKg) && twKg > 0){
+    if(pigState.targetWeightUnit === 'lb') pigEl('pig-target-weight').value = pigKgToLb(twKg);
+    else pigEl('pig-target-weight').value = twKg;
+  }
+
+  if(goal.duration_months)     pigEl('pig-duration').value = goal.duration_months;
+  if(goal.daily_calorie_intake) pigEl('pig-daily-cal').value = goal.daily_calorie_intake;
+  if(goal.daily_exercise_cal)  pigEl('pig-exercise-cal').value = goal.daily_exercise_cal;
+
+  const wml = parseFloat(goal.water_goal_ml);
+  if(!isNaN(wml) && wml > 0){
+    if(pigState.waterUnit === 'floz') pigEl('pig-water').value = pigMlToFloz(wml);
+    else pigEl('pig-water').value = wml;
+  }
+
+  const sleepMin = parseFloat(goal.sleep_goal_min);
+  if(!isNaN(sleepMin) && sleepMin > 0) pigEl('pig-sleep').value = +(sleepMin/60).toFixed(1);
+
+  pigCalcPace();
+}
+
+/* ── Collect ─────────────────────────────────────────────────── */
+function pigCollectBaseline(){
+  const hCm = parseFloat(pigEl('pig-height-cm').value) || null;
+  const wKg = pigWeightInKg();
+  return {
+    height_cm:         hCm,
+    weight_kg:         wKg,
+    sex:               pigEl('pig-sex').value || null,
+    dob:               pigEl('pig-dob').value || null,
+    blood_type:        pigEl('pig-blood-type').value || null,
+    allergies:         pigEl('pig-allergies').value.trim() || null,
+    emergency_contact: pigEl('pig-emergency').value.trim() || null,
+    activity_level:    parseFloat(pigEl('pig-activity').value) || null,
+  };
+}
+
+function pigCollectGoal(){
+  const sleepH = parseFloat(pigEl('pig-sleep').value) || null;
+  const waterRaw = parseFloat(pigEl('pig-water').value) || null;
+  const waterMl = waterRaw
+    ? (pigState.waterUnit === 'floz' ? pigFlozToMl(waterRaw) : waterRaw)
+    : null;
+
+  return {
+    goal_type:            pigEl('pig-goal-type').value || null,
+    target_weight_kg:     pigTargetWeightInKg(),
+    duration_months:      parseFloat(pigEl('pig-duration').value) || null,
+    daily_calorie_intake: parseFloat(pigEl('pig-daily-cal').value) || null,
+    daily_exercise_cal:   parseFloat(pigEl('pig-exercise-cal').value) || null,
+    water_goal_ml:        waterMl,
+    sleep_goal_min:       sleepH ? Math.round(sleepH * 60) : null,
+  };
+}
+
+/* ── Save Info ───────────────────────────────────────────────── */
+async function pigSaveInfo(){
+  pigClearErrors(['pig-height-cm','pig-height-ft','pig-height-in','pig-weight','pig-sex','pig-activity']);
+  const btn = pigEl('pig-save-info');
+  btn.disabled = true;
+  try {
+    const baseline = pigCollectBaseline();
+    // required fields check
+    const heightOk = pigState.heightUnit === 'cm'
+      ? !!pigEl('pig-height-cm').value
+      : (!!pigEl('pig-height-ft').value || !!pigEl('pig-height-in').value);
+    if(!heightOk || !baseline.weight_kg || !baseline.sex || !baseline.activity_level){
+      const ids = pigState.heightUnit === 'cm'
+        ? ['pig-height-cm'] : ['pig-height-ft'];
+      if(!baseline.weight_kg)      ids.push('pig-weight');
+      if(!baseline.sex)            ids.push('pig-sex');
+      if(!baseline.activity_level) ids.push('pig-activity');
+      ids.forEach(id=>pigEl(id)?.classList.add('error'));
+      pigFlashStatus('pig-status-info', '⚠ Please fill required fields.', true);
+      return;
+    }
+
+    const existing = await pigFetchProfile().catch(()=>null);
+    await pigPostProfile({ baseline, goal: existing?.goal || {} });
+    pigFlashStatus('pig-status-info', '✅ Saved!');
+    pigCalcBMR();
+    pigUpdateSummary();
+  } catch(e){
+    pigFlashStatus('pig-status-info', `❌ Error: ${e.message}`, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── Save Goals ──────────────────────────────────────────────── */
+async function pigSaveGoals(){
+  pigClearErrors(['pig-goal-type','pig-target-weight','pig-duration']);
+  const btn = pigEl('pig-save-goals');
+  btn.disabled = true;
+  try {
+    const goal = pigCollectGoal();
+    if(!goal.goal_type || !goal.target_weight_kg || !goal.duration_months){
+      if(!goal.goal_type)        pigEl('pig-goal-type').classList.add('error');
+      if(!goal.target_weight_kg) pigEl('pig-target-weight').classList.add('error');
+      if(!goal.duration_months)  pigEl('pig-duration').classList.add('error');
+      pigFlashStatus('pig-status-goals', '⚠ Please fill required fields.', true);
+      return;
+    }
+
+    const existing = await pigFetchProfile().catch(()=>null);
+    await pigPostProfile({ baseline: existing?.baseline || {}, goal });
+    pigFlashStatus('pig-status-goals', '✅ Saved!');
+    pigUpdateSummary();
+  } catch(e){
+    pigFlashStatus('pig-status-goals', `❌ Error: ${e.message}`, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ── Summary ─────────────────────────────────────────────────── */
+function pigUpdateSummary(){
+  const weightKg = pigWeightInKg();
+  const heightCm = parseFloat(pigEl('pig-height-cm').value) || null;
+  const targetKg = pigTargetWeightInKg();
+  const dur      = parseFloat(pigEl('pig-duration').value) || null;
+  const dailyCal = parseFloat(pigEl('pig-daily-cal').value) || null;
+  const tdee     = parseFloat(pigEl('pig-tdee').value) || null;
+
+  // BMI
+  if(weightKg && heightCm){
+    const bmi = weightKg / Math.pow(heightCm/100, 2);
+    pigEl('pig-s-bmi').textContent = bmi.toFixed(1);
+  } else {
+    pigEl('pig-s-bmi').textContent = '—';
+  }
+
+  // Calories to goal: (target - start) kg × 7700 kcal/kg
+  if(weightKg && targetKg && dur){
+    const diffKg  = targetKg - weightKg;
+    const totalKcal = Math.abs(Math.round(diffKg * 7700));
+    pigEl('pig-s-cal').textContent = totalKcal.toLocaleString() + ' kcal';
+  } else {
+    pigEl('pig-s-cal').textContent = '—';
+  }
+
+  // Estimated completion
+  if(dur){
+    const d = new Date();
+    d.setMonth(d.getMonth() + Math.round(dur));
+    pigEl('pig-s-date').textContent = d.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  } else {
+    pigEl('pig-s-date').textContent = '—';
+  }
+
+  pigEl('pig-summary').classList.add('visible');
+}
+
+/* ── Unit pref sync (global toggle from index.html) ──────────── */
+window.plSetUnitPref = function(pref){
+  // pref: 'us' | 'metric'
+  if(pref === 'us'){
+    if(pigState.heightUnit !== 'ft')      pigSetHeightUnit('ft');
+    if(pigState.weightUnit !== 'lb')      pigSetWeightUnit('lb');
+    if(pigState.targetWeightUnit !== 'lb') pigSetTargetWeightUnit('lb');
+    if(pigState.waterUnit !== 'floz')     pigSetWaterUnit('floz');
+  } else {
+    if(pigState.heightUnit !== 'cm')      pigSetHeightUnit('cm');
+    if(pigState.weightUnit !== 'kg')      pigSetWeightUnit('kg');
+    if(pigState.targetWeightUnit !== 'kg') pigSetTargetWeightUnit('kg');
+    if(pigState.waterUnit !== 'ml')       pigSetWaterUnit('ml');
+  }
+};
+
+/* ── Card visibility by view ─────────────────────────────────── */
+function pigApplyView(v){
+  const showInfo  = v === 'myinfo';
+  const showGoals = v === 'goals';
+  // show both cards but collapse the inactive one
+  pigEl('pig-card-myinfo').style.display = showInfo  ? '' : 'none';
+  pigEl('pig-card-goals').style.display  = showGoals ? '' : 'none';
+}
+
+/* ── Init ────────────────────────────────────────────────────── */
+async function pigInit(v){
+  pigState.view = v;
+  pigApplyView(v);
+  pigEl('pig-root').style.display = '';
+
+  // restore unit prefs from localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('mie_health_profile') || '{}');
+    if(saved._heightUnit) { pigState.heightUnit = saved._heightUnit; pigSetPill('pig-pills-height', saved._heightUnit); if(saved._heightUnit==='ft'){pigShow('pig-height-cm',false);pigShow('pig-ftin',true);} }
+    if(saved._weightUnit) { pigState.weightUnit = saved._weightUnit; pigSetPill('pig-pills-weight', saved._weightUnit); }
+    if(saved._targetWeightUnit) { pigState.targetWeightUnit = saved._targetWeightUnit; pigSetPill('pig-pills-target-weight', saved._targetWeightUnit); }
+    if(saved._waterUnit) { pigState.waterUnit = saved._waterUnit; pigSetPill('pig-pills-water', saved._waterUnit); }
+  } catch{}
+
+  const data = await pigFetchProfile();
+  pigPopulate(data);
+}
+
+/* ── onPanelLoad entry point (called by health/index.html) ───── */
+window.onPanelLoad = function(v){
+  if(v !== 'myinfo' && v !== 'goals') return;
+  pigInit(v);
+};
+</script>
+</body>
+</html>
