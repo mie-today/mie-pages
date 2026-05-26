@@ -539,8 +539,12 @@
 <script>
 /* ══════════════════════════════════════════════════════════════
    PIG — Panel Info Goal
-   All symbols prefixed pig* to avoid collisions
+   Wrapped in IIFE: prevents const/let "already declared" errors
+   when this panel is loaded more than once in a session.
+   Public API is exposed via window.* assignments as before.
 ══════════════════════════════════════════════════════════════ */
+(function(){
+'use strict';
 
 /* ── State ──────────────────────────────────────────────────── */
 const pigState = {
@@ -1117,6 +1121,8 @@ window.onPanelLoad = function(v){
   if(v !== 'myinfo' && v !== 'goals') return;
   pigInit(v);
 };
+
+})(); // end IIFE
 </script>
 </body>
 </html>
