@@ -3,7 +3,7 @@
 .pl-wrap{display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;}
 
 /* ── Cards ── */
-.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.pl-card{background:#fff;border:1px solid #e8eaed;border-radius:10px;padding:12px 14px;margin-bottom:8px;}
 .pl-card-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
 .pl-card-title.foldable{cursor:pointer;user-select:none;}
 .pl-fold-btn{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:13px;padding:2px 5px;border-radius:4px;font-family:sans-serif;display:flex;align-items:center;gap:3px;transition:all .12s;}
@@ -61,15 +61,15 @@
 /* ── Summary bar ── */
 .pf-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:14px;}
 .pf-sum-item{background:#f8f9fa;border-radius:8px;padding:8px 6px;text-align:center;}
-.pf-sum-val{font-size:15px;font-weight:700;color:#202124;}
-.pf-sum-lbl{font-size:11px;color:#5f6368;margin-top:2px;}
+.pf-sum-val{font-size:14px;font-weight:700;color:#202124;}
+.pf-sum-lbl{font-size:10.5px;color:#5f6368;margin-top:1px;}
 
 /* ── Today's food log: 2-col AM/PM ── */
 .pf-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .pf-log-total{font-size:13px;font-weight:700;color:#1e8e3e;}
 
 .pf-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.pf-col{background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;padding:12px 14px;min-height:120px;}
+.pf-col{background:#f8f9fa;border:1px solid #e8eaed;border-radius:10px;padding:10px 12px;min-height:80px;}
 .pf-col-header{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e8eaed;}
 .pf-col-empty{font-size:13px;color:#bdc1c6;font-style:italic;text-align:center;padding:18px 0;}
 
@@ -92,7 +92,7 @@
 .pf-chart-wrap{position:relative;width:100%;overflow:hidden;}
 .pf-chart-canvas{width:100%;display:block;}
 .pf-chart-empty{font-size:13px;color:#5f6368;font-style:italic;text-align:center;padding:24px 0;}
-.pf-chart-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#5f6368;margin-bottom:8px;}
+.pf-chart-legend{display:flex;align-items:center;gap:6px;font-size:11px;color:#5f6368;margin-bottom:4px;}
 .pf-chart-legend-dot{width:12px;height:8px;border-radius:2px;background:#a8c7fa;flex-shrink:0;}
 
 /* ════════════════════════════════
@@ -106,8 +106,9 @@
   .pl-input,.pl-select{font-size:16px;}
 }
 @media(max-width:480px){
-  .pl-card{padding:12px;}
-  .pl-form{padding:10px 11px;}
+  .pl-card{padding:10px;}
+  .pl-form{padding:9px 10px;}
+  .pf-chart-canvas{height:150px !important;}
   .pf-cols{grid-template-columns:1fr;} /* stack AM/PM on very small */
   .pf-summary{grid-template-columns:repeat(3,1fr);}
   .pl-btn-save,.pl-btn-cancel{font-size:13px;padding:8px;}
@@ -228,7 +229,7 @@
       Total Calories per Day
     </div>
     <div class="pf-chart-wrap">
-      <canvas id="pf-chart-canvas" class="pf-chart-canvas" height="220"></canvas>
+      <canvas id="pf-chart-canvas" class="pf-chart-canvas" height="180"></canvas>
     </div>
     <div id="pf-chart-msg" class="pf-chart-empty" style="display:none;">No data for this period.</div>
   </div>
@@ -561,20 +562,28 @@ function drawChart(dates, cals){
   // Set canvas size
   var wrap = canvas.parentElement;
   var W = wrap ? wrap.clientWidth : 600;
-  var H = 220;
+  var H = 180;
   canvas.width  = W;
   canvas.height = H;
 
   var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
 
-  var PAD_L=48, PAD_R=16, PAD_T=16, PAD_B=40;
+  var PAD_L=44, PAD_R=12, PAD_T=12, PAD_B=34;
   var chartW = W - PAD_L - PAD_R;
   var chartH = H - PAD_T - PAD_B;
 
   var maxCal = Math.max.apply(null, cals) || 1;
-  // Round up to nearest 500
-  var yMax = Math.ceil(maxCal/500)*500;
+
+  // ── Fixed Y-axis gridlines ──
+  // ≤2000 kcal: steps of 500  → gridlines at 500, 1000, 1500, 2000
+  // >2000 kcal: steps of 1000 → gridlines at 1000, 2000, 3000, ...
+  var stepSize = maxCal <= 2000 ? 500 : 1000;
+  var yMax = Math.ceil(maxCal / stepSize) * stepSize;
+  // Always show at least 4 gridlines above zero
+  if(yMax < stepSize * 4) yMax = stepSize * 4;
+  var yTicks = [];
+  for(var t = stepSize; t <= yMax; t += stepSize) yTicks.push(t);
 
   // Grid lines & Y labels
   ctx.textAlign   = 'right';
@@ -583,16 +592,23 @@ function drawChart(dates, cals){
   ctx.fillStyle   = '#9aa0a6';
   ctx.strokeStyle = '#f1f3f4';
   ctx.lineWidth   = 1;
-  var ySteps = 5;
-  for(var i=0;i<=ySteps;i++){
-    var v   = yMax * (ySteps-i) / ySteps;
-    var y   = PAD_T + chartH * i / ySteps;
+
+  // Draw 0 baseline
+  ctx.beginPath();
+  ctx.moveTo(PAD_L, PAD_T+chartH);
+  ctx.lineTo(PAD_L+chartW, PAD_T+chartH);
+  ctx.stroke();
+  ctx.fillText('0', PAD_L-6, PAD_T+chartH);
+
+  // Draw each fixed tick
+  yTicks.forEach(function(tickVal){
+    var y = PAD_T + chartH * (1 - tickVal/yMax);
     ctx.beginPath();
     ctx.moveTo(PAD_L, y);
     ctx.lineTo(PAD_L+chartW, y);
     ctx.stroke();
-    ctx.fillText(v.toLocaleString(), PAD_L-6, y);
-  }
+    ctx.fillText(tickVal >= 1000 ? (tickVal/1000)+'k' : tickVal, PAD_L-6, y);
+  });
 
   // X labels (show every Nth date to avoid crowding)
   var n = dates.length;
