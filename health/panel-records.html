@@ -1,1 +1,1274 @@
+<!-- panel-records.html -->
+<!-- Injected into #panel-body by index.html loadPanelContent() -->
+<!-- onPanelLoad(v) called after injection with v: 'insurance'|'medication'|'history' -->
 
+<style>
+  /* ── Reset & Base ── */
+  .pr-root * { box-sizing: border-box; margin: 0; padding: 0; }
+  .pr-root {
+    font-family: 'DM Sans', sans-serif;
+    color: #202124;
+    padding: 16px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* ── Card ── */
+  .pr-card {
+    background: #fff;
+    border: 1px solid #e8eaed;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .pr-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e8eaed;
+  }
+  .pr-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pr-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #e8f0fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .pr-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #202124;
+  }
+  .pr-card-body {
+    padding: 20px;
+  }
+
+  /* ── Labels ── */
+  .pr-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  /* ── Fields grid ── */
+  .pr-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 520px) {
+    .pr-fields-grid { grid-template-columns: 1fr; }
+  }
+  .pr-field { display: flex; flex-direction: column; }
+  .pr-field-value {
+    font-size: 14px;
+    color: #202124;
+    padding: 8px 0;
+    min-height: 36px;
+    line-height: 1.5;
+  }
+  .pr-field-value.pr-empty { color: #9aa0a6; font-style: italic; }
+
+  /* ── Inputs ── */
+  .pr-input, .pr-select, .pr-textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #202124;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    padding: 8px 10px;
+    width: 100%;
+    background: #fff;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  @media (max-width: 520px) {
+    .pr-input, .pr-select, .pr-textarea { font-size: 16px; }
+  }
+  .pr-input:focus, .pr-select:focus, .pr-textarea:focus {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.12);
+  }
+  .pr-textarea { resize: vertical; min-height: 80px; }
+
+  /* ── Buttons ── */
+  .pr-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 7px 14px;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .pr-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .pr-btn-primary {
+    background: #1a73e8;
+    color: #fff;
+  }
+  .pr-btn-primary:hover:not(:disabled) { background: #1557b0; }
+  .pr-btn-secondary {
+    background: #f1f3f4;
+    color: #3c4043;
+  }
+  .pr-btn-secondary:hover:not(:disabled) { background: #e8eaed; }
+  .pr-btn-ghost {
+    background: transparent;
+    color: #1a73e8;
+    padding: 5px 10px;
+  }
+  .pr-btn-ghost:hover:not(:disabled) { background: #e8f0fe; }
+  .pr-btn-danger-ghost {
+    background: transparent;
+    color: #d93025;
+    padding: 5px 10px;
+  }
+  .pr-btn-danger-ghost:hover:not(:disabled) { background: #fce8e6; }
+  .pr-btn-sm { font-size: 12px; padding: 5px 10px; }
+  .pr-btn-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Status badge ── */
+  .pr-status {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.3s;
+  }
+  .pr-status.success { background: #e6f4ea; color: #137333; }
+  .pr-status.error   { background: #fce8e6; color: #c5221f; }
+  .pr-status.hidden  { opacity: 0; pointer-events: none; }
+
+  /* ── Divider ── */
+  .pr-divider {
+    border: none;
+    border-top: 1px solid #e8eaed;
+    margin: 20px 0;
+  }
+
+  /* ── Section title ── */
+  .pr-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #3c4043;
+    margin-bottom: 14px;
+  }
+
+  /* ── Custom fields (Insurance) ── */
+  .pr-custom-field-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .pr-custom-field-row .pr-input { flex: 1; }
+  .pr-custom-remove {
+    background: transparent;
+    border: none;
+    color: #9aa0a6;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 6px 4px;
+    line-height: 1;
+    transition: color 0.15s;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .pr-custom-remove:hover { color: #d93025; }
+  .pr-custom-display-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f3f4;
+  }
+  .pr-custom-display-key {
+    font-size: 11px;
+    font-weight: 600;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 100px;
+    padding-top: 2px;
+  }
+  .pr-custom-display-val {
+    font-size: 14px;
+    color: #202124;
+    flex: 1;
+  }
+
+  /* ── Medication cards ── */
+  .pr-med-list { display: flex; flex-direction: column; gap: 10px; }
+  .pr-med-card {
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+  .pr-med-card:hover { border-color: #c5c7ca; }
+  .pr-med-card.pr-pending-delete { opacity: 0.4; }
+  .pr-med-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: #e8f0fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .pr-med-info { flex: 1; min-width: 0; }
+  .pr-med-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #202124;
+    margin-bottom: 3px;
+  }
+  .pr-med-meta {
+    font-size: 12px;
+    color: #5f6368;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin-bottom: 4px;
+  }
+  .pr-med-notes {
+    font-size: 12px;
+    color: #80868b;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .pr-med-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+  /* ── Add Medication form ── */
+  .pr-add-form {
+    border: 1px dashed #dadce0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    background: #fafafa;
+  }
+  .pr-add-form-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #3c4043;
+    margin-bottom: 12px;
+  }
+  .pr-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 520px) {
+    .pr-form-grid { grid-template-columns: 1fr; }
+  }
+  .pr-form-field { display: flex; flex-direction: column; gap: 5px; }
+  .pr-form-field.pr-full { grid-column: 1 / -1; }
+
+  /* ── History events ── */
+  .pr-event-list { display: flex; flex-direction: column; gap: 8px; }
+  .pr-event-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+    transition: border-color 0.15s;
+  }
+  .pr-event-item:hover { border-color: #c5c7ca; }
+  .pr-event-item.pr-pending-delete { opacity: 0.4; }
+  .pr-event-date {
+    font-size: 11px;
+    color: #5f6368;
+    font-weight: 500;
+    min-width: 70px;
+    padding-top: 2px;
+    flex-shrink: 0;
+  }
+  .pr-event-content { flex: 1; min-width: 0; }
+  .pr-event-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    flex-wrap: wrap;
+  }
+  .pr-event-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #202124;
+  }
+  .pr-event-desc {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 2px;
+  }
+  .pr-event-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+  /* ── Type badges ── */
+  .pr-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .pr-badge-diagnosis    { background: #fce8e6; color: #c5221f; }
+  .pr-badge-surgery      { background: #e8f0fe; color: #1a73e8; }
+  .pr-badge-hospitalization { background: #fef7e0; color: #a16400; }
+  .pr-badge-allergy      { background: #f3e8fd; color: #7b1fa2; }
+  .pr-badge-vaccination  { background: #e6f4ea; color: #137333; }
+  .pr-badge-other        { background: #f1f3f4; color: #5f6368; }
+
+  /* ── Empty state ── */
+  .pr-empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: #9aa0a6;
+  }
+  .pr-empty-state-icon { font-size: 36px; margin-bottom: 10px; }
+  .pr-empty-state-text { font-size: 13px; }
+
+  /* ── Toast (Undo) ── */
+  #pr-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #202124;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    transition: transform 0.25s ease, opacity 0.25s;
+    opacity: 0;
+    z-index: 9999;
+    white-space: nowrap;
+  }
+  #pr-toast.pr-toast-visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  #pr-toast-undo {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  #pr-toast-undo:hover { background: rgba(255,255,255,0.15); }
+  #pr-toast-timer {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    font-weight: 400;
+    min-width: 14px;
+  }
+
+  /* ── Notes autosave indicator ── */
+  .pr-autosave-hint {
+    font-size: 11px;
+    color: #9aa0a6;
+    margin-top: 5px;
+    min-height: 16px;
+    transition: color 0.2s;
+  }
+  .pr-autosave-hint.saving { color: #1a73e8; }
+  .pr-autosave-hint.saved  { color: #137333; }
+</style>
+
+<div class="pr-root" id="pr-root"></div>
+
+<!-- Shared toast element (rendered once, reused) -->
+<div id="pr-toast">
+  <span id="pr-toast-msg"></span>
+  <button id="pr-toast-undo">Undo</button>
+  <span id="pr-toast-timer"></span>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ─────────────────────────────────────────────
+     Constants
+  ───────────────────────────────────────────── */
+  const API_BASE = 'https://api.mie.today';
+  const FETCH_OPTS = { credentials: 'include' };
+
+  /* ─────────────────────────────────────────────
+     Listener tracking for cleanup
+  ───────────────────────────────────────────── */
+  const prListeners = []; // { el, type, fn }
+  function prOn(el, type, fn) {
+    el.addEventListener(type, fn);
+    prListeners.push({ el, type, fn });
+  }
+  function prCleanup() {
+    prListeners.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
+    prListeners.length = 0;
+  }
+
+  /* ─────────────────────────────────────────────
+     Toast (Undo)
+  ───────────────────────────────────────────── */
+  let prToastTimer = null;
+  let prToastCountdown = null;
+
+  function prShowToast(msg, onUndo, onConfirm) {
+    const toast   = document.getElementById('pr-toast');
+    const msgEl   = document.getElementById('pr-toast-msg');
+    const timerEl = document.getElementById('pr-toast-timer');
+    const undoBtn = document.getElementById('pr-toast-undo');
+
+    // Clear any previous
+    clearTimeout(prToastTimer);
+    clearInterval(prToastCountdown);
+
+    msgEl.textContent   = msg;
+    timerEl.textContent = '3s';
+    toast.classList.add('pr-toast-visible');
+
+    let secs = 3;
+    prToastCountdown = setInterval(() => {
+      secs--;
+      timerEl.textContent = secs > 0 ? `${secs}s` : '';
+      if (secs <= 0) clearInterval(prToastCountdown);
+    }, 1000);
+
+    // Replace undo listener
+    const newUndo = undoBtn.cloneNode(true);
+    undoBtn.parentNode.replaceChild(newUndo, undoBtn);
+    newUndo.addEventListener('click', () => {
+      clearTimeout(prToastTimer);
+      clearInterval(prToastCountdown);
+      toast.classList.remove('pr-toast-visible');
+      if (onUndo) onUndo();
+    });
+
+    prToastTimer = setTimeout(() => {
+      toast.classList.remove('pr-toast-visible');
+      if (onConfirm) onConfirm();
+    }, 3000);
+  }
+
+  /* ─────────────────────────────────────────────
+     Status helper
+  ───────────────────────────────────────────── */
+  function prShowStatus(el, type) {
+    // type: 'success' | 'error'
+    el.className = `pr-status ${type}`;
+    el.textContent = type === 'success' ? '✓ Saved' : '⚠ Saved offline';
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => {
+      el.className = 'pr-status hidden';
+    }, 3000);
+  }
+
+  /* ─────────────────────────────────────────────
+     API helpers
+  ───────────────────────────────────────────── */
+  async function prFetchRecords(type) {
+    const r = await fetch(`${API_BASE}/api/me/health/records?type=${type}`, FETCH_OPTS);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+  async function prPostRecord(type, data) {
+    const r = await fetch(`${API_BASE}/api/me/health/records`, {
+      ...FETCH_OPTS,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data })
+    });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+  async function prPutRecord(id, data) {
+    const r = await fetch(`${API_BASE}/api/me/health/records/${id}`, {
+      ...FETCH_OPTS,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data })
+    });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+  async function prDeleteRecord(id) {
+    const r = await fetch(`${API_BASE}/api/me/health/records/${id}`, {
+      ...FETCH_OPTS,
+      method: 'DELETE'
+    });
+    if (!r.ok) throw new Error(r.status);
+  }
+
+  /* ─────────────────────────────────────────────
+     localStorage fallback
+  ───────────────────────────────────────────── */
+  function lsGet(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+  }
+  function lsSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  }
+
+  /* ─────────────────────────────────────────────
+     Debounce
+  ───────────────────────────────────────────── */
+  function prDebounce(fn, ms) {
+    let t;
+    return function(...args) {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  /* ─────────────────────────────────────────────
+     Render helpers
+  ───────────────────────────────────────────── */
+  function prMakeCard(iconEmoji, title, bodyHTML, headerExtra = '') {
+    return `
+      <div class="pr-card">
+        <div class="pr-card-header">
+          <div class="pr-card-header-left">
+            <div class="pr-card-icon">${iconEmoji}</div>
+            <span class="pr-card-title">${title}</span>
+          </div>
+          ${headerExtra}
+        </div>
+        <div class="pr-card-body">
+          ${bodyHTML}
+        </div>
+      </div>`;
+  }
+
+  function prEmpty(icon, text) {
+    return `<div class="pr-empty-state">
+      <div class="pr-empty-state-icon">${icon}</div>
+      <div class="pr-empty-state-text">${text}</div>
+    </div>`;
+  }
+
+  /* ═══════════════════════════════════════════
+     INSURANCE
+  ═══════════════════════════════════════════ */
+  const INS_FIELDS = [
+    { key: 'provider',       label: 'Provider' },
+    { key: 'plan_name',      label: 'Plan Name' },
+    { key: 'member_id',      label: 'Member ID' },
+    { key: 'group_number',   label: 'Group Number' },
+    { key: 'phone',          label: 'Phone' },
+    { key: 'effective_date', label: 'Effective Date' },
+  ];
+
+  function prInitInsurance() {
+    const root = document.getElementById('pr-root');
+    root.innerHTML = '<div style="padding:32px;text-align:center;color:#9aa0a6;font-size:13px;">Loading…</div>';
+
+    let record = null; // { id, data }
+    let editMode = false;
+
+    async function load() {
+      let data = lsGet('mie_insurance') || {};
+      try {
+        const res = await prFetchRecords('insurance');
+        const items = Array.isArray(res) ? res : (res.records || []);
+        if (items.length) {
+          record = items[0];
+          data = record.data || {};
+          lsSet('mie_insurance', data);
+        }
+      } catch {}
+      render(data);
+    }
+
+    function render(data) {
+      const customFields = data.custom_fields || [];
+      const notes = data.notes || '';
+
+      const headerExtra = `
+        <div class="pr-btn-row">
+          <span class="pr-status hidden" id="pr-ins-status"></span>
+          <button class="pr-btn pr-btn-secondary pr-btn-sm" id="pr-ins-edit-btn">
+            ${editMode ? 'Cancel' : 'Edit'}
+          </button>
+          ${editMode ? `<button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-ins-save-btn">Save</button>` : ''}
+        </div>`;
+
+      // Fixed fields
+      let fixedHTML = '<div class="pr-fields-grid">';
+      INS_FIELDS.forEach(f => {
+        const val = data[f.key] || '';
+        fixedHTML += `<div class="pr-field">
+          <span class="pr-label">${f.label}</span>
+          ${editMode
+            ? `<input class="pr-input" id="pr-ins-${f.key}" type="${f.key === 'effective_date' ? 'date' : 'text'}" value="${prEsc(val)}" placeholder="${f.label}">`
+            : `<div class="pr-field-value ${val ? '' : 'pr-empty'}">${val ? prEsc(val) : '—'}</div>`
+          }
+        </div>`;
+      });
+      fixedHTML += '</div>';
+
+      // Custom fields
+      let customHTML = '';
+      if (editMode) {
+        customHTML = `<div class="pr-section-title">Custom Fields</div>
+          <div id="pr-ins-custom-list">`;
+        customFields.forEach((cf, i) => {
+          customHTML += prCustomFieldRow(i, cf.key, cf.value);
+        });
+        customHTML += `</div>
+          <button class="pr-btn pr-btn-ghost pr-btn-sm" id="pr-ins-add-custom" style="margin-top:6px;">＋ Add field</button>`;
+      } else if (customFields.length) {
+        customHTML = `<div class="pr-section-title">Additional Info</div>`;
+        customFields.forEach(cf => {
+          customHTML += `<div class="pr-custom-display-row">
+            <span class="pr-custom-display-key">${prEsc(cf.key)}</span>
+            <span class="pr-custom-display-val">${prEsc(cf.value)}</span>
+          </div>`;
+        });
+        customHTML += '<div style="margin-bottom:16px;"></div>';
+      }
+
+      // Notes
+      const notesHTML = `<hr class="pr-divider">
+        <div class="pr-section-title">Notes</div>
+        ${editMode
+          ? `<textarea class="pr-textarea" id="pr-ins-notes" placeholder="Add any notes about your insurance…">${prEsc(notes)}</textarea>`
+          : `<div class="pr-field-value ${notes ? '' : 'pr-empty'}" style="white-space:pre-wrap;">${notes ? prEsc(notes) : 'No notes added.'}</div>`
+        }`;
+
+      root.innerHTML = prMakeCard('🏥', 'Insurance Info',
+        fixedHTML + customHTML + notesHTML, headerExtra);
+
+      // Bind buttons
+      const editBtn = document.getElementById('pr-ins-edit-btn');
+      prOn(editBtn, 'click', () => {
+        editMode = !editMode;
+        const cur = gatherInsData();
+        render(cur);
+      });
+
+      if (editMode) {
+        const saveBtn = document.getElementById('pr-ins-save-btn');
+        prOn(saveBtn, 'click', () => prSaveInsurance());
+
+        const addCustom = document.getElementById('pr-ins-add-custom');
+        prOn(addCustom, 'click', () => {
+          const list = document.getElementById('pr-ins-custom-list');
+          const idx = list.children.length;
+          const row = document.createElement('div');
+          row.innerHTML = prCustomFieldRow(idx, '', '');
+          list.appendChild(row.firstElementChild);
+          bindCustomRemove(list.lastElementChild);
+        });
+
+        // Bind existing remove buttons
+        document.querySelectorAll('.pr-custom-remove').forEach(btn => {
+          prOn(btn, 'click', () => btn.closest('.pr-custom-field-row').remove());
+        });
+      }
+    }
+
+    function prCustomFieldRow(i, key, value) {
+      return `<div class="pr-custom-field-row" data-idx="${i}">
+        <input class="pr-input pr-cf-key" type="text" placeholder="Field name" value="${prEsc(key)}">
+        <input class="pr-input pr-cf-val" type="text" placeholder="Value" value="${prEsc(value)}">
+        <button class="pr-custom-remove" title="Remove">×</button>
+      </div>`;
+    }
+    function bindCustomRemove(row) {
+      const btn = row.querySelector('.pr-custom-remove');
+      prOn(btn, 'click', () => row.remove());
+    }
+
+    function gatherInsData() {
+      const data = {};
+      INS_FIELDS.forEach(f => {
+        const el = document.getElementById(`pr-ins-${f.key}`);
+        if (el) data[f.key] = el.value.trim();
+        else data[f.key] = '';
+      });
+      // Custom fields
+      const rows = document.querySelectorAll('.pr-custom-field-row');
+      data.custom_fields = [];
+      rows.forEach(row => {
+        const k = row.querySelector('.pr-cf-key')?.value.trim();
+        const v = row.querySelector('.pr-cf-val')?.value.trim();
+        if (k) data.custom_fields.push({ key: k, value: v || '' });
+      });
+      const notesEl = document.getElementById('pr-ins-notes');
+      data.notes = notesEl ? notesEl.value.trim() : '';
+      return data;
+    }
+
+    async function prSaveInsurance() {
+      const saveBtn = document.getElementById('pr-ins-save-btn');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+      const data = gatherInsData();
+      const statusEl = document.getElementById('pr-ins-status');
+      try {
+        let res;
+        if (record && record.id) {
+          res = await prPutRecord(record.id, data);
+        } else {
+          res = await prPostRecord('insurance', data);
+          record = res;
+        }
+        lsSet('mie_insurance', data);
+        prShowStatus(statusEl, 'success');
+        editMode = false;
+        render(data);
+      } catch {
+        lsSet('mie_insurance', data);
+        prShowStatus(statusEl, 'error');
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      }
+    }
+
+    load();
+  }
+
+  /* ═══════════════════════════════════════════
+     MEDICATION
+  ═══════════════════════════════════════════ */
+  function prInitMedication() {
+    const root = document.getElementById('pr-root');
+    root.innerHTML = '<div style="padding:32px;text-align:center;color:#9aa0a6;font-size:13px;">Loading…</div>';
+
+    let meds = []; // [{ id, data }]
+    let showForm = false;
+    let editingId = null;
+
+    async function load() {
+      let local = lsGet('mie_med_records') || [];
+      try {
+        const res = await prFetchRecords('medication');
+        const items = Array.isArray(res) ? res : (res.records || []);
+        meds = items;
+        lsSet('mie_med_records', meds);
+      } catch {
+        meds = local;
+      }
+      render();
+    }
+
+    function render() {
+      const headerExtra = `
+        <div class="pr-btn-row">
+          <span class="pr-status hidden" id="pr-med-status"></span>
+          <button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-med-add-btn">＋ Add Medication</button>
+        </div>`;
+
+      let listHTML = '';
+      const activeMeds = meds.filter(m => !m._deleted);
+      if (activeMeds.length) {
+        listHTML = '<div class="pr-med-list">';
+        activeMeds.forEach(m => {
+          const d = m.data || {};
+          listHTML += `
+            <div class="pr-med-card" id="pr-med-${m.id}">
+              <div class="pr-med-icon">💊</div>
+              <div class="pr-med-info">
+                <div class="pr-med-name">${prEsc(d.name || 'Unnamed')}</div>
+                <div class="pr-med-meta">
+                  ${d.dosage ? `<span>📐 ${prEsc(d.dosage)}</span>` : ''}
+                  ${d.doctor ? `<span>👨‍⚕️ ${prEsc(d.doctor)}</span>` : ''}
+                  ${d.start_date ? `<span>📅 ${prEsc(d.start_date)}</span>` : ''}
+                </div>
+                ${d.notes ? `<div class="pr-med-notes">${prEsc(d.notes)}</div>` : ''}
+              </div>
+              <div class="pr-med-actions">
+                <button class="pr-btn pr-btn-ghost pr-btn-sm pr-med-edit" data-id="${m.id}" title="Edit">✏️</button>
+                <button class="pr-btn pr-btn-danger-ghost pr-btn-sm pr-med-del" data-id="${m.id}" title="Delete">🗑</button>
+              </div>
+            </div>`;
+        });
+        listHTML += '</div>';
+      } else {
+        listHTML = prEmpty('💊', 'No medications added yet.');
+      }
+
+      // Add / Edit form
+      let formHTML = '';
+      if (showForm) {
+        const editing = editingId ? meds.find(m => m.id === editingId) : null;
+        const d = editing ? (editing.data || {}) : {};
+        formHTML = `
+          <div class="pr-add-form" id="pr-med-form">
+            <div class="pr-add-form-title">${editingId ? 'Edit Medication' : 'New Medication'}</div>
+            <div class="pr-form-grid">
+              <div class="pr-form-field pr-full">
+                <label class="pr-label">Medication Name *</label>
+                <input class="pr-input" id="pr-med-f-name" type="text" value="${prEsc(d.name||'')}" placeholder="e.g. Metformin">
+              </div>
+              <div class="pr-form-field">
+                <label class="pr-label">Dosage</label>
+                <input class="pr-input" id="pr-med-f-dosage" type="text" value="${prEsc(d.dosage||'')}" placeholder="e.g. 500mg">
+              </div>
+              <div class="pr-form-field">
+                <label class="pr-label">Prescribing Doctor</label>
+                <input class="pr-input" id="pr-med-f-doctor" type="text" value="${prEsc(d.doctor||'')}" placeholder="Dr. Name">
+              </div>
+              <div class="pr-form-field">
+                <label class="pr-label">Start Date</label>
+                <input class="pr-input" id="pr-med-f-date" type="date" value="${prEsc(d.start_date||'')}">
+              </div>
+              <div class="pr-form-field pr-full">
+                <label class="pr-label">Notes (optional)</label>
+                <textarea class="pr-textarea" id="pr-med-f-notes" placeholder="Any additional notes…" style="min-height:60px;">${prEsc(d.notes||'')}</textarea>
+              </div>
+            </div>
+            <div class="pr-btn-row">
+              <button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-med-form-save">${editingId ? 'Update' : 'Add'}</button>
+              <button class="pr-btn pr-btn-secondary pr-btn-sm" id="pr-med-form-cancel">Cancel</button>
+            </div>
+          </div>`;
+      }
+
+      root.innerHTML = prMakeCard('💊', 'Medications', listHTML + formHTML, headerExtra);
+
+      // Bind add button
+      prOn(document.getElementById('pr-med-add-btn'), 'click', () => {
+        showForm = true;
+        editingId = null;
+        render();
+        document.getElementById('pr-med-f-name')?.focus();
+      });
+
+      // Edit / Delete buttons
+      document.querySelectorAll('.pr-med-edit').forEach(btn => {
+        prOn(btn, 'click', () => {
+          showForm = true;
+          editingId = btn.dataset.id;
+          render();
+        });
+      });
+      document.querySelectorAll('.pr-med-del').forEach(btn => {
+        prOn(btn, 'click', () => prDeleteMed(btn.dataset.id));
+      });
+
+      // Form buttons
+      if (showForm) {
+        prOn(document.getElementById('pr-med-form-save'), 'click', () => prSaveMed());
+        prOn(document.getElementById('pr-med-form-cancel'), 'click', () => {
+          showForm = false;
+          editingId = null;
+          render();
+        });
+      }
+    }
+
+    function gatherMedForm() {
+      return {
+        name:       document.getElementById('pr-med-f-name')?.value.trim(),
+        dosage:     document.getElementById('pr-med-f-dosage')?.value.trim(),
+        doctor:     document.getElementById('pr-med-f-doctor')?.value.trim(),
+        start_date: document.getElementById('pr-med-f-date')?.value,
+        notes:      document.getElementById('pr-med-f-notes')?.value.trim(),
+      };
+    }
+
+    async function prSaveMed() {
+      const saveBtn = document.getElementById('pr-med-form-save');
+      const d = gatherMedForm();
+      if (!d.name) {
+        document.getElementById('pr-med-f-name')?.focus();
+        return;
+      }
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+      const statusEl = document.getElementById('pr-med-status');
+      try {
+        if (editingId) {
+          const res = await prPutRecord(editingId, d);
+          const idx = meds.findIndex(m => m.id === editingId);
+          if (idx !== -1) meds[idx] = { ...meds[idx], data: d };
+        } else {
+          const res = await prPostRecord('medication', d);
+          meds.push(res);
+        }
+        lsSet('mie_med_records', meds);
+        prShowStatus(statusEl, 'success');
+        showForm = false;
+        editingId = null;
+        render();
+      } catch {
+        // Offline: add optimistically with tmp id
+        if (!editingId) {
+          const tmp = { id: 'tmp_' + Date.now(), data: d };
+          meds.push(tmp);
+        } else {
+          const idx = meds.findIndex(m => m.id === editingId);
+          if (idx !== -1) meds[idx].data = d;
+        }
+        lsSet('mie_med_records', meds);
+        prShowStatus(statusEl, 'error');
+        showForm = false;
+        editingId = null;
+        render();
+      }
+    }
+
+    function prDeleteMed(id) {
+      const med = meds.find(m => m.id === id);
+      if (!med) return;
+      const name = (med.data && med.data.name) || 'medication';
+      // Optimistic remove
+      med._deleted = true;
+      render();
+
+      prShowToast(`Removed "${name}"`,
+        // Undo
+        () => { med._deleted = false; render(); },
+        // Confirm delete
+        async () => {
+          meds = meds.filter(m => m.id !== id);
+          lsSet('mie_med_records', meds);
+          try { await prDeleteRecord(id); } catch {}
+        }
+      );
+    }
+
+    load();
+  }
+
+  /* ═══════════════════════════════════════════
+     HISTORY
+  ═══════════════════════════════════════════ */
+  const EVENT_TYPES = ['Diagnosis','Surgery','Hospitalization','Allergy','Vaccination','Other'];
+  const EVENT_BADGE_CLASS = {
+    diagnosis:       'pr-badge-diagnosis',
+    surgery:         'pr-badge-surgery',
+    hospitalization: 'pr-badge-hospitalization',
+    allergy:         'pr-badge-allergy',
+    vaccination:     'pr-badge-vaccination',
+    other:           'pr-badge-other',
+  };
+
+  function prInitHistory() {
+    const root = document.getElementById('pr-root');
+    root.innerHTML = '<div style="padding:32px;text-align:center;color:#9aa0a6;font-size:13px;">Loading…</div>';
+
+    let events = [];
+    let notes = '';
+    let notesRecordId = null;
+    let showEventForm = false;
+    let editingEventId = null;
+    let notesSaveState = 'idle'; // idle | saving | saved
+
+    async function load() {
+      try {
+        const res = await prFetchRecords('history');
+        const items = Array.isArray(res) ? res : (res.records || []);
+        events = items.filter(r => r.data && !r.data.content);
+        const notesRec = items.find(r => r.data && r.data.content !== undefined);
+        if (notesRec) {
+          notes = notesRec.data.content || '';
+          notesRecordId = notesRec.id;
+          lsSet('mie_history_notes', notes);
+        } else {
+          notes = lsGet('mie_history_notes') || '';
+        }
+      } catch {
+        events = [];
+        notes = lsGet('mie_history_notes') || '';
+      }
+      render();
+    }
+
+    function render() {
+      // Section A — Events
+      const activeEvents = events
+        .filter(e => !e._deleted)
+        .sort((a, b) => {
+          const da = (a.data && a.data.date) || '';
+          const db = (b.data && b.data.date) || '';
+          return db.localeCompare(da);
+        });
+
+      let eventsHTML = '';
+      if (activeEvents.length) {
+        eventsHTML = '<div class="pr-event-list">';
+        activeEvents.forEach(e => {
+          const d = e.data || {};
+          const typeKey = (d.event_type || 'other').toLowerCase();
+          const badgeCls = EVENT_BADGE_CLASS[typeKey] || 'pr-badge-other';
+          eventsHTML += `
+            <div class="pr-event-item" id="pr-ev-${e.id}">
+              <div class="pr-event-date">${prEsc(prFormatDate(d.date))}</div>
+              <div class="pr-event-content">
+                <div class="pr-event-top">
+                  <span class="pr-badge ${badgeCls}">${prEsc(d.event_type || 'Other')}</span>
+                  <span class="pr-event-title">${prEsc(d.title || '')}</span>
+                </div>
+                ${d.description ? `<div class="pr-event-desc">${prEsc(d.description)}</div>` : ''}
+              </div>
+              <div class="pr-event-actions">
+                <button class="pr-btn pr-btn-ghost pr-btn-sm pr-ev-edit" data-id="${e.id}" title="Edit">✏️</button>
+                <button class="pr-btn pr-btn-danger-ghost pr-btn-sm pr-ev-del" data-id="${e.id}" title="Delete">🗑</button>
+              </div>
+            </div>`;
+        });
+        eventsHTML += '</div>';
+      } else {
+        eventsHTML = prEmpty('📋', 'No medical events recorded yet.');
+      }
+
+      // Add event form
+      let formHTML = '';
+      if (showEventForm) {
+        const editing = editingEventId ? events.find(e => e.id === editingEventId) : null;
+        const d = editing ? (editing.data || {}) : {};
+        const opts = EVENT_TYPES.map(t =>
+          `<option value="${t}" ${d.event_type === t ? 'selected' : ''}>${t}</option>`
+        ).join('');
+        formHTML = `
+          <div class="pr-add-form" id="pr-ev-form" style="margin-top:12px;">
+            <div class="pr-add-form-title">${editingEventId ? 'Edit Event' : 'Add Event'}</div>
+            <div class="pr-form-grid">
+              <div class="pr-form-field">
+                <label class="pr-label">Date</label>
+                <input class="pr-input" id="pr-ev-f-date" type="date" value="${prEsc(d.date||'')}">
+              </div>
+              <div class="pr-form-field">
+                <label class="pr-label">Type</label>
+                <select class="pr-select" id="pr-ev-f-type">${opts}</select>
+              </div>
+              <div class="pr-form-field pr-full">
+                <label class="pr-label">Title *</label>
+                <input class="pr-input" id="pr-ev-f-title" type="text" value="${prEsc(d.title||'')}" placeholder="Brief description">
+              </div>
+              <div class="pr-form-field pr-full">
+                <label class="pr-label">Description (optional)</label>
+                <textarea class="pr-textarea" id="pr-ev-f-desc" placeholder="Additional details…" style="min-height:60px;">${prEsc(d.description||'')}</textarea>
+              </div>
+            </div>
+            <div class="pr-btn-row">
+              <button class="pr-btn pr-btn-primary pr-btn-sm" id="pr-ev-form-save">${editingEventId ? 'Update' : 'Add'}</button>
+              <button class="pr-btn pr-btn-secondary pr-btn-sm" id="pr-ev-form-cancel">Cancel</button>
+              <span class="pr-status hidden" id="pr-ev-status"></span>
+            </div>
+          </div>`;
+      }
+
+      const addEvtBtn = `<button class="pr-btn pr-btn-ghost pr-btn-sm" id="pr-ev-add-btn" style="margin-bottom:4px;">＋ Add Event</button>`;
+
+      // Section B — Notes
+      const notesSection = `
+        <hr class="pr-divider">
+        <div class="pr-section-title">Notes</div>
+        <textarea class="pr-textarea" id="pr-hist-notes" placeholder="Add general health notes, family history, allergies, etc." style="min-height:100px;">${prEsc(notes)}</textarea>
+        <div class="pr-autosave-hint" id="pr-hist-notes-hint">Auto-saved</div>`;
+
+      const headerExtra = `<span class="pr-status hidden" id="pr-hist-status"></span>`;
+      root.innerHTML = prMakeCard('📋', 'Medical History',
+        addEvtBtn + eventsHTML + formHTML + notesSection,
+        headerExtra
+      );
+
+      // Bind add event
+      prOn(document.getElementById('pr-ev-add-btn'), 'click', () => {
+        showEventForm = true;
+        editingEventId = null;
+        render();
+        document.getElementById('pr-ev-f-title')?.focus();
+      });
+
+      // Edit / Delete
+      document.querySelectorAll('.pr-ev-edit').forEach(btn => {
+        prOn(btn, 'click', () => {
+          showEventForm = true;
+          editingEventId = btn.dataset.id;
+          render();
+        });
+      });
+      document.querySelectorAll('.pr-ev-del').forEach(btn => {
+        prOn(btn, 'click', () => prDeleteEvent(btn.dataset.id));
+      });
+
+      // Form save/cancel
+      if (showEventForm) {
+        prOn(document.getElementById('pr-ev-form-save'), 'click', () => prSaveEvent());
+        prOn(document.getElementById('pr-ev-form-cancel'), 'click', () => {
+          showEventForm = false;
+          editingEventId = null;
+          render();
+        });
+      }
+
+      // Notes autosave
+      const notesEl = document.getElementById('pr-hist-notes');
+      const notesHint = document.getElementById('pr-hist-notes-hint');
+      if (notesEl) {
+        notesEl.value = notes;
+        const debouncedSave = prDebounce(async (val) => {
+          notes = val;
+          notesHint.textContent = 'Saving…';
+          notesHint.className = 'pr-autosave-hint saving';
+          try {
+            if (notesRecordId) {
+              await prPutRecord(notesRecordId, { content: val });
+            } else {
+              const res = await prPostRecord('history_notes', { content: val });
+              notesRecordId = res.id;
+            }
+            lsSet('mie_history_notes', val);
+            notesHint.textContent = '✓ Saved';
+            notesHint.className = 'pr-autosave-hint saved';
+            setTimeout(() => { notesHint.textContent = 'Auto-saved'; notesHint.className = 'pr-autosave-hint'; }, 2000);
+          } catch {
+            lsSet('mie_history_notes', val);
+            notesHint.textContent = '⚠ Saved offline';
+            notesHint.className = 'pr-autosave-hint';
+          }
+        }, 800);
+        prOn(notesEl, 'input', e => debouncedSave(e.target.value));
+      }
+    }
+
+    function gatherEventForm() {
+      return {
+        date:        document.getElementById('pr-ev-f-date')?.value,
+        event_type:  document.getElementById('pr-ev-f-type')?.value,
+        title:       document.getElementById('pr-ev-f-title')?.value.trim(),
+        description: document.getElementById('pr-ev-f-desc')?.value.trim(),
+      };
+    }
+
+    async function prSaveEvent() {
+      const saveBtn = document.getElementById('pr-ev-form-save');
+      const statusEl = document.getElementById('pr-ev-status');
+      const d = gatherEventForm();
+      if (!d.title) { document.getElementById('pr-ev-f-title')?.focus(); return; }
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+      try {
+        if (editingEventId) {
+          await prPutRecord(editingEventId, d);
+          const idx = events.findIndex(e => e.id === editingEventId);
+          if (idx !== -1) events[idx] = { ...events[idx], data: d };
+        } else {
+          const res = await prPostRecord('history', d);
+          events.push(res);
+        }
+        prShowStatus(statusEl, 'success');
+        showEventForm = false;
+        editingEventId = null;
+        render();
+      } catch {
+        if (!editingEventId) {
+          events.push({ id: 'tmp_' + Date.now(), data: d });
+        } else {
+          const idx = events.findIndex(e => e.id === editingEventId);
+          if (idx !== -1) events[idx].data = d;
+        }
+        prShowStatus(statusEl, 'error');
+        showEventForm = false;
+        editingEventId = null;
+        render();
+      }
+    }
+
+    function prDeleteEvent(id) {
+      const ev = events.find(e => e.id === id);
+      if (!ev) return;
+      const label = (ev.data && ev.data.title) || 'event';
+      ev._deleted = true;
+      render();
+      prShowToast(`Removed "${label}"`,
+        () => { ev._deleted = false; render(); },
+        async () => {
+          events = events.filter(e => e.id !== id);
+          try { await prDeleteRecord(id); } catch {}
+        }
+      );
+    }
+
+    load();
+  }
+
+  /* ─────────────────────────────────────────────
+     Utilities
+  ───────────────────────────────────────────── */
+  function prEsc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function prFormatDate(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch { return iso; }
+  }
+
+  /* ─────────────────────────────────────────────
+     Public API
+  ───────────────────────────────────────────── */
+  window.onPanelLoad = function(v) {
+    // Guard
+    if (v !== 'insurance' && v !== 'medication' && v !== 'history') return;
+
+    // Cleanup previous listeners
+    prCleanup();
+
+    // Dismiss any pending toast
+    clearTimeout(prToastTimer);
+    clearInterval(prToastCountdown);
+    const toast = document.getElementById('pr-toast');
+    if (toast) toast.classList.remove('pr-toast-visible');
+
+    // Render
+    if (v === 'insurance')  prInitInsurance();
+    if (v === 'medication') prInitMedication();
+    if (v === 'history')    prInitHistory();
+  };
+
+})();
+</script>
