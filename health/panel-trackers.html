@@ -30,26 +30,14 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    cursor: pointer;
-    user-select: none;
   }
   .pt-card-header h3 {
     font-size: 15px;
     font-weight: 600;
     color: #202124;
   }
-  .pt-card-toggle {
-    width: 22px; height: 22px;
-    border: none; background: none;
-    font-size: 16px;
-    color: #5f6368;
-    cursor: pointer;
-    transition: transform .2s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .pt-card-toggle.collapsed { transform: rotate(-90deg); }
+  .pt-card-toggle { display: none; }
   .pt-card-body { padding: 0 16px 16px; }
-  .pt-card-body.hidden { display: none; }
 
   /* ── Labels ── */
   .pt-label {
@@ -230,16 +218,11 @@
   .pt-btn-primary:disabled { opacity: .55; cursor: default; }
 
   /* Goal display */
-  .pt-goal-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12px;
-    color: #5f6368;
-    background: #f1f3f4;
-    border-radius: 99px;
-    padding: 3px 10px;
-    margin-bottom: 10px;
+  .pt-goal-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    margin-bottom: 12px;
   }
 
   /* Water chart */
@@ -581,9 +564,8 @@
   function ptMakeCard(id, title, bodyHtml) {
     return `
       <div class="pt-card" id="ptcard-${id}">
-        <div class="pt-card-header" data-ptcard="${id}">
+        <div class="pt-card-header">
           <h3>${title}</h3>
-          <button class="pt-card-toggle" data-ptcard="${id}" aria-label="접기">▾</button>
         </div>
         <div class="pt-card-body" id="ptbody-${id}">
           ${bodyHtml}
@@ -591,18 +573,7 @@
       </div>`;
   }
 
-  function ptBindFold(root) {
-    root.querySelectorAll('[data-ptcard]').forEach(el => {
-      ptListen(el, 'click', (e) => {
-        const id = el.dataset.ptcard;
-        const body = document.getElementById('ptbody-' + id);
-        const btn = root.querySelector('.pt-card-toggle[data-ptcard="' + id + '"]');
-        if (!body) return;
-        const hidden = body.classList.toggle('hidden');
-        btn.classList.toggle('collapsed', hidden);
-      });
-    });
-  }
+  function ptBindFold(root) { /* foldable disabled */ }
 
   /* ═══════════════════════════════════════
      ██ WATER TRACKER
@@ -611,10 +582,7 @@
   function ptWaterHtml() {
     return `
       <div class="pt-section">
-        <div class="pt-label">오늘 수분 섭취</div>
-        <div class="pt-goal-chip" id="pt-goal-chip">
-          🎯 목표 로딩 중…
-        </div>
+        <div class="pt-goal-text" id="pt-goal-chip">🎯 Goal: —</div>
         <div class="pt-unit-toggle">
           <button class="pt-unit-btn active" data-unit="ml">ml</button>
           <button class="pt-unit-btn" data-unit="floz">fl oz</button>
@@ -682,7 +650,10 @@
       ptState.waterGoalMl = 2000;
     }
     const chip = document.getElementById('pt-goal-chip');
-    if (chip) chip.textContent = `🎯 목표: ${ptFmt(ptState.waterGoalMl, ptState.waterUnit)}`;
+    if (chip) {
+      const oz = (ptState.waterGoalMl / 29.5735).toFixed(1);
+      chip.textContent = `🎯 Goal: ${ptState.waterGoalMl}ml / ${oz}oz`;
+    }
   }
 
   async function ptWaterLoadToday() {
@@ -758,7 +729,10 @@
 
     // Goal chip
     const chip = document.getElementById('pt-goal-chip');
-    if (chip) chip.textContent = `🎯 목표: ${ptFmt(goal, unit)}`;
+    if (chip) {
+      const oz = (goal / 29.5735).toFixed(1);
+      chip.textContent = `🎯 Goal: ${goal}ml / ${oz}oz`;
+    }
   }
 
   function ptWaterRenderChart() {
@@ -861,7 +835,7 @@
   }
 
   async function ptInitWater(root) {
-    root.innerHTML = ptMakeCard('water-today', '💧 오늘 수분 섭취', ptWaterHtml());
+    root.innerHTML = ptMakeCard('water-today', '💧 Today\'s Hydration', ptWaterHtml());
     ptBindFold(root);
     ptWaterBind(root);
     await ptWaterLoadProfile();
