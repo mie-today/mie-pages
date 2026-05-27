@@ -91,23 +91,36 @@
 /* ════════════════════════════════════════
    TREND CHARTS
 ════════════════════════════════════════ */
-.pb-trend-section{margin-bottom:12px;}
-.pb-trend-header{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f3f4;margin-bottom:8px;}
-.pb-trend-title{font-size:11px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
-.pb-trend-toggle{background:none;border:none;cursor:pointer;color:#9aa0a6;font-size:11px;padding:2px 6px;border-radius:4px;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;}
+
+/* ── Trends card header ── */
+.pb-trends-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
+.pb-trends-title{font-size:12.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
+.pb-period-label{font-size:11px;color:#9aa0a6;font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;transition:color .2s;}
+.pb-period-label.active{color:#1a73e8;font-style:normal;font-weight:600;}
+
+/* ── 2-col trend grid ── */
+.pb-trend-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.pb-trend-section{border:1px solid #f1f3f4;border-radius:8px;padding:10px 10px 8px;background:#fafafa;min-width:0;}
+.pb-trend-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.pb-trend-title{font-size:10.5px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
+.pb-trend-toggle{background:none;border:none;cursor:pointer;color:#c5c7ca;font-size:11px;padding:1px 4px;border-radius:4px;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;line-height:1;}
 .pb-trend-toggle:hover{background:#f1f3f4;color:#5f6368;}
 .pb-trend-body{overflow:hidden;}
 .pb-trend-body.collapsed{display:none;}
-.pb-trend-empty{font-size:12px;color:#9aa0a6;font-style:italic;padding:10px 0;text-align:center;}
+.pb-trend-empty{font-size:11px;color:#9aa0a6;font-style:italic;padding:16px 0;text-align:center;}
 
 .pb-svg-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .pb-svg-wrap svg{display:block;}
-.pb-chart-footer{font-size:11.5px;color:#5f6368;text-align:center;margin-top:4px;}
+.pb-chart-footer{font-size:10px;color:#9aa0a6;text-align:center;margin-top:4px;line-height:1.4;}
 .pb-ref-label{font-size:9px;fill:#9aa0a6;}
 
 /* ── Mobile ── */
 @media(max-width:900px){
   .pb-grid-2{grid-template-columns:1fr;}
+}
+@media(max-width:640px){
+  .pb-trend-grid{grid-template-columns:1fr;}
 }
 @media(max-width:580px){
   .pl-card{padding:12px;}
@@ -250,84 +263,91 @@
        CARD 2: TRENDS
   ══════════════════════════════════════════ -->
   <div class="pl-card">
-    <div class="pl-card-title">Trends (last 30 days)</div>
-
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">⚖ Weight</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-weight',this)">▾ Hide</button>
-      </div>
-      <div class="pb-trend-body" id="tr-weight">
-        <div class="pb-svg-wrap" id="tr-weight-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-weight-footer"></div>
-      </div>
+    <div class="pb-trends-header">
+      <span class="pb-trends-title">Trends</span>
+      <span class="pb-period-label" id="pb-period-label">Daily</span>
     </div>
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">🩺 Blood Pressure</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-bp',this)">▾ Hide</button>
-      </div>
-      <div class="pb-trend-body" id="tr-bp">
-        <div class="pb-svg-wrap" id="tr-bp-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-bp-footer"></div>
-      </div>
-    </div>
+    <div class="pb-trend-grid">
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">❤ Heart Rate</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-hr',this)">▾ Hide</button>
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">⚖ Weight</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-weight',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-weight">
+          <div class="pb-svg-wrap" id="tr-weight-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-weight-footer"></div>
+        </div>
       </div>
-      <div class="pb-trend-body" id="tr-hr">
-        <div class="pb-svg-wrap" id="tr-hr-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-hr-footer"></div>
-      </div>
-    </div>
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">🫁 SpO2</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-spo2',this)">▾ Hide</button>
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">🩺 Blood Pressure</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-bp',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-bp">
+          <div class="pb-svg-wrap" id="tr-bp-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-bp-footer"></div>
+        </div>
       </div>
-      <div class="pb-trend-body" id="tr-spo2">
-        <div class="pb-svg-wrap" id="tr-spo2-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-spo2-footer"></div>
-      </div>
-    </div>
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">🩸 Glucose</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-glu',this)">▾ Hide</button>
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">❤ Heart Rate</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-hr',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-hr">
+          <div class="pb-svg-wrap" id="tr-hr-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-hr-footer"></div>
+        </div>
       </div>
-      <div class="pb-trend-body" id="tr-glu">
-        <div class="pb-svg-wrap" id="tr-glu-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-glu-footer"></div>
-      </div>
-    </div>
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">🌡 Temperature</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-temp',this)">▾ Hide</button>
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">🫁 SpO2</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-spo2',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-spo2">
+          <div class="pb-svg-wrap" id="tr-spo2-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-spo2-footer"></div>
+        </div>
       </div>
-      <div class="pb-trend-body" id="tr-temp">
-        <div class="pb-svg-wrap" id="tr-temp-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-temp-footer"></div>
-      </div>
-    </div>
 
-    <div class="pb-trend-section">
-      <div class="pb-trend-header">
-        <span class="pb-trend-title">🧪 Cholesterol</span>
-        <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-chol',this)">▾ Hide</button>
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">🩸 Glucose</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-glu',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-glu">
+          <div class="pb-svg-wrap" id="tr-glu-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-glu-footer"></div>
+        </div>
       </div>
-      <div class="pb-trend-body" id="tr-chol">
-        <div class="pb-svg-wrap" id="tr-chol-chart"><div class="pb-trend-empty">Loading…</div></div>
-        <div class="pb-chart-footer" id="tr-chol-footer"></div>
+
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">🌡 Temperature</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-temp',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-temp">
+          <div class="pb-svg-wrap" id="tr-temp-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-temp-footer"></div>
+        </div>
       </div>
-    </div>
+
+      <div class="pb-trend-section">
+        <div class="pb-trend-header">
+          <span class="pb-trend-title">🧪 Cholesterol</span>
+          <button class="pb-trend-toggle" onclick="pbToggleTrend('tr-chol',this)">▾</button>
+        </div>
+        <div class="pb-trend-body" id="tr-chol">
+          <div class="pb-svg-wrap" id="tr-chol-chart"><div class="pb-trend-empty">Loading…</div></div>
+          <div class="pb-chart-footer" id="tr-chol-footer"></div>
+        </div>
+      </div>
+
+    </div><!-- /pb-trend-grid -->
 
   </div><!-- /card 2 trends -->
 
@@ -844,14 +864,25 @@ function pbRenderAllCharts(items){
 }
 
 /* ── Load data ──────────────────────────────────────────────── */
-function loadData(){
+var _currentPeriod = 'daily';   // tracks active period from index.html
+
+function loadData(period){
+  period = period || _currentPeriod;
+
+  // Always reload today's log (period-independent)
   fetch(BACKEND+'/api/me/health?date='+todayStr()+'&period=daily&tab=health',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){if(d) renderLog(d.health||[], d.custom||[]);})
     .catch(function(){});
 
-  var now=new Date();
-  fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period=monthly&tab=health',{credentials:'include'})
+  // Trend chart period
+  var apiPeriod = period === 'ytd' ? 'yearly'
+                : period === 'week' ? 'weekly'
+                : period === 'month' ? 'monthly'
+                : 'daily';
+
+  var now = new Date();
+  fetch(BACKEND+'/api/me/health?date='+now.toISOString().slice(0,10)+'&period='+apiPeriod+'&tab=health',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(d){
@@ -866,6 +897,17 @@ function loadData(){
       });
     });
 }
+
+/* ── Period update: called by index.html when Day/Week/Month/YTD changes ── */
+window.plSetPeriod = function(period, label){
+  _currentPeriod = period;
+  var lbl = el('pb-period-label');
+  if(lbl){
+    lbl.textContent = label || period;
+    lbl.classList.add('active');
+  }
+  loadData(period);
+};
 
 function loadProfile(){
   fetch(BACKEND+'/api/me/health/profile',{credentials:'include'})
