@@ -1112,9 +1112,13 @@ function onPeriodChange(period){
   document.getElementById('ytd-btn').classList.remove('active');
   renderDate();
   toast(period.charAt(0).toUpperCase()+period.slice(1));
-  // sync native select value
   var sel=document.getElementById('period-select');
   if(sel)sel.value=period;
+  // ── Notify active panel to update trend charts ──
+  if(typeof window.plSetPeriod==='function'){
+    var label=PERIOD_LABELS[period]||period.charAt(0).toUpperCase()+period.slice(1);
+    window.plSetPeriod(period, label);
+  }
 }
 function toggleYTD(){
   ytdActive=!ytdActive;
