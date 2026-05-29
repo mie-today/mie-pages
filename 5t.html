@@ -125,9 +125,22 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .ov-task-mini-dot.loading{opacity:.45;cursor:wait;}
 .ov-task-mini-dot.overdue-dot{border-color:#c5221f;}
 .ov-task-mini-dot.today-dot{border-color:#b06000;}
-/* ── Task box + add button ── */
-.ov-task-add-btn{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1a73e8;color:#fff;border:none;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;transition:background .15s;font-family:inherit;padding-bottom:1px;}
-.ov-task-add-btn:hover{background:#1557b0;}
+/* ── Task box + add button (borderless) ── */
+.ov-task-add-btn{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:none;color:#1a73e8;border:none;cursor:pointer;font-size:20px;line-height:1;flex-shrink:0;transition:color .15s;font-family:inherit;padding:0;}
+.ov-task-add-btn:hover{color:#1557b0;}
+/* ── Draft UI ── */
+.draft-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
+.draft-check-lbl{display:flex;align-items:center;gap:5px;font-size:11px;color:#5f6368;cursor:pointer;user-select:none;}
+.draft-check-lbl input[type="checkbox"]{width:12px;height:12px;accent-color:#1a73e8;cursor:pointer;flex-shrink:0;}
+.draft-list-wrap{margin-top:4px;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;max-height:120px;overflow-y:auto;}
+.draft-list-wrap::-webkit-scrollbar{width:3px;}
+.draft-list-wrap::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px;}
+.draft-item{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f1f3f4;}
+.draft-item:last-child{border-bottom:none;}
+.draft-item:hover{background:#f8f9fa;}
+.draft-item-text{flex:1;font-size:11px;color:#3c4043;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.draft-item-del{background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0;transition:color .12s;}
+.draft-item-del:hover{color:#d93025;}
 .fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
 .fc .fc-col-header-cell{text-align:center !important;}
 
@@ -545,14 +558,6 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 
     <div class="col-right">
       <div class="r-card">
-        <div class="r-label">Send to MIE</div>
-        <div class="tag-chips">
-          <button class="tag-chip" data-tag="@draft">@draft</button>
-          <button class="tag-chip" data-tag="@calendar">@calendar</button>
-          <button class="tag-chip" data-tag="@tasks">@tasks</button>
-          <button class="tag-chip" data-tag="@finance">@finance</button>
-          <button class="tag-chip" data-tag="@health">@health</button>
-        </div>
         <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
         <div class="msg-actions">
           <label class="attach-lbl" for="file-input">📎 Attach</label>
@@ -560,6 +565,15 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
           <span class="fname" id="fname" style="display:none;"></span>
           <button class="rm-btn" id="rm-file" style="display:none;">✕</button>
           <button class="send-btn" id="send-btn" disabled>Send</button>
+        </div>
+        <div class="draft-row">
+          <label class="draft-check-lbl">
+            <input type="checkbox" id="draft-check"/>
+            <span>Save as draft</span>
+          </label>
+        </div>
+        <div class="draft-list-wrap" id="draft-list-wrap" style="display:none;">
+          <div class="draft-list" id="draft-list"></div>
         </div>
         <div class="send-status" id="send-status"></div>
       </div>
@@ -787,7 +801,7 @@ document.getElementById('hamburger').addEventListener('click',function(){sidebar
 document.getElementById('sidebar-dim').addEventListener('click',closeSidebar);
 document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
 
-document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.dispatchEvent(new Event('input'));ta.focus();});});
+// tag-chip removed
 
 function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
 document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
@@ -1073,7 +1087,77 @@ function updateSendBtn(){sndBtn.disabled=!msgIn.value.trim()&&!selFile;}
 msgIn.addEventListener('input',updateSendBtn);
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}else{fnm.style.display='none';rmf.style.display='none';}updateSendBtn();});
 rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
-sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile)return;sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});});
+
+// ── Draft management ──────────────────────────────────
+var DRAFT_KEY='mie_drafts';
+function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
+function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
+function renderDraftList(){
+  var drafts=getDrafts();
+  var wrap=document.getElementById('draft-list-wrap');
+  var list=document.getElementById('draft-list');
+  if(!wrap||!list)return;
+  if(!drafts.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  list.innerHTML='';
+  drafts.forEach(function(d,i){
+    var item=document.createElement('div');
+    item.className='draft-item';
+    var txt=document.createElement('span');
+    txt.className='draft-item-text';
+    txt.title=d.text;
+    txt.textContent=d.text.length>40?d.text.slice(0,40)+'…':d.text;
+    var del=document.createElement('button');
+    del.className='draft-item-del';
+    del.textContent='✕';
+    del.title='Delete draft';
+    del.addEventListener('click',function(e){
+      e.stopPropagation();
+      var arr=getDrafts();
+      arr.splice(i,1);
+      saveDrafts(arr);
+      renderDraftList();
+    });
+    item.addEventListener('click',function(){
+      msgIn.value=d.text;
+      msgIn.dispatchEvent(new Event('input'));
+      msgIn.focus();
+    });
+    item.appendChild(txt);
+    item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+renderDraftList();
+
+sndBtn.addEventListener('click',function(){
+  var txt=msgIn.value.trim();
+  if(!txt&&!selFile)return;
+  var isDraft=document.getElementById('draft-check')&&document.getElementById('draft-check').checked;
+  if(isDraft){
+    // A안: 로컬 저장만, API 미전송
+    if(txt){
+      var arr=getDrafts();
+      arr.unshift({id:Date.now(),text:txt});
+      saveDrafts(arr);
+    }
+    sndSt.style.color='#1a73e8';
+    sndSt.textContent='📝 Saved as draft';
+    msgIn.value='';
+    selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
+    document.getElementById('draft-check').checked=false;
+    renderDraftList();
+    updateSendBtn();
+    setTimeout(function(){sndSt.textContent='';},2500);
+    return;
+  }
+  // 기존 API 전송
+  sndBtn.disabled=true;sndSt.textContent='';
+  fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
+    .then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}  )
+    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';})
+    .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
+});
 
 /* ── Overview widget: Finance ── */
 function loadDashFinance(){
