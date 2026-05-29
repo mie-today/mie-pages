@@ -73,7 +73,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .ov-panel.clickable:hover .ov-panel-title{color:#1a73e8;}
 .ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
 .cal-topbar{display:flex;align-items:center;gap:8px;padding:0 16px 7px;flex-shrink:0;}
-.cal-title-btn{display:flex;align-items:center;gap:5px;cursor:pointer;flex:1;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;}
+.cal-title-btn{display:flex;align-items:center;gap:5px;cursor:pointer;flex:0 0 auto;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;}
+.cal-nav-group{display:flex;align-items:center;gap:0;flex:0 0 auto;}
 .cal-month-title{font-size:17px;font-weight:500;color:#202124;}
 .cal-title-arrow{font-size:12px;color:#5f6368;transition:transform .2s;}
 .cal-title-arrow.open{transform:rotate(180deg);}
@@ -106,24 +107,22 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .yp-month:hover{background:#f1f3f4;}
 .yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
 .yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
-.cal-nav-inline{font-size:18px;padding:2px 6px;font-weight:400;min-width:28px;}
-/* Day cell custom layout */
-.fc .fc-daygrid-day-frame{display:grid;grid-template-rows:auto auto 1fr;min-height:0;}
-.fc .fc-daygrid-day-top{justify-content:flex-start !important;padding:3px 4px 1px !important;}
-.fc .fc-daygrid-day-number{width:auto !important;display:inline-flex !important;margin:0 !important;}
-.mie-day-icons{display:flex;flex-wrap:wrap;gap:2px;padding:0 4px 2px;font-size:10px;line-height:1;min-height:14px;}
+.cal-nav-inline{font-size:16px;padding:2px 6px;font-weight:400;min-width:26px;}
+/* Day cell layout — stronger specificity to beat FullCalendar defaults */
+.fc-daygrid-day .fc-daygrid-day-frame{display:flex;flex-direction:column;}
+.fc-daygrid-day .fc-daygrid-day-top{display:flex !important;flex-direction:row !important;justify-content:flex-start !important;align-items:center !important;padding:3px 5px 1px !important;}
+.fc-daygrid-day .fc-daygrid-day-number{width:22px !important;height:22px !important;font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;transition:background .12s;}
+.fc-daygrid-day .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
+.fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600 !important;}
+.mie-day-icons{display:flex;flex-wrap:wrap;gap:1px;padding:0 4px 2px;font-size:10px;line-height:1;min-height:13px;}
 .fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
 .fc .fc-col-header-cell{text-align:center !important;}
-.cal-topbar{flex-wrap:nowrap;align-items:center;}
 
 .fc .fc-event,.fc .fc-event-main,.fc .fc-daygrid-event,.fc .fc-timegrid-event,.fc .fc-event-main-frame,.fc .fc-daygrid-event-harness .fc-event{background:transparent !important;background-color:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
 .fc .fc-daygrid-event-dot{display:none !important;}
 .fc .fc-col-header-cell{background:#f8f9fa !important;font-size:13px !important;font-weight:600 !important;color:#70757a !important;border-bottom:1px solid #e0e0e0 !important;}
 .fc .fc-daygrid-day{border:1px solid #e8eaed !important;background:#fff !important;}
 .fc .fc-daygrid-day.fc-day-today{background:#f0f6ff !important;}
-.fc .fc-daygrid-day-number{font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;transition:background .12s;}
-.fc .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
-.fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600;}
 .fc .fc-daygrid-more-link{display:none !important;}
 .mie-more{display:block;margin:1px 4px;font-size:10px;color:#5f6368;cursor:pointer;font-weight:500;}
 .mie-more:hover{color:#1a73e8;}
@@ -469,12 +468,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
           </div>
         </div>
         <div class="cal-topbar">
-          <button class="cal-nav-btn cal-nav-inline" id="cal-prev">&#8249;</button>
-          <button class="cal-title-btn" id="cal-title-btn" type="button">
-            <span class="cal-month-title" id="cal-title"></span>
-            <span class="cal-title-arrow" id="cal-title-arrow" style="display:none;"></span>
-          </button>
-          <button class="cal-nav-btn cal-nav-inline" id="cal-next">&#8250;</button>
+          <div class="cal-nav-group">
+            <button class="cal-nav-btn cal-nav-inline" id="cal-prev">&#8249;</button>
+            <button class="cal-title-btn" id="cal-title-btn" type="button">
+              <span class="cal-month-title" id="cal-title"></span>
+              <span class="cal-title-arrow" id="cal-title-arrow" style="display:none;"></span>
+            </button>
+            <button class="cal-nav-btn cal-nav-inline" id="cal-next">&#8250;</button>
+          </div>
           <button class="cal-today-btn" id="cal-today">Today</button>
           <select class="cal-view-sel" id="cal-view">
             <option value="dayGridMonth">Month</option>
@@ -846,19 +847,19 @@ function fmtDateKey(date) {
 function injectDayIcons(cellEl, date) {
   var dateStr = fmtDateKey(date);
   var icons = getMieDayIcons(dateStr);
-  if (!icons.length) return;
   // Remove any existing icons row to avoid duplication
   var existing = cellEl.querySelector('.mie-day-icons');
   if (existing) existing.remove();
+  if (!icons.length) return;
   var frame = cellEl.querySelector('.fc-daygrid-day-frame');
-  var top = cellEl.querySelector('.fc-daygrid-day-top');
-  if (!frame || !top) return;
+  if (!frame) return;
   var iconRow = document.createElement('div');
   iconRow.className = 'mie-day-icons';
   iconRow.textContent = icons.join('');
-  // Insert icon row right after the day-top (date number row)
-  if (top.nextSibling) {
-    frame.insertBefore(iconRow, top.nextSibling);
+  // Insert before the events area (safe fallback: append to frame)
+  var eventsEl = frame.querySelector('.fc-daygrid-day-events');
+  if (eventsEl) {
+    frame.insertBefore(iconRow, eventsEl);
   } else {
     frame.appendChild(iconRow);
   }
