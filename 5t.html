@@ -106,7 +106,16 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .yp-month:hover{background:#f1f3f4;}
 .yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
 .yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
-.fc{font-size:15px !important;}
+.cal-nav-inline{font-size:18px;padding:2px 6px;font-weight:400;min-width:28px;}
+/* Day cell custom layout */
+.fc .fc-daygrid-day-frame{display:grid;grid-template-rows:auto auto 1fr;min-height:0;}
+.fc .fc-daygrid-day-top{justify-content:flex-start !important;padding:3px 4px 1px !important;}
+.fc .fc-daygrid-day-number{width:auto !important;display:inline-flex !important;margin:0 !important;}
+.mie-day-icons{display:flex;flex-wrap:wrap;gap:2px;padding:0 4px 2px;font-size:10px;line-height:1;min-height:14px;}
+.fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
+.fc .fc-col-header-cell{text-align:center !important;}
+.cal-topbar{flex-wrap:nowrap;align-items:center;}
+
 .fc .fc-event,.fc .fc-event-main,.fc .fc-daygrid-event,.fc .fc-timegrid-event,.fc .fc-event-main-frame,.fc .fc-daygrid-event-harness .fc-event{background:transparent !important;background-color:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
 .fc .fc-daygrid-event-dot{display:none !important;}
 .fc .fc-col-header-cell{background:#f8f9fa !important;font-size:13px !important;font-weight:600 !important;color:#70757a !important;border-bottom:1px solid #e0e0e0 !important;}
@@ -460,18 +469,19 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
           </div>
         </div>
         <div class="cal-topbar">
+          <button class="cal-nav-btn cal-nav-inline" id="cal-prev">&#8249;</button>
           <button class="cal-title-btn" id="cal-title-btn" type="button">
             <span class="cal-month-title" id="cal-title"></span>
-            <span class="cal-title-arrow" id="cal-title-arrow">&#9660;</span>
+            <span class="cal-title-arrow" id="cal-title-arrow" style="display:none;"></span>
           </button>
-          <button class="cal-nav-btn" id="cal-prev">←</button>
-          <button class="cal-nav-btn" id="cal-next">→</button>
+          <button class="cal-nav-btn cal-nav-inline" id="cal-next">&#8250;</button>
           <button class="cal-today-btn" id="cal-today">Today</button>
           <select class="cal-view-sel" id="cal-view">
             <option value="dayGridMonth">Month</option>
             <option value="timeGridWeek">Week</option>
             <option value="timeGridDay">Day</option>
           </select>
+          <button class="add-fab" id="cal-add-fab" onclick="openUniversalAdd()">+ Add</button>
         </div>
         <div class="cal-wrap" id="cal-wrap">
           <div id="calendar" style="height:100%;"></div>
@@ -485,7 +495,6 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
         </div>
         <div class="cal-footer-row">
           <button class="cal-cals-btn" id="cal-list-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Calendars</button>
-          <button class="add-fab" id="cal-add-fab" onclick="openUniversalAdd()">+ Add</button>
         </div>
       </div>
 
@@ -801,7 +810,61 @@ var calPopup=document.getElementById('cal-popup'),calListBtn=document.getElement
 calListBtn.addEventListener('click',function(e){e.stopPropagation();calPopup.classList.toggle('open');});
 document.addEventListener('click',function(e){if(!calPopup.contains(e.target)&&e.target!==calListBtn)calPopup.classList.remove('open');});
 
-function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:'100%',headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);attachDayClicks();closeMiniCal();closeYearPicker();},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal)cal.updateSize();},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();});}
+// ── Women's Health icons from panel-logs-womens localStorage ──
+function getMieDayIcons(dateStr) {
+  try {
+    var raw = localStorage.getItem('mie_womens_' + dateStr);
+    if (!raw) return [];
+    var d = JSON.parse(raw);
+    var icons = [];
+    if (d.note && d.note.trim()) icons.push('📝');
+    if (d.period_start || d.period_end) icons.push('🔴');
+    if (d.sex && d.sex.had_sex) icons.push('💜');
+    if (d.symptoms && d.symptoms.length) icons.push('⚡');
+    if (d.medications && d.medications.some(function(m){return m.taken;})) icons.push('💊');
+    if (d.ovulation) icons.push('🌸');
+    if (d.pregnancy_test && d.pregnancy_test.result === 'Positive') icons.push('✅');
+    else if (d.pregnancy_test && d.pregnancy_test.result) icons.push('🤰');
+    if (d.ovulation_test && d.ovulation_test.result === 'Positive') icons.push('✅');
+    else if (d.ovulation_test && d.ovulation_test.result) icons.push('🔬');
+    if (d.cervical_mucus && d.cervical_mucus.feeling) icons.push('💧');
+    if (d.fetal_movement && d.fetal_movement.count) icons.push('👶');
+    if (d.clinic_visit && d.clinic_visit.type) icons.push('🏥');
+    if (d.baby_kick && d.baby_kick.count) icons.push('👣');
+    if (d.blood_pressure && d.blood_pressure.systolic) icons.push('❤️');
+    if (d.morning_sickness && d.morning_sickness.count) icons.push('🤢');
+    if (d.womens_mood && d.womens_mood.mood) icons.push('🌈');
+    return icons;
+  } catch(e) { return []; }
+}
+function fmtDateKey(date) {
+  var y = date.getFullYear();
+  var m = String(date.getMonth()+1).padStart(2,'0');
+  var dd = String(date.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+dd;
+}
+function injectDayIcons(cellEl, date) {
+  var dateStr = fmtDateKey(date);
+  var icons = getMieDayIcons(dateStr);
+  if (!icons.length) return;
+  // Remove any existing icons row to avoid duplication
+  var existing = cellEl.querySelector('.mie-day-icons');
+  if (existing) existing.remove();
+  var frame = cellEl.querySelector('.fc-daygrid-day-frame');
+  var top = cellEl.querySelector('.fc-daygrid-day-top');
+  if (!frame || !top) return;
+  var iconRow = document.createElement('div');
+  iconRow.className = 'mie-day-icons';
+  iconRow.textContent = icons.join('');
+  // Insert icon row right after the day-top (date number row)
+  if (top.nextSibling) {
+    frame.insertBefore(iconRow, top.nextSibling);
+  } else {
+    frame.appendChild(iconRow);
+  }
+}
+
+function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:'100%',headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);setTimeout(function(){if(cal.view.type==='dayGridMonth'){document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var d=new Date(ds+'T12:00:00');injectDayIcons(cell,d);});}},80);attachDayClicks();closeMiniCal();closeYearPicker();},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},dayCellDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;injectDayIcons(info.el,info.date);},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal)cal.updateSize();},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();});}
 function syncTitle(){if(!cal)return;document.getElementById('cal-title').textContent=cal.view.title||'';}
 function attachDayClicks(){document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('.fc-daygrid-day');if(!cell)return;var ds=cell.getAttribute('data-date');if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});document.querySelectorAll('.fc-col-header-cell-cushion').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('[data-date]');var ds=cell?cell.getAttribute('data-date'):null;if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});}
 function applyFilter(){if(!cal)return;var ids=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});eventsByDate={};var filtered=allEvents.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});cal.removeAllEventSources();cal.addEventSource(function(fi,ok){ok(filtered);});setTimeout(rebuildPills,120);}
