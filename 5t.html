@@ -290,8 +290,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .dh-skel-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;}
 .dh-skel-icon{height:26px;background:#e8eaed;border-radius:50%;}
 /* projects+lists row */
-.ov-pl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0;}
-.ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px 10px;text-align:center;cursor:default;flex-shrink:0;}
+.ov-pl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;}
+.ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px;text-align:center;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .ov-pl-icon{font-size:18px;margin-bottom:3px;}
 .ov-pl-name{font-size:12px;font-weight:500;color:#3c4043;}
 .ov-loading{font-size:11px;color:#9aa0a6;text-align:center;padding:8px 0;}
@@ -581,8 +581,17 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
                     <span class="dh-cal-unit" id="dash-h-cal-goal">—</span>
                     <span class="dh-cal-unit">cal</span>
                   </div>
-                  <div class="dh-cal-bigbar" style="margin-bottom:3px;">
-                    <div class="dh-cal-bigfill" id="dash-h-cal-fill" style="width:0%;"></div>
+                  <div class="dh-cal-bigbar" style="margin-bottom:4px;display:flex;gap:1px;">
+                    <div id="dash-h-bar-carbs" style="height:100%;border-radius:3px 0 0 3px;background:#1a73e8;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-fat"   style="height:100%;background:#fbbc04;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-fiber" style="height:100%;background:#00897b;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-prot"  style="height:100%;border-radius:0 3px 3px 0;background:#ea4335;width:0%;transition:width .3s;"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#1a73e8;display:inline-block;flex-shrink:0;"></span>Carbs: <b id="dash-h-carbs">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#fbbc04;display:inline-block;flex-shrink:0;"></span>Fat: <b id="dash-h-fat-g">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#00897b;display:inline-block;flex-shrink:0;"></span>Fiber: <b id="dash-h-fiber">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#ea4335;display:inline-block;flex-shrink:0;"></span>Protein: <b id="dash-h-prot">—</b> g</span>
                   </div>
                   <!-- Activity icons: 🔥 👟 📍 💧 ⚖️ — 5개 균등 한 줄 -->
                   <div style="display:flex;align-items:flex-start;margin-top:3px;width:100%;">
@@ -888,11 +897,12 @@ function loadDashHealth(){
   var panelBase='/health/';
   Promise.all([
     fetch(panelBase+'panel-logs-ams.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
-    fetch(panelBase+'panel-logs-body.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;})
+    fetch(panelBase+'panel-logs-body.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
+    fetch(panelBase+'panel-logs-food.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;})
   ]).then(function(results){
-    populateDashHealth(results[0], results[1]);
+    populateDashHealth(results[0], results[1], results[2]);
   }).catch(function(){
-    dashHealthShowData(); // show skeleton→content with all dashes
+    dashHealthShowData();
   });
 }
 
@@ -905,7 +915,7 @@ function dashHealthShowData(){
   document.getElementById('dash-health-body').style.display='';
 }
 
-function populateDashHealth(amsHtml, bodyHtml){
+function populateDashHealth(amsHtml, bodyHtml, foodHtml){
   // Parse AMS panel HTML (activity, sleep, mood)
   if(amsHtml){
     try{
@@ -993,6 +1003,49 @@ function populateDashHealth(amsHtml, bodyHtml){
       if(fatMatch){document.getElementById('dash-h-fat').textContent=fatMatch[1]+' kg';}
 
     }catch(e){console.warn('Body parse error',e);}
+  }
+
+  // Parse Food panel (macros: carbs/fat/fiber/protein + calories)
+  if(foodHtml){
+    try{
+      // Calories consumed: look for large cal number
+      var calMatch=foodHtml.match(/(\d[\d,]*)\s*(?:cal|kcal)/i);
+      if(calMatch){
+        var calNum=parseInt(calMatch[1].replace(/,/g,''),10);
+        if(!isNaN(calNum)){
+          document.getElementById('dash-h-cal').textContent=calNum.toLocaleString();
+        }
+      }
+      // Macro patterns: look for 'Carbs', 'Fat', 'Fiber', 'Protein' near a number
+      function getMacro(html,label){
+        var re=new RegExp(label+'[^<]*?([\\d\\.]+)\\s*g','i');
+        var m=html.match(re);
+        if(!m){re=new RegExp('([\\d\\.]+)\\s*g[^<]*'+label,'i');m=html.match(re);}
+        return m?parseFloat(m[1]):null;
+      }
+      var carbs=getMacro(foodHtml,'Carbs');
+      var fat=getMacro(foodHtml,'Fat');
+      var fiber=getMacro(foodHtml,'Fiber');
+      var prot=getMacro(foodHtml,'Protein');
+      if(carbs!==null)document.getElementById('dash-h-carbs').textContent=carbs.toFixed(0);
+      if(fat!==null)document.getElementById('dash-h-fat-g').textContent=fat.toFixed(0);
+      if(fiber!==null)document.getElementById('dash-h-fiber').textContent=fiber.toFixed(0);
+      if(prot!==null)document.getElementById('dash-h-prot').textContent=prot.toFixed(0);
+      // Update macro bar segments (% of total macros by weight)
+      var total=(carbs||0)+(fat||0)+(fiber||0)+(prot||0);
+      function barPct(v){return total>0?Math.round((v||0)/total*100):0;}
+      var pCarbs=barPct(carbs),pFat=barPct(fat),pFiber=barPct(fiber),pProt=100-pCarbs-pFat-pFiber;
+      if(total>0){
+        var bc=document.getElementById('dash-h-bar-carbs');
+        var bf=document.getElementById('dash-h-bar-fat');
+        var bfi=document.getElementById('dash-h-bar-fiber');
+        var bp=document.getElementById('dash-h-bar-prot');
+        if(bc)bc.style.width=pCarbs+'%';
+        if(bf)bf.style.width=pFat+'%';
+        if(bfi)bfi.style.width=pFiber+'%';
+        if(bp)bp.style.width=Math.max(pProt,0)+'%';
+      }
+    }catch(e){console.warn('Food parse error',e);}
   }
 
   dashHealthShowData();
