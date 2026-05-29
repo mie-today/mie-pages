@@ -110,11 +110,11 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .cal-nav-inline{font-size:16px;padding:3px 8px;font-weight:400;min-width:28px;background:none !important;border:none !important;color:#5f6368;}
 /* Day cell layout — stronger specificity to beat FullCalendar defaults */
 .fc-daygrid-day .fc-daygrid-day-frame{display:flex;flex-direction:column;}
-.fc-daygrid-day .fc-daygrid-day-top{display:flex !important;flex-direction:row !important;justify-content:flex-start !important;align-items:center !important;padding:3px 5px 1px !important;}
-.fc-daygrid-day .fc-daygrid-day-number{width:22px !important;height:22px !important;font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;transition:background .12s;}
+.fc-daygrid-day .fc-daygrid-day-top{display:flex !important;flex-direction:row !important;justify-content:flex-start !important;align-items:center !important;padding:3px 5px 2px !important;overflow:visible !important;}
+.fc-daygrid-day .fc-daygrid-day-number{width:22px !important;height:22px !important;font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;transition:background .12s;flex-shrink:0 !important;}
 .fc-daygrid-day .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
 .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600 !important;}
-.mie-day-icons{display:inline-flex;align-items:center;gap:1px;padding-left:3px;font-size:10px;line-height:1;flex-wrap:nowrap;overflow:hidden;}
+.mie-day-icons{display:inline-flex;align-items:center;gap:1px;padding-left:2px;font-size:11px;line-height:1.4;flex-wrap:nowrap;overflow:visible;}
 .fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
 .fc .fc-col-header-cell{text-align:center !important;}
 
@@ -298,10 +298,18 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .dh-skel-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;}
 .dh-skel-icon{height:26px;background:#e8eaed;border-radius:50%;}
 /* projects+lists row */
-.ov-pl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;}
+.ov-pl-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;flex:1;min-height:0;}
 .ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px;text-align:center;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ov-pl-tasks{text-align:left !important;}
 .ov-pl-icon{font-size:18px;margin-bottom:3px;}
 .ov-pl-name{font-size:12px;font-weight:500;color:#3c4043;}
+.ov-task-mini-item{display:flex;align-items:flex-start;gap:5px;padding:2px 0;font-size:10.5px;color:#3c4043;line-height:1.3;cursor:default;}
+.ov-task-mini-dot{width:5px;height:5px;border-radius:50%;background:#9aa0a6;flex-shrink:0;margin-top:4px;}
+.ov-task-mini-done{text-decoration:line-through;color:#bdc1c6;}
+.ov-task-mini-badge{font-size:9px;padding:1px 4px;border-radius:6px;flex-shrink:0;margin-top:1px;}
+.ov-task-mini-badge.overdue{background:#fce8e6;color:#c5221f;}
+.ov-task-mini-badge.today{background:#fef7e0;color:#b06000;}
+.ov-task-mini-empty{font-size:10px;color:#9aa0a6;text-align:center;padding:8px 0;font-style:italic;}
 .ov-loading{font-size:11px;color:#9aa0a6;text-align:center;padding:8px 0;}
 /* keep qa-btn for potential reuse, but hide old grid */
 .qa-grid{display:none;}
@@ -459,14 +467,6 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 
       <div class="module active" id="mod-calendar">
         <div class="module-top-space"></div>
-        <div class="ov-panels">
-          <div class="ov-panel clickable" id="ov-tasks-panel" title="Show Tasks">
-            <div class="ov-panel-hd"><span class="ov-panel-title">✅ Tasks to Complete</span><span class="ov-panel-right"><span class="ov-panel-count" id="ov-task-count">0</span><span class="ov-panel-arrow" id="ov-tasks-arrow">&#9660;</span></span></div>
-          </div>
-          <div class="ov-panel clickable" id="ov-proj-panel" title="Go to Trackers">
-            <div class="ov-panel-hd"><span class="ov-panel-title">📁 Projects</span><span class="ov-panel-count" id="ov-proj-count">0</span></div>
-          </div>
-        </div>
         <div class="cal-topbar">
           <div class="cal-nav-group">
             <button class="cal-nav-btn cal-nav-inline" id="cal-prev">&#8249;</button>
@@ -583,7 +583,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
               <div style="display:flex;gap:8px;">
 
                 <!-- LEFT: Calories + bar + activity icons + weight -->
-                <div style="flex:0 0 48%;display:flex;flex-direction:column;gap:0;min-width:0;">
+                <div style="flex:0 0 58%;display:flex;flex-direction:column;gap:0;min-width:0;">
                   <div class="dh-cal-label">Calories</div>
                   <div style="display:flex;align-items:baseline;gap:3px;flex-wrap:nowrap;">
                     <span class="dh-cal-num" id="dash-h-cal">—</span>
@@ -676,8 +676,18 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
             </div><!-- /dash-health-body -->
           </div>
 
-          <!-- Projects + Lists -->
+          <!-- Tasks + Projects + Lists -->
           <div class="ov-pl-row">
+            <!-- TASKS box -->
+            <div class="ov-pl-btn ov-pl-tasks" title="Tasks" style="align-items:stretch;justify-content:flex-start;padding:8px 10px;cursor:default;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0;">
+                <span style="font-size:11px;font-weight:700;color:#202124;">Task</span>
+                <select id="ov-task-list-filter" style="font-size:10px;border:1px solid #e0e0e0;border-radius:4px;padding:2px 18px 2px 5px;color:#5f6368;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%224%22%3E%3Cpath d=%22M0 0l3 4 3-4z%22 fill=%22%235f6368%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 5px center;">
+                  <option value="all">All Lists</option>
+                </select>
+              </div>
+              <div id="ov-task-mini-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;min-height:0;"></div>
+            </div>
             <div class="ov-pl-btn" title="Coming soon">
               <div class="ov-pl-icon">🎯</div>
               <div class="ov-pl-name">Projects</div>
@@ -744,8 +754,7 @@ function switchModule(modId){currentMod=modId;closeMiniCal();document.querySelec
 document.querySelectorAll('.qa-btn[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}switchModule(btn.getAttribute('data-mod'));});});
 document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}switchModule(btn.getAttribute('data-mod'));closeSidebar();});});
 
-document.getElementById('ov-tasks-panel').addEventListener('click',function(){var section=document.getElementById('cal-task-section');var panel=document.getElementById('ov-tasks-panel');var isOpen=section.classList.contains('expanded');section.classList.toggle('expanded',!isOpen);panel.classList.toggle('task-open',!isOpen);if(!isOpen)renderCalTaskSection();});
-document.getElementById('ov-proj-panel').addEventListener('click',function(){switchModule('trackers');});
+// ov-panels removed — listeners no longer needed
 
 var sidebarOverlay=document.getElementById('sidebar-overlay');
 function openSidebar(){sidebarOverlay.classList.add('is-open');document.getElementById('hamburger').classList.add('is-open');}
@@ -793,10 +802,83 @@ document.getElementById('nl-cancel').addEventListener('click',function(){documen
 document.getElementById('new-list-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
 document.getElementById('nl-save').addEventListener('click',function(){var name=document.getElementById('nl-name').value.trim(),st=document.getElementById('nl-status');if(!name){st.style.color='#d93025';st.textContent='Name is required.';return;}document.getElementById('nl-save').disabled=true;st.style.color='#5f6368';st.textContent='Creating…';fetch(BACKEND+'/api/me/tasks/lists/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:name})}).then(function(r){if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Created!';setTimeout(function(){document.getElementById('new-list-modal').classList.add('hidden');st.textContent='';loadTasks();},600);}else{st.style.color='#d93025';st.textContent='❌ Failed.';}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';}).finally(function(){document.getElementById('nl-save').disabled=false;});});
 
-function loadTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){allTasks=[];taskLists=[];}else{taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});}renderOvPanels();renderTaskSidebar();renderCalTaskSection();if(currentMod==='tasks')renderTaskModule();}).catch(function(){allTasks=[];taskLists=[];renderOvPanels();renderCalTaskSection();});}
+function loadTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){allTasks=[];taskLists=[];}else{taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});}renderOvTaskMini();renderTaskSidebar();renderCalTaskSection();if(currentMod==='tasks')renderTaskModule();}).catch(function(){allTasks=[];taskLists=[];renderOvTaskMini();renderCalTaskSection();});}
+
+function renderOvTaskMini(){
+  var filterEl=document.getElementById('ov-task-list-filter');
+  var listEl=document.getElementById('ov-task-mini-list');
+  if(!filterEl||!listEl)return;
+  // Rebuild dropdown options
+  var currentVal=filterEl.value||'all';
+  filterEl.innerHTML='<option value="all">All Lists</option>';
+  taskLists.forEach(function(l){
+    var o=document.createElement('option');
+    o.value=l.id;
+    o.textContent=l.title||l.id;
+    filterEl.appendChild(o);
+  });
+  // Restore selection if still valid
+  if(currentVal!=='all'&&taskLists.find(function(l){return l.id===currentVal;})){
+    filterEl.value=currentVal;
+  } else {
+    filterEl.value='all';
+  }
+  var filterVal=filterEl.value;
+  var now=new Date();now.setHours(0,0,0,0);
+  var tasks=allTasks.filter(function(t){
+    if(t.status==='completed')return false;
+    if(filterVal!=='all'&&t.listId!==filterVal)return false;
+    return true;
+  });
+  // Sort: overdue first, today next, then by due date
+  tasks.sort(function(a,b){
+    function score(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);if(diff<0)return 0;if(diff===0)return 1;return 2;}
+    var sa=score(a),sb=score(b);
+    if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);
+    return 0;
+  });
+  listEl.innerHTML='';
+  if(!tasks.length){
+    var empty=document.createElement('div');
+    empty.className='ov-task-mini-empty';
+    empty.textContent='All caught up!';
+    listEl.appendChild(empty);
+    return;
+  }
+  tasks.forEach(function(t){
+    var isOverdue=false,isToday=false;
+    if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);isOverdue=diff<0;isToday=diff===0;}
+    var row=document.createElement('div');
+    row.className='ov-task-mini-item';
+    var dot=document.createElement('div');
+    dot.className='ov-task-mini-dot';
+    if(isOverdue)dot.style.background='#c5221f';
+    else if(isToday)dot.style.background='#b06000';
+    else dot.style.background='#9aa0a6';
+    var txt=document.createElement('div');
+    txt.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+    txt.textContent=t.title||'Untitled';
+    row.appendChild(dot);
+    row.appendChild(txt);
+    if(isOverdue){var b=document.createElement('span');b.className='ov-task-mini-badge overdue';b.textContent='Late';row.appendChild(b);}
+    else if(isToday){var b=document.createElement('span');b.className='ov-task-mini-badge today';b.textContent='Today';row.appendChild(b);}
+    listEl.appendChild(row);
+  });
+}
+// Wire up task list dropdown filter
+document.addEventListener('DOMContentLoaded',function(){
+  var filterEl=document.getElementById('ov-task-list-filter');
+  if(filterEl)filterEl.addEventListener('change',renderOvTaskMini);
+});
+// Also wire immediately in case DOM is already ready
+(function(){
+  var filterEl=document.getElementById('ov-task-list-filter');
+  if(filterEl)filterEl.addEventListener('change',renderOvTaskMini);
+})();
 function renderCalTaskSection(){var now=new Date();now.setHours(0,0,0,0);var listEl=document.getElementById('cal-task-list');if(!listEl)return;listEl.innerHTML='';var activeTasks=allTasks.filter(function(t){return t.status!=='completed';});activeTasks.sort(function(a,b){function score(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);if(diff<0)return 0;if(diff===0)return 1;return 2;}var sa=score(a),sb=score(b);if(sa!==sb)return sa-sb;if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;});var hdr=document.createElement('div');hdr.className='cal-task-header';hdr.innerHTML='<span>All tasks ('+activeTasks.length+')</span><a class="cal-task-header-link" href="/task">View all →</a>';listEl.appendChild(hdr);if(!activeTasks.length){var empty=document.createElement('div');empty.className='cal-task-empty';empty.textContent='All caught up! No pending tasks.';listEl.appendChild(empty);return;}activeTasks.forEach(function(t){var isOverdue=false,isToday=false;if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);isOverdue=diff<0;isToday=diff===0;}var item=document.createElement('div');item.className='cal-task-item';var cb=document.createElement('div');cb.className='cal-task-cb';cb.addEventListener('click',function(e){e.stopPropagation();if(t._calPending)return;t._calPending=true;toggleTaskFromCal_(t,cb,item,function(){t._calPending=false;});});var name=document.createElement('div');name.className='cal-task-name';name.textContent=t.title||'Untitled';var badge=document.createElement('span');if(isOverdue){badge.className='cal-task-badge overdue-badge';badge.textContent='⚠ Overdue';}else if(isToday){badge.className='cal-task-badge today-badge';badge.textContent='Today';}else if(t.due){var dt2=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));badge.className='cal-task-badge future-badge';badge.textContent=dt2.toLocaleDateString('en-US',{month:'short',day:'numeric'});}item.appendChild(cb);item.appendChild(name);if(badge.textContent)item.appendChild(badge);listEl.appendChild(item);});}
 function toggleTaskFromCal_(t,cb,row,onDone){var wasDone=t.status==='completed';var newStatus=wasDone?'needsAction':'completed';cb.classList.toggle('checked',!wasDone);var nameEl=row.querySelector('.cal-task-name');if(nameEl)nameEl.classList.toggle('done',!wasDone);t.status=newStatus;renderOvPanels();function attempt(listId){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})});}attempt(t.listId||'@default').then(function(r){if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;}).then(function(r){if(r&&r.ok){renderCalTaskSection();renderOvPanels();if(currentMod==='tasks')renderTaskModule();}else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();}if(onDone)onDone();}).catch(function(){t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();if(onDone)onDone();});}
-function renderOvPanels(){var active=allTasks.filter(function(t){return t.status!=='completed';});document.getElementById('ov-task-count').textContent=active.length;document.getElementById('ov-proj-count').textContent=taskLists.length||'—';}
+function renderOvPanels(){renderOvTaskMini();}
 function renderTaskSidebar(){var sidebar=document.getElementById('task-list-sidebar-items');sidebar.innerHTML='';taskLists.forEach(function(l){var count=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;var btn=document.createElement('button');btn.className='tl-item'+(currentTaskFilter===l.id?' active':'');btn.innerHTML='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/></svg>'+l.title+'<span class="tl-count">'+count+'</span>';btn.addEventListener('click',function(){currentTaskFilter=l.id;document.querySelectorAll('.tl-item').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderTaskModule();});sidebar.appendChild(btn);});document.getElementById('tl-all').className='tl-item'+(currentTaskFilter==='all'?' active':'');}
 document.getElementById('tl-all').addEventListener('click',function(){currentTaskFilter='all';document.querySelectorAll('.tl-item').forEach(function(b){b.classList.remove('active');});this.classList.add('active');renderTaskModule();});
 function renderTaskModule(){var grid=document.getElementById('task-lists-grid');grid.innerHTML='';var listsToShow=currentTaskFilter==='all'?taskLists.slice():[taskLists.find(function(l){return l.id===currentTaskFilter;})||{id:currentTaskFilter,title:'Tasks'}];if(!listsToShow.length||!listsToShow[0])listsToShow=[{id:'@default',title:'My Tasks'}];grid.className='task-lists-grid '+(listsToShow.length>1?'multi':'single');listsToShow.forEach(function(lst){grid.appendChild(buildListCard(lst));});}
