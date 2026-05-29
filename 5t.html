@@ -234,12 +234,49 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .send-btn:hover:not(:disabled){background:#1765cc;}
 .send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .send-status{font-size:11px;text-align:center;margin-top:6px;min-height:14px;}
-.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
-.qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
-.qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:22px;margin-bottom:6px;}
-.qa-name{font-size:13px;font-weight:500;color:#202124;}
+/* ── Overview widget (replaces Quick Actions) ── */
+.ov-widget{display:flex;flex-direction:column;gap:8px;}
+.ov-fin-card,.ov-health-card{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color .15s;}
+.ov-fin-card:hover,.ov-health-card:hover{border-color:#1a73e8;background:#f0f5ff;}
+.ov-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.ov-card-title{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
+.ov-card-link{font-size:10px;color:#1a73e8;font-weight:500;}
+.ov-remaining{font-size:20px;font-weight:700;color:#1e8e3e;line-height:1;margin-bottom:5px;}
+.ov-stacked-bar{height:10px;border-radius:5px;overflow:hidden;display:flex;width:100%;margin-bottom:5px;background:#f1f3f4;}
+.ov-sb-seg{height:100%;}
+.ov-legend{display:grid;grid-template-columns:1fr 1fr;gap:1px 6px;}
+.ov-leg-item{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#3c4043;}
+.ov-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+/* health card */
+.ov-h-cal-row{display:flex;align-items:baseline;gap:4px;margin-bottom:5px;}
+.ov-h-cal-num{font-size:20px;font-weight:700;color:#202124;line-height:1;}
+.ov-h-cal-goal{font-size:10.5px;color:#5f6368;}
+.ov-h-calbar{height:5px;border-radius:3px;background:#f1f3f4;margin-bottom:6px;}
+.ov-h-calbar-fill{height:100%;border-radius:3px;background:#34a853;}
+.ov-h-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;}
+.ov-h-stat{display:flex;flex-direction:column;align-items:center;flex:1;}
+.ov-h-stat-icon{font-size:13px;line-height:1;}
+.ov-h-stat-val{font-size:10.5px;font-weight:600;color:#202124;}
+.ov-h-stat-lbl{font-size:9px;color:#9aa0a6;}
+.ov-h-divider{height:1px;background:#f1f3f4;margin:4px 0 6px;}
+.ov-h-vitals{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:5px;}
+.ov-h-vital{display:flex;align-items:center;gap:4px;}
+.ov-h-vital-icon{font-size:12px;}
+.ov-h-vital-val{font-size:10.5px;font-weight:600;color:#202124;}
+.ov-h-vital-lbl{font-size:9px;color:#9aa0a6;}
+.ov-h-sleep-mood{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.ov-h-sm-tile{background:#f8f9fa;border-radius:6px;padding:4px 6px;}
+.ov-h-sm-lbl{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.04em;}
+.ov-h-sm-val{font-size:11px;font-weight:600;color:#202124;}
+.ov-h-sm-sub{font-size:9.5px;color:#5f6368;}
+/* projects+lists row */
+.ov-pl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:12px 10px;text-align:center;cursor:default;opacity:.6;}
+.ov-pl-icon{font-size:18px;margin-bottom:4px;}
+.ov-pl-name{font-size:12px;font-weight:500;color:#202124;}
+.ov-loading{font-size:11px;color:#9aa0a6;text-align:center;padding:8px 0;}
+/* keep qa-btn for potential reuse, but hide old grid */
+.qa-grid{display:none;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
 .modal-bg.hidden{display:none;}
 .modal-box{background:#fff;border-radius:12px;padding:20px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);}
@@ -479,16 +516,39 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
         <div class="send-status" id="send-status"></div>
       </div>
       <div class="r-card" style="flex:1;overflow-y:auto;">
-        <div class="r-label">Quick Actions</div>
-        <div class="qa-grid">
-          <div class="qa-btn qa-active" data-mod="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></div>
-          <div class="qa-btn" data-mod="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
-          <div class="qa-btn" data-mod="finance" onclick="window.location.href='/finance'"><div class="qa-icon">💰</div><div class="qa-name">Finance</div></div>
-          <div class="qa-btn" data-mod="health" onclick="window.location.href='/health'"><div class="qa-icon">💪</div><div class="qa-name">Health</div></div>
-          <div class="qa-btn" data-mod="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
-          <div class="qa-btn" data-mod="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
-          <div class="qa-btn" data-mod="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
-          <div class="qa-btn" data-mod="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
+        <div class="r-label">Overview</div>
+        <div class="ov-widget">
+
+          <!-- Finance card -->
+          <div class="ov-fin-card" onclick="window.location.href='/finance'" title="Go to Finance">
+            <div class="ov-card-hd">
+              <span class="ov-card-title">💰 Finance &mdash; Monthly</span>
+              <span class="ov-card-link">›</span>
+            </div>
+            <div id="dash-fin-body"><div class="ov-loading">Loading…</div></div>
+          </div>
+
+          <!-- Health card -->
+          <div class="ov-health-card" onclick="window.location.href='/health'" title="Go to Health">
+            <div class="ov-card-hd">
+              <span class="ov-card-title">💪 Health &mdash; Daily</span>
+              <span class="ov-card-link">›</span>
+            </div>
+            <div id="dash-health-body"><div class="ov-loading">Loading…</div></div>
+          </div>
+
+          <!-- Projects + Lists -->
+          <div class="ov-pl-row">
+            <div class="ov-pl-btn" title="Coming soon">
+              <div class="ov-pl-icon">🎯</div>
+              <div class="ov-pl-name">Projects</div>
+            </div>
+            <div class="ov-pl-btn" title="Coming soon">
+              <div class="ov-pl-icon">📋</div>
+              <div class="ov-pl-name">Lists</div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -557,7 +617,7 @@ document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
 
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.dispatchEvent(new Event('input'));ta.focus();});});
 
-function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
+function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
 document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
 document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
 function startClock(){function tick(){var now=new Date();document.getElementById('wb-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});document.getElementById('wb-time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
@@ -648,6 +708,120 @@ msgIn.addEventListener('input',updateSendBtn);
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}else{fnm.style.display='none';rmf.style.display='none';}updateSendBtn();});
 rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile)return;sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});});
+
+/* ── Overview widget: Finance ── */
+function loadDashFinance(){
+  var now=new Date();
+  var ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">No data</div>';return;}
+      renderDashFinance(data);
+    })
+    .catch(function(){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">—</div>';});
+}
+function renderDashFinance(data){
+  var s=data.summary;
+  var inc=s.income.actual||1;
+  var rem=s.remaining;
+  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
+  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
+  var needsActual=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var wantsActual=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  function pct(v,t){return t?Math.round(v/t*100):0;}
+  var savPct=pct(s.savings.actual,inc);
+  var expPct=pct(needsActual,inc);
+  var remPct=pct(wantsActual,inc);
+  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
+  // bar widths
+  var wE=expPct>0?Math.max(expPct,3):0;
+  var wS=s.savings.actual>0?Math.max(savPct,3):0;
+  var wR=wantsActual>0?Math.max(remPct,3):0;
+  var tot=wE+wS+wR;
+  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
+  var remColor=rem>=0?'#1e8e3e':'#c5221f';
+  var html=
+    '<div class="ov-remaining" style="color:'+remColor+';">'+fmtS(rem)+'</div>'+
+    '<div style="font-size:9.5px;color:#9aa0a6;margin-bottom:4px;">Remaining</div>'+
+    '<div class="ov-stacked-bar">'+
+      (wE>0?'<div class="ov-sb-seg" style="width:'+wE+'%;background:#c0522b;border-radius:3px 0 0 3px;"></div>':'')+
+      (wS>0?'<div class="ov-sb-seg" style="width:'+wS+'%;background:#34a853;margin-left:1px;"></div>':'')+
+      (wR>0?'<div class="ov-sb-seg" style="width:'+wR+'%;background:#dadce0;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')+
+    '</div>'+
+    '<div class="ov-legend">'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#7c3aed;"></div><span>Income '+fmtS(s.income.actual)+' (100%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#34a853;"></div><span>Savings '+fmtS(s.savings.actual)+' ('+savPct+'%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#c0522b;"></div><span>Needs '+fmtS(needsActual)+' ('+expPct+'%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#dadce0;"></div><span>Wants '+fmtS(wantsActual)+' ('+remPct+'%)</span></div>'+
+    '</div>';
+  document.getElementById('dash-fin-body').innerHTML=html;
+}
+
+/* ── Overview widget: Health ── */
+function loadDashHealth(){
+  var today=new Date().toISOString().slice(0,10);
+  fetch(BACKEND+'/api/me/health?date='+today,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){document.getElementById('dash-health-body').innerHTML='<div class="ov-loading">No data</div>';return;}
+      renderDashHealth(data);
+    })
+    .catch(function(){document.getElementById('dash-health-body').innerHTML='<div class="ov-loading">—</div>';});
+}
+function renderDashHealth(data){
+  var cal=data.calories||data.cal||0;
+  var calGoal=data.calories_goal||data.calGoal||2874;
+  var calPct=calGoal?Math.min(Math.round(cal/calGoal*100),100):0;
+  var burned=data.calories_burned||data.burned||0;
+  var steps=data.steps||0;
+  var dist=data.distance||data.dist||0;
+  var water=data.water||0;
+  var weight=data.weight||null;
+  var bp=(data.blood_pressure||data.bp||'—');
+  var hr=(data.heart_rate||data.hr||'—');
+  var spo2=(data.spo2||'—');
+  var glucose=(data.glucose||'—');
+  var sleepH=data.sleep_hours||data.sleepH||null;
+  var sleepM=data.sleep_minutes||data.sleepM||null;
+  var sleepStr=sleepH!=null?(sleepH+'h'+(sleepM?' '+sleepM+'m':'')):'—';
+  var sleepQ=data.sleep_quality||data.sleepQ||null;
+  var mood=data.mood||'—';
+  function fmt(v,unit){return v?v+(unit?' '+unit:''):'—';}
+  var html=
+    '<div class="ov-h-cal-row">'+
+      '<span class="ov-h-cal-num">'+cal+'</span>'+
+      '<span class="ov-h-cal-goal">cal / '+calGoal.toLocaleString()+' goal</span>'+
+    '</div>'+
+    '<div class="ov-h-calbar"><div class="ov-h-calbar-fill" style="width:'+calPct+'%;"></div></div>'+
+    '<div class="ov-h-stats">'+
+      '<div class="ov-h-stat"><div class="ov-h-stat-icon">🔥</div><div class="ov-h-stat-val">'+fmt(burned)+'</div><div class="ov-h-stat-lbl">Cals</div></div>'+
+      '<div class="ov-h-stat"><div class="ov-h-stat-icon">👟</div><div class="ov-h-stat-val">'+(steps?Number(steps).toLocaleString():'—')+'</div><div class="ov-h-stat-lbl">Steps</div></div>'+
+      '<div class="ov-h-stat"><div class="ov-h-stat-icon">📍</div><div class="ov-h-stat-val">'+fmt(dist)+'</div><div class="ov-h-stat-lbl">km</div></div>'+
+      '<div class="ov-h-stat"><div class="ov-h-stat-icon">💧</div><div class="ov-h-stat-val">'+fmt(water)+'</div><div class="ov-h-stat-lbl">ml</div></div>'+
+      (weight?'<div class="ov-h-stat"><div class="ov-h-stat-icon">⚖️</div><div class="ov-h-stat-val">'+weight+'</div><div class="ov-h-stat-lbl">kg</div></div>':'')+
+    '</div>'+
+    '<div class="ov-h-divider"></div>'+
+    '<div class="ov-h-vitals">'+
+      '<div class="ov-h-vital"><span class="ov-h-vital-icon">🩺</span><div><div class="ov-h-vital-val">'+bp+'</div><div class="ov-h-vital-lbl">Blood Pressure</div></div></div>'+
+      '<div class="ov-h-vital"><span class="ov-h-vital-icon">🫀</span><div><div class="ov-h-vital-val">'+fmt(hr,'bpm')+'</div><div class="ov-h-vital-lbl">Heart Rate</div></div></div>'+
+      '<div class="ov-h-vital"><span class="ov-h-vital-icon">💨</span><div><div class="ov-h-vital-val">'+fmt(spo2,'%')+'</div><div class="ov-h-vital-lbl">SpO2</div></div></div>'+
+      '<div class="ov-h-vital"><span class="ov-h-vital-icon">🩸</span><div><div class="ov-h-vital-val">'+fmt(glucose,'mg/dL')+'</div><div class="ov-h-vital-lbl">Glucose</div></div></div>'+
+    '</div>'+
+    '<div class="ov-h-sleep-mood">'+
+      '<div class="ov-h-sm-tile">'+
+        '<div class="ov-h-sm-lbl">Sleep</div>'+
+        '<div class="ov-h-sm-val">'+sleepStr+'</div>'+
+        (sleepQ?'<div class="ov-h-sm-sub">😴 Quality: '+sleepQ+'/5</div>':'')+
+      '</div>'+
+      '<div class="ov-h-sm-tile">'+
+        '<div class="ov-h-sm-lbl">Mood</div>'+
+        '<div class="ov-h-sm-val">'+mood+'</div>'+
+        '<div class="ov-h-sm-sub">Logged today</div>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('dash-health-body').innerHTML=html;
+}
 
 init();
 </script>
