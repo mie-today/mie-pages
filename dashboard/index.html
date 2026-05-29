@@ -217,8 +217,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .coming-soon-icon{font-size:40px;}
 .coming-soon-title{font-size:16px;font-weight:500;color:#5f6368;}
 .coming-soon-sub{font-size:13px;}
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 18px;}
-.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
+.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:12px 14px;}
+.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase;flex-shrink:0;}
 .tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
 .tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
@@ -234,12 +234,69 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .send-btn:hover:not(:disabled){background:#1765cc;}
 .send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .send-status{font-size:11px;text-align:center;margin-top:6px;min-height:14px;}
-.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.qa-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
-.qa-btn:hover{background:#f1f3f4;border-color:#1a73e8;}
-.qa-btn.qa-active{background:#e8f0fe;border-color:#1a73e8;}
-.qa-icon{font-size:22px;margin-bottom:6px;}
-.qa-name{font-size:13px;font-weight:500;color:#202124;}
+/* ── Overview widget (replaces Quick Actions) ── */
+.ov-widget{display:flex;flex-direction:column;gap:8px;}
+.ov-fin-card,.ov-health-card{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;cursor:pointer;transition:border-color .15s;flex-shrink:0;}
+.ov-fin-card:hover,.ov-health-card:hover{border-color:#1a73e8;background:#f0f5ff;}
+.ov-health-card{flex-shrink:0;display:flex;flex-direction:column;}
+.ov-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-shrink:0;}
+.ov-card-title{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
+.ov-card-link{font-size:10px;color:#1a73e8;font-weight:500;}
+.ov-remaining{font-size:18px;font-weight:700;line-height:1;}
+.ov-stacked-bar{height:8px;border-radius:5px;overflow:hidden;display:flex;width:100%;margin-bottom:4px;background:#f1f3f4;}
+.ov-sb-seg{height:100%;}
+.ov-legend{display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;}
+.ov-leg-item{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#3c4043;}
+.ov-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+/* health card */
+.dh-cal-label{font-size:9.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;}
+.dh-cal-block{display:flex;align-items:baseline;gap:4px;}
+.dh-cal-num{font-size:22px;font-weight:700;color:#202124;line-height:1;}
+.dh-cal-unit{font-size:11.5px;color:#9aa0a6;}
+.dh-cal-goal{font-size:10.5px;color:#9aa0a6;margin-bottom:3px;}
+.dh-cal-bigbar{height:5px;border-radius:3px;background:#f1f3f4;overflow:hidden;margin-bottom:4px;}
+.dh-cal-bigfill{height:100%;border-radius:3px;background:#34a853;}
+.dh-cal-stats{display:flex;gap:10px;margin-bottom:6px;}
+.dh-cal-stat-item{font-size:10.5px;color:#5f6368;}
+.dh-cal-stat-item span{font-weight:600;color:#202124;}
+.dh-divider-h{height:1px;background:#f1f3f4;margin:3px 0;}
+.dh-activity-row{display:flex;align-items:center;gap:2px;margin-bottom:4px;}
+.dh-metric-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;border-radius:8px;padding:2px 1px;}
+.dh-metric-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.dh-metric-val{font-size:10px;font-weight:600;color:#202124;text-align:center;line-height:1.2;}
+.dh-metric-label{font-size:9px;color:#9aa0a6;text-align:center;}
+.dh-divider-v{width:1px;background:#f1f3f4;align-self:stretch;flex-shrink:0;}
+.dh-body-row{display:flex;align-items:center;gap:2px;margin-bottom:6px;}
+.dh-bc-item{text-align:center;flex:1;border-radius:8px;padding:3px 2px;}
+.dh-bc-label{font-size:9.5px;color:#9aa0a6;margin-bottom:1px;line-height:1.3;}
+.dh-bc-val{font-size:12px;font-weight:700;color:#202124;}
+.dh-bc-sub{font-size:10px;color:#5f6368;}
+.dh-section-lbl{font-size:10px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.dh-vitals-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:2px;}
+.dh-vital-item{display:flex;align-items:center;gap:4px;}
+.dh-vital-icon{font-size:13px;flex-shrink:0;}
+.dh-vital-val{font-size:11.5px;font-weight:600;color:#202124;}
+.dh-vital-label{font-size:9.5px;color:#9aa0a6;}
+.dh-hs-divider{height:1px;background:#f1f3f4;margin:4px 0;}
+.dh-sleep-mood{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.dh-sm-tile{background:#f8f9fa;border-radius:8px;padding:4px 6px;display:flex;flex-direction:column;gap:1px;}
+.dh-sm-label{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;}
+.dh-sm-val{font-size:12px;font-weight:600;color:#202124;}
+.dh-sm-sub{font-size:9.5px;color:#9aa0a6;}
+.dh-skeleton{animation:dhPulse 1.4s ease-in-out infinite;}
+@keyframes dhPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.dh-skel-line{height:10px;background:#e8eaed;border-radius:4px;margin-bottom:6px;}
+.dh-skel-bar{height:5px;background:#e8eaed;border-radius:3px;margin-bottom:8px;}
+.dh-skel-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;}
+.dh-skel-icon{height:26px;background:#e8eaed;border-radius:50%;}
+/* projects+lists row */
+.ov-pl-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;}
+.ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px;text-align:center;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ov-pl-icon{font-size:18px;margin-bottom:3px;}
+.ov-pl-name{font-size:12px;font-weight:500;color:#3c4043;}
+.ov-loading{font-size:11px;color:#9aa0a6;text-align:center;padding:8px 0;}
+/* keep qa-btn for potential reuse, but hide old grid */
+.qa-grid{display:none;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
 .modal-bg.hidden{display:none;}
 .modal-box{background:#fff;border-radius:12px;padding:20px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);}
@@ -478,17 +535,149 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
         </div>
         <div class="send-status" id="send-status"></div>
       </div>
-      <div class="r-card" style="flex:1;overflow-y:auto;">
-        <div class="r-label">Quick Actions</div>
-        <div class="qa-grid">
-          <div class="qa-btn qa-active" data-mod="calendar"><div class="qa-icon">📅</div><div class="qa-name">Calendar</div></div>
-          <div class="qa-btn" data-mod="tasks"><div class="qa-icon">✅</div><div class="qa-name">Tasks</div></div>
-          <div class="qa-btn" data-mod="finance" onclick="window.location.href='/finance'"><div class="qa-icon">💰</div><div class="qa-name">Finance</div></div>
-          <div class="qa-btn" data-mod="health" onclick="window.location.href='/health'"><div class="qa-icon">💪</div><div class="qa-name">Health</div></div>
-          <div class="qa-btn" data-mod="trackers"><div class="qa-icon">📊</div><div class="qa-name">Trackers</div></div>
-          <div class="qa-btn" data-mod="playbook"><div class="qa-icon">📖</div><div class="qa-name">Playbook</div></div>
-          <div class="qa-btn" data-mod="summaries"><div class="qa-icon">📋</div><div class="qa-name">Summaries</div></div>
-          <div class="qa-btn" data-mod="settings"><div class="qa-icon">⚙️</div><div class="qa-name">Settings</div></div>
+      <div class="r-card" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
+        <div class="r-label">Overview</div>
+        <div class="ov-widget" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:6px;min-height:0;">
+
+          <!-- Finance card -->
+          <div class="ov-fin-card" onclick="window.location.href='/finance'" title="Go to Finance" style="flex-shrink:0;">
+            <div class="ov-card-hd">
+              <span class="ov-card-title">💰 Finance &mdash; Monthly</span>
+              <span class="ov-card-link">›</span>
+            </div>
+            <div id="dash-fin-body"><div class="ov-loading">Loading…</div></div>
+          </div>
+
+          <!-- Health card -->
+          <div class="ov-health-card" onclick="window.location.href='/health'" title="Go to Health">
+            <div class="ov-card-hd">
+              <span class="ov-card-title">💪 Health &mdash; Daily</span>
+              <span class="ov-card-link">›</span>
+            </div>
+
+            <!-- skeleton shown while loading -->
+            <div id="dash-health-skeleton" class="dh-skeleton" style="padding:4px 0;">
+              <div class="dh-skel-line" style="width:40%;margin-bottom:5px;"></div>
+              <div class="dh-skel-bar" style="margin-bottom:6px;"></div>
+              <div class="dh-skel-grid" style="margin-bottom:6px;">
+                <div class="dh-skel-icon"></div><div class="dh-skel-icon"></div>
+                <div class="dh-skel-icon"></div><div class="dh-skel-icon"></div>
+                <div class="dh-skel-icon"></div>
+              </div>
+              <div class="dh-skel-line" style="width:100%;margin-bottom:4px;"></div>
+              <div class="dh-skel-line" style="width:100%;"></div>
+            </div>
+
+            <!-- actual content — 2-column layout matching health/index.html overview -->
+            <div id="dash-health-body" style="display:none;">
+              <div style="display:flex;gap:8px;">
+
+                <!-- LEFT: Calories + bar + activity icons + weight -->
+                <div style="flex:0 0 48%;display:flex;flex-direction:column;gap:0;min-width:0;">
+                  <div class="dh-cal-label">Calories</div>
+                  <div style="display:flex;align-items:baseline;gap:3px;flex-wrap:nowrap;">
+                    <span class="dh-cal-num" id="dash-h-cal">—</span>
+                    <span class="dh-cal-unit">/ </span>
+                    <span class="dh-cal-unit" id="dash-h-cal-goal">—</span>
+                    <span class="dh-cal-unit">cal</span>
+                  </div>
+                  <div class="dh-cal-bigbar" style="margin-bottom:4px;display:flex;gap:1px;">
+                    <div id="dash-h-bar-carbs" style="height:100%;border-radius:3px 0 0 3px;background:#1a73e8;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-fat"   style="height:100%;background:#fbbc04;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-fiber" style="height:100%;background:#00897b;width:0%;transition:width .3s;"></div>
+                    <div id="dash-h-bar-prot"  style="height:100%;border-radius:0 3px 3px 0;background:#ea4335;width:0%;transition:width .3s;"></div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#1a73e8;display:inline-block;flex-shrink:0;"></span>Carbs: <b id="dash-h-carbs">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#fbbc04;display:inline-block;flex-shrink:0;"></span>Fat: <b id="dash-h-fat-g">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#00897b;display:inline-block;flex-shrink:0;"></span>Fiber: <b id="dash-h-fiber">—</b> g</span>
+                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#ea4335;display:inline-block;flex-shrink:0;"></span>Protein: <b id="dash-h-prot">—</b> g</span>
+                  </div>
+                  <!-- Activity icons: 🔥 👟 📍 💧 ⚖️ — 5개 균등 한 줄 -->
+                  <div style="display:flex;align-items:flex-start;margin-top:3px;width:100%;">
+                    <div class="dh-metric-item" style="flex:1;min-width:0;">
+                      <div class="dh-metric-icon" style="background:#e8f5e9;">🔥</div>
+                      <div class="dh-metric-val" id="dash-h-cals-b">—</div>
+                      <div class="dh-metric-label">Cals</div>
+                    </div>
+                    <div class="dh-metric-item" style="flex:1;min-width:0;">
+                      <div class="dh-metric-icon" style="background:#e3f2fd;">👟</div>
+                      <div class="dh-metric-val" id="dash-h-steps">—</div>
+                      <div class="dh-metric-label">Steps</div>
+                    </div>
+                    <div class="dh-metric-item" style="flex:1;min-width:0;">
+                      <div class="dh-metric-icon" style="background:#f3e5f5;">📍</div>
+                      <div class="dh-metric-val" id="dash-h-dist">—</div>
+                      <div class="dh-metric-label" id="dash-h-dist-lbl">km</div>
+                    </div>
+                    <div class="dh-metric-item" style="flex:1;min-width:0;">
+                      <div class="dh-metric-icon" style="background:#e0f7fa;">💧</div>
+                      <div class="dh-metric-val" id="dash-h-water">—</div>
+                      <div class="dh-metric-label">ml</div>
+                    </div>
+                    <div class="dh-metric-item" style="flex:1;min-width:0;">
+                      <div class="dh-metric-icon" style="background:#f3e5f5;font-size:11px;">⚖️</div>
+                      <div class="dh-metric-val" id="dash-h-weight" style="font-size:9.5px;">—</div>
+                      <div class="dh-metric-label" id="dash-h-weight-sub">kg</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- vertical divider -->
+                <div style="width:1px;background:#f1f3f4;flex-shrink:0;align-self:stretch;"></div>
+
+                <!-- RIGHT: Vitals + Sleep/Mood -->
+                <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
+                  <!-- Vitals grid -->
+                  <div class="dh-vitals-grid" style="margin-bottom:2px;">
+                    <div class="dh-vital-item">
+                      <span class="dh-vital-icon">🩺</span>
+                      <div><div class="dh-vital-val" id="dash-h-bp">—</div><div class="dh-vital-label">Blood Pressure</div></div>
+                    </div>
+                    <div class="dh-vital-item">
+                      <span class="dh-vital-icon">🫀</span>
+                      <div><div class="dh-vital-val" id="dash-h-hr">—</div><div class="dh-vital-label">Heart Rate</div></div>
+                    </div>
+                    <div class="dh-vital-item">
+                      <span class="dh-vital-icon">💨</span>
+                      <div><div class="dh-vital-val" id="dash-h-spo2">—</div><div class="dh-vital-label">SpO2</div></div>
+                    </div>
+                    <div class="dh-vital-item">
+                      <span class="dh-vital-icon">🩸</span>
+                      <div><div class="dh-vital-val" id="dash-h-glucose">—</div><div class="dh-vital-label">Glucose</div></div>
+                    </div>
+                  </div>
+                  <div class="dh-hs-divider"></div>
+                  <!-- Sleep + Mood -->
+                  <div class="dh-sleep-mood">
+                    <div class="dh-sm-tile">
+                      <div class="dh-sm-label">Sleep</div>
+                      <div class="dh-sm-val" id="dash-h-sleep">—</div>
+                      <div class="dh-sm-sub" id="dash-h-sleep-q"></div>
+                    </div>
+                    <div class="dh-sm-tile">
+                      <div class="dh-sm-label">Mood</div>
+                      <div class="dh-sm-val" id="dash-h-mood">—</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div><!-- /dash-health-body -->
+          </div>
+
+          <!-- Projects + Lists -->
+          <div class="ov-pl-row">
+            <div class="ov-pl-btn" title="Coming soon">
+              <div class="ov-pl-icon">🎯</div>
+              <div class="ov-pl-name">Projects</div>
+            </div>
+            <div class="ov-pl-btn" title="Coming soon">
+              <div class="ov-pl-icon">📋</div>
+              <div class="ov-pl-name">Lists</div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -557,7 +746,7 @@ document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
 
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag');var ta=document.getElementById('msg-input');chip.classList.toggle('selected');var val=ta.value;if(chip.classList.contains('selected')){if(val.indexOf(tag)===-1){ta.value=(tag+' '+val).trimEnd();}}else{ta.value=val.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.dispatchEvent(new Event('input'));ta.focus();});});
 
-function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
+function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
 document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
 document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
 function startClock(){function tick(){var now=new Date();document.getElementById('wb-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});document.getElementById('wb-time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
@@ -648,6 +837,217 @@ msgIn.addEventListener('input',updateSendBtn);
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}else{fnm.style.display='none';rmf.style.display='none';}updateSendBtn();});
 rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile)return;sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});});
+
+/* ── Overview widget: Finance ── */
+function loadDashFinance(){
+  var now=new Date();
+  var ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">No data</div>';return;}
+      renderDashFinance(data);
+    })
+    .catch(function(){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">—</div>';});
+}
+function renderDashFinance(data){
+  var s=data.summary;
+  var inc=s.income.actual||1;
+  var rem=s.remaining;
+  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
+  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
+  var needsActual=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var wantsActual=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  function pct(v,t){return t?Math.round(v/t*100):0;}
+  var savPct=pct(s.savings.actual,inc);
+  var expPct=pct(needsActual,inc);
+  var remPct=pct(wantsActual,inc);
+  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
+  // bar widths
+  var wE=expPct>0?Math.max(expPct,3):0;
+  var wS=s.savings.actual>0?Math.max(savPct,3):0;
+  var wR=wantsActual>0?Math.max(remPct,3):0;
+  var tot=wE+wS+wR;
+  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
+  var remColor=rem>=0?'#1e8e3e':'#c5221f';
+  var html=
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'+
+      '<div style="flex-shrink:0;"><span class="ov-remaining" style="color:'+remColor+';">'+fmtS(rem)+'</span><span style="font-size:9.5px;color:#9aa0a6;margin-left:4px;">Remaining</span></div>'+
+      '<div class="ov-stacked-bar" style="flex:1;margin-bottom:0;">'+
+        (wE>0?'<div class="ov-sb-seg" style="width:'+wE+'%;background:#c0522b;border-radius:3px 0 0 3px;"></div>':'')+
+        (wS>0?'<div class="ov-sb-seg" style="width:'+wS+'%;background:#34a853;margin-left:1px;"></div>':'')+
+        (wR>0?'<div class="ov-sb-seg" style="width:'+wR+'%;background:#dadce0;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')+
+      '</div>'+
+    '</div>'+
+    '<div class="ov-legend">'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#7c3aed;"></div><span>Income '+fmtS(s.income.actual)+' (100%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#34a853;"></div><span>Savings '+fmtS(s.savings.actual)+' ('+savPct+'%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#c0522b;"></div><span>Needs '+fmtS(needsActual)+' ('+expPct+'%)</span></div>'+
+      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#dadce0;"></div><span>Wants '+fmtS(wantsActual)+' ('+remPct+'%)</span></div>'+
+    '</div>';
+  document.getElementById('dash-fin-body').innerHTML=html;
+}
+
+/* ── Overview widget: Health ── */
+function loadDashHealth(){
+  // Fetch the AMS panel (activity/sleep/mood) and body panel in parallel
+  // then parse the returned HTML to extract today's data values
+  var panelBase='/health/';
+  Promise.all([
+    fetch(panelBase+'panel-logs-ams.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
+    fetch(panelBase+'panel-logs-body.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
+    fetch(panelBase+'panel-logs-food.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;})
+  ]).then(function(results){
+    populateDashHealth(results[0], results[1], results[2]);
+  }).catch(function(){
+    dashHealthShowData();
+  });
+}
+
+function dashHealthParseVal(doc,selector,fallback){
+  try{var el=doc.querySelector(selector);return el?el.textContent.trim():fallback;}catch(e){return fallback;}
+}
+
+function dashHealthShowData(){
+  document.getElementById('dash-health-skeleton').style.display='none';
+  document.getElementById('dash-health-body').style.display='';
+}
+
+function populateDashHealth(amsHtml, bodyHtml, foodHtml){
+  // Parse AMS panel HTML (activity, sleep, mood)
+  if(amsHtml){
+    try{
+      var parser=new DOMParser();
+      var amsDoc=parser.parseFromString(amsHtml,'text/html');
+
+      // Activity: look for numeric values in known patterns
+      // panel-logs-ams renders rows — grab first entry values if present
+      // Steps: look for a cell containing step-like data
+      var allCells=Array.from(amsDoc.querySelectorAll('td,span,div'));
+
+      // Helper: find element whose text matches a label nearby
+      function findNear(label,els){
+        for(var i=0;i<els.length;i++){
+          if(els[i].textContent.toLowerCase().indexOf(label)!==-1){
+            // look at siblings and parent
+            var sib=els[i].nextElementSibling;
+            if(sib&&/\d/.test(sib.textContent))return sib.textContent.trim();
+            var par=els[i].parentElement;
+            if(par){var kids=Array.from(par.children);for(var j=0;j<kids.length;j++){if(kids[j]!==els[i]&&/\d/.test(kids[j].textContent))return kids[j].textContent.trim();}}
+          }
+        }
+        return null;
+      }
+
+      // Sleep: look for duration pattern like "7h 20m" or "7:20"
+      var sleepMatch=amsHtml.match(/(\d+)h\s*(\d+)m/);
+      if(sleepMatch){
+        document.getElementById('dash-h-sleep').textContent=sleepMatch[1]+'h '+sleepMatch[2]+'m';
+      }
+      // Sleep quality: look for "Quality: X/5" or "4/5"
+      var sqMatch=amsHtml.match(/[Qq]uality[:\s]*(\d)\/5/);
+      if(sqMatch){
+        document.getElementById('dash-h-sleep-q').textContent='😴 Quality: '+sqMatch[1]+'/5';
+      }
+      // Mood: look for mood label value
+      var moodMatch=amsHtml.match(/[Mm]ood[^<]*<[^>]+>([A-Za-z\s😊😐😢😠😴]+)<\//) ||
+                    amsHtml.match(/class="[^"]*mood[^"]*"[^>]*>([A-Za-z\s😊😐😢😠😴]+)</i);
+      if(moodMatch){
+        var moodVal=moodMatch[1].trim();
+        if(moodVal&&moodVal.length<20)document.getElementById('dash-h-mood').textContent=moodVal;
+      }
+      // Steps: pattern like "11,256" or "11256" near "steps"
+      var stepsMatch=amsHtml.match(/steps[^<]*?(\d[\d,]+)/i) ||
+                     amsHtml.match(/(\d[\d,]+)\s*steps/i);
+      if(stepsMatch){var stepsNum=parseInt(stepsMatch[1].replace(/,/g,''),10);document.getElementById('dash-h-steps').textContent=isNaN(stepsNum)?'—':stepsNum.toLocaleString();}
+      // Distance
+      var distMatch=amsHtml.match(/(\d+\.?\d*)\s*(km|mi)/i);
+      if(distMatch){var dNum=parseFloat(distMatch[1]);document.getElementById('dash-h-dist').textContent=isNaN(dNum)?distMatch[1]:dNum.toLocaleString(undefined,{maximumFractionDigits:2});document.getElementById('dash-h-dist-lbl').textContent=distMatch[2];}
+      // Calories burned
+      var burnMatch=amsHtml.match(/burned[^<]*?(\d[\d,]+)/i)||amsHtml.match(/(\d[\d,]+)[^<]*burned/i);
+      if(burnMatch){var burnNum=parseInt(burnMatch[1].replace(/,/g,''),10);var burnFmt=isNaN(burnNum)?'—':burnNum.toLocaleString();document.getElementById('dash-h-cals-b').textContent=burnFmt;document.getElementById('dash-h-burned').textContent=burnFmt;}
+
+    }catch(e){console.warn('AMS parse error',e);}
+  }
+
+  // Parse Body panel HTML (vitals, weight, body composition)
+  if(bodyHtml){
+    try{
+      // Blood pressure
+      var bpMatch=bodyHtml.match(/(\d{2,3}\/\d{2,3})/);
+      if(bpMatch)document.getElementById('dash-h-bp').textContent=bpMatch[1];
+      // Heart rate
+      var hrMatch=bodyHtml.match(/(\d{2,3})\s*bpm/i);
+      if(hrMatch)document.getElementById('dash-h-hr').textContent=hrMatch[1]+' bpm';
+      // SpO2
+      var spo2Match=bodyHtml.match(/(\d{2,3})%\s*(?:SpO2|spo2|oxygen)/i)||bodyHtml.match(/SpO2[^<]*?(\d{2,3})%/i);
+      if(spo2Match)document.getElementById('dash-h-spo2').textContent=spo2Match[1]+'%';
+      // Glucose
+      var glucMatch=bodyHtml.match(/(\d{2,3})\s*mg\/dL/i)||bodyHtml.match(/glucose[^<]*?(\d{2,3})/i);
+      if(glucMatch)document.getElementById('dash-h-glucose').textContent=glucMatch[1]+' mg/dL';
+      // Weight
+      var wMatch=bodyHtml.match(/(\d+\.?\d*)\s*kg/i);
+      if(wMatch){
+        var wVal=parseFloat(wMatch[1]);
+        document.getElementById('dash-h-weight').textContent=isNaN(wVal)?'—':wVal.toFixed(1);
+        var lbs=(wVal*2.20462).toFixed(1);
+        document.getElementById('dash-h-weight-sub').textContent=isNaN(wVal)?'kg':wVal.toFixed(1)+' kg';
+      }
+      // Muscle mass
+      var muscMatch=bodyHtml.match(/[Mm]uscle[^<]*?(\d+\.?\d*)\s*kg/i);
+      if(muscMatch){document.getElementById('dash-h-muscle').textContent=muscMatch[1]+' kg';}
+      // Body fat
+      var fatMatch=bodyHtml.match(/[Ff]at[^<]*?(\d+\.?\d*)\s*kg/i);
+      if(fatMatch){document.getElementById('dash-h-fat').textContent=fatMatch[1]+' kg';}
+
+    }catch(e){console.warn('Body parse error',e);}
+  }
+
+  // Parse Food panel (macros: carbs/fat/fiber/protein + calories)
+  if(foodHtml){
+    try{
+      // Calories consumed: look for large cal number
+      var calMatch=foodHtml.match(/(\d[\d,]*)\s*(?:cal|kcal)/i);
+      if(calMatch){
+        var calNum=parseInt(calMatch[1].replace(/,/g,''),10);
+        if(!isNaN(calNum)){
+          document.getElementById('dash-h-cal').textContent=calNum.toLocaleString();
+        }
+      }
+      // Macro patterns: look for 'Carbs', 'Fat', 'Fiber', 'Protein' near a number
+      function getMacro(html,label){
+        var re=new RegExp(label+'[^<]*?([\\d\\.]+)\\s*g','i');
+        var m=html.match(re);
+        if(!m){re=new RegExp('([\\d\\.]+)\\s*g[^<]*'+label,'i');m=html.match(re);}
+        return m?parseFloat(m[1]):null;
+      }
+      var carbs=getMacro(foodHtml,'Carbs');
+      var fat=getMacro(foodHtml,'Fat');
+      var fiber=getMacro(foodHtml,'Fiber');
+      var prot=getMacro(foodHtml,'Protein');
+      if(carbs!==null)document.getElementById('dash-h-carbs').textContent=carbs.toFixed(0);
+      if(fat!==null)document.getElementById('dash-h-fat-g').textContent=fat.toFixed(0);
+      if(fiber!==null)document.getElementById('dash-h-fiber').textContent=fiber.toFixed(0);
+      if(prot!==null)document.getElementById('dash-h-prot').textContent=prot.toFixed(0);
+      // Update macro bar segments (% of total macros by weight)
+      var total=(carbs||0)+(fat||0)+(fiber||0)+(prot||0);
+      function barPct(v){return total>0?Math.round((v||0)/total*100):0;}
+      var pCarbs=barPct(carbs),pFat=barPct(fat),pFiber=barPct(fiber),pProt=100-pCarbs-pFat-pFiber;
+      if(total>0){
+        var bc=document.getElementById('dash-h-bar-carbs');
+        var bf=document.getElementById('dash-h-bar-fat');
+        var bfi=document.getElementById('dash-h-bar-fiber');
+        var bp=document.getElementById('dash-h-bar-prot');
+        if(bc)bc.style.width=pCarbs+'%';
+        if(bf)bf.style.width=pFat+'%';
+        if(bfi)bfi.style.width=pFiber+'%';
+        if(bp)bp.style.width=Math.max(pProt,0)+'%';
+      }
+    }catch(e){console.warn('Food parse error',e);}
+  }
+
+  dashHealthShowData();
+}
 
 init();
 </script>
