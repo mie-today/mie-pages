@@ -74,8 +74,8 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
 .cal-topbar{display:flex;align-items:center;gap:8px;padding:0 16px 7px;flex-shrink:0;}
 .cal-title-btn{display:flex;align-items:center;gap:5px;cursor:pointer;flex:0 0 auto;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;}
-.cal-nav-group{display:flex;align-items:center;gap:0;flex:0 0 auto;}
-.cal-month-title{font-size:17px;font-weight:500;color:#202124;}
+.cal-nav-group{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-right:auto;}
+.cal-month-title{font-size:16px;font-weight:500;color:#202124;padding:0 6px;}
 .cal-title-arrow{font-size:12px;color:#5f6368;transition:transform .2s;}
 .cal-title-arrow.open{transform:rotate(180deg);}
 .cal-nav-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 12px;font-size:13px;cursor:pointer;color:#5f6368;}
@@ -107,14 +107,14 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 .yp-month:hover{background:#f1f3f4;}
 .yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
 .yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
-.cal-nav-inline{font-size:16px;padding:2px 6px;font-weight:400;min-width:26px;}
+.cal-nav-inline{font-size:16px;padding:3px 8px;font-weight:400;min-width:28px;background:none !important;border:none !important;color:#5f6368;}
 /* Day cell layout — stronger specificity to beat FullCalendar defaults */
 .fc-daygrid-day .fc-daygrid-day-frame{display:flex;flex-direction:column;}
 .fc-daygrid-day .fc-daygrid-day-top{display:flex !important;flex-direction:row !important;justify-content:flex-start !important;align-items:center !important;padding:3px 5px 1px !important;}
 .fc-daygrid-day .fc-daygrid-day-number{width:22px !important;height:22px !important;font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;transition:background .12s;}
 .fc-daygrid-day .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
 .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600 !important;}
-.mie-day-icons{display:flex;flex-wrap:wrap;gap:1px;padding:0 4px 2px;font-size:10px;line-height:1;min-height:13px;}
+.mie-day-icons{display:inline-flex;align-items:center;gap:1px;padding-left:3px;font-size:10px;line-height:1;flex-wrap:nowrap;overflow:hidden;}
 .fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
 .fc .fc-col-header-cell{text-align:center !important;}
 
@@ -847,22 +847,18 @@ function fmtDateKey(date) {
 function injectDayIcons(cellEl, date) {
   var dateStr = fmtDateKey(date);
   var icons = getMieDayIcons(dateStr);
-  // Remove any existing icons row to avoid duplication
+  // Remove any existing icon span to avoid duplication
   var existing = cellEl.querySelector('.mie-day-icons');
   if (existing) existing.remove();
   if (!icons.length) return;
-  var frame = cellEl.querySelector('.fc-daygrid-day-frame');
-  if (!frame) return;
-  var iconRow = document.createElement('div');
-  iconRow.className = 'mie-day-icons';
-  iconRow.textContent = icons.join('');
-  // Insert before the events area (safe fallback: append to frame)
-  var eventsEl = frame.querySelector('.fc-daygrid-day-events');
-  if (eventsEl) {
-    frame.insertBefore(iconRow, eventsEl);
-  } else {
-    frame.appendChild(iconRow);
-  }
+  // Insert inline inside .fc-daygrid-day-top, right after the date number anchor
+  var top = cellEl.querySelector('.fc-daygrid-day-top');
+  if (!top) return;
+  var iconSpan = document.createElement('span');
+  iconSpan.className = 'mie-day-icons';
+  iconSpan.textContent = icons.join('');
+  // Append after the day number link (which is the only child of day-top)
+  top.appendChild(iconSpan);
 }
 
 function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:'100%',headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);setTimeout(function(){if(cal.view.type==='dayGridMonth'){document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var d=new Date(ds+'T12:00:00');injectDayIcons(cell,d);});}},80);attachDayClicks();closeMiniCal();closeYearPicker();},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},dayCellDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;injectDayIcons(info.el,info.date);},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal)cal.updateSize();},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();});}
