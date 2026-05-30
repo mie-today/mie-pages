@@ -1052,12 +1052,12 @@ function calcCalHeight(){
   if(h>100)cal.setOption('height',h);
 }
 
-function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:600,headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);setTimeout(function(){if(cal.view.type==='dayGridMonth'){document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var d=new Date(ds+'T12:00:00');injectDayIcons(cell,d);});}else{injectTimegridIcons();}},80);attachDayClicks();closeMiniCal();closeYearPicker();setTimeout(calcCalHeight,30);},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},dayCellDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;injectDayIcons(info.el,info.date);},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();setTimeout(calcCalHeight,60);var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal){cal.updateSize();calcCalHeight();}},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();setTimeout(calcCalHeight,60);});}
+function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:600,headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);setTimeout(function(){if(cal.view.type==='dayGridMonth'){document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var d=new Date(ds+'T12:00:00');injectDayIcons(cell,d);});}else{injectTimegridIcons();}},80);attachDayClicks();closeMiniCal();closeYearPicker();setTimeout(calcCalHeight,30);setTimeout(extractCalendarInsights,200);},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},dayCellDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;injectDayIcons(info.el,info.date);},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();setTimeout(calcCalHeight,60);var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal){cal.updateSize();calcCalHeight();}},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();setTimeout(calcCalHeight,60);});}
 function syncTitle(){if(!cal)return;document.getElementById('cal-title').textContent=cal.view.title||'';}
 function attachDayClicks(){document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('.fc-daygrid-day');if(!cell)return;var ds=cell.getAttribute('data-date');if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});document.querySelectorAll('.fc-col-header-cell-cushion').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('[data-date]');var ds=cell?cell.getAttribute('data-date'):null;if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});}
 function applyFilter(){if(!cal)return;var ids=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});eventsByDate={};var filtered=allEvents.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});cal.removeAllEventSources();cal.addEventSource(function(fi,ok){ok(filtered);});setTimeout(rebuildPills,120);}
 function rebuildPills(){if(!cal||cal.view.type!=='dayGridMonth')return;document.querySelectorAll('.mie-more').forEach(function(el){el.remove();});document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VISIBLE)return;var pill=document.createElement('div');pill.className='mie-more';pill.textContent='+ '+(evs.length-MAX_VISIBLE)+' more';pill.addEventListener('click',function(e){e.stopPropagation();openDayModal(ds,evs);});var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');if(bot)bot.appendChild(pill);});}
-function fetchEvents(fi,ok,fail){var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){if(r.status===401){show(authWrap);fail(new Error('401'));return null;}if(!r.ok){fail(new Error('HTTP '+r.status));return null;}return r.json();}).then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];var enabledMeta=calendarMeta.filter(function(c){return c.enabled;});var ids=enabledMeta.map(function(c){return c.id;});var primaryMeta=calendarMeta.find(function(c){return c.primary;});allEvents=[];eventsByDate={};var mapped=items.map(function(e){var start=(e.start&&(e.start.dateTime||e.start.date))||null;var end=(e.end&&(e.end.dateTime||e.end.date))||null;var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);var rawCid=e.calendarId||'primary';var cid=rawCid;if(primaryMeta&&rawCid===primaryMeta.id)cid=primaryMeta.id;if(!calendarMeta.find(function(m){return m.id===cid;})){var byRaw=calendarMeta.find(function(m){return m.id===rawCid;});if(byRaw)cid=byRaw.id;}return{id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,url:e.htmlLink||'',extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:cid}};});allEvents=mapped;var filtered=mapped.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});ok(filtered);}).catch(function(err){fail(err);});}
+function fetchEvents(fi,ok,fail){var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){if(r.status===401){show(authWrap);fail(new Error('401'));return null;}if(!r.ok){fail(new Error('HTTP '+r.status));return null;}return r.json();}).then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];var enabledMeta=calendarMeta.filter(function(c){return c.enabled;});var ids=enabledMeta.map(function(c){return c.id;});var primaryMeta=calendarMeta.find(function(c){return c.primary;});allEvents=[];eventsByDate={};var mapped=items.map(function(e){var start=(e.start&&(e.start.dateTime||e.start.date))||null;var end=(e.end&&(e.end.dateTime||e.end.date))||null;var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);var rawCid=e.calendarId||'primary';var cid=rawCid;if(primaryMeta&&rawCid===primaryMeta.id)cid=primaryMeta.id;if(!calendarMeta.find(function(m){return m.id===cid;})){var byRaw=calendarMeta.find(function(m){return m.id===rawCid;});if(byRaw)cid=byRaw.id;}return{id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,url:e.htmlLink||'',extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:cid}};});allEvents=mapped;var filtered=mapped.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});ok(filtered);setTimeout(extractCalendarInsights,0);}).catch(function(err){fail(err);});}
 function openDayModal(ds,evs){var d=new Date(ds+'T12:00:00');document.getElementById('day-modal-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var list=document.getElementById('day-modal-list');list.innerHTML='';if(!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px 0;font-size:13px;color:#9aa0a6;';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('hidden');return;}evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){var p=pastelForCalId((ev.extendedProps&&ev.extendedProps.cc)||null,(ev.extendedProps&&ev.extendedProps.calId)||'primary');var item=document.createElement('div');item.className='day-ev-item';var dot=document.createElement('div');dot.className='day-ev-dot';dot.style.background=p.text;var info=document.createElement('div');info.className='day-ev-info';var tDiv=document.createElement('div');tDiv.className='day-ev-time';var ttDiv=document.createElement('div');ttDiv.className='day-ev-title';if(ev.allDay)tDiv.textContent='All-day';else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;tDiv.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}ttDiv.textContent=ev.title||'No Title';info.appendChild(tDiv);info.appendChild(ttDiv);if(ev.extendedProps&&ev.extendedProps.loc){var lDiv=document.createElement('div');lDiv.className='day-ev-loc';lDiv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lDiv);}item.appendChild(dot);item.appendChild(info);item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');openEventView(ev);});list.appendChild(item);});document.getElementById('day-modal').classList.remove('hidden');}
 document.getElementById('day-modal-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');});
 document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
@@ -1368,6 +1368,398 @@ function populateDashHealth(amsHtml, bodyHtml, foodHtml){
   }
 
   dashHealthShowData();
+  // Q1: loadDashHealth 완료 후 calendar insights 적용
+  // (fetchEvents가 먼저 끝났을 경우 allEvents가 채워진 상태로 실행됨)
+  extractCalendarInsights();
+}
+
+/* ── Calendar → Overview Insights ────────────────────────────────────────
+   extractCalendarInsights()
+     오늘 날짜의 allEvents에서 title+desc 텍스트를 수집하고
+     CALENDAR_KEYWORD_MAP 기준으로 숫자를 추출한 뒤
+     applyCalendarInsights(insights) 로 전달한다.
+
+   applyCalendarInsights(insights)
+     각 dash-h-* 필드가 현재 '—' 상태일 때만 값을 업데이트한다.
+     Finance 카드는 감지된 지출 항목을 "from calendar" 섹션으로 append한다.
+   ─────────────────────────────────────────────────────────────────────── */
+
+// ── 키워드 매핑 객체 배열 ──
+// 항목 추가/삭제는 이 배열만 수정하면 된다.
+// type: 'int' | 'float' | 'text' | 'finance'
+// unit: 표시 단위 문자열 (없으면 null)
+// numIndex: 'first' | 'last' | 'all'  — 숫자 여러 개일 때 처리 방식
+var CALENDAR_KEYWORD_MAP = [
+  // ── 혈당/혈압/맥박/산소/체중 ──────────────────────────────────────
+  {
+    keywords: ['혈당','glucose','sugar','글루코스'],
+    field: 'dash-h-glucose',
+    unit: 'mg/dL',
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['혈압','blood pressure','bp'],
+    field: 'dash-h-bp',
+    unit: null,          // "120/80" 형식 그대로 사용
+    type: 'bp',
+    numIndex: 'first'
+  },
+  {
+    keywords: ['맥박','심박','heart rate','hr','bpm'],
+    field: 'dash-h-hr',
+    unit: 'bpm',
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['산소','spo2','산소포화도','oxygen'],
+    field: 'dash-h-spo2',
+    unit: '%',
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['체중','몸무게','weight'],
+    field: 'dash-h-weight',
+    unit: 'kg',
+    type: 'float',
+    numIndex: 'all'
+  },
+  // ── 활동 ─────────────────────────────────────────────────────────
+  {
+    keywords: ['걸음','steps','보행'],
+    field: 'dash-h-steps',
+    unit: null,
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['칼로리 소모','칼로리소모','소모','burned','kcal burn','cal burn'],
+    field: 'dash-h-cals-b',
+    unit: null,
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['거리','distance','km run','km 달리기'],
+    field: 'dash-h-dist',
+    unit: 'km',
+    type: 'float',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['물','수분','음수','water'],
+    field: 'dash-h-water',
+    unit: 'ml',
+    type: 'int',
+    numIndex: 'all'
+  },
+  // ── 식사/영양 ────────────────────────────────────────────────────
+  {
+    keywords: ['칼로리','kcal','cal','열량'],
+    field: 'dash-h-cal',
+    unit: null,
+    type: 'int',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['단백질','protein'],
+    field: 'dash-h-prot',
+    unit: 'g',
+    type: 'float',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['탄수화물','carb','탄수'],
+    field: 'dash-h-carbs',
+    unit: 'g',
+    type: 'float',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['지방','fat g','fat:'],
+    field: 'dash-h-fat-g',
+    unit: 'g',
+    type: 'float',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['섬유','fiber','식이섬유'],
+    field: 'dash-h-fiber',
+    unit: 'g',
+    type: 'float',
+    numIndex: 'all'
+  },
+  // ── 수면/기분 ────────────────────────────────────────────────────
+  {
+    keywords: ['수면','sleep','잠','취침'],
+    field: 'dash-h-sleep',
+    unit: null,
+    type: 'sleep',   // "7h 30m" 패턴 특수 처리
+    numIndex: 'first'
+  },
+  {
+    keywords: ['기분','mood','감정'],
+    field: 'dash-h-mood',
+    unit: null,
+    type: 'text',    // 숫자 추출 없이 키워드 뒤 단어 추출
+    numIndex: 'first'
+  },
+  // ── 체성분 ───────────────────────────────────────────────────────
+  {
+    keywords: ['근육','근육량','muscle','muscle mass'],
+    field: 'dash-h-muscle',
+    unit: 'kg',
+    type: 'float',
+    numIndex: 'all'
+  },
+  {
+    keywords: ['체지방','body fat','지방량'],
+    field: 'dash-h-fat',
+    unit: 'kg',
+    type: 'float',
+    numIndex: 'all'
+  },
+  // ── Finance (숫자 추출 대신 텍스트 항목으로 수집) ─────────────────
+  {
+    keywords: ['지출','결제','구매','샀다','paid','bought','payment','pay'],
+    field: '_finance_expense',
+    unit: null,
+    type: 'finance',
+    numIndex: 'first'
+  },
+  {
+    keywords: ['수입','월급','받았','income','salary','received'],
+    field: '_finance_income',
+    unit: null,
+    type: 'finance',
+    numIndex: 'first'
+  }
+];
+
+// ── 오늘 날짜 키 반환 (YYYY-MM-DD) ──
+function _calTodayKey() {
+  var now = new Date();
+  var m = now.getMonth() + 1;
+  var d = now.getDate();
+  return now.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+}
+
+// ── 숫자 추출 헬퍼 ──
+// text에서 숫자(정수/소수) 배열을 반환한다.
+function _extractNums(text) {
+  var matches = text.match(/\d+(?:\.\d+)?/g);
+  return matches ? matches.map(Number) : [];
+}
+
+// ── 혈압 패턴 추출 헬퍼 ("120/80" 형태) ──
+function _extractBP(text) {
+  var m = text.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
+  return m ? m[1] + '/' + m[2] : null;
+}
+
+// ── 수면 패턴 추출 헬퍼 ("7h 30m" or "7:30" 형태) ──
+function _extractSleep(text) {
+  var m1 = text.match(/(\d+)\s*h\s*(\d+)\s*m/i);
+  if (m1) return m1[1] + 'h ' + m1[2] + 'm';
+  var m2 = text.match(/(\d+):(\d{2})/);
+  if (m2) return m2[1] + 'h ' + m2[2] + 'm';
+  return null;
+}
+
+// ── 기분 텍스트 추출 헬퍼 (키워드 뒤 단어) ──
+function _extractMood(text, keyword) {
+  var re = new RegExp(keyword + '[:\\s]+([가-힣a-zA-Z]+)', 'i');
+  var m = re.exec(text);
+  return m ? m[1].trim() : null;
+}
+
+// ── 숫자 배열 → 표시 문자열 ──
+// numIndex: 'all' → "98/145/127", 'first' → "98", 'last' → "127"
+function _formatNums(nums, type, unit, numIndex) {
+  if (!nums.length) return null;
+  var selected;
+  if (numIndex === 'first') {
+    selected = [nums[0]];
+  } else if (numIndex === 'last') {
+    selected = [nums[nums.length - 1]];
+  } else {
+    selected = nums; // 'all'
+  }
+  var formatted = selected.map(function(n) {
+    return type === 'float' ? parseFloat(n.toFixed(1)) : Math.round(n);
+  });
+  var numStr = formatted.join('/');
+  return unit ? numStr + ' ' + unit : numStr;
+}
+
+// ── extractCalendarInsights 메인 ──
+function extractCalendarInsights() {
+  var todayKey = _calTodayKey();
+
+  // 오늘 날짜 이벤트 필터 (allDay는 start가 'YYYY-MM-DD', timed는 start가 'YYYY-MM-DDT...')
+  var todayEvents = allEvents.filter(function(ev) {
+    if (!ev.start) return false;
+    var dateStr = ev.allDay ? ev.start : ev.start.split('T')[0];
+    return dateStr === todayKey;
+  });
+
+  if (!todayEvents.length) return;
+
+  // 이벤트별 title + desc 합치기
+  var texts = todayEvents.map(function(ev) {
+    var title = (ev.title || '').toLowerCase();
+    var desc  = ((ev.extendedProps && ev.extendedProps.desc) || '').toLowerCase();
+    return title + ' ' + desc;
+  });
+
+  var insights = {
+    health: {},       // { fieldId: displayString }
+    finance: []       // [{ label: string, raw: string }]
+  };
+
+  CALENDAR_KEYWORD_MAP.forEach(function(mapping) {
+    // 이미 이 필드에 값을 찾았으면 skip (첫 번째 이벤트 매치 우선)
+    if (mapping.type !== 'finance' && insights.health[mapping.field]) return;
+
+    texts.forEach(function(text, evIdx) {
+      // 키워드 중 하나라도 포함되어 있는지 확인
+      var hit = mapping.keywords.some(function(kw) {
+        return text.indexOf(kw.toLowerCase()) !== -1;
+      });
+      if (!hit) return;
+
+      var ev = todayEvents[evIdx];
+      var rawText = (ev.title || '') + ' ' + ((ev.extendedProps && ev.extendedProps.desc) || '');
+
+      // Finance 타입: 텍스트 항목으로 수집
+      if (mapping.type === 'finance') {
+        insights.finance.push({
+          label: mapping.field === '_finance_income' ? '수입' : '지출',
+          raw: ev.title || rawText.trim().slice(0, 60)
+        });
+        return;
+      }
+
+      // 이미 이 필드에 값이 있으면 skip
+      if (insights.health[mapping.field]) return;
+
+      // 혈압 특수 처리
+      if (mapping.type === 'bp') {
+        var bp = _extractBP(rawText);
+        if (bp) insights.health[mapping.field] = bp;
+        return;
+      }
+
+      // 수면 특수 처리
+      if (mapping.type === 'sleep') {
+        var sl = _extractSleep(rawText);
+        if (sl) insights.health[mapping.field] = sl;
+        return;
+      }
+
+      // 기분 텍스트 처리
+      if (mapping.type === 'text') {
+        var moodKeyword = mapping.keywords.find(function(kw) {
+          return text.indexOf(kw.toLowerCase()) !== -1;
+        });
+        if (moodKeyword) {
+          var moodVal = _extractMood(rawText, moodKeyword);
+          if (moodVal && moodVal.length < 20) insights.health[mapping.field] = moodVal;
+        }
+        return;
+      }
+
+      // 일반 숫자 추출 (int / float)
+      // 키워드 위치 뒤의 텍스트에서만 숫자를 추출해 오매칭 방지
+      var lowerRaw = rawText.toLowerCase();
+      var hitKw = mapping.keywords.find(function(kw) {
+        return lowerRaw.indexOf(kw.toLowerCase()) !== -1;
+      });
+      if (!hitKw) return;
+
+      var afterKw = rawText.slice(lowerRaw.indexOf(hitKw.toLowerCase()) + hitKw.length);
+      var nums = _extractNums(afterKw);
+      if (!nums.length) return;
+
+      // 단위에 맞는 값만 필터 (체중/체성분은 10~300kg 범위, 혈당은 40~600, 등)
+      nums = nums.filter(function(n) {
+        if (mapping.field === 'dash-h-glucose') return n >= 40 && n <= 600;
+        if (mapping.field === 'dash-h-hr')      return n >= 30 && n <= 220;
+        if (mapping.field === 'dash-h-spo2')    return n >= 60 && n <= 100;
+        if (mapping.field === 'dash-h-weight')  return n >= 20 && n <= 300;
+        if (mapping.field === 'dash-h-steps')   return n >= 100 && n <= 100000;
+        if (mapping.field === 'dash-h-cals-b')  return n >= 100 && n <= 10000;
+        if (mapping.field === 'dash-h-cal')     return n >= 100 && n <= 10000;
+        if (mapping.field === 'dash-h-water')   return n >= 50  && n <= 10000;
+        if (mapping.field === 'dash-h-muscle')  return n >= 5   && n <= 150;
+        if (mapping.field === 'dash-h-fat')     return n >= 1   && n <= 150;
+        return true;
+      });
+      if (!nums.length) return;
+
+      var str = _formatNums(nums, mapping.type, mapping.unit, mapping.numIndex);
+      if (str) insights.health[mapping.field] = str;
+    });
+  });
+
+  applyCalendarInsights(insights);
+}
+
+// ── applyCalendarInsights ──
+function applyCalendarInsights(insights) {
+  // Health: 각 필드가 '—' 상태일 때만 calendar 값으로 보완
+  Object.keys(insights.health).forEach(function(fieldId) {
+    var el = document.getElementById(fieldId);
+    if (!el) return;
+    var current = el.textContent.trim();
+    if (current === '—' || current === '') {
+      el.textContent = insights.health[fieldId];
+      // calendar 출처임을 나타내는 스타일 (연한 색)
+      el.style.color = '#9aa0a6';
+      el.title = 'from calendar';
+    }
+  });
+
+  // Finance: renderDashFinance() 완료 후 "from calendar" 섹션 append
+  if (insights.finance.length) {
+    var finBody = document.getElementById('dash-fin-body');
+    if (!finBody) return;
+
+    // 기존 from-calendar 섹션이 있으면 제거 후 재생성
+    var old = finBody.querySelector('.cal-finance-section');
+    if (old) old.remove();
+
+    var section = document.createElement('div');
+    section.className = 'cal-finance-section';
+    section.style.cssText = 'margin-top:5px;padding-top:5px;border-top:1px dashed #e0e0e0;';
+
+    var hd = document.createElement('div');
+    hd.style.cssText = 'font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;';
+    hd.textContent = 'from calendar';
+    section.appendChild(hd);
+
+    insights.finance.forEach(function(item) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10.5px;color:#5f6368;line-height:1.4;';
+      var badge = document.createElement('span');
+      badge.style.cssText = 'font-size:9px;font-weight:600;border-radius:3px;padding:0 4px;flex-shrink:0;' +
+        (item.label === '수입'
+          ? 'background:#d3ead9;color:#0b6b37;'
+          : 'background:#fce8e6;color:#c5221f;');
+      badge.textContent = item.label;
+      var txt = document.createElement('span');
+      txt.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
+      txt.textContent = item.raw;
+      txt.title = item.raw;
+      row.appendChild(badge);
+      row.appendChild(txt);
+      section.appendChild(row);
+    });
+
+    finBody.appendChild(section);
+  }
 }
 
 init();
