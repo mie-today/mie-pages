@@ -3,20 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>MIE Dashboard</title>
+<title>MIE</title>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
-.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
-.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
-.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
-.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
-.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
-.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.connect-btn:hover{background:#1765cc;}
 .spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
 .spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -423,15 +416,7 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 </head>
 <body>
 
-<div id="auth-wrap" class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">M</div>
-    <div class="auth-title">MIE</div>
-    <div class="auth-sub">Your messages. Your calendar. Zero effort.</div>
-    <button class="connect-btn" id="connect-btn">Connect Google</button>
-  </div>
-</div>
-<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+<div id="loading-wrap" class="spinner-wrap">
   <div class="spinner"></div>
   <div style="font-size:12px;color:#5f6368;margin-top:4px;">Loading…</div>
 </div>
@@ -757,20 +742,18 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size
 
 <script>
 'use strict';
-var BACKEND='https://api.mie.today';
-var MAX_VISIBLE=3;
-var authWrap=document.getElementById('auth-wrap');
-var loadWrap=document.getElementById('loading-wrap');
-var dash=document.getElementById('dashboard');
-var cal=null,eventsByDate={},allEvents=[],calendarMeta=[];
-var allTasks=[],taskLists=[],currentTaskFilter='all';
-var currentMod='calendar';
-
 var PASTEL_MAP={'#d50000':{bg:'#fdd5d5',text:'#b71c1c'},'#e67c73':{bg:'#fce4e3',text:'#c5221f'},'#f4511e':{bg:'#fde8e1',text:'#b83000'},'#f6bf26':{bg:'#fef3cd',text:'#a07000'},'#33b679':{bg:'#d3ead9',text:'#0b6b37'},'#0b8043':{bg:'#d3ead9',text:'#0b6b37'},'#039be5':{bg:'#cdeaf8',text:'#0277a8'},'#3f51b5':{bg:'#e0e4f7',text:'#283593'},'#7986cb':{bg:'#e8eaf6',text:'#3949ab'},'#8e24aa':{bg:'#ead5f5',text:'#6a1899'},'#616161':{bg:'#e8eaed',text:'#3c4043'},'#1a73e8':{bg:'#dce8fd',text:'#1a56b0'},'#4285f4':{bg:'#dce8fd',text:'#1a56b0'},'#4986e7':{bg:'#dce8fd',text:'#1a56b0'},'#0f9d58':{bg:'#d3ead9',text:'#0b6b37'},'#51b749':{bg:'#d3ead9',text:'#0b6b37'},'#f09300':{bg:'#fef3cd',text:'#a07000'},'#e4c441':{bg:'#fef7cd',text:'#8a6800'},'#9e69af':{bg:'#ead5f5',text:'#6a1899'},'#a142f4':{bg:'#ead5f5',text:'#6a1899'},'#ad1457':{bg:'#fce4ec',text:'#880e4f'},'#e91e63':{bg:'#fce4ec',text:'#880e4f'},'#a79b8e':{bg:'#ede9e5',text:'#5d4037'},'#795548':{bg:'#ede9e5',text:'#5d4037'},'#8d6e63':{bg:'#f0e6e2',text:'#7b3f2b'},'#ac725e':{bg:'#f0e6e2',text:'#7b3f2b'}};
 function pastelFor(hex){if(!hex)return{bg:'#dce8fd',text:'#1a56b0'};var k=hex.toLowerCase();if(PASTEL_MAP[k])return PASTEL_MAP[k];var h=k.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];if(h.length!==6)return{bg:'#dce8fd',text:'#1a56b0'};var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);var pr=Math.round(r*0.22+255*0.78),pg=Math.round(g*0.22+255*0.78),pb=Math.round(b*0.22+255*0.78);var tr=Math.round(r*0.55),tg=Math.round(g*0.55),tb=Math.round(b*0.55);function hx(n){return n.toString(16).padStart(2,'0');}return{bg:'#'+hx(pr)+hx(pg)+hx(pb),text:'#'+hx(tr)+hx(tg)+hx(tb)};}
 function pastelForCalId(rawCc,calId){if(rawCc)return pastelFor(rawCc);var meta=calendarMeta.find(function(c){return c.id===calId;});if(meta&&meta.color)return pastelFor(meta.color);return{bg:'#dce8fd',text:'#1a56b0'};}
 
-function show(el){[authWrap,loadWrap,dash].forEach(function(e){e.style.display='none';});if(el===dash){dash.style.display='flex';dash.style.flexDirection='column';}else el.style.display='';}
+var BACKEND='https://api.mie.today';
+var MAX_VISIBLE=3;
+var cal=null,eventsByDate={},allEvents=[],calendarMeta=[];
+var allTasks=[],taskLists=[],currentTaskFilter='all';
+var currentMod='calendar';
+var loadWrap=document.getElementById('loading-wrap');
+var dash=document.getElementById('dashboard');
+function show(el){[loadWrap,dash].forEach(function(e){e.style.display='none';});if(el===dash){dash.style.display='flex';dash.style.flexDirection='column';}else el.style.display='';}
 function formatDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),td=new Date();td.setHours(0,0,0,0);var diff=Math.round((dt-td)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
 function isoDate(d){var m=d.getMonth()+1,day=d.getDate();return d.getFullYear()+'-'+(m<10?'0'+m:m)+'-'+(day<10?'0'+day:day);}
 
@@ -786,9 +769,8 @@ document.getElementById('hamburger').addEventListener('click',function(){sidebar
 document.getElementById('sidebar-dim').addEventListener('click',closeSidebar);
 document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
 
-function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
-document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
-document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
+function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){window.location.replace('/');return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{window.location.replace('/');}}).catch(function(){window.location.replace('/');});}
+document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){window.location.replace('/');});});
 function startClock(){function tick(){var now=new Date();document.getElementById('wb-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});document.getElementById('wb-time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
 function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';if(c<=99)return'⛈️';return'🌡️';}
 function fetchWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';}).catch(function(){});}
@@ -1025,7 +1007,7 @@ function syncTitle(){if(!cal)return;document.getElementById('cal-title').textCon
 function attachDayClicks(){document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('.fc-daygrid-day');if(!cell)return;var ds=cell.getAttribute('data-date');if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});document.querySelectorAll('.fc-col-header-cell-cushion').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('[data-date]');var ds=cell?cell.getAttribute('data-date'):null;if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});}
 function applyFilter(){if(!cal)return;var ids=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});eventsByDate={};var filtered=allEvents.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});cal.removeAllEventSources();cal.addEventSource(function(fi,ok){ok(filtered);});setTimeout(rebuildPills,120);}
 function rebuildPills(){if(!cal||cal.view.type!=='dayGridMonth')return;document.querySelectorAll('.mie-more').forEach(function(el){el.remove();});document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VISIBLE)return;var pill=document.createElement('div');pill.className='mie-more';pill.textContent='+ '+(evs.length-MAX_VISIBLE)+' more';pill.addEventListener('click',function(e){e.stopPropagation();openDayModal(ds,evs);});var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');if(bot)bot.appendChild(pill);});}
-function fetchEvents(fi,ok,fail){var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){if(r.status===401){show(authWrap);fail(new Error('401'));return null;}if(!r.ok){fail(new Error('HTTP '+r.status));return null;}return r.json();}).then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];var enabledMeta=calendarMeta.filter(function(c){return c.enabled;});var ids=enabledMeta.map(function(c){return c.id;});var primaryMeta=calendarMeta.find(function(c){return c.primary;});allEvents=[];eventsByDate={};var mapped=items.map(function(e){var start=(e.start&&(e.start.dateTime||e.start.date))||null;var end=(e.end&&(e.end.dateTime||e.end.date))||null;var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);var rawCid=e.calendarId||'primary';var cid=rawCid;if(primaryMeta&&rawCid===primaryMeta.id)cid=primaryMeta.id;if(!calendarMeta.find(function(m){return m.id===cid;})){var byRaw=calendarMeta.find(function(m){return m.id===rawCid;});if(byRaw)cid=byRaw.id;}return{id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,url:e.htmlLink||'',extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:cid}};});allEvents=mapped;var filtered=mapped.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});ok(filtered);}).catch(function(err){fail(err);});}
+function fetchEvents(fi,ok,fail){var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){if(r.status===401){window.location.replace('/');fail(new Error('401'));return null;}if(!r.ok){fail(new Error('HTTP '+r.status));return null;}return r.json();}).then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];var enabledMeta=calendarMeta.filter(function(c){return c.enabled;});var ids=enabledMeta.map(function(c){return c.id;});var primaryMeta=calendarMeta.find(function(c){return c.primary;});allEvents=[];eventsByDate={};var mapped=items.map(function(e){var start=(e.start&&(e.start.dateTime||e.start.date))||null;var end=(e.end&&(e.end.dateTime||e.end.date))||null;var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);var rawCid=e.calendarId||'primary';var cid=rawCid;if(primaryMeta&&rawCid===primaryMeta.id)cid=primaryMeta.id;if(!calendarMeta.find(function(m){return m.id===cid;})){var byRaw=calendarMeta.find(function(m){return m.id===rawCid;});if(byRaw)cid=byRaw.id;}return{id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,url:e.htmlLink||'',extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:cid}};});allEvents=mapped;var filtered=mapped.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});ok(filtered);}).catch(function(err){fail(err);});}
 function openDayModal(ds,evs){var d=new Date(ds+'T12:00:00');document.getElementById('day-modal-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var list=document.getElementById('day-modal-list');list.innerHTML='';if(!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px 0;font-size:13px;color:#9aa0a6;';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('hidden');return;}evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){var p=pastelForCalId((ev.extendedProps&&ev.extendedProps.cc)||null,(ev.extendedProps&&ev.extendedProps.calId)||'primary');var item=document.createElement('div');item.className='day-ev-item';var dot=document.createElement('div');dot.className='day-ev-dot';dot.style.background=p.text;var info=document.createElement('div');info.className='day-ev-info';var tDiv=document.createElement('div');tDiv.className='day-ev-time';var ttDiv=document.createElement('div');ttDiv.className='day-ev-title';if(ev.allDay)tDiv.textContent='All-day';else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;tDiv.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}ttDiv.textContent=ev.title||'No Title';info.appendChild(tDiv);info.appendChild(ttDiv);if(ev.extendedProps&&ev.extendedProps.loc){var lDiv=document.createElement('div');lDiv.className='day-ev-loc';lDiv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lDiv);}item.appendChild(dot);item.appendChild(info);item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');openEventView(ev);});list.appendChild(item);});document.getElementById('day-modal').classList.remove('hidden');}
 document.getElementById('day-modal-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');});
 document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
