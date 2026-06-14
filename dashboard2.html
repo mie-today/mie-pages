@@ -1175,16 +1175,15 @@ function renderDashFinance(data){
 
 /* ── Overview widget: Health ── */
 function loadDashHealth(){
-  var panelBase='/health/';
-  Promise.all([
-    fetch(panelBase+'panel-logs-ams.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
-    fetch(panelBase+'panel-logs-body.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
-    fetch(panelBase+'panel-logs-food.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;})
-  ]).then(function(results){
-    populateDashHealth(results[0], results[1], results[2]);
-  }).catch(function(){
-    dashHealthShowData(false);
-  });
+  var today=new Date();
+  var dateStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  fetch(BACKEND+'/api/me/health?date='+dateStr+'&period=daily&tab=all',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){dashHealthShowData(false);return;}
+      populateDashHealth(data);
+    })
+    .catch(function(){dashHealthShowData(false);});
 }
 
 function dashHealthShowData(hasData){
@@ -1198,88 +1197,78 @@ function dashHealthShowData(hasData){
   }
 }
 
-function populateDashHealth(amsHtml, bodyHtml, foodHtml){
-  var foundAnyData=false;
+function populateDashHealth(data){
+  var s=data.summary||{};
+  var healthArr=data.health||[];
+  var lastHealth=healthArr.length?healthArr[healthArr.length-1]:null;
 
-  if(amsHtml){
-    try{
-      var sleepMatch=amsHtml.match(/(\d+)h\s*(\d+)m/);
-      if(sleepMatch){
-        document.getElementById('dash-h-sleep').textContent=sleepMatch[1]+'h '+sleepMatch[2]+'m';
-        foundAnyData=true;
-      }
-      var sqMatch=amsHtml.match(/[Qq]uality[:\s]*(\d)\/5/);
-      if(sqMatch){
-        document.getElementById('dash-h-sleep-q').textContent='😴 Quality: '+sqMatch[1]+'/5';
-        foundAnyData=true;
-      }
-      var moodMatch=amsHtml.match(/[Mm]ood[^<]*<[^>]+>([A-Za-z\s😊😐😢😠😴]+)<\//) ||
-                    amsHtml.match(/class="[^"]*mood[^"]*"[^>]*>([A-Za-z\s😊😐😢😠😴]+)</i);
-      if(moodMatch){
-        var moodVal=moodMatch[1].trim();
-        if(moodVal&&moodVal.length<20){document.getElementById('dash-h-mood').textContent=moodVal;foundAnyData=true;}
-      }
-      var stepsMatch=amsHtml.match(/steps[^<]*?(\d[\d,]+)/i)||amsHtml.match(/(\d[\d,]+)\s*steps/i);
-      if(stepsMatch){var stepsNum=parseInt(stepsMatch[1].replace(/,/g,''),10);if(!isNaN(stepsNum)&&stepsNum>0){document.getElementById('dash-h-steps').textContent=stepsNum.toLocaleString();foundAnyData=true;}}
-      var distMatch=amsHtml.match(/(\d+\.?\d*)\s*(km|mi)/i);
-      if(distMatch){var dNum=parseFloat(distMatch[1]);if(!isNaN(dNum)&&dNum>0){document.getElementById('dash-h-dist').textContent=dNum.toLocaleString(undefined,{maximumFractionDigits:2});document.getElementById('dash-h-dist-lbl').textContent=distMatch[2];foundAnyData=true;}}
-      var burnMatch=amsHtml.match(/burned[^<]*?(\d[\d,]+)/i)||amsHtml.match(/(\d[\d,]+)[^<]*burned/i);
-      if(burnMatch){var burnNum=parseInt(burnMatch[1].replace(/,/g,''),10);if(!isNaN(burnNum)&&burnNum>0){document.getElementById('dash-h-cals-b').textContent=burnNum.toLocaleString();foundAnyData=true;}}
-    }catch(e){console.warn('AMS parse error',e);}
+  // Check if any real data exists for today
+  var hasFood   = (s.total_calories_kcal||0)>0 || (s.total_protein_g||0)>0 || (s.total_carbs_g||0)>0;
+  var hasAct    = (s.total_steps||0)>0 || (s.total_calories_burned_kcal||0)>0 || (s.total_distance_km||0)>0;
+  var hasHealth = lastHealth!==null;
+  var hasSleep  = s.sleep_duration_min!=null;
+  var hasMood   = s.mood!=null && s.mood!=='';
+
+  if(!hasFood && !hasAct && !hasHealth && !hasSleep && !hasMood){
+    dashHealthShowData(false);
+    return;
   }
 
-  if(bodyHtml){
-    try{
-      var bpMatch=bodyHtml.match(/(\d{2,3}\/\d{2,3})/);
-      if(bpMatch){document.getElementById('dash-h-bp').textContent=bpMatch[1];foundAnyData=true;}
-      var hrMatch=bodyHtml.match(/(\d{2,3})\s*bpm/i);
-      if(hrMatch){document.getElementById('dash-h-hr').textContent=hrMatch[1]+' bpm';foundAnyData=true;}
-      var spo2Match=bodyHtml.match(/(\d{2,3})%\s*(?:SpO2|spo2|oxygen)/i)||bodyHtml.match(/SpO2[^<]*?(\d{2,3})%/i);
-      if(spo2Match){document.getElementById('dash-h-spo2').textContent=spo2Match[1]+'%';foundAnyData=true;}
-      var glucMatch=bodyHtml.match(/(\d{2,3})\s*mg\/dL/i)||bodyHtml.match(/glucose[^<]*?(\d{2,3})/i);
-      if(glucMatch){document.getElementById('dash-h-glucose').textContent=glucMatch[1]+' mg/dL';foundAnyData=true;}
-      var wMatch=bodyHtml.match(/(\d+\.?\d*)\s*kg/i);
-      if(wMatch){var wVal=parseFloat(wMatch[1]);if(!isNaN(wVal)&&wVal>0){document.getElementById('dash-h-weight').textContent=wVal.toFixed(1);document.getElementById('dash-h-weight-sub').textContent=wVal.toFixed(1)+' kg';foundAnyData=true;}}
-    }catch(e){console.warn('Body parse error',e);}
+  // Calories
+  if(s.total_calories_kcal>0){
+    document.getElementById('dash-h-cal').textContent=Math.round(s.total_calories_kcal).toLocaleString();
   }
 
-  if(foodHtml){
-    try{
-      var calMatch=foodHtml.match(/(\d[\d,]*)\s*(?:cal|kcal)/i);
-      if(calMatch){var calNum=parseInt(calMatch[1].replace(/,/g,''),10);if(!isNaN(calNum)&&calNum>0){document.getElementById('dash-h-cal').textContent=calNum.toLocaleString();foundAnyData=true;}}
-      function getMacro(html,label){
-        var re=new RegExp(label+'[^<]*?([\\d\\.]+)\\s*g','i');
-        var m=html.match(re);
-        if(!m){re=new RegExp('([\\d\\.]+)\\s*g[^<]*'+label,'i');m=html.match(re);}
-        return m?parseFloat(m[1]):null;
-      }
-      var carbs=getMacro(foodHtml,'Carbs');
-      var fat=getMacro(foodHtml,'Fat');
-      var fiber=getMacro(foodHtml,'Fiber');
-      var prot=getMacro(foodHtml,'Protein');
-      var hasMacro=false;
-      if(carbs!==null&&carbs>0){document.getElementById('dash-h-carbs').textContent=carbs.toFixed(0);hasMacro=true;}
-      if(fat!==null&&fat>0){document.getElementById('dash-h-fat-g').textContent=fat.toFixed(0);hasMacro=true;}
-      if(fiber!==null&&fiber>0){document.getElementById('dash-h-fiber').textContent=fiber.toFixed(0);hasMacro=true;}
-      if(prot!==null&&prot>0){document.getElementById('dash-h-prot').textContent=prot.toFixed(0);hasMacro=true;}
-      if(hasMacro){
-        foundAnyData=true;
-        var total=(carbs||0)+(fat||0)+(fiber||0)+(prot||0);
-        function barPct(v){return total>0?Math.round((v||0)/total*100):0;}
-        var pCarbs=barPct(carbs),pFat=barPct(fat),pFiber=barPct(fiber),pProt=100-pCarbs-pFat-pFiber;
-        var bc=document.getElementById('dash-h-bar-carbs');
-        var bf=document.getElementById('dash-h-bar-fat');
-        var bfi=document.getElementById('dash-h-bar-fiber');
-        var bp=document.getElementById('dash-h-bar-prot');
-        if(bc)bc.style.width=pCarbs+'%';
-        if(bf)bf.style.width=pFat+'%';
-        if(bfi)bfi.style.width=pFiber+'%';
-        if(bp)bp.style.width=Math.max(pProt,0)+'%';
-      }
-    }catch(e){console.warn('Food parse error',e);}
+  // Macros
+  var carbs=s.total_carbs_g||0, fat=s.total_fat_g||0, fiber=s.total_fiber_g||0, prot=s.total_protein_g||0;
+  if(carbs>0) document.getElementById('dash-h-carbs').textContent=carbs.toFixed(0);
+  if(fat>0)   document.getElementById('dash-h-fat-g').textContent=fat.toFixed(0);
+  if(fiber>0) document.getElementById('dash-h-fiber').textContent=fiber.toFixed(0);
+  if(prot>0)  document.getElementById('dash-h-prot').textContent=prot.toFixed(0);
+
+  // Macro bar
+  var macroTotal=carbs+fat+fiber+prot;
+  if(macroTotal>0){
+    function bPct(v){return Math.round(v/macroTotal*100);}
+    var pC=bPct(carbs),pF=bPct(fat),pFi=bPct(fiber),pP=Math.max(100-pC-pF-pFi,0);
+    document.getElementById('dash-h-bar-carbs').style.width=pC+'%';
+    document.getElementById('dash-h-bar-fat').style.width=pF+'%';
+    document.getElementById('dash-h-bar-fiber').style.width=pFi+'%';
+    document.getElementById('dash-h-bar-prot').style.width=pP+'%';
   }
 
-  dashHealthShowData(foundAnyData);
+  // Activity
+  if((s.total_calories_burned_kcal||0)>0) document.getElementById('dash-h-cals-b').textContent=Math.round(s.total_calories_burned_kcal).toLocaleString();
+  if((s.total_steps||0)>0)                document.getElementById('dash-h-steps').textContent=s.total_steps.toLocaleString();
+  if((s.total_distance_km||0)>0){
+    document.getElementById('dash-h-dist').textContent=s.total_distance_km.toFixed(2);
+    document.getElementById('dash-h-dist-lbl').textContent='km';
+  }
+
+  // Vitals from health tab
+  if(lastHealth){
+    var sys=lastHealth.blood_pressure_sys, dia=lastHealth.blood_pressure_dia;
+    if(sys&&dia) document.getElementById('dash-h-bp').textContent=sys+'/'+dia;
+    if(lastHealth.heart_rate_bpm)  document.getElementById('dash-h-hr').textContent=lastHealth.heart_rate_bpm+' bpm';
+    if(lastHealth.spo2_pct)        document.getElementById('dash-h-spo2').textContent=lastHealth.spo2_pct+'%';
+    if(lastHealth.glucose_mgdl)    document.getElementById('dash-h-glucose').textContent=lastHealth.glucose_mgdl+' mg/dL';
+    if(lastHealth.weight_kg){
+      document.getElementById('dash-h-weight').textContent=lastHealth.weight_kg.toFixed(1);
+      document.getElementById('dash-h-weight-sub').textContent=lastHealth.weight_kg.toFixed(1)+' kg';
+    }
+  }
+
+  // Sleep
+  if(s.sleep_duration_min!=null){
+    var hrs=Math.floor(s.sleep_duration_min/60), mins=Math.round(s.sleep_duration_min%60);
+    document.getElementById('dash-h-sleep').textContent=hrs+'h '+mins+'m';
+    if(s.sleep_quality) document.getElementById('dash-h-sleep-q').textContent='😴 Quality: '+s.sleep_quality+'/5';
+  }
+
+  // Mood
+  if(s.mood) document.getElementById('dash-h-mood').textContent=s.mood;
+
+  dashHealthShowData(true);
 }
 
 init();
