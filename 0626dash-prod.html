@@ -406,6 +406,7 @@ var BACKEND='https://api.mie.today';
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var selectedDateStr=null; // 달력에서 클릭된 날짜
+var calHasTodayCard=false; // S2/S4에서는 Today카드가 이벤트를 담당
 var calYear=2026, calMonth=5;
 var currentState=3;
 var curViewEv=null, curEditEv=null, selFile=null;
@@ -443,7 +444,7 @@ var CAL_MK={
   '2026-06-17':['#534AB7'],'2026-06-20':['#378ADD'],
   '2026-06-25':['#1D9E75','#378ADD'],'2026-06-26':['#378ADD'],
 };
-var REC={1:3,2:43,3:127,4:56,5:81};
+var REC={1:3,2:43,3:81,4:56,5:127};
 
 /* ── Clock & Weather ── */
 function startClock(){
@@ -629,28 +630,36 @@ function renderGrid(s){
     var R=document.createElement('div');R.className='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=s1TaskCardHTML()+inputCardHTML();
     g.appendChild(L);g.appendChild(R);
   } else if(s===2){
+    // S2: cal | today | fin+input  (Today card covers events → hide cal-ev-section)
+    calHasTodayCard=true;
     g.style.gridTemplateColumns='40fr 30fr 30fr';
     var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
     var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;';M.innerHTML=todayCardHTML();
     var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+inputCardHTML();
     g.appendChild(L);g.appendChild(M);g.appendChild(R);
   } else if(s===3){
+    // S3 (was S5): cal | task+proj | fin+input  (no Health)
+    calHasTodayCard=false;
     g.style.gridTemplateColumns='40fr 30fr 30fr';
     var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
     var M=document.createElement('div');M.style.cssText='display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;';M.innerHTML=taskCardHTML()+projCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+healthCardHTML(false)+inputCardHTML();
+    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+inputCardHTML();
     g.appendChild(L);g.appendChild(M);g.appendChild(R);
   } else if(s===4){
+    // S4: cal | today | fin+health(compact)+input  (Today card covers events → hide cal-ev-section)
+    calHasTodayCard=true;
     g.style.gridTemplateColumns='40fr 30fr 30fr';
     var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
     var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;';M.innerHTML=todayCardHTML();
     var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+healthCardHTML(true)+inputCardHTML();
     g.appendChild(L);g.appendChild(M);g.appendChild(R);
   } else if(s===5){
+    // S5 FULL (was S3): cal | task+proj | fin+health+input
+    calHasTodayCard=false;
     g.style.gridTemplateColumns='40fr 30fr 30fr';
     var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
     var M=document.createElement('div');M.style.cssText='display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;';M.innerHTML=taskCardHTML()+projCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+inputCardHTML();
+    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=finCardHTML()+healthCardHTML(false)+inputCardHTML();
     g.appendChild(L);g.appendChild(M);g.appendChild(R);
   }
   bindAll(s);
@@ -920,13 +929,23 @@ function buildCalGrid(){
   }
   // 이벤트 데이터로 마커 빌드
   buildCalGridFromEvents();
+  // S2/S4: Today 카드가 이벤트를 담당 → 달력 하단 EVENTS 섹션 숨김
+  var evSec=document.getElementById('cal-ev-section');
+  if(evSec){evSec.style.display=calHasTodayCard?'none':'';}
 }
 
 /* ── Calendar Event List (클릭한 날짜 기준) ── */
 function renderCalEventList(){
+  var section=document.getElementById('cal-ev-section');
   var list=document.getElementById('cal-ev-list');
   var hdr=document.getElementById('cal-ev-hdr-lbl');
   if(!list)return;
+  // S2, S4: 가운데 Today card가 이벤트를 표시하므로 이 섹션 숨김
+  if(currentState===2||currentState===4){
+    if(section)section.style.display='none';
+    return;
+  }
+  if(section)section.style.display='';
   list.innerHTML='';
 
   // 날짜 선택 전이면 오늘 날짜 기준
@@ -1579,7 +1598,7 @@ function renderHealth(data){
 /* ── Init ── */
 function init(){
   startClock();loadWeather();
-  setState(3);
+  setState(5);
   loadUserInfo();
   loadCalendarList();
   loadEvents();
