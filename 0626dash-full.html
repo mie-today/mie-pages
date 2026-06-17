@@ -181,6 +181,46 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .add-sub{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;}
 .add-st{font-size:10px;min-height:13px;flex-shrink:0;}
 
+/* Unit toggle in Health header */
+.unit-toggle{display:flex;align-items:center;gap:0;border:.5px solid var(--b1);border-radius:5px;overflow:hidden;}
+.unit-btn{font-size:9px;font-weight:600;padding:3px 8px;background:var(--bg2);color:var(--txt3);border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;letter-spacing:.02em;}
+.unit-btn:hover{color:var(--txt);}
+.unit-btn.on{background:var(--blue);color:#fff;}
+.unit-sep{width:.5px;background:var(--b1);align-self:stretch;}
+/* Weight row */
+.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
+.hwl{display:flex;flex-direction:column;}
+.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
+.hw-lbl{font-size:9px;color:var(--txt3);}
+.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
+.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
+/* Invite people (Event Add) */
+.invite-section{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.invite-row{display:flex;gap:5px;align-items:center;}
+.invite-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.invite-in::placeholder{color:var(--txt3);}
+.invite-in:focus{border-color:var(--blue);}
+.invite-add-btn{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+.invite-chips{display:flex;flex-wrap:wrap;gap:4px;min-height:0;}
+.invite-chip{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
+.invite-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
+.invite-chip-x:hover{opacity:1;}
+/* Add type — 2-row grid */
+.add-type-sect{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.add-type-row1{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.add-type-row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;}
+.add-type-btn{padding:7px 6px;border:.5px solid var(--b1);border-radius:7px;background:var(--bg2);font-family:'Inter',sans-serif;font-size:10px;font-weight:500;color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;}
+.add-type-btn:hover,.add-type-btn.sel{background:rgba(28,126,214,.08);border-color:var(--blue);color:var(--blue);}
+.add-type-btn svg{width:12px;height:12px;flex-shrink:0;}
+/* Finance add form */
+.add-divider{height:.5px;background:var(--b1);margin:2px 0;flex-shrink:0;}
+/* Health add form - metric inputs */
+.h-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex-shrink:0;}
+.h-add-cell{display:flex;flex-direction:column;gap:2px;}
+.h-add-lbl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
+/* Project add form */
+.proj-add-row{display:flex;gap:5px;flex-shrink:0;}
+
 /* ── Bottom nav ── */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:.5px solid var(--b1);color:var(--txt3);cursor:pointer;background:none;border-top:2px solid transparent;border-bottom:none;border-left:none;padding:0;font-family:'Inter',sans-serif;transition:color .12s;}
@@ -396,7 +436,15 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
           <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>
           Health
         </span>
-        <button class="card-hd-link">View all →</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <!-- Metric / US toggle -->
+          <div class="unit-toggle">
+            <button class="unit-btn on" id="btn-metric" onclick="setUnit('metric')">Metric</button>
+            <div class="unit-sep"></div>
+            <button class="unit-btn" id="btn-us" onclick="setUnit('us')">US</button>
+          </div>
+          <button class="card-hd-link">View all →</button>
+        </div>
       </div>
       <div class="card-body">
         <div class="h-vitals">
@@ -410,8 +458,25 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
           <div class="h-cell"><div class="h-main">1,862</div><div class="h-sub">Cal Burned</div></div>
         </div>
         <div class="h-row">
-          <div class="h-cell"><div class="h-main">11,256</div><div class="h-sub">Steps · 8.89 km</div></div>
-          <div class="h-cell"><div class="h-main">1,200 ml</div><div class="h-sub">Water</div></div>
+          <div class="h-cell">
+            <div class="h-main">11,256</div>
+            <div class="h-sub">Steps · <span id="h-dist">8.89 km</span></div>
+          </div>
+          <div class="h-cell">
+            <div class="h-main"><span id="h-water">1,200 ml</span></div>
+            <div class="h-sub">Water</div>
+          </div>
+        </div>
+        <!-- Weight row -->
+        <div class="h-wt">
+          <div class="hwl">
+            <div class="hw-val" id="h-weight-val">70.4 kg / 155.10 lb</div>
+            <div class="hw-lbl">Weight today</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="hw-diff">↓ −0.3 <span id="h-weight-unit">kg</span></div>
+            <div class="hw-dlbl">vs last week</div>
+          </div>
         </div>
       </div>
     </div>
@@ -438,32 +503,54 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         </div>
       </div>
 
-      <!-- Add panel — Compact, no scroll -->
+      <!-- Add panel — 5 types, compact, no scroll -->
       <div class="inp-panel" id="panel-add">
         <div class="add-panel">
-          <!-- Type selector -->
-          <div class="add-type-row">
-            <button class="add-type-btn sel" id="btn-ev" onclick="selType('event')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
-              Event
-            </button>
-            <button class="add-type-btn" id="btn-tk" onclick="selType('task')">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>
-              Task
-            </button>
+
+          <!-- Type selector: 2 rows -->
+          <div class="add-type-sect">
+            <div class="add-type-row1">
+              <button class="add-type-btn sel" id="btn-ev" onclick="selType('event')">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
+                Event
+              </button>
+              <button class="add-type-btn" id="btn-tk" onclick="selType('task')">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>
+                Task
+              </button>
+            </div>
+            <div class="add-type-row2">
+              <button class="add-type-btn" id="btn-fin" onclick="selType('finance')">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>
+                Finance
+              </button>
+              <button class="add-type-btn" id="btn-hl" onclick="selType('health')">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>
+                Health
+              </button>
+              <button class="add-type-btn" id="btn-pr" onclick="selType('project')">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>
+                Project
+              </button>
+            </div>
           </div>
 
-          <!-- Event form (compact) -->
+          <!-- ── EVENT form ── -->
           <div class="add-form vis" id="form-ev">
-            <div class="add-quick-row">
-              <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
-            </div>
+            <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
             <div class="add-meta-row">
-              <input class="add-meta-in" type="date" id="ev-date" style="flex:1.2;"/>
-              <input class="add-meta-in" type="time" id="ev-start" style="flex:1;"/>
-              <input class="add-meta-in" type="time" id="ev-end" style="flex:1;"/>
+              <input class="add-meta-in" type="date" id="ev-date" style="flex:1.3;"/>
+              <input class="add-meta-in" type="time" id="ev-start" style="flex:1;" placeholder="Start"/>
+              <input class="add-meta-in" type="time" id="ev-end" style="flex:1;" placeholder="End"/>
             </div>
-            <!-- More options toggle -->
+            <!-- Invite People -->
+            <div class="invite-section">
+              <div class="invite-row">
+                <input class="invite-in" type="email" id="invite-email" placeholder="Invite people (email)"/>
+                <button class="invite-add-btn" onclick="addInvite()" title="Add">+</button>
+              </div>
+              <div class="invite-chips" id="invite-chips"></div>
+            </div>
             <button class="add-more-toggle" onclick="toggleMore('ev-extra')">＋ Location / Notes</button>
             <div class="add-extra" id="ev-extra">
               <input class="add-extra-in" type="text" placeholder="Location (optional)"/>
@@ -473,25 +560,22 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
             <div class="add-st" id="ev-st"></div>
           </div>
 
-          <!-- Task form (compact) -->
+          <!-- ── TASK form ── -->
           <div class="add-form" id="form-tk">
-            <div class="add-quick-row">
-              <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
-            </div>
+            <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
             <div class="add-meta-row">
-              <select class="add-meta-in" style="flex:1.2;">
+              <select class="add-meta-in" id="tk-list" style="flex:1.3;">
                 <option>My Tasks</option>
                 <option>Rachel's list</option>
                 <option>dinner</option>
                 <option>Health</option>
                 <option>Finance</option>
               </select>
-              <input class="add-meta-in" type="date" id="tk-due" style="flex:1.3;"/>
+              <input class="add-meta-in" type="date" id="tk-due" style="flex:1.2;"/>
             </div>
-            <!-- More options toggle -->
             <button class="add-more-toggle" onclick="toggleMore('tk-extra')">＋ Notes / Priority</button>
             <div class="add-extra" id="tk-extra">
-              <div class="add-extra-row" style="gap:6px;">
+              <div class="add-extra-row">
                 <div style="flex:1.5;"><div class="afl-sm">Notes</div><input class="add-extra-in" type="text" placeholder="Optional"/></div>
                 <div style="flex:1;"><div class="afl-sm">Priority</div>
                   <select class="add-extra-in"><option>High</option><option selected>Medium</option><option>Low</option></select>
@@ -501,6 +585,77 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
             <button class="add-sub" onclick="submitTask()">Add Task</button>
             <div class="add-st" id="tk-st"></div>
           </div>
+
+          <!-- ── FINANCE form ── -->
+          <div class="add-form" id="form-fin">
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="number" placeholder="Amount ($)" id="fin-amt" style="flex:1;" min="0" step="0.01"/>
+              <input class="add-meta-in" type="date" id="fin-date" style="flex:1.2;"/>
+            </div>
+            <select class="add-meta-in" id="fin-cat">
+              <option value="">Category ▾</option>
+              <optgroup label="Needs">
+                <option>Housing</option><option>Utilities</option><option>Groceries</option>
+                <option>Transportation</option><option>Insurance</option><option>Healthcare</option>
+                <option>Phone</option><option>Internet</option><option>Subscriptions</option>
+              </optgroup>
+              <optgroup label="Wants">
+                <option>Dining Out</option><option>Entertainment</option><option>Shopping</option>
+                <option>Travel</option><option>Personal Care</option><option>Other</option>
+              </optgroup>
+              <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
+              <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
+            </select>
+            <input class="add-extra-in" type="text" placeholder="Description (optional)" id="fin-desc"/>
+            <button class="add-sub" onclick="submitFin()">Add Entry</button>
+            <div class="add-st" id="fin-st"></div>
+          </div>
+
+          <!-- ── HEALTH form ── -->
+          <div class="add-form" id="form-hl">
+            <div class="add-meta-row">
+              <select class="add-meta-in" id="hl-type" onchange="updateHealthFields()" style="flex:1.4;">
+                <option value="">Metric ▾</option>
+                <option value="weight">⚖️ Weight</option>
+                <option value="bp">🩺 Blood Pressure</option>
+                <option value="hr">❤️ Heart Rate</option>
+                <option value="glucose">🩸 Glucose</option>
+                <option value="steps">👟 Steps</option>
+                <option value="water">💧 Water</option>
+                <option value="sleep">😴 Sleep</option>
+                <option value="mood">😊 Mood</option>
+              </select>
+              <input class="add-meta-in" type="date" id="hl-date" style="flex:1;"/>
+            </div>
+            <!-- Dynamic value fields -->
+            <div id="hl-value-wrap">
+              <input class="add-extra-in" type="number" id="hl-val" placeholder="Value" step="0.1"/>
+            </div>
+            <input class="add-extra-in" type="text" placeholder="Notes (optional)" id="hl-notes"/>
+            <button class="add-sub" onclick="submitHealth()">Add Record</button>
+            <div class="add-st" id="hl-st"></div>
+          </div>
+
+          <!-- ── PROJECT form ── -->
+          <div class="add-form" id="form-pr">
+            <input class="add-title-in" type="text" placeholder="Project name" id="pr-name"/>
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="date" id="pr-due" style="flex:1;" placeholder="Due date"/>
+              <select class="add-meta-in" id="pr-status" style="flex:1.2;">
+                <option>Planning</option>
+                <option>In Progress</option>
+                <option>On Hold</option>
+              </select>
+            </div>
+            <button class="add-more-toggle" onclick="toggleMore('pr-extra')">＋ Description / Members</button>
+            <div class="add-extra" id="pr-extra">
+              <textarea class="add-extra-in" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
+              <input class="add-extra-in" type="text" placeholder="Add member emails (comma separated)"/>
+            </div>
+            <button class="add-sub" onclick="submitProject()">Create Project</button>
+            <div class="add-st" id="pr-st"></div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -582,82 +737,151 @@ function switchTab(tab, btn){
   document.getElementById('panel-add').classList.toggle('on', tab==='add');
 }
 
-/* ── Add type selector ── */
+/* ── Add type selector (5 types) ── */
+var TYPE_MAP={event:'btn-ev',task:'btn-tk',finance:'btn-fin',health:'btn-hl',project:'btn-pr'};
+var FORM_MAP={event:'form-ev',task:'form-tk',finance:'form-fin',health:'form-hl',project:'form-pr'};
 function selType(type){
-  document.getElementById('btn-ev').classList.toggle('sel', type==='event');
-  document.getElementById('btn-tk').classList.toggle('sel', type==='task');
-  document.getElementById('form-ev').classList.toggle('vis', type==='event');
-  document.getElementById('form-tk').classList.toggle('vis', type==='task');
-  if(type==='event'){
-    var nd=new Date().toISOString().slice(0,10);
-    document.getElementById('ev-date').value=nd;
-  }
-  if(type==='task'){
-    document.getElementById('tk-due').value=new Date().toISOString().slice(0,10);
-  }
+  Object.keys(TYPE_MAP).forEach(function(k){
+    document.getElementById(TYPE_MAP[k]).classList.toggle('sel',k===type);
+    document.getElementById(FORM_MAP[k]).classList.toggle('vis',k===type);
+  });
+  var nd=new Date().toISOString().slice(0,10);
+  if(type==='event'){document.getElementById('ev-date').value=nd;}
+  if(type==='task'){document.getElementById('tk-due').value=nd;}
+  if(type==='finance'){document.getElementById('fin-date').value=nd;}
+  if(type==='health'){document.getElementById('hl-date').value=nd;}
 }
 
 /* ── More options toggle ── */
 function toggleMore(id){
-  var el=document.getElementById(id);
-  if(!el)return;
+  var el=document.getElementById(id);if(!el)return;
   el.classList.toggle('vis');
   var btn=el.previousElementSibling;
   if(btn&&btn.classList.contains('add-more-toggle')){
-    btn.textContent=el.classList.contains('vis')?'− Less':'＋ Location / Notes';
-    if(id==='tk-extra')btn.textContent=el.classList.contains('vis')?'− Less':'＋ Notes / Priority';
+    var open=el.classList.contains('vis');
+    if(id==='ev-extra')btn.textContent=open?'− Location / Notes':'＋ Location / Notes';
+    else if(id==='tk-extra')btn.textContent=open?'− Notes / Priority':'＋ Notes / Priority';
+    else if(id==='pr-extra')btn.textContent=open?'− Description / Members':'＋ Description / Members';
   }
+}
+
+/* ── Unit toggle (Metric / US) ── */
+var UNIT_DATA={
+  metric:{dist:'8.89 km',water:'1,200 ml',weight:'70.4 kg / 155.10 lb',wdiff:'kg'},
+  us:{dist:'5.52 mi',water:'40.6 fl oz',weight:'155.10 lb / 70.4 kg',wdiff:'lb'}
+};
+function setUnit(u){
+  document.getElementById('btn-metric').classList.toggle('on',u==='metric');
+  document.getElementById('btn-us').classList.toggle('on',u==='us');
+  var d=UNIT_DATA[u];
+  document.getElementById('h-dist').textContent=d.dist;
+  document.getElementById('h-water').textContent=d.water;
+  document.getElementById('h-weight-val').textContent=d.weight;
+  document.getElementById('h-weight-unit').textContent=d.wdiff;
+}
+
+/* ── Invite People (Event) ── */
+var invitees=[];
+function addInvite(){
+  var inp=document.getElementById('invite-email');
+  var email=inp.value.trim();
+  if(!email)return;
+  if(!email.includes('@')){inp.style.borderColor='var(--red)';return;}
+  if(invitees.indexOf(email)!==-1){inp.value='';return;}
+  inp.style.borderColor='';
+  invitees.push(email);
+  renderChips();
+  inp.value='';inp.focus();
+}
+function removeInvite(email){
+  invitees=invitees.filter(function(e){return e!==email;});
+  renderChips();
+}
+function renderChips(){
+  var wrap=document.getElementById('invite-chips');
+  wrap.innerHTML='';
+  invitees.forEach(function(e){
+    var chip=document.createElement('div');chip.className='invite-chip';
+    var nm=document.createElement('span');nm.textContent=e;
+    var x=document.createElement('button');x.className='invite-chip-x';x.textContent='×';
+    x.onclick=(function(em){return function(){removeInvite(em);};})(e);
+    chip.appendChild(nm);chip.appendChild(x);wrap.appendChild(chip);
+  });
+}
+document.getElementById('invite-email').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addInvite();}
+});
+
+/* ── Health dynamic fields ── */
+function updateHealthFields(){
+  var type=document.getElementById('hl-type').value;
+  var wrap=document.getElementById('hl-value-wrap');
+  var t={
+    weight:'<input class="add-extra-in" type="number" placeholder="Weight (kg or lb)" step="0.1" min="0"/>',
+    bp:'<div style="display:flex;gap:5px;"><input class="add-extra-in" type="number" placeholder="Systolic" min="0" max="300" style="flex:1;"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="add-extra-in" type="number" placeholder="Diastolic" min="0" max="200" style="flex:1;"/></div>',
+    hr:'<input class="add-extra-in" type="number" placeholder="Heart rate (BPM)" min="0" max="300"/>',
+    glucose:'<input class="add-extra-in" type="number" placeholder="Glucose (mg/dL)" min="0" step="1"/>',
+    steps:'<input class="add-extra-in" type="number" placeholder="Steps" min="0" step="1"/>',
+    water:'<input class="add-extra-in" type="number" placeholder="Water (ml or fl oz)" min="0" step="10"/>',
+    sleep:'<div style="display:flex;gap:5px;"><input class="add-extra-in" type="number" placeholder="Hours" min="0" max="24" step="0.5" style="flex:1;"/><select class="add-extra-in" style="flex:1;"><option>Quality 5/5</option><option>Quality 4/5</option><option selected>Quality 3/5</option><option>Quality 2/5</option><option>Quality 1/5</option></select></div>',
+    mood:'<select class="add-extra-in"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'
+  };
+  wrap.innerHTML=t[type]||'<input class="add-extra-in" type="number" placeholder="Value" step="0.1"/>';
 }
 
 /* ── Task checkbox ── */
 function toggleCb(cb){
-  cb.classList.toggle('done');
-  if(cb.classList.contains('done')){
-    cb.style.background='var(--blue)';cb.style.borderColor='var(--blue)';cb.innerHTML='<span style="color:#fff;font-size:8px;font-weight:700;">✓</span>';
-    var row=cb.closest('.task-item');
-    if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration='line-through';nm.style.color='var(--txt3)';}}
-  } else {
-    cb.style.background='';cb.style.borderColor='';cb.innerHTML='';
-    var row=cb.closest('.task-item');
-    if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration='';nm.style.color='';}}
-  }
+  var done=cb.classList.toggle('done');
+  cb.style.cssText=done?'background:var(--blue);border-color:var(--blue);':'';
+  cb.innerHTML=done?'<span style="color:#fff;font-size:8px;font-weight:700;">✓</span>':'';
+  var row=cb.closest('.task-item');
+  if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration=done?'line-through':'';nm.style.color=done?'var(--txt3)':'';}}
 }
 
-/* ── Submit placeholders ── */
+/* ── Submit handlers ── */
+function showSt(id,msg,col){
+  var el=document.getElementById(id);if(!el)return;
+  el.style.color=col;el.textContent=msg;
+  setTimeout(function(){el.textContent='';},2500);
+}
 function submitEv(){
-  var t=document.getElementById('ev-title').value.trim();
-  var st=document.getElementById('ev-st');
-  if(!t){st.style.color='var(--red)';st.textContent='Title required.';return;}
-  st.style.color='var(--teal)';st.textContent='✅ Event added!';
-  document.getElementById('ev-title').value='';
-  setTimeout(function(){st.textContent='';},2500);
+  if(!document.getElementById('ev-title').value.trim()){showSt('ev-st','Title required.','var(--red)');return;}
+  showSt('ev-st','✅ Event added!','var(--teal)');
+  document.getElementById('ev-title').value='';invitees=[];renderChips();
 }
 function submitTask(){
-  var t=document.getElementById('tk-title').value.trim();
-  var st=document.getElementById('tk-st');
-  if(!t){st.style.color='var(--red)';st.textContent='Title required.';return;}
-  st.style.color='var(--teal)';st.textContent='✅ Task added!';
+  if(!document.getElementById('tk-title').value.trim()){showSt('tk-st','Title required.','var(--red)');return;}
+  showSt('tk-st','✅ Task added!','var(--teal)');
   document.getElementById('tk-title').value='';
-  setTimeout(function(){st.textContent='';},2500);
+}
+function submitFin(){
+  var a=document.getElementById('fin-amt').value;
+  var cat=document.getElementById('fin-cat').value;
+  if(!a||!cat){showSt('fin-st','Amount & category required.','var(--red)');return;}
+  showSt('fin-st','✅ Entry recorded!','var(--teal)');
+  document.getElementById('fin-amt').value='';
+  document.getElementById('fin-desc').value='';
+}
+function submitHealth(){
+  if(!document.getElementById('hl-type').value){showSt('hl-st','Select a metric.','var(--red)');return;}
+  showSt('hl-st','✅ Health record saved!','var(--teal)');
+  document.getElementById('hl-notes').value='';
+}
+function submitProject(){
+  if(!document.getElementById('pr-name').value.trim()){showSt('pr-st','Project name required.','var(--red)');return;}
+  showSt('pr-st','✅ Project created!','var(--teal)');
+  document.getElementById('pr-name').value='';
 }
 
-function filterTasks(sel){
-  // Placeholder filter interaction
-  console.log('Filter:', sel.value);
-}
+function filterTasks(sel){console.log('Filter:',sel.value);}
+function openEvModal(id){console.log('Open event:',id);}
 
-function openEvModal(id){
-  // Placeholder event click
-  console.log('Open event:', id);
-}
-
-// Set today's date in date inputs on load
+// Init dates
 (function(){
   var nd=new Date().toISOString().slice(0,10);
-  var ed=document.getElementById('ev-date');
-  if(ed)ed.value=nd;
-  var td=document.getElementById('tk-due');
-  if(td)td.value=nd;
+  ['ev-date','tk-due','fin-date','hl-date'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value=nd;
+  });
 })();
 </script>
 </body>
