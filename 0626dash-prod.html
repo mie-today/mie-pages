@@ -76,6 +76,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;}
 .cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
 .cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
+.cal-day.selected-day{background:rgba(28,126,214,0.04);}
+.cal-day.selected-day .cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
 .cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
 .cal-mk{height:2px;border-radius:1px;width:100%;}
 .cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
@@ -227,19 +229,23 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .s1-task-card{flex-shrink:0;}
 
 /* ── Calendar event list (below grid, for extra calendars) ── */
-.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;max-height:0;transition:max-height .25s ease;}
-.cal-ev-section.open{max-height:240px;}
+.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;}
+.cal-ev-hdr{padding:7px 14px 3px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.cal-ev-list{overflow-y:auto;max-height:180px;padding-bottom:8px;}
+.cal-ev-list::-webkit-scrollbar{width:3px;}
+.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
 .cal-ev-list{padding:6px 10px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:228px;}
 .cal-ev-list::-webkit-scrollbar{width:3px;}
 .cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
 .cal-ev-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
-.cal-ev-row{display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;}
+.cal-ev-row{display:flex;align-items:stretch;gap:0;padding:4px 14px;cursor:pointer;border-left:2px solid transparent;}
 .cal-ev-row:hover{background:var(--bg2);}
-.cal-ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.cal-ev-bar{width:2.5px;border-radius:2px;flex-shrink:0;margin-right:10px;align-self:stretch;min-height:16px;}
+.cal-ev-time-col{width:86px;flex-shrink:0;font-size:10px;color:var(--txt3);line-height:1.4;padding-top:1px;}
 .cal-ev-info{flex:1;min-width:0;}
-.cal-ev-time{font-size:9px;color:var(--txt3);margin-bottom:1px;}
-.cal-ev-title{font-size:11px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cal-ev-loc{font-size:9px;color:var(--txt3);margin-top:1px;}
+.cal-ev-title{font-size:11px;font-weight:400;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5;}
+.cal-ev-title.is-link{color:var(--blue);}
+.cal-ev-loc{font-size:10px;color:var(--txt3);margin-top:1px;}
 .cal-ev-empty{font-size:11px;color:var(--txt3);text-align:center;padding:10px 0;font-style:italic;}
 
 /* Popup: two sections separator */
@@ -399,6 +405,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 var BACKEND='https://api.mie.today';
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
+var selectedDateStr=null; // 달력에서 클릭된 날짜
 var calYear=2026, calMonth=5;
 var currentState=3;
 var curViewEv=null, curEditEv=null, selFile=null;
@@ -465,7 +472,7 @@ function calCardHTML(){
       +'<div class="cal-grid" id="cal-grid"></div>'
     +'</div>'
     +'<div class="cal-ev-section" id="cal-ev-section">'
-      +'<div class="cal-ev-hdr"><span id="cal-ev-hdr-title">Events</span></div>'
+      +'<div class="cal-ev-hdr"><span>Events</span><span id="cal-ev-hdr-lbl" style="font-size:10px;font-weight:400;color:var(--txt2);text-transform:none;letter-spacing:0;"></span></div>'
       +'<div class="cal-ev-list" id="cal-ev-list"></div>'
     +'</div>'
     +'<div class="cal-foot">'
@@ -500,7 +507,7 @@ function taskCardHTML(){
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       +'Task</span>'
-      +'<select class="all-list-sel"><option>All List ▾</option></select>'
+      +'<select class="all-list-sel" id="task-list-filter" onchange="renderTasksByFilter()"><option value="all">All List ▾</option></select>'
     +'</div>'
     +'<div class="card-body" id="task-list"></div>'
   +'</div>';
@@ -576,7 +583,7 @@ function s1TaskCardHTML(){
   return '<div class="card s1-task-card">'
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      +'Task</span><select class="all-list-sel"><option>All List ▾</option></select></div>'
+      +'Task</span><select class="all-list-sel" id="s1-task-filter" onchange="renderS1TasksByFilter()"><option value="all">All List ▾</option></select></div>'
     +'<div class="card-body" id="s1-task-list"></div>'
   +'</div>';
 }
@@ -668,6 +675,7 @@ function setState(s){
   buildCalGrid();
   buildCalLegend();
   renderTodayEvents();
+  renderCalEventList();
   renderTasks(s);
   renderProjects(s);
   renderDraftList();
@@ -723,14 +731,12 @@ function classifyCalendars(items, primaryId){
   hasKlaiveCal=false;
   hasWomensCal=false;
 
-  // Step 1: Primary 달력 그룹에 Default / Private 추가
-  // Default = primary 이메일 id, visibility=default (mieCalendarColor로 구분)
-  // Private = primary 이메일 id, visibility=private
-  // 이 두 개는 항상 존재 (primary id와 연결)
-  primaryCals.push({id:primaryId, summary:'Default', color:PRIMARY_CAL_COLORS['Default'], enabled:true, isPrimary:true});
-  primaryCals.push({id:primaryId+'__private', summary:'Private', color:PRIMARY_CAL_COLORS['Private'], enabled:true, isPrimary:true, visibilityPrivate:true});
+  // Default / Private 는 같은 primaryId 달력의 이벤트를 visibility 필드로 구분
+  // 두 항목 모두 id=primaryId, 마커 색상만 다름
+  primaryCals.push({id:primaryId, summary:'Default', color:PRIMARY_CAL_COLORS['Default'], enabled:true, isPrimary:true, visibilityFilter:'default'});
+  primaryCals.push({id:primaryId, summary:'Private', color:PRIMARY_CAL_COLORS['Private'], enabled:true, isPrimary:true, visibilityFilter:'private'});
 
-  // Step 2: KLAIVE / Women's Health — summary 키워드로 items에서 찾기
+  // KLAIVE / Women's Health — summary 키워드로 items에서 찾기
   items.forEach(function(c){
     var s=c.summary||'';
     if(s==='KLAIVE'||s.toLowerCase().indexOf('klaive')!==-1){
@@ -740,12 +746,10 @@ function classifyCalendars(items, primaryId){
       hasWomensCal=true;
       primaryCals.push({id:c.id, summary:"Women's Health", color:c.backgroundColor||PRIMARY_CAL_COLORS["Women's Health"], enabled:true});
     } else if(!c.primary){
-      // Step 3: 나머지 구독/공유 달력
       otherCals.push({id:c.id, summary:c.summary||c.id, color:c.backgroundColor||'#9AA0A6', enabled:false});
     }
   });
 
-  // calendarMeta = 모두 합친 배열 (이벤트 필터링에 사용)
   calendarMeta=primaryCals.concat(otherCals);
 }
 
@@ -756,10 +760,13 @@ function buildCalLegend(){
   var popOtherHdr=document.getElementById('cal-pop-other-hdr');
   if(!leg)return;
 
-  // Legend: Primary 달력 4개만 (KLAIVE / Women's Health 없으면 제외)
+  // Legend: Primary 달력 (Default / Private / KLAIVE / Women's Health, 있는 것만)
+  // Default와 Private는 같은 primaryId지만 별도 Legend 항목으로 표시
   leg.innerHTML='';
+  var seenSummaries={};
   primaryCals.forEach(function(c){
-    if(c.visibilityPrivate)return; // Private는 legend에 표시하되
+    if(seenSummaries[c.summary])return; // 중복 방지
+    seenSummaries[c.summary]=true;
     var item=document.createElement('div');item.className='leg-item';
     var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
     var txt=document.createElement('span');txt.className='leg-txt';txt.textContent=c.summary;
@@ -768,23 +775,33 @@ function buildCalLegend(){
     leg.appendChild(item);
   });
 
-  // Popup Primary 섹션
+  // Popup Primary 섹션 — Default/Private 중복 방지 (같은 id지만 별도 항목)
   if(popPrimary){
     popPrimary.innerHTML='';
+    var seenPop={};
     primaryCals.forEach(function(c){
+      if(seenPop[c.summary])return;
+      seenPop[c.summary]=true;
       var row=document.createElement('div');row.className='cal-row';
       var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
       var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
       var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
-      (function(cm,ck,ldot,ltxt){
+      (function(cm,ck,ldot){
         ck.addEventListener('change',function(){
-          cm.enabled=ck.checked;
+          // 같은 summary의 모든 primaryCal 항목 동기화
+          primaryCals.forEach(function(pc){if(pc.summary===cm.summary)pc.enabled=ck.checked;});
           ldot.style.background=ck.checked?cm.color:'#ccc';
-          if(ltxt)ltxt.style.opacity=ck.checked?'1':'0.4';
-          // 마커 필터 재적용
+          // Legend 업데이트
+          document.querySelectorAll('.leg-txt').forEach(function(t){
+            if(t.textContent===cm.summary){
+              var dot=t.previousElementSibling;
+              if(dot)dot.style.background=ck.checked?cm.color:'#ccc';
+              t.style.opacity=ck.checked?'1':'0.4';
+            }
+          });
           buildCalGridFromEvents();
         });
-      })(c,chk,rdot,null);
+      })(c,chk,rdot);
       row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
       popPrimary.appendChild(row);
     });
@@ -824,9 +841,8 @@ function buildCalGridFromEvents(){
 
   // primaryCals에서 enabled 체크
   var primaryId=primaryCals.length?primaryCals[0].id:null;
-  var privateEnabled=primaryCals.find(function(c){return c.visibilityPrivate;});
-  var privateOn=privateEnabled?privateEnabled.enabled:true;
-  var defaultOn=primaryCals[0]?primaryCals[0].enabled:true;
+  var defaultEntry=primaryCals.find(function(c){return c.summary==='Default';});
+  var privateEntry=primaryCals.find(function(c){return c.summary==='Private';});
   var klaiveCal=primaryCals.find(function(c){return c.summary==='KLAIVE';});
   var womensCal=primaryCals.find(function(c){return c.summary==="Women's Health";});
 
@@ -835,7 +851,7 @@ function buildCalGridFromEvents(){
   allEvents.forEach(function(ev){
     if(!ev.start)return;
     var ds=ev.allDay?ev.start:ev.start.slice(0,10);
-    var color=resolveEventColor(ev, primaryId, defaultOn, privateOn, klaiveCal, womensCal);
+    var color=resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal);
     if(!color)return;
     if(!dateColors[ds])dateColors[ds]=[];
     if(dateColors[ds].indexOf(color)===-1)dateColors[ds].push(color);
@@ -857,30 +873,32 @@ function buildCalGridFromEvents(){
   });
 }
 
-// 이벤트 색상 결정 로직 (mieCalendarColor 기반)
-function resolveEventColor(ev, primaryId, defaultOn, privateOn, klaiveCal, womensCal){
-  var cc=ev.calColor; // mieCalendarColor
+// 이벤트 색상 결정 로직
+// Private: ev.visibility === "private" 로 구분 (mieCalendarColor와 무관)
+function resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal){
   var calId=ev.calId;
+  var cc=ev.calColor; // mieCalendarColor
 
   // Other 달력 이벤트
-  var otherC=otherCals.find(function(c){return c.id===calId;});
+  var otherC=otherCals.find(function(c){return c.id===calId&&!c.isPrimary;});
   if(otherC){return otherC.enabled?otherC.color:null;}
 
-  // Primary 달력 이벤트 — mieCalendarColor로 분류
-  if(cc){
-    var ccLow=cc.toLowerCase();
-    // KLAIVE 색상 범위 (초록계열)
-    if(klaiveCal&&klaiveCal.enabled&&(ccLow===klaiveCal.color.toLowerCase()||ccLow==='#1d9e75'||ccLow==='#0b8043'||ccLow==='#33b679'))return klaiveCal.color;
-    // Women's Health 색상 범위 (빨강/핑크계열)
-    if(womensCal&&womensCal.enabled&&(ccLow===womensCal.color.toLowerCase()||ccLow==='#e24b4a'||ccLow==='#d50000'||ccLow==='#e67c73'||ccLow==='#ad1457'||ccLow==='#e91e63'))return womensCal.color;
-    // Private (보라계열)
-    if(privateOn&&(ccLow==='#534ab7'||ccLow==='#3f51b5'||ccLow==='#7986cb'||ccLow==='#9e69af'||ccLow==='#8e24aa'||ccLow==='#a142f4'))return '#534AB7';
-    // Default (파랑계열)
-    if(defaultOn)return cc;
+  // KLAIVE 달력
+  if(klaiveCal&&calId===klaiveCal.id){return klaiveCal.enabled?klaiveCal.color:null;}
+  // Women's Health 달력
+  if(womensCal&&calId===womensCal.id){return womensCal.enabled?womensCal.color:null;}
+
+  // Primary 달력 이벤트 — visibility 필드로 Default/Private 구분
+  if(calId===primaryId||(!calId)){
+    var vis=ev.visibility||'default';
+    if(vis==='private'){
+      return (privateEntry&&privateEntry.enabled)?PRIMARY_CAL_COLORS['Private']:null;
+    }
+    return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
   }
-  // mieCalendarColor 없으면 calendarId 기반
-  if(defaultOn)return PRIMARY_CAL_COLORS['Default'];
-  return null;
+
+  // fallback
+  return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
 }
 
 /* Build calendar grid — data-date 속성 포함하여 재빌드 */
@@ -904,61 +922,110 @@ function buildCalGrid(){
     // data-date 속성 저장 (마커 재빌드에 사용)
     cell.setAttribute('data-date',ds);
     var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
-    (function(dstr){cell.addEventListener('click',function(){var evs=eventsByDate[dstr]||DEMO_EVENTS.filter(function(e){return e.start.slice(0,10)===dstr;});openDayModal(dstr,evs);});;})(ds);
+    (function(dstr){cell.addEventListener('click',function(){
+      selectedDateStr=dstr;
+      renderCalEventList();
+    });;})(ds);
     g.appendChild(cell);
   }
   // 이벤트 데이터로 마커 빌드
   buildCalGridFromEvents();
 }
 
-/* ── Other 달력 Event List 섹션 ── */
-function renderOtherCalEventList(){
-  var section=document.getElementById('cal-ev-section');
+/* ── Calendar Event List (클릭한 날짜 기준) ── */
+function renderCalEventList(){
   var list=document.getElementById('cal-ev-list');
-  var hdr=document.getElementById('cal-ev-hdr-title');
-  if(!section||!list)return;
-
-  var enabledOther=otherCals.filter(function(c){return c.enabled;});
-  if(!enabledOther.length){section.classList.remove('open');return;}
-
-  var enabledIds=enabledOther.map(function(c){return c.id;});
-  var evs=allEvents.filter(function(ev){return enabledIds.indexOf(ev.calId)!==-1;});
-
-  // 현재 달 이벤트만 정렬
-  evs.sort(function(a,b){return new Date(a.start)-new Date(b.start);});
-
+  var hdr=document.getElementById('cal-ev-hdr-lbl');
+  if(!list)return;
   list.innerHTML='';
-  if(!evs.length){
-    var empty=document.createElement('div');empty.className='cal-ev-empty';empty.textContent='No events in selected calendars.';list.appendChild(empty);
-    section.classList.add('open');return;
-  }
-  var calNames=enabledOther.map(function(c){return c.summary;}).join(', ');
-  if(hdr)hdr.textContent=calNames;
 
-  evs.forEach(function(ev){
-    var calC=otherCals.find(function(c){return c.id===ev.calId;});
-    var color=calC?calC.color:'#9AA0A6';
-    var row=document.createElement('div');row.className='cal-ev-row';
-    var dot=document.createElement('div');dot.className='cal-ev-dot';dot.style.background=color;
-    var info=document.createElement('div');info.className='cal-ev-info';
-    var td=document.createElement('div');td.className='cal-ev-time';
-    var tt=document.createElement('div');tt.className='cal-ev-title';
-    if(ev.allDay){
-      var d=new Date(ev.start.slice(0,10)+'T12:00:00');
-      td.textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    } else {
-      var sd=new Date(ev.start);
-      td.textContent=sd.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    }
-    tt.textContent=ev.title||'No Title';
-    info.appendChild(td);info.appendChild(tt);
-    if(ev.loc){var lv=document.createElement('div');lv.className='cal-ev-loc';lv.textContent='📍 '+ev.loc;info.appendChild(lv);}
-    row.appendChild(dot);row.appendChild(info);
-    row.addEventListener('click',function(){openEvView(ev);});
-    list.appendChild(row);
+  // 날짜 선택 전이면 오늘 날짜 기준
+  var now=new Date();
+  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var ds=selectedDateStr||todayStr;
+
+  // 날짜 헤더 표시
+  if(hdr){
+    var d=new Date(ds+'T12:00:00');
+    hdr.textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
+  }
+
+  // 선택 날짜 이벤트
+  var dayEvs=(eventsByDate[ds]||[]).slice();
+
+  // 선택된 Other 달력 이벤트 (해당 날짜)
+  var enabledOther=otherCals.filter(function(c){return c.enabled;});
+  var otherEvs=[];
+  if(enabledOther.length){
+    var enabledIds=enabledOther.map(function(c){return c.id;});
+    otherEvs=(eventsByDate[ds]||[]).filter(function(ev){return enabledIds.indexOf(ev.calId)!==-1;});
+  }
+
+  // 합쳐서 정렬
+  var allDayEvs=dayEvs.concat(otherEvs.filter(function(e){return dayEvs.indexOf(e)===-1;}));
+  allDayEvs.sort(function(a,b){
+    if(a.allDay&&!b.allDay)return -1;
+    if(!a.allDay&&b.allDay)return 1;
+    return new Date(a.start)-new Date(b.start);
   });
-  section.classList.add('open');
+
+  if(!allDayEvs.length){
+    var empty=document.createElement('div');
+    empty.className='cal-ev-empty';
+    empty.textContent='No events.';
+    list.appendChild(empty);
+    return;
+  }
+
+  // 선택 날짜 셀 하이라이트
+  document.querySelectorAll('.cal-day.selected-day').forEach(function(el){el.classList.remove('selected-day');});
+  document.querySelectorAll('.cal-day').forEach(function(el){
+    if(el.getAttribute('data-date')===ds)el.classList.add('selected-day');
+  });
+
+  allDayEvs.forEach(function(ev){
+    var defaultE=primaryCals.find(function(c){return c.summary==='Default';});
+    var privateE=primaryCals.find(function(c){return c.summary==='Private';});
+    var klaiveE=primaryCals.find(function(c){return c.summary==='KLAIVE';});
+    var womensE=primaryCals.find(function(c){return c.summary==="Women's Health";});
+    var pid=primaryCals.length?primaryCals[0].id:null;
+    var color=resolveEventColor(ev,pid,defaultE,privateE,klaiveE,womensE)||PRIMARY_CAL_COLORS['Default'];
+    renderCalEvRow(list,ev,color);
+  });
 }
+
+function renderCalEvRow(list, ev, color){
+  var row=document.createElement('div');row.className='cal-ev-row';
+  // 색상 세로 바
+  var bar=document.createElement('div');bar.className='cal-ev-bar';bar.style.background=color;bar.style.borderRadius='2px';
+  // 시간 컬럼
+  var tc=document.createElement('div');tc.className='cal-ev-time-col';
+  if(ev.allDay){
+    tc.textContent='All day';
+  } else {
+    var sd=new Date(ev.start);
+    var ed=ev.end?new Date(ev.end):null;
+    var startStr=sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    var endStr=ed?ed.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+    tc.innerHTML=startStr+(endStr?'<br>'+endStr:'');
+  }
+  // 제목 + 위치
+  var info=document.createElement('div');info.className='cal-ev-info';
+  var tt=document.createElement('div');
+  tt.className='cal-ev-title'+(ev.isLink?' is-link':'');
+  tt.textContent=ev.title||'No Title';
+  tt.title=ev.title||'';
+  info.appendChild(tt);
+  if(ev.loc){
+    var lv=document.createElement('div');lv.className='cal-ev-loc';lv.textContent='📍 '+ev.loc;info.appendChild(lv);
+  }
+  row.appendChild(bar);row.appendChild(tc);row.appendChild(info);
+  row.addEventListener('click',function(){openEvView(ev);});
+  list.appendChild(row);
+}
+
+// Other 달력 체크박스 변경 시 호출 (이전 이름 유지)
+function renderOtherCalEventList(){renderCalEventList();}
 
 /* ── Today events ── */
 function renderTodayEvents(){
@@ -1005,11 +1072,46 @@ function toggleTask(t,cb,row){
   var tag=row.querySelector('.task-tag');if(tag){tag.className='task-tag '+(t.status==='completed'?'done':'today');tag.textContent=t.status==='completed'?'done':'today';}
   fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:t.listId||'@default',status:t.status,title:t.title||'',notes:t.notes||''})}).catch(function(){});
 }
+function populateTaskFilter(selId){
+  var sel=document.getElementById(selId);
+  if(!sel)return;
+  var cur=sel.value||'all';
+  sel.innerHTML='<option value="all">All List ▾</option>';
+  taskLists.forEach(function(l){
+    var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);
+  });
+  if(cur!=='all'&&taskLists.find(function(l){return l.id===cur;}))sel.value=cur;
+  else sel.value='all';
+}
+function getFilteredTasks(selId){
+  var sel=document.getElementById(selId);
+  var filterVal=sel?sel.value:'all';
+  var base=allTasks.length?allTasks:DEMO_TASKS;
+  if(filterVal==='all')return base.slice();
+  return base.filter(function(t){return t.listId===filterVal;});
+}
+function renderTasksByFilter(){
+  var tasks=getFilteredTasks('task-list-filter');
+  var c=document.getElementById('task-list');
+  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
+}
+function renderS1TasksByFilter(){
+  var tasks=getFilteredTasks('s1-task-filter');
+  var c=document.getElementById('s1-task-list');
+  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
+}
 function renderTasks(s){
   var tasks=allTasks.length?allTasks:DEMO_TASKS;
-  var c1=document.getElementById('today-task-list');if(c1){c1.innerHTML='';tasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
-  var c2=document.getElementById('task-list');if(c2){c2.innerHTML='';tasks.forEach(function(t){c2.appendChild(makeTaskEl(t));});}
-  var c3=document.getElementById('s1-task-list');if(c3){c3.innerHTML='';tasks.forEach(function(t){c3.appendChild(makeTaskEl(t));});}
+  // populate dropdowns first
+  populateTaskFilter('task-list-filter');
+  populateTaskFilter('s1-task-filter');
+  // today task list (no filter)
+  var c1=document.getElementById('today-task-list');
+  if(c1){c1.innerHTML='';tasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
+  // main task card (respect filter)
+  renderTasksByFilter();
+  // s1 task card
+  renderS1TasksByFilter();
 }
 
 /* ── Projects ── */
@@ -1331,13 +1433,14 @@ function loadEvents(){
       // 마커 재빌드 및 Today events 렌더링
       buildCalGridFromEvents();
       renderTodayEvents();
+      renderCalEventList();
     })
     .catch(function(){});
 }
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();renderTasks(currentState);return;}var lists=data.taskLists||[];taskLists=lists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});allTasks=[];lists.forEach(function(l){(l.tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{listId:l.id}));});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks(currentState);})
+    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks(currentState);return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks(currentState);})
     .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks(currentState);});
 }
 
