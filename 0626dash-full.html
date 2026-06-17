@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>KLAIVE — S5 Full</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
+  --blue:#1C7ED6;--teal:#1D9E75;
+  --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
+  --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;}
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* Topbar */
+.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
+.logo .ai{color:var(--blue);}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.tb-div{width:.5px;height:28px;background:var(--b2);}
+.tb-user{display:flex;flex-direction:column;gap:1px;}
+.tb-name{font-size:12px;font-weight:500;}
+.tb-email{font-size:10px;color:var(--txt3);}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px;}
+.tb-badge{background:rgba(29,158,117,.12);color:var(--teal);border:.5px solid rgba(29,158,117,.25);border-radius:12px;padding:3px 9px;font-size:11px;font-weight:500;}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:40fr 30fr 30fr;flex:1;gap:14px;padding:14px 24px;overflow:hidden;min-height:0;}
+
+/* Cards */
+.card{background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.card-hd-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);display:flex;align-items:center;gap:4px;}
+.card-hd-link{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
+.card-body{flex:1;overflow-y:auto;padding:12px 14px;min-height:0;}
+.card-body::-webkit-scrollbar{width:3px;}
+.card-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+/* ── LEFT: Calendar ── */
+.cal-card{flex:1;}
+.cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;}
+.cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--txt2);}
+.cal-mo{font-size:14px;font-weight:500;padding:0 5px;}
+.cal-today-btn{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);}
+.cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;border-radius:4px;padding:4px 22px 4px 10px;font-size:11px;font-weight:500;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+.cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0 10px 6px;min-height:0;}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding-top:7px;flex-shrink:0;}
+.cal-dow{font-size:9px;font-weight:600;color:var(--txt3);text-align:center;padding:2px 0 4px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);flex:1;border-top:.5px solid var(--b1);}
+.cal-day{border-right:.5px solid var(--b1);border-bottom:.5px solid var(--b1);padding:3px 4px 4px;cursor:pointer;display:flex;flex-direction:column;}
+.cal-day:hover{background:var(--bg2);}
+.cal-day:nth-child(7n){border-right:none;}
+.cal-day.other-mo .cal-dn{opacity:.35;}
+.cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
+.cal-day.sel-day{background:rgba(28,126,214,.05);}
+.cal-day.sel-day .cal-dn{outline:1.5px solid var(--blue);}
+.cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
+.cal-mk{height:2px;border-radius:1px;width:100%;}
+/* Events below calendar */
+.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;}
+.cal-ev-hdr{padding:7px 14px 3px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between;}
+.cal-ev-list{overflow-y:auto;max-height:175px;padding-bottom:8px;}
+.cal-ev-list::-webkit-scrollbar{width:3px;}
+.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.cal-ev-row{display:flex;align-items:stretch;gap:0;padding:4px 14px;cursor:pointer;}
+.cal-ev-row:hover{background:var(--bg2);}
+.cal-ev-bar{width:2.5px;border-radius:2px;flex-shrink:0;margin-right:10px;min-height:16px;}
+.cal-ev-time-col{width:86px;flex-shrink:0;font-size:10px;color:var(--txt3);line-height:1.4;padding-top:1px;}
+.cal-ev-info{flex:1;min-width:0;}
+.cal-ev-title{font-size:11px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5;}
+.cal-ev-loc{font-size:9px;color:var(--txt3);margin-top:1px;}
+.cal-ev-empty{font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;}
+/* Footer */
+.cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
+.cal-leg-lbl{font-size:10px;color:var(--txt3);}
+.leg-items{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+.leg-txt{font-size:10px;color:var(--txt2);}
+.cals-btn{display:flex;align-items:center;gap:4px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--txt2);cursor:pointer;margin-left:auto;}
+
+/* ── MIDDLE: Task + Projects 50/50 ── */
+.mid-col{display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;}
+.task-card,.proj-card{overflow:hidden;min-height:0;display:flex;flex-direction:column;}
+.all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
+/* Tasks */
+.task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;}
+.task-item:hover{background:var(--bg2);}
+.task-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.task-cb:hover{border-color:var(--blue);}
+.task-nm{flex:1;font-size:11px;color:var(--txt);}
+.task-tag{font-size:9px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
+.task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
+/* Projects */
+.proj-item{display:flex;flex-direction:column;padding:5px 0;border-bottom:.5px solid var(--b1);}
+.proj-item:last-child{border-bottom:none;}
+.proj-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.proj-name{font-size:11px;font-weight:500;color:var(--txt);}
+.proj-pct{font-size:10px;color:var(--txt3);}
+.proj-bar-wrap{width:100%;height:3px;background:var(--bg3);border-radius:2px;margin-bottom:3px;}
+.proj-bar{height:3px;border-radius:2px;}
+.proj-meta{font-size:9px;color:var(--txt3);}
+
+/* ── RIGHT: Finance + Health + Input ── */
+.right-col{display:flex;flex-direction:column;gap:14px;min-height:0;}
+/* Finance */
+.fin-card{flex-shrink:0;}
+.fin-rem{font-size:22px;font-weight:300;color:var(--teal);margin-bottom:6px;}
+.fin-rem span{font-size:11px;font-weight:400;color:var(--txt3);margin-left:3px;}
+.fin-bar{height:5px;border-radius:3px;background:var(--bg3);display:flex;overflow:hidden;margin-bottom:9px;gap:1px;}
+.fin-seg{height:100%;}
+.fin-legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;}
+.fin-li{display:flex;align-items:center;gap:5px;}
+.fin-ld{width:7px;height:7px;border-radius:50%;}
+.fin-lt{font-size:10px;color:var(--txt2);}
+/* Health */
+.health-card{flex-shrink:0;}
+.h-vitals{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
+.h-vc{background:var(--bg2);border-radius:7px;padding:6px 9px;}
+.h-vi{font-size:12px;margin-bottom:2px;}
+.h-vv{font-size:12px;font-weight:500;color:var(--txt);}
+.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
+.h-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
+.h-cell{display:flex;flex-direction:column;gap:1px;}
+.h-main{font-size:11px;font-weight:500;color:var(--txt);}
+.h-sub{font-size:9px;color:var(--txt3);}
+
+/* ── Input Card (Send Message + Add) ── */
+.input-card{flex:1;display:flex;flex-direction:column;min-height:0;}
+.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+.inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 12px;}
+.inp-panel.on{display:flex;}
+/* Send Message */
+.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:10px 12px;}
+.msg-ta::placeholder{color:var(--txt3);}
+.inp-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-shrink:0;}
+.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 10px;cursor:pointer;flex-shrink:0;}
+.send-btn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.draft-row{display:flex;align-items:center;gap:5px;margin-top:5px;flex-shrink:0;}
+.draft-lbl{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);cursor:pointer;}
+.draft-lbl input{width:11px;height:11px;accent-color:var(--blue);}
+
+/* ── Add Panel — Compact design (no scroll needed) ── */
+.add-panel{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;}
+.add-type-row{display:flex;gap:8px;flex-shrink:0;}
+.add-type-btn{flex:1;padding:7px 8px;border:.5px solid var(--b1);border-radius:8px;background:var(--bg2);font-family:'Inter',sans-serif;font-size:11px;color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .12s;}
+.add-type-btn:hover,.add-type-btn.sel{background:rgba(28,126,214,.08);border-color:var(--blue);color:var(--blue);}
+.add-type-btn svg{width:14px;height:14px;}
+/* Compact inline form — minimal fields, no scroll */
+.add-form{display:none;flex-direction:column;gap:6px;flex:1;min-height:0;}
+.add-form.vis{display:flex;}
+.add-quick-row{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.add-title-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:7px 9px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.add-title-in:focus{border-color:var(--blue);background:var(--bg);}
+.add-title-in::placeholder{color:var(--txt3);}
+.add-meta-row{display:flex;gap:6px;flex-shrink:0;}
+.add-meta-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.add-meta-in:focus{border-color:var(--blue);}
+/* More options toggle */
+.add-more-toggle{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;text-align:left;flex-shrink:0;}
+.add-more-toggle:hover{text-decoration:underline;}
+.add-extra{display:none;flex-direction:column;gap:6px;flex-shrink:0;}
+.add-extra.vis{display:flex;}
+.add-extra-row{display:flex;gap:6px;}
+.afl-sm{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.add-extra-in{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.add-extra-in:focus{border-color:var(--blue);}
+.add-sub{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;}
+.add-st{font-size:10px;min-height:13px;flex-shrink:0;}
+
+/* ── Bottom nav ── */
+.bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:.5px solid var(--b1);color:var(--txt3);cursor:pointer;background:none;border-top:2px solid transparent;border-bottom:none;border-left:none;padding:0;font-family:'Inter',sans-serif;transition:color .12s;}
+.nav-tab:last-child{border-right:none;}
+.nav-tab.on{color:var(--blue);border-top-color:var(--blue);}
+.nav-tab:hover:not(.on){color:var(--txt2);}
+.nav-tab svg{width:14px;height:14px;}
+.nav-lbl{font-size:11px;}
+*::-webkit-scrollbar{width:3px;}
+*::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <span class="logo">KL<span class="ai">AI</span>VE</span>
+    <div class="tb-div"></div>
+    <div class="tb-user">
+      <div class="tb-name">Welcome, Mie</div>
+      <div class="tb-email">rylhong@gmail.com</div>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-meta">
+      <span>Tue, Jun 16, 2026</span>
+      <span style="color:var(--b2)">·</span>
+      <span>09:25 PM PDT</span>
+      <span style="color:var(--b2)">·</span>
+      <span>🌤️ 57°F / 14°C</span>
+    </div>
+    <div class="tb-badge">127 records saved</div>
+    <div class="tb-avatar">M</div>
+    <button class="tb-signout" style="font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;">Sign out</button>
+  </div>
+</div>
+
+<!-- MAIN GRID: S5 Full -->
+<div class="grid">
+
+  <!-- LEFT: Calendar -->
+  <div style="display:flex;flex-direction:column;min-height:0;">
+    <div class="card cal-card">
+      <div class="cal-topbar">
+        <div class="cal-navg">
+          <button class="cal-nbtn">‹</button>
+          <span class="cal-mo">June 2026</span>
+          <button class="cal-nbtn">›</button>
+        </div>
+        <button class="cal-today-btn">Today</button>
+        <select class="cal-view-sel"><option>Month ▾</option></select>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-dow-row">
+          <div class="cal-dow">SUN</div><div class="cal-dow">MON</div>
+          <div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div>
+          <div class="cal-dow">THURS</div><div class="cal-dow">FRI</div>
+          <div class="cal-dow">SAT</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <!-- Events below calendar (clicked date) -->
+      <div class="cal-ev-section">
+        <div class="cal-ev-hdr">
+          <span>Events</span>
+          <span style="font-size:10px;font-weight:400;color:var(--txt2);" id="ev-date-lbl">Tue, Jun 16</span>
+        </div>
+        <div class="cal-ev-list">
+          <div class="cal-ev-row" onclick="openEvModal('ev1')">
+            <div class="cal-ev-bar" style="background:#534AB7;"></div>
+            <div class="cal-ev-time-col">All day</div>
+            <div class="cal-ev-info">
+              <div class="cal-ev-title">6pm 아빠 한 소라: 처음 또 한국에서 고생했다. 건강해질거다 걱정마라는</div>
+            </div>
+          </div>
+          <div class="cal-ev-row" onclick="openEvModal('ev2')">
+            <div class="cal-ev-bar" style="background:#378ADD;"></div>
+            <div class="cal-ev-time-col">All day</div>
+            <div class="cal-ev-info"><div class="cal-ev-title">Total Steps: 0</div></div>
+          </div>
+          <div class="cal-ev-row" onclick="openEvModal('ev3')">
+            <div class="cal-ev-bar" style="background:#378ADD;"></div>
+            <div class="cal-ev-time-col">11:15 AM<br>11:45 AM</div>
+            <div class="cal-ev-info">
+              <div class="cal-ev-title">PT Treatment with Joonmyung Hwang, PT</div>
+              <div class="cal-ev-loc">📍 1119 East Stanley Blvd Livermore CA 94550</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cal-foot">
+        <span class="cal-leg-lbl">Calendars</span>
+        <div class="leg-items">
+          <div class="leg-item"><div class="leg-dot" style="background:#378ADD;"></div><span class="leg-txt">Default</span></div>
+          <div class="leg-item"><div class="leg-dot" style="background:#534AB7;"></div><span class="leg-txt">Private</span></div>
+          <div class="leg-item"><div class="leg-dot" style="background:#1D9E75;"></div><span class="leg-txt">KLAIVE</span></div>
+        </div>
+        <button class="cals-btn">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          Calendars
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Task + Projects 50/50 -->
+  <div class="mid-col">
+    <!-- Task card -->
+    <div class="card task-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Task
+        </span>
+        <select class="all-list-sel" onchange="filterTasks(this)">
+          <option value="all">All List ▾</option>
+          <option>Rachel's list</option>
+          <option>dinner</option>
+          <option>Health</option>
+          <option>Finance</option>
+        </select>
+      </div>
+      <div class="card-body">
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">medication</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">Mind Setting - Quiet Time</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">dinner</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">exercise</span>
+          <span class="task-tag today">today</span>
+        </div>
+      </div>
+    </div>
+    <!-- Projects card -->
+    <div class="card proj-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>
+          Projects
+        </span>
+        <button class="card-hd-link">All →</button>
+      </div>
+      <div class="card-body">
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Dashboard Redesign</span><span class="proj-pct">68%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#1C7ED6;width:68%;"></div></div>
+          <div class="proj-meta">8 of 12 tasks · Due Jun 20</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Login Flow Update</span><span class="proj-pct">40%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#534AB7;width:40%;"></div></div>
+          <div class="proj-meta">4 of 10 tasks · Due Jun 25</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Korea Storage Unit</span><span class="proj-pct">15%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#EF9F27;width:15%;"></div></div>
+          <div class="proj-meta">2 of 14 tasks · Due Jul 3</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">SF Trip Planning</span><span class="proj-pct">85%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#E24B4A;width:85%;"></div></div>
+          <div class="proj-meta">11 of 13 tasks · Due Jun 15</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Finance + Health + Input -->
+  <div class="right-col">
+    <!-- Finance -->
+    <div class="card fin-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>
+          Finance — Monthly
+        </span>
+        <button class="card-hd-link">›</button>
+      </div>
+      <div class="card-body">
+        <div class="fin-rem">$173 <span>Remaining</span></div>
+        <div class="fin-bar">
+          <div class="fin-seg" style="width:13%;background:var(--red);border-radius:3px 0 0 3px;"></div>
+          <div class="fin-seg" style="width:13%;background:var(--teal);margin-left:1px;"></div>
+          <div class="fin-seg" style="width:52%;background:#D3D1C7;border-radius:0 3px 3px 0;margin-left:1px;"></div>
+        </div>
+        <div class="fin-legend">
+          <div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income $795 (100%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings $100 (13%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs $106 (13%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants $416 (52%)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health -->
+    <div class="card health-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>
+          Health
+        </span>
+        <button class="card-hd-link">View all →</button>
+      </div>
+      <div class="card-body">
+        <div class="h-vitals">
+          <div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">120/80</div><div class="h-vl">Blood Pressure</div></div>
+          <div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">72 bpm</div><div class="h-vl">Heart Rate</div></div>
+          <div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">98%</div><div class="h-vl">SpO2</div></div>
+          <div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">95 mg/dL</div><div class="h-vl">Glucose</div></div>
+        </div>
+        <div class="h-row">
+          <div class="h-cell"><div class="h-main">976</div><div class="h-sub">Cal Intake</div></div>
+          <div class="h-cell"><div class="h-main">1,862</div><div class="h-sub">Cal Burned</div></div>
+        </div>
+        <div class="h-row">
+          <div class="h-cell"><div class="h-main">11,256</div><div class="h-sub">Steps · 8.89 km</div></div>
+          <div class="h-cell"><div class="h-main">1,200 ml</div><div class="h-sub">Water</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input: Send Message + Add (Compact) -->
+    <div class="card input-card">
+      <div class="inp-tabs">
+        <button class="inp-tab on" onclick="switchTab('send',this)">Send Message</button>
+        <button class="inp-tab" onclick="switchTab('add',this)">+ Add</button>
+      </div>
+
+      <!-- Send Message panel -->
+      <div class="inp-panel on" id="panel-send">
+        <textarea class="msg-ta" placeholder="Type your message"></textarea>
+        <div class="inp-actions">
+          <label class="attach-lbl">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Attach
+          </label>
+          <button class="send-btn">SEND</button>
+        </div>
+        <div class="draft-row">
+          <label class="draft-lbl"><input type="checkbox"/> Save as draft</label>
+        </div>
+      </div>
+
+      <!-- Add panel — Compact, no scroll -->
+      <div class="inp-panel" id="panel-add">
+        <div class="add-panel">
+          <!-- Type selector -->
+          <div class="add-type-row">
+            <button class="add-type-btn sel" id="btn-ev" onclick="selType('event')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
+              Event
+            </button>
+            <button class="add-type-btn" id="btn-tk" onclick="selType('task')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>
+              Task
+            </button>
+          </div>
+
+          <!-- Event form (compact) -->
+          <div class="add-form vis" id="form-ev">
+            <div class="add-quick-row">
+              <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
+            </div>
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="date" id="ev-date" style="flex:1.2;"/>
+              <input class="add-meta-in" type="time" id="ev-start" style="flex:1;"/>
+              <input class="add-meta-in" type="time" id="ev-end" style="flex:1;"/>
+            </div>
+            <!-- More options toggle -->
+            <button class="add-more-toggle" onclick="toggleMore('ev-extra')">＋ Location / Notes</button>
+            <div class="add-extra" id="ev-extra">
+              <input class="add-extra-in" type="text" placeholder="Location (optional)"/>
+              <textarea class="add-extra-in" rows="2" placeholder="Notes (optional)" style="resize:none;"></textarea>
+            </div>
+            <button class="add-sub" onclick="submitEv()">Add Event</button>
+            <div class="add-st" id="ev-st"></div>
+          </div>
+
+          <!-- Task form (compact) -->
+          <div class="add-form" id="form-tk">
+            <div class="add-quick-row">
+              <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
+            </div>
+            <div class="add-meta-row">
+              <select class="add-meta-in" style="flex:1.2;">
+                <option>My Tasks</option>
+                <option>Rachel's list</option>
+                <option>dinner</option>
+                <option>Health</option>
+                <option>Finance</option>
+              </select>
+              <input class="add-meta-in" type="date" id="tk-due" style="flex:1.3;"/>
+            </div>
+            <!-- More options toggle -->
+            <button class="add-more-toggle" onclick="toggleMore('tk-extra')">＋ Notes / Priority</button>
+            <div class="add-extra" id="tk-extra">
+              <div class="add-extra-row" style="gap:6px;">
+                <div style="flex:1.5;"><div class="afl-sm">Notes</div><input class="add-extra-in" type="text" placeholder="Optional"/></div>
+                <div style="flex:1;"><div class="afl-sm">Priority</div>
+                  <select class="add-extra-in"><option>High</option><option selected>Medium</option><option>Low</option></select>
+                </div>
+              </div>
+            </div>
+            <button class="add-sub" onclick="submitTask()">Add Task</button>
+            <div class="add-st" id="tk-st"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- BOTTOM NAV -->
+<div class="bot-nav">
+  <button class="nav-tab on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span class="nav-lbl">Overview</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span class="nav-lbl">Calendar</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span class="nav-lbl">Finance</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span class="nav-lbl">Health</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="3" x2="8" y2="3" stroke-linecap="round"/><line x1="2" y1="6" x2="8" y2="6" stroke-linecap="round"/></svg><span class="nav-lbl">Tasks</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span class="nav-lbl">Documents</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span class="nav-lbl">Settings</span></button>
+</div>
+
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+/* ── Calendar ── */
+(function(){
+  var today = new Date();
+  var y = today.getFullYear(), mo = today.getMonth(), d = today.getDate();
+  var grid = document.getElementById('cal-grid');
+  var fd = new Date(y,mo,1).getDay();
+  var dim = new Date(y,mo+1,0).getDate();
+  var dip = new Date(y,mo,0).getDate();
+  var total = Math.ceil((fd+dim)/7)*7;
+  // Sample event markers
+  var markers = {
+    1:['#378ADD'],2:['#378ADD'],3:['#378ADD'],4:['#378ADD','#534AB7'],
+    6:['#378ADD'],7:['#534AB7'],8:['#378ADD'],9:['#378ADD','#E24B4A'],
+    10:['#378ADD'],11:['#378ADD'],12:['#378ADD'],13:['#378ADD'],
+    14:['#534AB7','#378ADD'],15:['#378ADD'],16:['#534AB7','#378ADD'],
+    17:['#534AB7'],20:['#378ADD'],25:['#1D9E75','#378ADD'],26:['#378ADD']
+  };
+  for(var i=0;i<total;i++){
+    var cell=document.createElement('div');cell.className='cal-day';
+    var dn,isOther=false;
+    if(i<fd){dn=dip-fd+i+1;isOther=true;}
+    else if(i>=fd+dim){dn=i-fd-dim+1;isOther=true;}
+    else{dn=i-fd+1;}
+    if(isOther)cell.classList.add('other-mo');
+    if(!isOther&&dn===d)cell.classList.add('today');
+    var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
+    if(!isOther&&markers[dn]){
+      var mw=document.createElement('div');mw.className='cal-mks';
+      markers[dn].forEach(function(c){var m=document.createElement('div');m.className='cal-mk';m.style.background=c;mw.appendChild(m);});
+      cell.appendChild(mw);
+    }
+    (function(dayNum,isOth){
+      cell.addEventListener('click',function(){
+        if(isOth)return;
+        document.querySelectorAll('.cal-day.sel-day').forEach(function(el){el.classList.remove('sel-day');});
+        cell.classList.add('sel-day');
+        var lbl=document.getElementById('ev-date-lbl');
+        if(lbl){
+          var nd=new Date(y,mo,dayNum);
+          lbl.textContent=nd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+        }
+      });
+    })(dn,isOther);
+    grid.appendChild(cell);
+  }
+  // Mark today as selected initially
+  var todayCell=document.querySelector('.cal-day.today');
+  if(todayCell)todayCell.classList.add('sel-day');
+})();
+
+/* ── Tab switch ── */
+function switchTab(tab, btn){
+  document.querySelectorAll('.inp-tab').forEach(function(t){t.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('panel-send').classList.toggle('on', tab==='send');
+  document.getElementById('panel-add').classList.toggle('on', tab==='add');
+}
+
+/* ── Add type selector ── */
+function selType(type){
+  document.getElementById('btn-ev').classList.toggle('sel', type==='event');
+  document.getElementById('btn-tk').classList.toggle('sel', type==='task');
+  document.getElementById('form-ev').classList.toggle('vis', type==='event');
+  document.getElementById('form-tk').classList.toggle('vis', type==='task');
+  if(type==='event'){
+    var nd=new Date().toISOString().slice(0,10);
+    document.getElementById('ev-date').value=nd;
+  }
+  if(type==='task'){
+    document.getElementById('tk-due').value=new Date().toISOString().slice(0,10);
+  }
+}
+
+/* ── More options toggle ── */
+function toggleMore(id){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.classList.toggle('vis');
+  var btn=el.previousElementSibling;
+  if(btn&&btn.classList.contains('add-more-toggle')){
+    btn.textContent=el.classList.contains('vis')?'− Less':'＋ Location / Notes';
+    if(id==='tk-extra')btn.textContent=el.classList.contains('vis')?'− Less':'＋ Notes / Priority';
+  }
+}
+
+/* ── Task checkbox ── */
+function toggleCb(cb){
+  cb.classList.toggle('done');
+  if(cb.classList.contains('done')){
+    cb.style.background='var(--blue)';cb.style.borderColor='var(--blue)';cb.innerHTML='<span style="color:#fff;font-size:8px;font-weight:700;">✓</span>';
+    var row=cb.closest('.task-item');
+    if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration='line-through';nm.style.color='var(--txt3)';}}
+  } else {
+    cb.style.background='';cb.style.borderColor='';cb.innerHTML='';
+    var row=cb.closest('.task-item');
+    if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration='';nm.style.color='';}}
+  }
+}
+
+/* ── Submit placeholders ── */
+function submitEv(){
+  var t=document.getElementById('ev-title').value.trim();
+  var st=document.getElementById('ev-st');
+  if(!t){st.style.color='var(--red)';st.textContent='Title required.';return;}
+  st.style.color='var(--teal)';st.textContent='✅ Event added!';
+  document.getElementById('ev-title').value='';
+  setTimeout(function(){st.textContent='';},2500);
+}
+function submitTask(){
+  var t=document.getElementById('tk-title').value.trim();
+  var st=document.getElementById('tk-st');
+  if(!t){st.style.color='var(--red)';st.textContent='Title required.';return;}
+  st.style.color='var(--teal)';st.textContent='✅ Task added!';
+  document.getElementById('tk-title').value='';
+  setTimeout(function(){st.textContent='';},2500);
+}
+
+function filterTasks(sel){
+  // Placeholder filter interaction
+  console.log('Filter:', sel.value);
+}
+
+function openEvModal(id){
+  // Placeholder event click
+  console.log('Open event:', id);
+}
+
+// Set today's date in date inputs on load
+(function(){
+  var nd=new Date().toISOString().slice(0,10);
+  var ed=document.getElementById('ev-date');
+  if(ed)ed.value=nd;
+  var td=document.getElementById('tk-due');
+  if(td)td.value=nd;
+})();
+</script>
+</body>
+</html>
