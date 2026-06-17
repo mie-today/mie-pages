@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>KLAIVE — S5 Full</title>
+<title>KLAIVE — S5 Full (B안)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -224,6 +224,19 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .h-add-lbl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
 /* Project add form */
 .proj-add-row{display:flex;gap:5px;flex-shrink:0;}
+
+/* ── B안: Add 패널 내부 Invisible Scroll + Submit 고정 ── */
+/* Add 패널 전체를 flex column으로, 폼 영역만 스크롤 */
+#panel-add{padding-bottom:0!important;}
+.add-panel{gap:6px;overflow:hidden;} /* 패널 자체는 fixed height */
+/* 폼 스크롤 영역 */
+.add-form-scroll{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding-bottom:4px;}
+.add-form-scroll::-webkit-scrollbar{display:none;} /* 스크롤바 숨김 */
+.add-form-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+/* Submit 버튼 고정 푸터 */
+.add-form-footer{flex-shrink:0;padding-top:6px;border-top:.5px solid var(--b1);background:var(--bg);}
+.add-form-footer .add-sub{width:100%;margin-top:0;}
+.add-form-footer .add-st{text-align:center;}
 
 /* ── Bottom nav ── */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
@@ -526,123 +539,143 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
           <!-- ── EVENT form ── -->
           <div class="add-form vis" id="form-ev">
-            <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
-            <div class="add-meta-row">
-              <input class="add-meta-in" type="date" id="ev-date" style="flex:1.3;"/>
-              <input class="add-meta-in" type="time" id="ev-start" style="flex:1;" placeholder="Start"/>
-              <input class="add-meta-in" type="time" id="ev-end" style="flex:1;" placeholder="End"/>
-            </div>
-            <!-- Invite People + Location / Notes (optional) -->
-            <button class="add-more-toggle" onclick="toggleMore('ev-extra')">＋ Invite / Location / Notes</button>
-            <div class="add-extra" id="ev-extra">
-              <div class="invite-section">
-                <div class="invite-row">
-                  <input class="invite-in" type="email" id="invite-email" placeholder="Invite people (email)"/>
-                  <button class="invite-add-btn" onclick="addInvite()" title="Add">+</button>
-                </div>
-                <div class="invite-chips" id="invite-chips"></div>
+            <div class="add-form-scroll">
+              <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
+              <div class="add-meta-row">
+                <input class="add-meta-in" type="date" id="ev-date" style="flex:1.3;"/>
+                <input class="add-meta-in" type="time" id="ev-start" style="flex:1;" placeholder="Start"/>
+                <input class="add-meta-in" type="time" id="ev-end" style="flex:1;" placeholder="End"/>
               </div>
-              <input class="add-extra-in" type="text" placeholder="Location (optional)"/>
-              <textarea class="add-extra-in" rows="2" placeholder="Notes (optional)" style="resize:none;"></textarea>
+              <!-- Invite People + Location / Notes (optional) -->
+              <button class="add-more-toggle" onclick="toggleMore('ev-extra')">＋ Invite / Location / Notes</button>
+              <div class="add-extra" id="ev-extra">
+                <div class="invite-section">
+                  <div class="invite-row">
+                    <input class="invite-in" type="email" id="invite-email" placeholder="Invite people (email)"/>
+                    <button class="invite-add-btn" onclick="addInvite()" title="Add">+</button>
+                  </div>
+                  <div class="invite-chips" id="invite-chips"></div>
+                </div>
+                <input class="add-extra-in" type="text" placeholder="Location (optional)"/>
+                <textarea class="add-extra-in" rows="2" placeholder="Notes (optional)" style="resize:none;"></textarea>
+              </div>
             </div>
-            <button class="add-sub" onclick="submitEv()">Add Event</button>
-            <div class="add-st" id="ev-st"></div>
+            <div class="add-form-footer">
+              <button class="add-sub" onclick="submitEv()">Add Event</button>
+              <div class="add-st" id="ev-st"></div>
+            </div>
           </div>
 
           <!-- ── TASK form ── -->
           <div class="add-form" id="form-tk">
-            <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
-            <div class="add-meta-row">
-              <select class="add-meta-in" id="tk-list" style="flex:1.3;">
-                <option>My Tasks</option>
-                <option>Rachel's list</option>
-                <option>dinner</option>
-                <option>Health</option>
-                <option>Finance</option>
-              </select>
-              <input class="add-meta-in" type="date" id="tk-due" style="flex:1.2;"/>
-            </div>
-            <button class="add-more-toggle" onclick="toggleMore('tk-extra')">＋ Notes / Priority</button>
-            <div class="add-extra" id="tk-extra">
-              <div class="add-extra-row">
-                <div style="flex:1.5;"><div class="afl-sm">Notes</div><input class="add-extra-in" type="text" placeholder="Optional"/></div>
-                <div style="flex:1;"><div class="afl-sm">Priority</div>
-                  <select class="add-extra-in"><option>High</option><option selected>Medium</option><option>Low</option></select>
+            <div class="add-form-scroll">
+              <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
+              <div class="add-meta-row">
+                <select class="add-meta-in" id="tk-list" style="flex:1.3;">
+                  <option>My Tasks</option>
+                  <option>Rachel's list</option>
+                  <option>dinner</option>
+                  <option>Health</option>
+                  <option>Finance</option>
+                </select>
+                <input class="add-meta-in" type="date" id="tk-due" style="flex:1.2;"/>
+              </div>
+              <button class="add-more-toggle" onclick="toggleMore('tk-extra')">＋ Notes / Priority</button>
+              <div class="add-extra" id="tk-extra">
+                <div class="add-extra-row">
+                  <div style="flex:1.5;"><div class="afl-sm">Notes</div><input class="add-extra-in" type="text" placeholder="Optional"/></div>
+                  <div style="flex:1;"><div class="afl-sm">Priority</div>
+                    <select class="add-extra-in"><option>High</option><option selected>Medium</option><option>Low</option></select>
+                  </div>
                 </div>
               </div>
             </div>
-            <button class="add-sub" onclick="submitTask()">Add Task</button>
-            <div class="add-st" id="tk-st"></div>
+            <div class="add-form-footer">
+              <button class="add-sub" onclick="submitTask()">Add Task</button>
+              <div class="add-st" id="tk-st"></div>
+            </div>
           </div>
 
           <!-- ── FINANCE form ── -->
           <div class="add-form" id="form-fin">
-            <div class="add-meta-row">
-              <input class="add-meta-in" type="number" placeholder="Amount ($)" id="fin-amt" style="flex:1;" min="0" step="0.01"/>
-              <input class="add-meta-in" type="date" id="fin-date" style="flex:1.2;"/>
+            <div class="add-form-scroll">
+              <div class="add-meta-row">
+                <input class="add-meta-in" type="number" placeholder="Amount ($)" id="fin-amt" style="flex:1;" min="0" step="0.01"/>
+                <input class="add-meta-in" type="date" id="fin-date" style="flex:1.2;"/>
+              </div>
+              <select class="add-meta-in" id="fin-cat">
+                <option value="">Category ▾</option>
+                <optgroup label="Needs">
+                  <option>Housing</option><option>Utilities</option><option>Groceries</option>
+                  <option>Transportation</option><option>Insurance</option><option>Healthcare</option>
+                  <option>Phone</option><option>Internet</option><option>Subscriptions</option>
+                </optgroup>
+                <optgroup label="Wants">
+                  <option>Dining Out</option><option>Entertainment</option><option>Shopping</option>
+                  <option>Travel</option><option>Personal Care</option><option>Other</option>
+                </optgroup>
+                <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
+                <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
+              </select>
+              <input class="add-extra-in" type="text" placeholder="Description (optional)" id="fin-desc"/>
             </div>
-            <select class="add-meta-in" id="fin-cat">
-              <option value="">Category ▾</option>
-              <optgroup label="Needs">
-                <option>Housing</option><option>Utilities</option><option>Groceries</option>
-                <option>Transportation</option><option>Insurance</option><option>Healthcare</option>
-                <option>Phone</option><option>Internet</option><option>Subscriptions</option>
-              </optgroup>
-              <optgroup label="Wants">
-                <option>Dining Out</option><option>Entertainment</option><option>Shopping</option>
-                <option>Travel</option><option>Personal Care</option><option>Other</option>
-              </optgroup>
-              <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
-              <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
-            </select>
-            <input class="add-extra-in" type="text" placeholder="Description (optional)" id="fin-desc"/>
-            <button class="add-sub" onclick="submitFin()">Add Entry</button>
-            <div class="add-st" id="fin-st"></div>
+            <div class="add-form-footer">
+              <button class="add-sub" onclick="submitFin()">Add Entry</button>
+              <div class="add-st" id="fin-st"></div>
+            </div>
           </div>
 
           <!-- ── HEALTH form ── -->
           <div class="add-form" id="form-hl">
-            <div class="add-meta-row">
-              <select class="add-meta-in" id="hl-type" onchange="updateHealthFields()" style="flex:1.4;">
-                <option value="">Metric ▾</option>
-                <option value="weight">⚖️ Weight</option>
-                <option value="bp">🩺 Blood Pressure</option>
-                <option value="hr">❤️ Heart Rate</option>
-                <option value="glucose">🩸 Glucose</option>
-                <option value="steps">👟 Steps</option>
-                <option value="water">💧 Water</option>
-                <option value="sleep">😴 Sleep</option>
-                <option value="mood">😊 Mood</option>
-              </select>
-              <input class="add-meta-in" type="date" id="hl-date" style="flex:1;"/>
+            <div class="add-form-scroll">
+              <div class="add-meta-row">
+                <select class="add-meta-in" id="hl-type" onchange="updateHealthFields()" style="flex:1.4;">
+                  <option value="">Metric ▾</option>
+                  <option value="weight">⚖️ Weight</option>
+                  <option value="bp">🩺 Blood Pressure</option>
+                  <option value="hr">❤️ Heart Rate</option>
+                  <option value="glucose">🩸 Glucose</option>
+                  <option value="steps">👟 Steps</option>
+                  <option value="water">💧 Water</option>
+                  <option value="sleep">😴 Sleep</option>
+                  <option value="mood">😊 Mood</option>
+                </select>
+                <input class="add-meta-in" type="date" id="hl-date" style="flex:1;"/>
+              </div>
+              <!-- Dynamic value fields -->
+              <div id="hl-value-wrap">
+                <input class="add-extra-in" type="number" id="hl-val" placeholder="Value" step="0.1"/>
+              </div>
+              <input class="add-extra-in" type="text" placeholder="Notes (optional)" id="hl-notes"/>
             </div>
-            <!-- Dynamic value fields -->
-            <div id="hl-value-wrap">
-              <input class="add-extra-in" type="number" id="hl-val" placeholder="Value" step="0.1"/>
+            <div class="add-form-footer">
+              <button class="add-sub" onclick="submitHealth()">Add Record</button>
+              <div class="add-st" id="hl-st"></div>
             </div>
-            <input class="add-extra-in" type="text" placeholder="Notes (optional)" id="hl-notes"/>
-            <button class="add-sub" onclick="submitHealth()">Add Record</button>
-            <div class="add-st" id="hl-st"></div>
           </div>
 
           <!-- ── PROJECT form ── -->
           <div class="add-form" id="form-pr">
-            <input class="add-title-in" type="text" placeholder="Project name" id="pr-name"/>
-            <div class="add-meta-row">
-              <input class="add-meta-in" type="date" id="pr-due" style="flex:1;" placeholder="Due date"/>
-              <select class="add-meta-in" id="pr-status" style="flex:1.2;">
-                <option>Planning</option>
-                <option>In Progress</option>
-                <option>On Hold</option>
-              </select>
+            <div class="add-form-scroll">
+              <input class="add-title-in" type="text" placeholder="Project name" id="pr-name"/>
+              <div class="add-meta-row">
+                <input class="add-meta-in" type="date" id="pr-due" style="flex:1;" placeholder="Due date"/>
+                <select class="add-meta-in" id="pr-status" style="flex:1.2;">
+                  <option>Planning</option>
+                  <option>In Progress</option>
+                  <option>On Hold</option>
+                </select>
+              </div>
+              <button class="add-more-toggle" onclick="toggleMore('pr-extra')">＋ Description / Members</button>
+              <div class="add-extra" id="pr-extra">
+                <textarea class="add-extra-in" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
+                <input class="add-extra-in" type="text" placeholder="Add member emails (comma separated)"/>
+              </div>
             </div>
-            <button class="add-more-toggle" onclick="toggleMore('pr-extra')">＋ Description / Members</button>
-            <div class="add-extra" id="pr-extra">
-              <textarea class="add-extra-in" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
-              <input class="add-extra-in" type="text" placeholder="Add member emails (comma separated)"/>
+            <div class="add-form-footer">
+              <button class="add-sub" onclick="submitProject()">Create Project</button>
+              <div class="add-st" id="pr-st"></div>
             </div>
-            <button class="add-sub" onclick="submitProject()">Create Project</button>
-            <div class="add-st" id="pr-st"></div>
           </div>
 
         </div>
