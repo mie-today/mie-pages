@@ -490,7 +490,7 @@ function calCardHTML(){
 }
 
 function todayCardHTML(){
-  var d=new Date(2026,5,14).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var d=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   return '<div class="card today-card">'
     +'<div class="today-hd"><span class="today-title">Today</span><span class="today-date">'+d+'</span></div>'
     +'<div class="today-inner">'
@@ -529,52 +529,40 @@ function finCardHTML(){
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>'
       +'Finance — Monthly</span><button class="card-hd-link">›</button></div>'
-    +'<div class="card-body">'
-      +'<div class="fin-rem">$173 <span>Remaining</span></div>'
-      +'<div class="fin-bar">'
-        +'<div class="fin-seg" style="width:13%;background:var(--red);border-radius:3px 0 0 3px;"></div>'
-        +'<div class="fin-seg" style="width:13%;background:var(--teal);"></div>'
-        +'<div class="fin-seg" style="width:52%;background:#D3D1C7;border-radius:0 3px 3px 0;"></div>'
-      +'</div>'
-      +'<div class="fin-legend">'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income $795 (100%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings $100 (13%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs $106 (13%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants $416 (52%)</span></div>'
-      +'</div>'
+    +'<div class="card-body" id="fin-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
     +'</div>'
   +'</div>';
 }
 
 function healthCardHTML(compact){
-  var hide=compact?' style="display:none"':'';
-  return '<div class="card health-card'+(compact?' h-compact':'')+'">'
+  return '<div class="card health-card'+(compact?' h-compact':'')+'" id="health-card-wrap">'
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>'
       +'Health</span><button class="card-hd-link">View all →</button></div>'
-    +'<div class="card-body">'
-      +'<div class="h-vitals">'
-        +'<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">120/80</div><div class="h-vl">Blood Pressure</div></div>'
-        +'<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">72 bpm</div><div class="h-vl">Heart Rate</div></div>'
-        +'<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">98%</div><div class="h-vl">SpO2</div></div>'
-        +'<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">95 mg/dL</div><div class="h-vl">Glucose</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">976</div><div class="h-sub">Cal Intake · / 2,874 goal · Net −886</div></div>'
-        +'<div class="h-cell"><div class="h-main">1,862</div><div class="h-sub">Cal Burned · 🏃 Active 862</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">11,256</div><div class="h-sub">Steps · 8.89 km</div></div>'
-        +'<div class="h-cell"><div class="h-main">1,200 ml</div><div class="h-sub">Water</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">7h 20m</div><div class="h-sub">😴 Quality 4/5</div></div>'
-        +'<div class="h-cell"><div class="h-main">😊 Happy</div><div class="h-sub">Logged today</div></div>'
-      +'</div>'
-      +'<div class="h-wt"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="hwl"><div class="hw-val">70.4 kg / 155.10 lb</div><div class="hw-lbl">Weight today</div></div>'
-        +'<div style="text-align:right"><div class="hw-diff">↓ −0.3 kg</div><div class="hw-dlbl">vs last week</div></div>'
-      +'</div>'
+    +'<div class="card-body" id="health-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
+    +'</div>'
+  +'</div>';
+}
+function projCardHTML(){
+  return '<div class="card proj-card">'
+    +'<div class="card-hd"><span class="card-hd-title">'
+      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>'
+      +'Projects</span>'
+      +'<button class="card-hd-link">All →</button>'
+    +'</div>'
+    +'<div class="card-body" id="proj-list"></div>'
+  +'</div>';
+}
+
+function finCardHTML(){
+  return '<div class="card fin-card">'
+    +'<div class="card-hd"><span class="card-hd-title">'
+      +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>'
+      +'Finance — Monthly</span><button class="card-hd-link">›</button></div>'
+    +'<div class="card-body" id="fin-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
     +'</div>'
   +'</div>';
 }
@@ -679,6 +667,8 @@ function setState(s){
   renderTasks(s);
   renderProjects(s);
   renderDraftList();
+  // Finance/Health 카드는 setState 후 innerHTML이 재생성되므로 데이터 재주입
+  setTimeout(function(){loadFinance();loadHealth();},50);
 }
 
 function bindAll(s){
@@ -916,7 +906,7 @@ function buildCalGrid(){
     if(i<fd){dn=dip-fd+i+1;var pm=calMonth===0?11:calMonth-1;var py=calMonth===0?calYear-1:calYear;ds=isoD(py,pm,dn);other=true;}
     else if(i>=fd+dim){dn=i-fd-dim+1;var nm=calMonth===11?0:calMonth+1;var ny=calMonth===11?calYear+1:calYear;ds=isoD(ny,nm,dn);other=true;}
     else{dn=i-fd+1;ds=isoD(calYear,calMonth,dn);}
-    var isToday=ds===isoD(2026,5,14);
+    var _td=new Date();var _todayStr=isoD(_td.getFullYear(),_td.getMonth(),_td.getDate());var isToday=ds===_todayStr;
     if(other)cell.classList.add('other-mo');
     if(isToday)cell.classList.add('today');
     // data-date 속성 저장 (마커 재빌드에 사용)
@@ -1087,8 +1077,10 @@ function getFilteredTasks(selId){
   var sel=document.getElementById(selId);
   var filterVal=sel?sel.value:'all';
   var base=allTasks.length?allTasks:DEMO_TASKS;
-  if(filterVal==='all')return base.slice();
-  return base.filter(function(t){return t.listId===filterVal;});
+  // completed 태스크 제외
+  var active=base.filter(function(t){return t.status!=='completed';});
+  if(filterVal==='all')return active;
+  return active.filter(function(t){return t.listId===filterVal;});
 }
 function renderTasksByFilter(){
   var tasks=getFilteredTasks('task-list-filter');
@@ -1105,29 +1097,53 @@ function renderTasks(s){
   // populate dropdowns first
   populateTaskFilter('task-list-filter');
   populateTaskFilter('s1-task-filter');
-  // today task list (no filter)
+  // today task list — completed 제외
+  var activeTasks=tasks.filter(function(t){return t.status!=='completed';});
   var c1=document.getElementById('today-task-list');
-  if(c1){c1.innerHTML='';tasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
-  // main task card (respect filter)
+  if(c1){c1.innerHTML='';activeTasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
+  // main task card (respect filter, completed already excluded inside getFilteredTasks)
   renderTasksByFilter();
   // s1 task card
   renderS1TasksByFilter();
 }
 
 /* ── Projects ── */
+var allProjects=[];
 function renderProjects(s){
   var c=document.getElementById('proj-list');if(!c)return;c.innerHTML='';
-  DEMO_PROJ.forEach(function(p){
+  var projects=allProjects.length?allProjects:[];
+  if(!projects.length){
+    var em=document.createElement('div');
+    em.style.cssText='font-size:11px;color:var(--txt3);text-align:center;padding:16px 0;';
+    em.textContent='No projects yet.';
+    c.appendChild(em);return;
+  }
+  projects.forEach(function(p){
+    var pct=Math.round((p.completed||0)/(p.total||1)*100);
     var item=document.createElement('div');item.className='proj-item';
     var r1=document.createElement('div');r1.className='proj-r1';
-    var nm=document.createElement('span');nm.className='proj-name';nm.textContent=p.name;
-    var pct=document.createElement('span');pct.className='proj-pct';pct.textContent=p.pct+'%';
-    r1.appendChild(nm);r1.appendChild(pct);
+    var nm=document.createElement('span');nm.className='proj-name';nm.textContent=p.name||p.title||'Untitled';
+    var pctEl=document.createElement('span');pctEl.className='proj-pct';pctEl.textContent=pct+'%';
+    r1.appendChild(nm);r1.appendChild(pctEl);
     var bw=document.createElement('div');bw.className='proj-bar-wrap';
-    var b=document.createElement('div');b.className='proj-bar';b.style.background=p.color;b.style.width=p.pct+'%';bw.appendChild(b);
-    var meta=document.createElement('div');meta.className='proj-meta';meta.textContent=p.tasks+' · Due '+p.due;
+    var b=document.createElement('div');b.className='proj-bar';b.style.background=p.color||'var(--blue)';b.style.width=pct+'%';bw.appendChild(b);
+    var meta=document.createElement('div');meta.className='proj-meta';
+    var taskStr=(p.completed||0)+' of '+(p.total||0)+' tasks';
+    var dueStr=p.due?'· Due '+p.due:'';
+    meta.textContent=taskStr+' '+dueStr;
     item.appendChild(r1);item.appendChild(bw);item.appendChild(meta);c.appendChild(item);
   });
+}
+function loadProjects(){
+  fetch(BACKEND+'/api/me/projects',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){allProjects=[];renderProjects(currentState);return;}
+      var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
+      allProjects=items;
+      renderProjects(currentState);
+    })
+    .catch(function(){allProjects=[];renderProjects(currentState);});
 }
 
 /* ── Input tab ── */
@@ -1420,7 +1436,8 @@ function loadEvents(){
           calColor:e.mieCalendarColor||null,
           loc:e.location||'',
           desc:e.description||'',
-          calId:e.calendarId||'primary'
+          calId:e.calendarId||'primary',
+          visibility:e.visibility||'default'
         };
       });
       eventsByDate={};
@@ -1444,6 +1461,121 @@ function loadTasks(){
     .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks(currentState);});
 }
 
+
+/* ── Finance API ── */
+function loadFinance(){
+  var now=new Date();
+  var ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var body=document.getElementById('fin-card-body');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data||!data.summary){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      renderFinance(data);
+    })
+    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+}
+function renderFinance(data){
+  var body=document.getElementById('fin-card-body');if(!body)return;
+  var s=data.summary;
+  var inc=(s.income&&s.income.actual)||0;
+  var rem=s.remaining||0;
+  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
+  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
+  var needsAmt=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var wantsAmt=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var savAmt=(s.savings&&s.savings.actual)||0;
+  function pct(v,t){return t?Math.round(v/t*100):0;}
+  var incAmt=inc||1;
+  var wE=pct(needsAmt,incAmt),wS=pct(savAmt,incAmt),wR=pct(wantsAmt,incAmt);
+  var tot=wE+wS+wR;
+  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
+  wE=wE>0?Math.max(wE,3):0;wS=wS>0?Math.max(wS,3):0;wR=wR>0?Math.max(wR,3):0;
+  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
+  var remColor=rem>=0?'var(--teal)':'var(--red)';
+  body.innerHTML=
+    '<div class="fin-rem" style="color:'+remColor+'">'+fmtS(rem)+' <span>Remaining</span></div>'
+    +'<div class="fin-bar">'
+      +(wE>0?'<div class="fin-seg" style="width:'+wE+'%;background:var(--red);border-radius:3px 0 0 3px;"></div>':'')
+      +(wS>0?'<div class="fin-seg" style="width:'+wS+'%;background:var(--teal);margin-left:1px;"></div>':'')
+      +(wR>0?'<div class="fin-seg" style="width:'+wR+'%;background:#D3D1C7;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')
+    +'</div>'
+    +'<div class="fin-legend">'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income '+fmtS(inc)+' (100%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings '+fmtS(savAmt)+' ('+pct(savAmt,incAmt)+'%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs '+fmtS(needsAmt)+' ('+pct(needsAmt,incAmt)+'%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants '+fmtS(wantsAmt)+' ('+pct(wantsAmt,incAmt)+'%)</span></div>'
+    +'</div>';
+}
+
+/* ── Health API ── */
+function loadHealth(){
+  var now=new Date();
+  var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var body=document.getElementById('health-card-body');
+  fetch(BACKEND+'/api/me/health?date='+ds+'&period=daily&tab=all',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      renderHealth(data);
+    })
+    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+}
+function renderHealth(data){
+  var body=document.getElementById('health-card-body');if(!body)return;
+  var s=data.summary||{};
+  var healthArr=data.health||[];
+  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
+  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
+
+  // Vitals
+  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
+  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
+  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
+  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
+
+  var html='<div class="h-vitals">';
+  html+='<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">'+(bp||'—')+'</div><div class="h-vl">Blood Pressure</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">'+(hr||'—')+'</div><div class="h-vl">Heart Rate</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">'+(spo2||'—')+'</div><div class="h-vl">SpO2</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">'+(gluc||'—')+'</div><div class="h-vl">Glucose</div></div>';
+  html+='</div>';
+
+  if(!compact){
+    // Cal Intake / Burned
+    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
+    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
+    if(calIn||calB){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div></div>';
+    }
+    // Steps / Water
+    var steps=s.total_steps?s.total_steps.toLocaleString():null;
+    var dist=s.total_distance_km?s.total_distance_km.toFixed(2)+' km':null;
+    var water=s.water_ml?s.water_ml.toLocaleString()+' ml':null;
+    if(steps||water){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(water||'—')+'</div><div class="h-sub">Water</div></div></div>';
+    }
+    // Sleep / Mood
+    var sleepStr=null;
+    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
+    var mood=s.mood||null;
+    if(sleepStr||mood){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Quality '+s.sleep_quality+'/5':'')+'</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
+    }
+    // Weight
+    if(lh&&lh.weight_kg){
+      var wkg=lh.weight_kg.toFixed(1);
+      var wlb=(lh.weight_kg*2.20462).toFixed(2);
+      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wkg+' kg / '+wlb+' lb</div><div class="hw-lbl">Weight today</div></div></div>';
+    }
+  }
+
+  body.innerHTML=html;
+}
+
 /* ── Init ── */
 function init(){
   startClock();loadWeather();
@@ -1452,6 +1584,9 @@ function init(){
   loadCalendarList();
   loadEvents();
   loadTasks();
+  loadFinance();
+  loadHealth();
+  loadProjects();
 }
 init();
 </script>
