@@ -38,7 +38,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .sbtn{font-size:10px;padding:3px 7px;border:.5px solid var(--b2);border-radius:4px;background:var(--bg2);color:var(--txt3);cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;}
 .sbtn:hover{background:var(--bg3);color:var(--txt);}
 .sbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);}
-
 /* ========== LAYOUT ========== */
 /* State 1: 2 cols (60/40). Mid col hidden. Right col = s1-task + input */
 /* State 2: 3 cols (40/30/30). Mid = today-card. Right = fin + input */
@@ -81,6 +80,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;}
 .cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
 .cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
+.cal-day.selected-day{background:rgba(28,126,214,0.04);}
+.cal-day.selected-day .cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
 .cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
 .cal-mk{height:2px;border-radius:1px;width:100%;}
 .cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
@@ -230,6 +231,30 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 /* State-1 task (in right col) */
 .s1-task-card{flex-shrink:0;}
+
+/* ── Calendar event list (below grid, for extra calendars) ── */
+.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;}
+.cal-ev-hdr{padding:7px 14px 3px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.cal-ev-list{overflow-y:auto;max-height:180px;padding-bottom:8px;}
+.cal-ev-list::-webkit-scrollbar{width:3px;}
+.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.cal-ev-list{padding:6px 10px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:228px;}
+.cal-ev-list::-webkit-scrollbar{width:3px;}
+.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.cal-ev-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.cal-ev-row{display:flex;align-items:stretch;gap:0;padding:4px 14px;cursor:pointer;border-left:2px solid transparent;}
+.cal-ev-row:hover{background:var(--bg2);}
+.cal-ev-bar{width:2.5px;border-radius:2px;flex-shrink:0;margin-right:10px;align-self:stretch;min-height:16px;}
+.cal-ev-time-col{width:86px;flex-shrink:0;font-size:10px;color:var(--txt3);line-height:1.4;padding-top:1px;}
+.cal-ev-info{flex:1;min-width:0;}
+.cal-ev-title{font-size:11px;font-weight:400;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5;}
+.cal-ev-title.is-link{color:var(--blue);}
+.cal-ev-loc{font-size:10px;color:var(--txt3);margin-top:1px;}
+.cal-ev-empty{font-size:11px;color:var(--txt3);text-align:center;padding:10px 0;font-style:italic;}
+
+/* Popup: two sections separator */
+.cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px;padding-top:8px;border-top:.5px solid var(--b1);}
+.cal-pop-sec:first-child{border-top:none;margin-top:0;padding-top:0;}
 
 /* ── Bottom nav ── */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
@@ -391,6 +416,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 var BACKEND='https://api.mie.today';
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
+var selectedDateStr=null; // 달력에서 클릭된 날짜
 var calYear=2026, calMonth=5;
 var currentState=3;
 var curViewEv=null, curEditEv=null, selFile=null;
@@ -456,17 +482,26 @@ function calCardHTML(){
       +'<div class="cal-dow-row"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div><div class="cal-dow">THURS</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>'
       +'<div class="cal-grid" id="cal-grid"></div>'
     +'</div>'
+    +'<div class="cal-ev-section" id="cal-ev-section">'
+      +'<div class="cal-ev-hdr"><span>Events</span><span id="cal-ev-hdr-lbl" style="font-size:10px;font-weight:400;color:var(--txt2);text-transform:none;letter-spacing:0;"></span></div>'
+      +'<div class="cal-ev-list" id="cal-ev-list"></div>'
+    +'</div>'
     +'<div class="cal-foot">'
       +'<span class="cal-leg-lbl">Calendars</span>'
       +'<div class="leg-items" id="cal-leg"></div>'
       +'<button class="cals-btn" id="cals-btn"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg> Calendars</button>'
-      +'<div class="cal-popup" id="cal-popup"><div class="cal-pop-title">My Calendars</div><div id="cal-pop-list"></div></div>'
+      +'<div class="cal-popup" id="cal-popup">'
+        +'<div class="cal-pop-sec">My Calendars</div>'
+        +'<div id="cal-pop-primary"></div>'
+        +'<div class="cal-pop-sec" id="cal-pop-other-hdr" style="display:none;">Other Calendars</div>'
+        +'<div id="cal-pop-other"></div>'
+      +'</div>'
     +'</div>'
   +'</div>';
 }
 
 function todayCardHTML(){
-  var d=new Date(2026,5,14).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var d=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   return '<div class="card today-card">'
     +'<div class="today-hd"><span class="today-title">Today</span><span class="today-date">'+d+'</span></div>'
     +'<div class="today-inner">'
@@ -483,7 +518,7 @@ function taskCardHTML(){
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       +'Task</span>'
-      +'<select class="all-list-sel"><option>All List ▾</option></select>'
+      +'<select class="all-list-sel" id="task-list-filter" onchange="renderTasksByFilter()"><option value="all">All List ▾</option></select>'
     +'</div>'
     +'<div class="card-body" id="task-list"></div>'
   +'</div>';
@@ -505,52 +540,40 @@ function finCardHTML(){
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>'
       +'Finance — Monthly</span><button class="card-hd-link">›</button></div>'
-    +'<div class="card-body">'
-      +'<div class="fin-rem">$173 <span>Remaining</span></div>'
-      +'<div class="fin-bar">'
-        +'<div class="fin-seg" style="width:13%;background:var(--red);border-radius:3px 0 0 3px;"></div>'
-        +'<div class="fin-seg" style="width:13%;background:var(--teal);"></div>'
-        +'<div class="fin-seg" style="width:52%;background:#D3D1C7;border-radius:0 3px 3px 0;"></div>'
-      +'</div>'
-      +'<div class="fin-legend">'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income $795 (100%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings $100 (13%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs $106 (13%)</span></div>'
-        +'<div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants $416 (52%)</span></div>'
-      +'</div>'
+    +'<div class="card-body" id="fin-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
     +'</div>'
   +'</div>';
 }
 
 function healthCardHTML(compact){
-  var hide=compact?' style="display:none"':'';
-  return '<div class="card health-card'+(compact?' h-compact':'')+'">'
+  return '<div class="card health-card'+(compact?' h-compact':'')+'" id="health-card-wrap">'
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>'
       +'Health</span><button class="card-hd-link">View all →</button></div>'
-    +'<div class="card-body">'
-      +'<div class="h-vitals">'
-        +'<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">120/80</div><div class="h-vl">Blood Pressure</div></div>'
-        +'<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">72 bpm</div><div class="h-vl">Heart Rate</div></div>'
-        +'<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">98%</div><div class="h-vl">SpO2</div></div>'
-        +'<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">95 mg/dL</div><div class="h-vl">Glucose</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">976</div><div class="h-sub">Cal Intake · / 2,874 goal · Net −886</div></div>'
-        +'<div class="h-cell"><div class="h-main">1,862</div><div class="h-sub">Cal Burned · 🏃 Active 862</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">11,256</div><div class="h-sub">Steps · 8.89 km</div></div>'
-        +'<div class="h-cell"><div class="h-main">1,200 ml</div><div class="h-sub">Water</div></div>'
-      +'</div>'
-      +'<div class="h-row"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="h-cell"><div class="h-main">7h 20m</div><div class="h-sub">😴 Quality 4/5</div></div>'
-        +'<div class="h-cell"><div class="h-main">😊 Happy</div><div class="h-sub">Logged today</div></div>'
-      +'</div>'
-      +'<div class="h-wt"'+(compact?' style="display:none"':'')+'>'+
-        '<div class="hwl"><div class="hw-val">70.4 kg / 155.10 lb</div><div class="hw-lbl">Weight today</div></div>'
-        +'<div style="text-align:right"><div class="hw-diff">↓ −0.3 kg</div><div class="hw-dlbl">vs last week</div></div>'
-      +'</div>'
+    +'<div class="card-body" id="health-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
+    +'</div>'
+  +'</div>';
+}
+function projCardHTML(){
+  return '<div class="card proj-card">'
+    +'<div class="card-hd"><span class="card-hd-title">'
+      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>'
+      +'Projects</span>'
+      +'<button class="card-hd-link">All →</button>'
+    +'</div>'
+    +'<div class="card-body" id="proj-list"></div>'
+  +'</div>';
+}
+
+function finCardHTML(){
+  return '<div class="card fin-card">'
+    +'<div class="card-hd"><span class="card-hd-title">'
+      +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>'
+      +'Finance — Monthly</span><button class="card-hd-link">›</button></div>'
+    +'<div class="card-body" id="fin-card-body">'
+      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
     +'</div>'
   +'</div>';
 }
@@ -559,7 +582,7 @@ function s1TaskCardHTML(){
   return '<div class="card s1-task-card">'
     +'<div class="card-hd"><span class="card-hd-title">'
       +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      +'Task</span><select class="all-list-sel"><option>All List ▾</option></select></div>'
+      +'Task</span><select class="all-list-sel" id="s1-task-filter" onchange="renderS1TasksByFilter()"><option value="all">All List ▾</option></select></div>'
     +'<div class="card-body" id="s1-task-list"></div>'
   +'</div>';
 }
@@ -652,9 +675,12 @@ function setState(s){
   buildCalGrid();
   buildCalLegend();
   renderTodayEvents();
+  renderCalEventList();
   renderTasks(s);
   renderProjects(s);
   renderDraftList();
+  // Finance/Health 카드는 setState 후 innerHTML이 재생성되므로 데이터 재주입
+  setTimeout(function(){loadFinance();loadHealth();},50);
 }
 
 function bindAll(s){
@@ -680,8 +706,204 @@ function bindAll(s){
   if(sb)sb.addEventListener('click',doSend);
 }
 
-/* ── Calendar grid ── */
+/* ── Calendar legend & popup ── */
 function isoD(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+
+// PRIMARY 달력 식별 키워드 (summary 기반)
+var PRIMARY_CAL_KEYWORDS=['Default','Private','KLAIVE','Women\'s Health'];
+// 색상 매핑 — mieCalendarColor 또는 summary 기반
+var PRIMARY_CAL_COLORS={
+  'Default':'#378ADD',
+  'Private':'#534AB7',
+  'KLAIVE':'#1D9E75',
+  'Women\'s Health':'#E24B4A'
+};
+
+// API 달력 목록을 두 그룹으로 분류
+// primaryCals: 사용자 Primary 달력 그룹 (Default/Private/KLAIVE/Women's Health)
+// otherCals: 구독/공유 달력 (Holidays, 타인 달력 등)
+var primaryCals=[];   // {id, summary, color, enabled}
+var otherCals=[];     // {id, summary, color, enabled}
+// 실제 KLAIVE / Women's Health 달력이 존재하는지 여부 (없으면 Legend에서 제외)
+var hasKlaiveCal=false, hasWomensCal=false;
+
+function classifyCalendars(items, primaryId){
+  primaryCals=[];
+  otherCals=[];
+  hasKlaiveCal=false;
+  hasWomensCal=false;
+
+  // Default / Private 는 같은 primaryId 달력의 이벤트를 visibility 필드로 구분
+  // 두 항목 모두 id=primaryId, 마커 색상만 다름
+  primaryCals.push({id:primaryId, summary:'Default', color:PRIMARY_CAL_COLORS['Default'], enabled:true, isPrimary:true, visibilityFilter:'default'});
+  primaryCals.push({id:primaryId, summary:'Private', color:PRIMARY_CAL_COLORS['Private'], enabled:true, isPrimary:true, visibilityFilter:'private'});
+
+  // KLAIVE / Women's Health — summary 키워드로 items에서 찾기
+  items.forEach(function(c){
+    var s=c.summary||'';
+    if(s==='KLAIVE'||s.toLowerCase().indexOf('klaive')!==-1){
+      hasKlaiveCal=true;
+      primaryCals.push({id:c.id, summary:'KLAIVE', color:c.backgroundColor||PRIMARY_CAL_COLORS['KLAIVE'], enabled:true});
+    } else if(s==="Women's Health"||s.toLowerCase().indexOf("women")!==-1){
+      hasWomensCal=true;
+      primaryCals.push({id:c.id, summary:"Women's Health", color:c.backgroundColor||PRIMARY_CAL_COLORS["Women's Health"], enabled:true});
+    } else if(!c.primary){
+      otherCals.push({id:c.id, summary:c.summary||c.id, color:c.backgroundColor||'#9AA0A6', enabled:false});
+    }
+  });
+
+  calendarMeta=primaryCals.concat(otherCals);
+}
+
+function buildCalLegend(){
+  var leg=document.getElementById('cal-leg');
+  var popPrimary=document.getElementById('cal-pop-primary');
+  var popOther=document.getElementById('cal-pop-other');
+  var popOtherHdr=document.getElementById('cal-pop-other-hdr');
+  if(!leg)return;
+
+  // Legend: Primary 달력 (Default / Private / KLAIVE / Women's Health, 있는 것만)
+  // Default와 Private는 같은 primaryId지만 별도 Legend 항목으로 표시
+  leg.innerHTML='';
+  var seenSummaries={};
+  primaryCals.forEach(function(c){
+    if(seenSummaries[c.summary])return; // 중복 방지
+    seenSummaries[c.summary]=true;
+    var item=document.createElement('div');item.className='leg-item';
+    var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
+    var txt=document.createElement('span');txt.className='leg-txt';txt.textContent=c.summary;
+    txt.style.opacity=c.enabled?'1':'0.4';
+    item.appendChild(dot);item.appendChild(txt);
+    leg.appendChild(item);
+  });
+
+  // Popup Primary 섹션 — Default/Private 중복 방지 (같은 id지만 별도 항목)
+  if(popPrimary){
+    popPrimary.innerHTML='';
+    var seenPop={};
+    primaryCals.forEach(function(c){
+      if(seenPop[c.summary])return;
+      seenPop[c.summary]=true;
+      var row=document.createElement('div');row.className='cal-row';
+      var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+      var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+      var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+      (function(cm,ck,ldot){
+        ck.addEventListener('change',function(){
+          // 같은 summary의 모든 primaryCal 항목 동기화
+          primaryCals.forEach(function(pc){if(pc.summary===cm.summary)pc.enabled=ck.checked;});
+          ldot.style.background=ck.checked?cm.color:'#ccc';
+          // Legend 업데이트
+          document.querySelectorAll('.leg-txt').forEach(function(t){
+            if(t.textContent===cm.summary){
+              var dot=t.previousElementSibling;
+              if(dot)dot.style.background=ck.checked?cm.color:'#ccc';
+              t.style.opacity=ck.checked?'1':'0.4';
+            }
+          });
+          buildCalGridFromEvents();
+        });
+      })(c,chk,rdot);
+      row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
+      popPrimary.appendChild(row);
+    });
+  }
+
+  // Popup Other 섹션
+  if(popOther&&popOtherHdr){
+    popOther.innerHTML='';
+    if(otherCals.length){
+      popOtherHdr.style.display='';
+      otherCals.forEach(function(c){
+        var row=document.createElement('div');row.className='cal-row';
+        var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+        var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+        var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+        (function(cm,ck){
+          ck.addEventListener('change',function(){
+            cm.enabled=ck.checked;
+            // 선택된 Other 달력의 이벤트를 하단 Event List로 표시
+            renderOtherCalEventList();
+          });
+        })(c,chk);
+        row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
+        popOther.appendChild(row);
+      });
+    } else {
+      popOtherHdr.style.display='none';
+    }
+  }
+}
+
+// 이벤트 기반으로 캘린더 그리드 마커 재빌드
+function buildCalGridFromEvents(){
+  var g=document.getElementById('cal-grid');if(!g)return;
+  // 기존 마커 전부 지우고 실제 이벤트로 재생성
+  g.querySelectorAll('.cal-mks').forEach(function(mw){mw.remove();});
+
+  // primaryCals에서 enabled 체크
+  var primaryId=primaryCals.length?primaryCals[0].id:null;
+  var defaultEntry=primaryCals.find(function(c){return c.summary==='Default';});
+  var privateEntry=primaryCals.find(function(c){return c.summary==='Private';});
+  var klaiveCal=primaryCals.find(function(c){return c.summary==='KLAIVE';});
+  var womensCal=primaryCals.find(function(c){return c.summary==="Women's Health";});
+
+  // 날짜별 이벤트 색상 수집
+  var dateColors={};
+  allEvents.forEach(function(ev){
+    if(!ev.start)return;
+    var ds=ev.allDay?ev.start:ev.start.slice(0,10);
+    var color=resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal);
+    if(!color)return;
+    if(!dateColors[ds])dateColors[ds]=[];
+    if(dateColors[ds].indexOf(color)===-1)dateColors[ds].push(color);
+  });
+
+  // 각 날짜 셀에 마커 추가
+  g.querySelectorAll('.cal-day').forEach(function(cell){
+    var ds=cell.querySelector('.cal-dn');if(!ds)return;
+    // data-date 속성 또는 텍스트에서 날짜 추출 — 셀의 dataset
+    var dateStr=cell.getAttribute('data-date');
+    if(!dateStr)return;
+    var colors=dateColors[dateStr];
+    if(!colors||!colors.length)return;
+    var mw=document.createElement('div');mw.className='cal-mks';
+    colors.slice(0,3).forEach(function(c){
+      var m=document.createElement('div');m.className='cal-mk';m.style.background=c;mw.appendChild(m);
+    });
+    cell.appendChild(mw);
+  });
+}
+
+// 이벤트 색상 결정 로직
+// Private: ev.visibility === "private" 로 구분 (mieCalendarColor와 무관)
+function resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal){
+  var calId=ev.calId;
+  var cc=ev.calColor; // mieCalendarColor
+
+  // Other 달력 이벤트
+  var otherC=otherCals.find(function(c){return c.id===calId&&!c.isPrimary;});
+  if(otherC){return otherC.enabled?otherC.color:null;}
+
+  // KLAIVE 달력
+  if(klaiveCal&&calId===klaiveCal.id){return klaiveCal.enabled?klaiveCal.color:null;}
+  // Women's Health 달력
+  if(womensCal&&calId===womensCal.id){return womensCal.enabled?womensCal.color:null;}
+
+  // Primary 달력 이벤트 — visibility 필드로 Default/Private 구분
+  if(calId===primaryId||(!calId)){
+    var vis=ev.visibility||'default';
+    if(vis==='private'){
+      return (privateEntry&&privateEntry.enabled)?PRIMARY_CAL_COLORS['Private']:null;
+    }
+    return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
+  }
+
+  // fallback
+  return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
+}
+
+/* Build calendar grid — data-date 속성 포함하여 재빌드 */
 function buildCalGrid(){
   var g=document.getElementById('cal-grid');if(!g)return;
   g.innerHTML='';
@@ -696,82 +918,130 @@ function buildCalGrid(){
     if(i<fd){dn=dip-fd+i+1;var pm=calMonth===0?11:calMonth-1;var py=calMonth===0?calYear-1:calYear;ds=isoD(py,pm,dn);other=true;}
     else if(i>=fd+dim){dn=i-fd-dim+1;var nm=calMonth===11?0:calMonth+1;var ny=calMonth===11?calYear+1:calYear;ds=isoD(ny,nm,dn);other=true;}
     else{dn=i-fd+1;ds=isoD(calYear,calMonth,dn);}
-    var isToday=ds===isoD(2026,5,14);
+    var _td=new Date();var _todayStr=isoD(_td.getFullYear(),_td.getMonth(),_td.getDate());var isToday=ds===_todayStr;
     if(other)cell.classList.add('other-mo');
     if(isToday)cell.classList.add('today');
+    // data-date 속성 저장 (마커 재빌드에 사용)
+    cell.setAttribute('data-date',ds);
     var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
-    var mks=CAL_MK[ds];
-    if(mks&&mks.length){var mw=document.createElement('div');mw.className='cal-mks';mks.forEach(function(c){var m=document.createElement('div');m.className='cal-mk';m.style.background=c;mw.appendChild(m);});cell.appendChild(mw);}
-    (function(dstr){cell.addEventListener('click',function(){var evs=eventsByDate[dstr]||DEMO_EVENTS.filter(function(e){return e.start.slice(0,10)===dstr;});openDayModal(dstr,evs);});;})(ds);
+    (function(dstr){cell.addEventListener('click',function(){
+      selectedDateStr=dstr;
+      renderCalEventList();
+    });;})(ds);
     g.appendChild(cell);
   }
-  // Apply enabled-calendar filter to markers
-  buildCalGridFiltered();
+  // 이벤트 데이터로 마커 빌드
+  buildCalGridFromEvents();
 }
 
-/* ── Calendar legend & popup ── */
-function buildCalLegend(){
-  var leg=document.getElementById('cal-leg');
-  var pop=document.getElementById('cal-pop-list');
-  if(!leg&&!pop)return;
-  var meta=calendarMeta.length?calendarMeta:DEMO_CAL;
-  if(leg){
-    leg.innerHTML='';
-    meta.forEach(function(c){
-      var item=document.createElement('div');item.className='leg-item';
-      var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
-      var txt=document.createElement('span');txt.className='leg-txt';txt.textContent=c.summary;
-      txt.style.opacity=c.enabled?'1':'0.4';
-      item.appendChild(dot);item.appendChild(txt);
-      leg.appendChild(item);
-    });
-  }
-  if(pop){
-    pop.innerHTML='';
-    meta.forEach(function(c){
-      var row=document.createElement('div');row.className='cal-row';
-      var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
-      var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
-      var rn=document.createElement('span');rn.className='cal-row-name'+(c.primary?' primary':'');rn.textContent=c.summary;
-      (function(cm,ck,dot,txt){
-        ck.addEventListener('change',function(){
-          cm.enabled=ck.checked;
-          // Update legend dot/text opacity
-          dot.style.background=ck.checked?cm.color:'#ccc';
-          txt.style.opacity=ck.checked?'1':'0.4';
-          // Rebuild calendar grid to show/hide markers for disabled calendars
-          buildCalGridFiltered();
-        });
-      })(c,chk,rdot,rn);
-      row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
-      pop.appendChild(row);
-    });
-  }
-}
+/* ── Calendar Event List (클릭한 날짜 기준) ── */
+function renderCalEventList(){
+  var list=document.getElementById('cal-ev-list');
+  var hdr=document.getElementById('cal-ev-hdr-lbl');
+  if(!list)return;
+  list.innerHTML='';
 
-/* Build calendar grid respecting enabled calendars */
-function buildCalGridFiltered(){
-  var g=document.getElementById('cal-grid');if(!g)return;
-  var meta=calendarMeta.length?calendarMeta:DEMO_CAL;
-  var enabledColors=new Set(meta.filter(function(c){return c.enabled!==false;}).map(function(c){return c.color.toLowerCase();}));
-  // Re-render each day's markers based on enabled state
-  g.querySelectorAll('.cal-day').forEach(function(cell){
-    var mw=cell.querySelector('.cal-mks');if(!mw)return;
-    mw.querySelectorAll('.cal-mk').forEach(function(mk){
-      var bg=mk.style.background;
-      mk.style.display=enabledColors.has(bg.toLowerCase())?'':'none';
-    });
+  // 날짜 선택 전이면 오늘 날짜 기준
+  var now=new Date();
+  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var ds=selectedDateStr||todayStr;
+
+  // 날짜 헤더 표시
+  if(hdr){
+    var d=new Date(ds+'T12:00:00');
+    hdr.textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
+  }
+
+  // 선택 날짜 이벤트
+  var dayEvs=(eventsByDate[ds]||[]).slice();
+
+  // 선택된 Other 달력 이벤트 (해당 날짜)
+  var enabledOther=otherCals.filter(function(c){return c.enabled;});
+  var otherEvs=[];
+  if(enabledOther.length){
+    var enabledIds=enabledOther.map(function(c){return c.id;});
+    otherEvs=(eventsByDate[ds]||[]).filter(function(ev){return enabledIds.indexOf(ev.calId)!==-1;});
+  }
+
+  // 합쳐서 정렬
+  var allDayEvs=dayEvs.concat(otherEvs.filter(function(e){return dayEvs.indexOf(e)===-1;}));
+  allDayEvs.sort(function(a,b){
+    if(a.allDay&&!b.allDay)return -1;
+    if(!a.allDay&&b.allDay)return 1;
+    return new Date(a.start)-new Date(b.start);
+  });
+
+  if(!allDayEvs.length){
+    var empty=document.createElement('div');
+    empty.className='cal-ev-empty';
+    empty.textContent='No events.';
+    list.appendChild(empty);
+    return;
+  }
+
+  // 선택 날짜 셀 하이라이트
+  document.querySelectorAll('.cal-day.selected-day').forEach(function(el){el.classList.remove('selected-day');});
+  document.querySelectorAll('.cal-day').forEach(function(el){
+    if(el.getAttribute('data-date')===ds)el.classList.add('selected-day');
+  });
+
+  allDayEvs.forEach(function(ev){
+    var defaultE=primaryCals.find(function(c){return c.summary==='Default';});
+    var privateE=primaryCals.find(function(c){return c.summary==='Private';});
+    var klaiveE=primaryCals.find(function(c){return c.summary==='KLAIVE';});
+    var womensE=primaryCals.find(function(c){return c.summary==="Women's Health";});
+    var pid=primaryCals.length?primaryCals[0].id:null;
+    var color=resolveEventColor(ev,pid,defaultE,privateE,klaiveE,womensE)||PRIMARY_CAL_COLORS['Default'];
+    renderCalEvRow(list,ev,color);
   });
 }
+
+function renderCalEvRow(list, ev, color){
+  var row=document.createElement('div');row.className='cal-ev-row';
+  // 색상 세로 바
+  var bar=document.createElement('div');bar.className='cal-ev-bar';bar.style.background=color;bar.style.borderRadius='2px';
+  // 시간 컬럼
+  var tc=document.createElement('div');tc.className='cal-ev-time-col';
+  if(ev.allDay){
+    tc.textContent='All day';
+  } else {
+    var sd=new Date(ev.start);
+    var ed=ev.end?new Date(ev.end):null;
+    var startStr=sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    var endStr=ed?ed.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+    tc.innerHTML=startStr+(endStr?'<br>'+endStr:'');
+  }
+  // 제목 + 위치
+  var info=document.createElement('div');info.className='cal-ev-info';
+  var tt=document.createElement('div');
+  tt.className='cal-ev-title'+(ev.isLink?' is-link':'');
+  tt.textContent=ev.title||'No Title';
+  tt.title=ev.title||'';
+  info.appendChild(tt);
+  if(ev.loc){
+    var lv=document.createElement('div');lv.className='cal-ev-loc';lv.textContent='📍 '+ev.loc;info.appendChild(lv);
+  }
+  row.appendChild(bar);row.appendChild(tc);row.appendChild(info);
+  row.addEventListener('click',function(){openEvView(ev);});
+  list.appendChild(row);
+}
+
+// Other 달력 체크박스 변경 시 호출 (이전 이름 유지)
+function renderOtherCalEventList(){renderCalEventList();}
 
 /* ── Today events ── */
 function renderTodayEvents(){
   var c=document.getElementById('today-ev-list');if(!c)return;c.innerHTML='';
-  var ds='2026-06-14';
-  var evs=eventsByDate[ds]||DEMO_EVENTS.filter(function(e){return e.start.slice(0,10)===ds;});
+  var today=new Date();
+  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var evs=eventsByDate[ds]||[];
+  // Primary 달력 이벤트만 (Other 달력은 event list 섹션에서 처리)
+  var primaryId=primaryCals.length?primaryCals[0].id:null;
+  if(!evs.length){var em=document.createElement('div');em.style.cssText='font-size:11px;color:var(--txt3);padding:6px 2px;';em.textContent='No events today.';c.appendChild(em);return;}
   evs.forEach(function(ev){
+    var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
     var item=document.createElement('div');item.className='ev-item';
-    var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=ev.calColor||'#378ADD';
+    var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
     var td=document.createElement('div');td.className='ev-time';
     if(ev.allDay)td.textContent='All day';
     else{var s=new Date(ev.start),e=ev.end?new Date(ev.end):null;td.innerHTML=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e?'<br>'+e.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
@@ -804,27 +1074,88 @@ function toggleTask(t,cb,row){
   var tag=row.querySelector('.task-tag');if(tag){tag.className='task-tag '+(t.status==='completed'?'done':'today');tag.textContent=t.status==='completed'?'done':'today';}
   fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:t.listId||'@default',status:t.status,title:t.title||'',notes:t.notes||''})}).catch(function(){});
 }
+function populateTaskFilter(selId){
+  var sel=document.getElementById(selId);
+  if(!sel)return;
+  var cur=sel.value||'all';
+  sel.innerHTML='<option value="all">All List ▾</option>';
+  taskLists.forEach(function(l){
+    var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);
+  });
+  if(cur!=='all'&&taskLists.find(function(l){return l.id===cur;}))sel.value=cur;
+  else sel.value='all';
+}
+function getFilteredTasks(selId){
+  var sel=document.getElementById(selId);
+  var filterVal=sel?sel.value:'all';
+  var base=allTasks.length?allTasks:DEMO_TASKS;
+  // completed 태스크 제외
+  var active=base.filter(function(t){return t.status!=='completed';});
+  if(filterVal==='all')return active;
+  return active.filter(function(t){return t.listId===filterVal;});
+}
+function renderTasksByFilter(){
+  var tasks=getFilteredTasks('task-list-filter');
+  var c=document.getElementById('task-list');
+  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
+}
+function renderS1TasksByFilter(){
+  var tasks=getFilteredTasks('s1-task-filter');
+  var c=document.getElementById('s1-task-list');
+  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
+}
 function renderTasks(s){
   var tasks=allTasks.length?allTasks:DEMO_TASKS;
-  var c1=document.getElementById('today-task-list');if(c1){c1.innerHTML='';tasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
-  var c2=document.getElementById('task-list');if(c2){c2.innerHTML='';tasks.forEach(function(t){c2.appendChild(makeTaskEl(t));});}
-  var c3=document.getElementById('s1-task-list');if(c3){c3.innerHTML='';tasks.forEach(function(t){c3.appendChild(makeTaskEl(t));});}
+  // populate dropdowns first
+  populateTaskFilter('task-list-filter');
+  populateTaskFilter('s1-task-filter');
+  // today task list — completed 제외
+  var activeTasks=tasks.filter(function(t){return t.status!=='completed';});
+  var c1=document.getElementById('today-task-list');
+  if(c1){c1.innerHTML='';activeTasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
+  // main task card (respect filter, completed already excluded inside getFilteredTasks)
+  renderTasksByFilter();
+  // s1 task card
+  renderS1TasksByFilter();
 }
 
 /* ── Projects ── */
+var allProjects=[];
 function renderProjects(s){
   var c=document.getElementById('proj-list');if(!c)return;c.innerHTML='';
-  DEMO_PROJ.forEach(function(p){
+  var projects=allProjects.length?allProjects:[];
+  if(!projects.length){
+    var em=document.createElement('div');
+    em.style.cssText='font-size:11px;color:var(--txt3);text-align:center;padding:16px 0;';
+    em.textContent='No projects yet.';
+    c.appendChild(em);return;
+  }
+  projects.forEach(function(p){
+    var pct=Math.round((p.completed||0)/(p.total||1)*100);
     var item=document.createElement('div');item.className='proj-item';
     var r1=document.createElement('div');r1.className='proj-r1';
-    var nm=document.createElement('span');nm.className='proj-name';nm.textContent=p.name;
-    var pct=document.createElement('span');pct.className='proj-pct';pct.textContent=p.pct+'%';
-    r1.appendChild(nm);r1.appendChild(pct);
+    var nm=document.createElement('span');nm.className='proj-name';nm.textContent=p.name||p.title||'Untitled';
+    var pctEl=document.createElement('span');pctEl.className='proj-pct';pctEl.textContent=pct+'%';
+    r1.appendChild(nm);r1.appendChild(pctEl);
     var bw=document.createElement('div');bw.className='proj-bar-wrap';
-    var b=document.createElement('div');b.className='proj-bar';b.style.background=p.color;b.style.width=p.pct+'%';bw.appendChild(b);
-    var meta=document.createElement('div');meta.className='proj-meta';meta.textContent=p.tasks+' · Due '+p.due;
+    var b=document.createElement('div');b.className='proj-bar';b.style.background=p.color||'var(--blue)';b.style.width=pct+'%';bw.appendChild(b);
+    var meta=document.createElement('div');meta.className='proj-meta';
+    var taskStr=(p.completed||0)+' of '+(p.total||0)+' tasks';
+    var dueStr=p.due?'· Due '+p.due:'';
+    meta.textContent=taskStr+' '+dueStr;
     item.appendChild(r1);item.appendChild(bw);item.appendChild(meta);c.appendChild(item);
   });
+}
+function loadProjects(){
+  fetch(BACKEND+'/api/me/projects',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){allProjects=[];renderProjects(currentState);return;}
+      var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
+      allProjects=items;
+      renderProjects(currentState);
+    })
+    .catch(function(){allProjects=[];renderProjects(currentState);});
 }
 
 /* ── Input tab ── */
@@ -1011,8 +1342,9 @@ function openDayModal(ds,evs){
   var list=document.getElementById('dm-list');list.innerHTML='';
   if(!evs||!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px;font-size:12px;color:var(--txt3);';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('h');return;}
   evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){
+    var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
     var item=document.createElement('div');item.className='dei';
-    var dot=document.createElement('div');dot.className='ded';dot.style.background=ev.calColor||'#378ADD';
+    var dot=document.createElement('div');dot.className='ded';dot.style.background=color;
     var info=document.createElement('div');info.className='dei-info';
     var td=document.createElement('div');td.className='det';
     var tt=document.createElement('div');tt.className='dett';
@@ -1080,26 +1412,180 @@ function loadCalendarList(){
   fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data){calendarMeta=DEMO_CAL.slice();buildCalLegend();return;}
-      var items=(data&&Array.isArray(data.calendars))?data.calendars:(data&&Array.isArray(data.items))?data.items:[];
-      calendarMeta=items.map(function(c){return{id:c.id,summary:c.summary||c.id,color:c.backgroundColor||'#1C7ED6',primary:!!c.primary,enabled:true};});
-      if(!calendarMeta.length)calendarMeta=DEMO_CAL.slice();
+      if(!data){
+        // fallback: Demo 데이터로 classify
+        var primaryItem=DEMO_CAL.find(function(c){return c.primary;});
+        var pid=primaryItem?primaryItem.id:'default';
+        classifyCalendars(DEMO_CAL.filter(function(c){return !c.primary;}),pid);
+        buildCalLegend();return;
+      }
+      var items=(Array.isArray(data.calendars))?data.calendars:(Array.isArray(data.items))?data.items:[];
+      var primaryItem=items.find(function(c){return c.primary;});
+      var primaryId=primaryItem?primaryItem.id:'primary';
+      classifyCalendars(items,primaryId);
       buildCalLegend();
     })
-    .catch(function(){calendarMeta=DEMO_CAL.slice();buildCalLegend();});
+    .catch(function(){
+      var pid=DEMO_CAL[0]?DEMO_CAL[0].id:'default';
+      classifyCalendars([],pid);
+      buildCalLegend();
+    });
 }
 function loadEvents(){
   var now=new Date(calYear,calMonth,1),end=new Date(calYear,calMonth+1,0);
   fetch(BACKEND+'/api/me/events?'+new URLSearchParams({timeMin:now.toISOString(),timeMax:end.toISOString()}),{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];allEvents=items.map(function(e){return{id:e.id,title:e.summary||'No Title',start:(e.start&&(e.start.dateTime||e.start.date))||null,end:(e.end&&(e.end.dateTime||e.end.date))||null,allDay:!!(e.start&&e.start.date&&!e.start.dateTime),calColor:e.mieCalendarColor||null,loc:e.location||'',desc:e.description||'',calId:e.calendarId||'primary'};});eventsByDate={};allEvents.forEach(function(e){var k=e.allDay?e.start:e.start.slice(0,10);if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(e);});renderTodayEvents();})
+    .then(function(data){
+      if(!data)return;
+      var items=Array.isArray(data.events)?data.events:[];
+      allEvents=items.map(function(e){
+        return{
+          id:e.id,
+          title:e.summary||'No Title',
+          start:(e.start&&(e.start.dateTime||e.start.date))||null,
+          end:(e.end&&(e.end.dateTime||e.end.date))||null,
+          allDay:!!(e.start&&e.start.date&&!e.start.dateTime),
+          calColor:e.mieCalendarColor||null,
+          loc:e.location||'',
+          desc:e.description||'',
+          calId:e.calendarId||'primary',
+          visibility:e.visibility||'default'
+        };
+      });
+      eventsByDate={};
+      allEvents.forEach(function(e){
+        if(!e.start)return;
+        var k=e.allDay?e.start:e.start.slice(0,10);
+        if(!eventsByDate[k])eventsByDate[k]=[];
+        eventsByDate[k].push(e);
+      });
+      // 마커 재빌드 및 Today events 렌더링
+      buildCalGridFromEvents();
+      renderTodayEvents();
+      renderCalEventList();
+    })
     .catch(function(){});
 }
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();renderTasks(currentState);return;}var lists=data.taskLists||[];taskLists=lists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});allTasks=[];lists.forEach(function(l){(l.tasks||[]).forEach(function(t){allTasks.push(Object.assign({},t,{listId:l.id}));});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks(currentState);})
+    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks(currentState);return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks(currentState);})
     .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks(currentState);});
+}
+
+
+/* ── Finance API ── */
+function loadFinance(){
+  var now=new Date();
+  var ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var body=document.getElementById('fin-card-body');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data||!data.summary){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      renderFinance(data);
+    })
+    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+}
+function renderFinance(data){
+  var body=document.getElementById('fin-card-body');if(!body)return;
+  var s=data.summary;
+  var inc=(s.income&&s.income.actual)||0;
+  var rem=s.remaining||0;
+  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
+  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
+  var needsAmt=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var wantsAmt=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
+  var savAmt=(s.savings&&s.savings.actual)||0;
+  function pct(v,t){return t?Math.round(v/t*100):0;}
+  var incAmt=inc||1;
+  var wE=pct(needsAmt,incAmt),wS=pct(savAmt,incAmt),wR=pct(wantsAmt,incAmt);
+  var tot=wE+wS+wR;
+  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
+  wE=wE>0?Math.max(wE,3):0;wS=wS>0?Math.max(wS,3):0;wR=wR>0?Math.max(wR,3):0;
+  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
+  var remColor=rem>=0?'var(--teal)':'var(--red)';
+  body.innerHTML=
+    '<div class="fin-rem" style="color:'+remColor+'">'+fmtS(rem)+' <span>Remaining</span></div>'
+    +'<div class="fin-bar">'
+      +(wE>0?'<div class="fin-seg" style="width:'+wE+'%;background:var(--red);border-radius:3px 0 0 3px;"></div>':'')
+      +(wS>0?'<div class="fin-seg" style="width:'+wS+'%;background:var(--teal);margin-left:1px;"></div>':'')
+      +(wR>0?'<div class="fin-seg" style="width:'+wR+'%;background:#D3D1C7;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')
+    +'</div>'
+    +'<div class="fin-legend">'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income '+fmtS(inc)+' (100%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings '+fmtS(savAmt)+' ('+pct(savAmt,incAmt)+'%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs '+fmtS(needsAmt)+' ('+pct(needsAmt,incAmt)+'%)</span></div>'
+      +'<div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants '+fmtS(wantsAmt)+' ('+pct(wantsAmt,incAmt)+'%)</span></div>'
+    +'</div>';
+}
+
+/* ── Health API ── */
+function loadHealth(){
+  var now=new Date();
+  var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var body=document.getElementById('health-card-body');
+  fetch(BACKEND+'/api/me/health?date='+ds+'&period=daily&tab=all',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      renderHealth(data);
+    })
+    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+}
+function renderHealth(data){
+  var body=document.getElementById('health-card-body');if(!body)return;
+  var s=data.summary||{};
+  var healthArr=data.health||[];
+  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
+  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
+
+  // Vitals
+  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
+  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
+  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
+  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
+
+  var html='<div class="h-vitals">';
+  html+='<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">'+(bp||'—')+'</div><div class="h-vl">Blood Pressure</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">'+(hr||'—')+'</div><div class="h-vl">Heart Rate</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">'+(spo2||'—')+'</div><div class="h-vl">SpO2</div></div>';
+  html+='<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">'+(gluc||'—')+'</div><div class="h-vl">Glucose</div></div>';
+  html+='</div>';
+
+  if(!compact){
+    // Cal Intake / Burned
+    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
+    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
+    if(calIn||calB){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div></div>';
+    }
+    // Steps / Water
+    var steps=s.total_steps?s.total_steps.toLocaleString():null;
+    var dist=s.total_distance_km?s.total_distance_km.toFixed(2)+' km':null;
+    var water=s.water_ml?s.water_ml.toLocaleString()+' ml':null;
+    if(steps||water){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(water||'—')+'</div><div class="h-sub">Water</div></div></div>';
+    }
+    // Sleep / Mood
+    var sleepStr=null;
+    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
+    var mood=s.mood||null;
+    if(sleepStr||mood){
+      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Quality '+s.sleep_quality+'/5':'')+'</div></div>';
+      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
+    }
+    // Weight
+    if(lh&&lh.weight_kg){
+      var wkg=lh.weight_kg.toFixed(1);
+      var wlb=(lh.weight_kg*2.20462).toFixed(2);
+      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wkg+' kg / '+wlb+' lb</div><div class="hw-lbl">Weight today</div></div></div>';
+    }
+  }
+
+  body.innerHTML=html;
 }
 
 /* ── Init ── */
@@ -1110,6 +1596,9 @@ function init(){
   loadCalendarList();
   loadEvents();
   loadTasks();
+  loadFinance();
+  loadHealth();
+  loadProjects();
 }
 init();
 </script>
