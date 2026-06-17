@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>KLAIVE — S5 Full (A안)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
+  --blue:#1C7ED6;--teal:#1D9E75;
+  --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
+  --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;}
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* Topbar */
+.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
+.logo .ai{color:var(--blue);}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.tb-div{width:.5px;height:28px;background:var(--b2);}
+.tb-user{display:flex;flex-direction:column;gap:1px;}
+.tb-name{font-size:12px;font-weight:500;}
+.tb-email{font-size:10px;color:var(--txt3);}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px;}
+.tb-badge{background:rgba(29,158,117,.12);color:var(--teal);border:.5px solid rgba(29,158,117,.25);border-radius:12px;padding:3px 9px;font-size:11px;font-weight:500;}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:40fr 30fr 30fr;flex:1;gap:14px;padding:14px 24px;overflow:hidden;min-height:0;}
+
+/* Cards */
+.card{background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.card-hd-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);display:flex;align-items:center;gap:4px;}
+.card-hd-link{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
+.card-body{flex:1;overflow-y:auto;padding:12px 14px;min-height:0;}
+.card-body::-webkit-scrollbar{width:3px;}
+.card-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+
+/* ── LEFT: Calendar ── */
+.cal-card{flex:1;}
+.cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;}
+.cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--txt2);}
+.cal-mo{font-size:14px;font-weight:500;padding:0 5px;}
+.cal-today-btn{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);}
+.cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;border-radius:4px;padding:4px 22px 4px 10px;font-size:11px;font-weight:500;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+.cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0 10px 6px;min-height:0;}
+.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding-top:7px;flex-shrink:0;}
+.cal-dow{font-size:9px;font-weight:600;color:var(--txt3);text-align:center;padding:2px 0 4px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);flex:1;border-top:.5px solid var(--b1);}
+.cal-day{border-right:.5px solid var(--b1);border-bottom:.5px solid var(--b1);padding:3px 4px 4px;cursor:pointer;display:flex;flex-direction:column;}
+.cal-day:hover{background:var(--bg2);}
+.cal-day:nth-child(7n){border-right:none;}
+.cal-day.other-mo .cal-dn{opacity:.35;}
+.cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
+.cal-day.sel-day{background:rgba(28,126,214,.05);}
+.cal-day.sel-day .cal-dn{outline:1.5px solid var(--blue);}
+.cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
+.cal-mk{height:2px;border-radius:1px;width:100%;}
+/* Events below calendar */
+.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;}
+.cal-ev-hdr{padding:7px 14px 3px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between;}
+.cal-ev-list{overflow-y:auto;max-height:175px;padding-bottom:8px;}
+.cal-ev-list::-webkit-scrollbar{width:3px;}
+.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.cal-ev-row{display:flex;align-items:stretch;gap:0;padding:4px 14px;cursor:pointer;}
+.cal-ev-row:hover{background:var(--bg2);}
+.cal-ev-bar{width:2.5px;border-radius:2px;flex-shrink:0;margin-right:10px;min-height:16px;}
+.cal-ev-time-col{width:86px;flex-shrink:0;font-size:10px;color:var(--txt3);line-height:1.4;padding-top:1px;}
+.cal-ev-info{flex:1;min-width:0;}
+.cal-ev-title{font-size:11px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5;}
+.cal-ev-loc{font-size:9px;color:var(--txt3);margin-top:1px;}
+.cal-ev-empty{font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;}
+/* Footer */
+.cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
+.cal-leg-lbl{font-size:10px;color:var(--txt3);}
+.leg-items{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+.leg-txt{font-size:10px;color:var(--txt2);}
+.cals-btn{display:flex;align-items:center;gap:4px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--txt2);cursor:pointer;margin-left:auto;}
+
+/* ── MIDDLE: Task + Projects 50/50 ── */
+.mid-col{display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;}
+.task-card,.proj-card{overflow:hidden;min-height:0;display:flex;flex-direction:column;}
+.all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
+/* Tasks */
+.task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;}
+.task-item:hover{background:var(--bg2);}
+.task-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;}
+.task-cb:hover{border-color:var(--blue);}
+.task-nm{flex:1;font-size:11px;color:var(--txt);}
+.task-tag{font-size:9px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
+.task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
+/* Projects */
+.proj-item{display:flex;flex-direction:column;padding:5px 0;border-bottom:.5px solid var(--b1);}
+.proj-item:last-child{border-bottom:none;}
+.proj-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.proj-name{font-size:11px;font-weight:500;color:var(--txt);}
+.proj-pct{font-size:10px;color:var(--txt3);}
+.proj-bar-wrap{width:100%;height:3px;background:var(--bg3);border-radius:2px;margin-bottom:3px;}
+.proj-bar{height:3px;border-radius:2px;}
+.proj-meta{font-size:9px;color:var(--txt3);}
+
+/* ── RIGHT: Finance + Health + Input ── */
+.right-col{display:flex;flex-direction:column;gap:14px;min-height:0;}
+/* Finance */
+.fin-card{flex-shrink:0;}
+.fin-rem{font-size:22px;font-weight:300;color:var(--teal);margin-bottom:6px;}
+.fin-rem span{font-size:11px;font-weight:400;color:var(--txt3);margin-left:3px;}
+.fin-bar{height:5px;border-radius:3px;background:var(--bg3);display:flex;overflow:hidden;margin-bottom:9px;gap:1px;}
+.fin-seg{height:100%;}
+.fin-legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;}
+.fin-li{display:flex;align-items:center;gap:5px;}
+.fin-ld{width:7px;height:7px;border-radius:50%;}
+.fin-lt{font-size:10px;color:var(--txt2);}
+/* Health */
+.health-card{flex-shrink:0;}
+.h-vitals{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px;}
+.h-vc{background:var(--bg2);border-radius:7px;padding:5px 9px;}
+.h-vc-top{display:flex;align-items:center;gap:4px;margin-bottom:2px;}
+.h-vi{font-size:11px;flex-shrink:0;}
+.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;line-height:1.2;}
+.h-vv{font-size:13px;font-weight:600;color:var(--txt);line-height:1.2;}
+.h-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
+.h-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:5px;padding:5px 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);}
+.h-cell{display:flex;flex-direction:column;gap:1px;}
+.h-main{font-size:11px;font-weight:600;color:var(--txt);}
+.h-sub{font-size:9px;color:var(--txt3);}
+
+/* ── Input Card (Send Message + Add) ── */
+.input-card{flex:1;display:flex;flex-direction:column;min-height:0;}
+.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+.inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 12px;}
+.inp-panel.on{display:flex;}
+/* Send Message */
+.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:10px 12px;}
+.msg-ta::placeholder{color:var(--txt3);}
+.inp-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-shrink:0;}
+.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 10px;cursor:pointer;flex-shrink:0;}
+.send-btn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;}
+.draft-row{display:flex;align-items:center;gap:5px;margin-top:5px;flex-shrink:0;}
+.draft-lbl{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);cursor:pointer;}
+.draft-lbl input{width:11px;height:11px;accent-color:var(--blue);}
+
+/* ── Add Panel — Compact design (no scroll needed) ── */
+.add-panel{display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;}
+.add-type-row{display:flex;gap:8px;flex-shrink:0;}
+.add-type-btn{flex:1;padding:7px 8px;border:.5px solid var(--b1);border-radius:8px;background:var(--bg2);font-family:'Inter',sans-serif;font-size:11px;color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .12s;}
+.add-type-btn:hover,.add-type-btn.sel{background:rgba(28,126,214,.08);border-color:var(--blue);color:var(--blue);}
+.add-type-btn svg{width:14px;height:14px;}
+/* Compact inline form — minimal fields, no scroll */
+.add-form{display:none;flex-direction:column;gap:6px;flex:1;min-height:0;}
+.add-form.vis{display:flex;}
+.add-quick-row{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.add-title-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:7px 9px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.add-title-in:focus{border-color:var(--blue);background:var(--bg);}
+.add-title-in::placeholder{color:var(--txt3);}
+.add-meta-row{display:flex;gap:6px;flex-shrink:0;}
+.add-meta-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.add-meta-in:focus{border-color:var(--blue);}
+/* More options toggle */
+.add-more-toggle{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;text-align:left;flex-shrink:0;}
+.add-more-toggle:hover{text-decoration:underline;}
+.add-extra{display:none;flex-direction:column;gap:6px;flex-shrink:0;}
+.add-extra.vis{display:flex;}
+.add-extra-row{display:flex;gap:6px;}
+.afl-sm{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.add-extra-in{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.add-extra-in:focus{border-color:var(--blue);}
+.add-sub{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;}
+.add-st{font-size:10px;min-height:13px;flex-shrink:0;}
+
+/* Unit toggle in Health header */
+.unit-toggle{display:flex;align-items:center;gap:0;border:.5px solid var(--b1);border-radius:5px;overflow:hidden;}
+.unit-btn{font-size:9px;font-weight:600;padding:3px 8px;background:var(--bg2);color:var(--txt3);border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;letter-spacing:.02em;}
+.unit-btn:hover{color:var(--txt);}
+.unit-btn.on{background:var(--blue);color:#fff;}
+.unit-sep{width:.5px;background:var(--b1);align-self:stretch;}
+/* Weight row */
+.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
+.hwl{display:flex;flex-direction:column;}
+.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
+.hw-lbl{font-size:9px;color:var(--txt3);}
+.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
+.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
+/* Invite people (Event Add) */
+.invite-section{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.invite-row{display:flex;gap:5px;align-items:center;}
+.invite-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.invite-in::placeholder{color:var(--txt3);}
+.invite-in:focus{border-color:var(--blue);}
+.invite-add-btn{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+.invite-chips{display:flex;flex-wrap:wrap;gap:4px;min-height:0;}
+.invite-chip{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
+.invite-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
+.invite-chip-x:hover{opacity:1;}
+/* Add type — single tab bar */
+.add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
+.add-type-btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;
+  padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;
+  font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);
+  cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
+.add-type-btn:hover{color:var(--txt2);}
+.add-type-btn.sel{color:var(--blue);border-bottom-color:var(--blue);}
+.add-type-btn svg{width:10px;height:10px;flex-shrink:0;}
+/* Finance add form */
+.add-divider{height:.5px;background:var(--b1);margin:2px 0;flex-shrink:0;}
+/* Health add form - metric inputs */
+.h-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex-shrink:0;}
+.h-add-cell{display:flex;flex-direction:column;gap:2px;}
+.h-add-lbl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
+/* Project add form */
+.proj-add-row{display:flex;gap:5px;flex-shrink:0;}
+
+/* ── A안: Add 모드 시 Finance/Health 숨김 ── */
+.fin-card,.health-card{transition:opacity .2s ease, max-height .25s ease, margin .2s ease;overflow:hidden;}
+.add-mode .fin-card,.add-mode .health-card{max-height:0!important;opacity:0;margin-top:0!important;margin-bottom:0!important;padding-top:0;padding-bottom:0;pointer-events:none;}
+.add-mode .input-card{flex:1;}
+/* add-mode 전환 중 gap 제거 */
+.right-col.add-mode{gap:0!important;}
+
+/* ── Bottom nav ── */
+.bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:.5px solid var(--b1);color:var(--txt3);cursor:pointer;background:none;border-top:2px solid transparent;border-bottom:none;border-left:none;padding:0;font-family:'Inter',sans-serif;transition:color .12s;}
+.nav-tab:last-child{border-right:none;}
+.nav-tab.on{color:var(--blue);border-top-color:var(--blue);}
+.nav-tab:hover:not(.on){color:var(--txt2);}
+.nav-tab svg{width:14px;height:14px;}
+.nav-lbl{font-size:11px;}
+*::-webkit-scrollbar{width:3px;}
+*::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <span class="logo">KL<span class="ai">AI</span>VE</span>
+    <div class="tb-div"></div>
+    <div style="font-size:12px;font-weight:500;color:var(--txt);">Welcome, Mie <span style="font-weight:400;color:var(--txt3);">(rylhong@gmail.com)</span></div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-meta">
+      <span>Tue, Jun 16, 2026</span>
+      <span style="color:var(--b2)">·</span>
+      <span>09:25 PM PDT</span>
+      <span style="color:var(--b2)">·</span>
+      <span>🌤️ 57°F / 14°C</span>
+    </div>
+    <div class="tb-avatar">M</div>
+    <button class="tb-signout" style="font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;">Sign out</button>
+  </div>
+</div>
+
+<!-- MAIN GRID: S5 Full -->
+<div class="grid">
+
+  <!-- LEFT: Calendar -->
+  <div style="display:flex;flex-direction:column;min-height:0;">
+    <div class="card cal-card">
+      <div class="cal-topbar">
+        <div class="cal-navg">
+          <button class="cal-nbtn">‹</button>
+          <span class="cal-mo">June 2026</span>
+          <button class="cal-nbtn">›</button>
+        </div>
+        <button class="cal-today-btn">Today</button>
+        <select class="cal-view-sel"><option>Month ▾</option></select>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-dow-row">
+          <div class="cal-dow">SUN</div><div class="cal-dow">MON</div>
+          <div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div>
+          <div class="cal-dow">THURS</div><div class="cal-dow">FRI</div>
+          <div class="cal-dow">SAT</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <!-- Events below calendar (clicked date) -->
+      <div class="cal-ev-section">
+        <div class="cal-ev-hdr">
+          <span>Events</span>
+          <span style="font-size:10px;font-weight:400;color:var(--txt2);" id="ev-date-lbl">Tue, Jun 16</span>
+        </div>
+        <div class="cal-ev-list">
+          <div class="cal-ev-row" onclick="openEvModal('ev1')">
+            <div class="cal-ev-bar" style="background:#534AB7;"></div>
+            <div class="cal-ev-time-col">All day</div>
+            <div class="cal-ev-info">
+              <div class="cal-ev-title">6pm 아빠 한 소라: 처음 또 한국에서 고생했다. 건강해질거다 걱정마라는</div>
+            </div>
+          </div>
+          <div class="cal-ev-row" onclick="openEvModal('ev2')">
+            <div class="cal-ev-bar" style="background:#378ADD;"></div>
+            <div class="cal-ev-time-col">All day</div>
+            <div class="cal-ev-info"><div class="cal-ev-title">Total Steps: 0</div></div>
+          </div>
+          <div class="cal-ev-row" onclick="openEvModal('ev3')">
+            <div class="cal-ev-bar" style="background:#378ADD;"></div>
+            <div class="cal-ev-time-col">11:15 AM<br>11:45 AM</div>
+            <div class="cal-ev-info">
+              <div class="cal-ev-title">PT Treatment with Joonmyung Hwang, PT</div>
+              <div class="cal-ev-loc">📍 1119 East Stanley Blvd Livermore CA 94550</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cal-foot">
+        <span class="cal-leg-lbl">Calendars</span>
+        <div class="leg-items">
+          <div class="leg-item"><div class="leg-dot" style="background:#378ADD;"></div><span class="leg-txt">Default</span></div>
+          <div class="leg-item"><div class="leg-dot" style="background:#534AB7;"></div><span class="leg-txt">Private</span></div>
+          <div class="leg-item"><div class="leg-dot" style="background:#1D9E75;"></div><span class="leg-txt">KLAIVE</span></div>
+        </div>
+        <button class="cals-btn">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+          Calendars
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Task + Projects 50/50 -->
+  <div class="mid-col">
+    <!-- Task card -->
+    <div class="card task-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Task
+        </span>
+        <select class="all-list-sel" onchange="filterTasks(this)">
+          <option value="all">All List ▾</option>
+          <option>Rachel's list</option>
+          <option>dinner</option>
+          <option>Health</option>
+          <option>Finance</option>
+        </select>
+      </div>
+      <div class="card-body">
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">medication</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">Mind Setting - Quiet Time</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">dinner</span>
+          <span class="task-tag today">today</span>
+        </div>
+        <div class="task-item">
+          <div class="task-cb" onclick="toggleCb(this)"></div>
+          <span class="task-nm">exercise</span>
+          <span class="task-tag today">today</span>
+        </div>
+      </div>
+    </div>
+    <!-- Projects card -->
+    <div class="card proj-card">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>
+          Projects
+        </span>
+        <button class="card-hd-link">All →</button>
+      </div>
+      <div class="card-body">
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Dashboard Redesign</span><span class="proj-pct">68%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#1C7ED6;width:68%;"></div></div>
+          <div class="proj-meta">8 of 12 tasks · Due Jun 20</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Login Flow Update</span><span class="proj-pct">40%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#534AB7;width:40%;"></div></div>
+          <div class="proj-meta">4 of 10 tasks · Due Jun 25</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">Korea Storage Unit</span><span class="proj-pct">15%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#EF9F27;width:15%;"></div></div>
+          <div class="proj-meta">2 of 14 tasks · Due Jul 3</div>
+        </div>
+        <div class="proj-item">
+          <div class="proj-r1"><span class="proj-name">SF Trip Planning</span><span class="proj-pct">85%</span></div>
+          <div class="proj-bar-wrap"><div class="proj-bar" style="background:#E24B4A;width:85%;"></div></div>
+          <div class="proj-meta">11 of 13 tasks · Due Jun 15</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Finance + Health + Input -->
+  <div class="right-col" id="right-col">
+    <!-- Finance -->
+    <div class="card fin-card" style="max-height:200px;">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>
+          Finance — Monthly
+        </span>
+        <button class="card-hd-link">›</button>
+      </div>
+      <div class="card-body">
+        <div class="fin-rem">$173 <span>Remaining</span></div>
+        <div class="fin-bar">
+          <div class="fin-seg" style="width:13%;background:var(--red);border-radius:3px 0 0 3px;"></div>
+          <div class="fin-seg" style="width:13%;background:var(--teal);margin-left:1px;"></div>
+          <div class="fin-seg" style="width:52%;background:#D3D1C7;border-radius:0 3px 3px 0;margin-left:1px;"></div>
+        </div>
+        <div class="fin-legend">
+          <div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income $795 (100%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings $100 (13%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs $106 (13%)</span></div>
+          <div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants $416 (52%)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health -->
+    <div class="card health-card" style="max-height:300px;">
+      <div class="card-hd">
+        <span class="card-hd-title">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>
+          Health
+        </span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <!-- Metric / US toggle -->
+          <div class="unit-toggle">
+            <button class="unit-btn on" id="btn-metric" onclick="setUnit('metric')">Metric</button>
+            <div class="unit-sep"></div>
+            <button class="unit-btn" id="btn-us" onclick="setUnit('us')">US</button>
+          </div>
+          <button class="card-hd-link">View all →</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="h-vitals">
+          <div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩺</span><span class="h-vl">Blood Pressure</span></div><div class="h-vv">120/80</div></div>
+          <div class="h-vc"><div class="h-vc-top"><span class="h-vi">❤️</span><span class="h-vl">Heart Rate</span></div><div class="h-vv">72 bpm</div></div>
+          <div class="h-vc"><div class="h-vc-top"><span class="h-vi">🌬️</span><span class="h-vl">SpO2</span></div><div class="h-vv">98%</div></div>
+          <div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩸</span><span class="h-vl">Glucose</span></div><div class="h-vv">95 mg/dL</div></div>
+        </div>
+        <!-- Cal + Steps + Water 4-column single row -->
+        <div class="h-row4">
+          <div class="h-cell"><div class="h-main">976</div><div class="h-sub">Cal Intake</div></div>
+          <div class="h-cell"><div class="h-main">1,862</div><div class="h-sub">Cal Burned</div></div>
+          <div class="h-cell"><div class="h-main"><span id="h-water">1,200 ml</span></div><div class="h-sub">Water</div></div>
+          <div class="h-cell"><div class="h-main">11,256</div><div class="h-sub">Steps · <span id="h-dist">8.89 km</span></div></div>
+        </div>
+        <!-- Weight row -->
+        <div class="h-wt">
+          <div class="hwl">
+            <div class="hw-val" id="h-weight-val">70.4 kg / 155.10 lb</div>
+            <div class="hw-lbl">Weight today</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="hw-diff">↓ −0.3 <span id="h-weight-unit">kg</span></div>
+            <div class="hw-dlbl">vs last week</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input: Send Message + Add (Compact) -->
+    <div class="card input-card">
+      <div class="inp-tabs">
+        <button class="inp-tab on" onclick="switchTab('send',this)">Send Message</button>
+        <button class="inp-tab" onclick="switchTab('add',this)">+ Add</button>
+      </div>
+
+      <!-- Send Message panel -->
+      <div class="inp-panel on" id="panel-send">
+        <textarea class="msg-ta" placeholder="Type your message"></textarea>
+        <div class="inp-actions">
+          <label class="attach-lbl">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Attach
+          </label>
+          <button class="send-btn">SEND</button>
+        </div>
+        <div class="draft-row">
+          <label class="draft-lbl"><input type="checkbox"/> Save as draft</label>
+        </div>
+      </div>
+
+      <!-- Add panel — 5 types, compact, no scroll -->
+      <div class="inp-panel" id="panel-add">
+        <div class="add-panel">
+
+          <!-- Type selector: single tab bar -->
+          <div class="add-type-sect">
+            <button class="add-type-btn sel" id="btn-ev" onclick="selType('event')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>
+              Event
+            </button>
+            <button class="add-type-btn" id="btn-tk" onclick="selType('task')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>
+              Task
+            </button>
+            <button class="add-type-btn" id="btn-fin" onclick="selType('finance')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>
+              Finance
+            </button>
+            <button class="add-type-btn" id="btn-hl" onclick="selType('health')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>
+              Health
+            </button>
+            <button class="add-type-btn" id="btn-pr" onclick="selType('project')">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>
+              Project
+            </button>
+          </div>
+
+          <!-- ── EVENT form ── -->
+          <div class="add-form vis" id="form-ev">
+            <input class="add-title-in" type="text" placeholder="Event title" id="ev-title"/>
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="date" id="ev-date" style="flex:1.3;"/>
+              <input class="add-meta-in" type="time" id="ev-start" style="flex:1;" placeholder="Start"/>
+              <input class="add-meta-in" type="time" id="ev-end" style="flex:1;" placeholder="End"/>
+            </div>
+            <!-- Invite People + Location / Notes (optional) -->
+            <button class="add-more-toggle" onclick="toggleMore('ev-extra')">＋ Invite / Location / Notes</button>
+            <div class="add-extra" id="ev-extra">
+              <div class="invite-section">
+                <div class="invite-row">
+                  <input class="invite-in" type="email" id="invite-email" placeholder="Invite people (email)"/>
+                  <button class="invite-add-btn" onclick="addInvite()" title="Add">+</button>
+                </div>
+                <div class="invite-chips" id="invite-chips"></div>
+              </div>
+              <input class="add-extra-in" type="text" placeholder="Location (optional)"/>
+              <textarea class="add-extra-in" rows="2" placeholder="Notes (optional)" style="resize:none;"></textarea>
+            </div>
+            <button class="add-sub" onclick="submitEv()">Add Event</button>
+            <div class="add-st" id="ev-st"></div>
+          </div>
+
+          <!-- ── TASK form ── -->
+          <div class="add-form" id="form-tk">
+            <input class="add-title-in" type="text" placeholder="Task title" id="tk-title"/>
+            <div class="add-meta-row">
+              <select class="add-meta-in" id="tk-list" style="flex:1.3;">
+                <option>My Tasks</option>
+                <option>Rachel's list</option>
+                <option>dinner</option>
+                <option>Health</option>
+                <option>Finance</option>
+              </select>
+              <input class="add-meta-in" type="date" id="tk-due" style="flex:1.2;"/>
+            </div>
+            <button class="add-more-toggle" onclick="toggleMore('tk-extra')">＋ Notes / Priority</button>
+            <div class="add-extra" id="tk-extra">
+              <div class="add-extra-row">
+                <div style="flex:1.5;"><div class="afl-sm">Notes</div><input class="add-extra-in" type="text" placeholder="Optional"/></div>
+                <div style="flex:1;"><div class="afl-sm">Priority</div>
+                  <select class="add-extra-in"><option>High</option><option selected>Medium</option><option>Low</option></select>
+                </div>
+              </div>
+            </div>
+            <button class="add-sub" onclick="submitTask()">Add Task</button>
+            <div class="add-st" id="tk-st"></div>
+          </div>
+
+          <!-- ── FINANCE form ── -->
+          <div class="add-form" id="form-fin">
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="number" placeholder="Amount ($)" id="fin-amt" style="flex:1;" min="0" step="0.01"/>
+              <input class="add-meta-in" type="date" id="fin-date" style="flex:1.2;"/>
+            </div>
+            <select class="add-meta-in" id="fin-cat">
+              <option value="">Category ▾</option>
+              <optgroup label="Needs">
+                <option>Housing</option><option>Utilities</option><option>Groceries</option>
+                <option>Transportation</option><option>Insurance</option><option>Healthcare</option>
+                <option>Phone</option><option>Internet</option><option>Subscriptions</option>
+              </optgroup>
+              <optgroup label="Wants">
+                <option>Dining Out</option><option>Entertainment</option><option>Shopping</option>
+                <option>Travel</option><option>Personal Care</option><option>Other</option>
+              </optgroup>
+              <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
+              <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
+            </select>
+            <input class="add-extra-in" type="text" placeholder="Description (optional)" id="fin-desc"/>
+            <button class="add-sub" onclick="submitFin()">Add Entry</button>
+            <div class="add-st" id="fin-st"></div>
+          </div>
+
+          <!-- ── HEALTH form ── -->
+          <div class="add-form" id="form-hl">
+            <div class="add-meta-row">
+              <select class="add-meta-in" id="hl-type" onchange="updateHealthFields()" style="flex:1.4;">
+                <option value="">Metric ▾</option>
+                <option value="weight">⚖️ Weight</option>
+                <option value="bp">🩺 Blood Pressure</option>
+                <option value="hr">❤️ Heart Rate</option>
+                <option value="glucose">🩸 Glucose</option>
+                <option value="steps">👟 Steps</option>
+                <option value="water">💧 Water</option>
+                <option value="sleep">😴 Sleep</option>
+                <option value="mood">😊 Mood</option>
+              </select>
+              <input class="add-meta-in" type="date" id="hl-date" style="flex:1;"/>
+            </div>
+            <!-- Dynamic value fields -->
+            <div id="hl-value-wrap">
+              <input class="add-extra-in" type="number" id="hl-val" placeholder="Value" step="0.1"/>
+            </div>
+            <input class="add-extra-in" type="text" placeholder="Notes (optional)" id="hl-notes"/>
+            <button class="add-sub" onclick="submitHealth()">Add Record</button>
+            <div class="add-st" id="hl-st"></div>
+          </div>
+
+          <!-- ── PROJECT form ── -->
+          <div class="add-form" id="form-pr">
+            <input class="add-title-in" type="text" placeholder="Project name" id="pr-name"/>
+            <div class="add-meta-row">
+              <input class="add-meta-in" type="date" id="pr-due" style="flex:1;" placeholder="Due date"/>
+              <select class="add-meta-in" id="pr-status" style="flex:1.2;">
+                <option>Planning</option>
+                <option>In Progress</option>
+                <option>On Hold</option>
+              </select>
+            </div>
+            <button class="add-more-toggle" onclick="toggleMore('pr-extra')">＋ Description / Members</button>
+            <div class="add-extra" id="pr-extra">
+              <textarea class="add-extra-in" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
+              <input class="add-extra-in" type="text" placeholder="Add member emails (comma separated)"/>
+            </div>
+            <button class="add-sub" onclick="submitProject()">Create Project</button>
+            <div class="add-st" id="pr-st"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<!-- BOTTOM NAV -->
+<div class="bot-nav">
+  <button class="nav-tab on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span class="nav-lbl">Overview</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span class="nav-lbl">Calendar</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span class="nav-lbl">Finance</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span class="nav-lbl">Health</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="3" x2="8" y2="3" stroke-linecap="round"/><line x1="2" y1="6" x2="8" y2="6" stroke-linecap="round"/></svg><span class="nav-lbl">Tasks</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span class="nav-lbl">Documents</span></button>
+  <button class="nav-tab"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span class="nav-lbl">Settings</span></button>
+</div>
+
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+/* ── Calendar ── */
+(function(){
+  var today = new Date();
+  var y = today.getFullYear(), mo = today.getMonth(), d = today.getDate();
+  var grid = document.getElementById('cal-grid');
+  var fd = new Date(y,mo,1).getDay();
+  var dim = new Date(y,mo+1,0).getDate();
+  var dip = new Date(y,mo,0).getDate();
+  var total = Math.ceil((fd+dim)/7)*7;
+  // Sample event markers
+  var markers = {
+    1:['#378ADD'],2:['#378ADD'],3:['#378ADD'],4:['#378ADD','#534AB7'],
+    6:['#378ADD'],7:['#534AB7'],8:['#378ADD'],9:['#378ADD','#E24B4A'],
+    10:['#378ADD'],11:['#378ADD'],12:['#378ADD'],13:['#378ADD'],
+    14:['#534AB7','#378ADD'],15:['#378ADD'],16:['#534AB7','#378ADD'],
+    17:['#534AB7'],20:['#378ADD'],25:['#1D9E75','#378ADD'],26:['#378ADD']
+  };
+  for(var i=0;i<total;i++){
+    var cell=document.createElement('div');cell.className='cal-day';
+    var dn,isOther=false;
+    if(i<fd){dn=dip-fd+i+1;isOther=true;}
+    else if(i>=fd+dim){dn=i-fd-dim+1;isOther=true;}
+    else{dn=i-fd+1;}
+    if(isOther)cell.classList.add('other-mo');
+    if(!isOther&&dn===d)cell.classList.add('today');
+    var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
+    if(!isOther&&markers[dn]){
+      var mw=document.createElement('div');mw.className='cal-mks';
+      markers[dn].forEach(function(c){var m=document.createElement('div');m.className='cal-mk';m.style.background=c;mw.appendChild(m);});
+      cell.appendChild(mw);
+    }
+    (function(dayNum,isOth){
+      cell.addEventListener('click',function(){
+        if(isOth)return;
+        document.querySelectorAll('.cal-day.sel-day').forEach(function(el){el.classList.remove('sel-day');});
+        cell.classList.add('sel-day');
+        var lbl=document.getElementById('ev-date-lbl');
+        if(lbl){
+          var nd=new Date(y,mo,dayNum);
+          lbl.textContent=nd.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+        }
+      });
+    })(dn,isOther);
+    grid.appendChild(cell);
+  }
+  // Mark today as selected initially
+  var todayCell=document.querySelector('.cal-day.today');
+  if(todayCell)todayCell.classList.add('sel-day');
+})();
+
+/* ── Tab switch (A안: Add 시 Finance/Health 숨김) ── */
+function switchTab(tab, btn){
+  document.querySelectorAll('.inp-tab').forEach(function(t){t.classList.remove('on');});
+  btn.classList.add('on');
+  document.getElementById('panel-send').classList.toggle('on', tab==='send');
+  document.getElementById('panel-add').classList.toggle('on', tab==='add');
+  // A안: Add 탭이면 right-col에 add-mode 클래스 추가 → Finance/Health 숨김
+  var rc = document.getElementById('right-col');
+  if(rc) rc.classList.toggle('add-mode', tab==='add');
+}
+
+/* ── Add type selector (5 types) ── */
+var TYPE_MAP={event:'btn-ev',task:'btn-tk',finance:'btn-fin',health:'btn-hl',project:'btn-pr'};
+var FORM_MAP={event:'form-ev',task:'form-tk',finance:'form-fin',health:'form-hl',project:'form-pr'};
+function selType(type){
+  Object.keys(TYPE_MAP).forEach(function(k){
+    document.getElementById(TYPE_MAP[k]).classList.toggle('sel',k===type);
+    document.getElementById(FORM_MAP[k]).classList.toggle('vis',k===type);
+  });
+  var nd=new Date().toISOString().slice(0,10);
+  if(type==='event'){document.getElementById('ev-date').value=nd;}
+  if(type==='task'){document.getElementById('tk-due').value=nd;}
+  if(type==='finance'){document.getElementById('fin-date').value=nd;}
+  if(type==='health'){document.getElementById('hl-date').value=nd;}
+}
+
+/* ── More options toggle ── */
+function toggleMore(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.classList.toggle('vis');
+  var btn=el.previousElementSibling;
+  if(btn&&btn.classList.contains('add-more-toggle')){
+    var open=el.classList.contains('vis');
+    if(id==='ev-extra')btn.textContent=open?'− Invite / Location / Notes':'＋ Invite / Location / Notes';
+    else if(id==='tk-extra')btn.textContent=open?'− Notes / Priority':'＋ Notes / Priority';
+    else if(id==='pr-extra')btn.textContent=open?'− Description / Members':'＋ Description / Members';
+  }
+}
+
+/* ── Unit toggle (Metric / US) ── */
+var UNIT_DATA={
+  metric:{dist:'8.89 km',water:'1,200 ml',weight:'70.4 kg / 155.10 lb',wdiff:'kg'},
+  us:{dist:'5.52 mi',water:'40.6 fl oz',weight:'155.10 lb / 70.4 kg',wdiff:'lb'}
+};
+function setUnit(u){
+  document.getElementById('btn-metric').classList.toggle('on',u==='metric');
+  document.getElementById('btn-us').classList.toggle('on',u==='us');
+  var d=UNIT_DATA[u];
+  document.getElementById('h-dist').textContent=d.dist;
+  document.getElementById('h-water').textContent=d.water;
+  document.getElementById('h-weight-val').textContent=d.weight;
+  document.getElementById('h-weight-unit').textContent=d.wdiff;
+}
+
+/* ── Invite People (Event) ── */
+var invitees=[];
+function addInvite(){
+  var inp=document.getElementById('invite-email');
+  var email=inp.value.trim();
+  if(!email)return;
+  if(!email.includes('@')){inp.style.borderColor='var(--red)';return;}
+  if(invitees.indexOf(email)!==-1){inp.value='';return;}
+  inp.style.borderColor='';
+  invitees.push(email);
+  renderChips();
+  inp.value='';inp.focus();
+}
+function removeInvite(email){
+  invitees=invitees.filter(function(e){return e!==email;});
+  renderChips();
+}
+function renderChips(){
+  var wrap=document.getElementById('invite-chips');
+  wrap.innerHTML='';
+  invitees.forEach(function(e){
+    var chip=document.createElement('div');chip.className='invite-chip';
+    var nm=document.createElement('span');nm.textContent=e;
+    var x=document.createElement('button');x.className='invite-chip-x';x.textContent='×';
+    x.onclick=(function(em){return function(){removeInvite(em);};})(e);
+    chip.appendChild(nm);chip.appendChild(x);wrap.appendChild(chip);
+  });
+}
+document.getElementById('invite-email').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addInvite();}
+});
+
+/* ── Health dynamic fields ── */
+function updateHealthFields(){
+  var type=document.getElementById('hl-type').value;
+  var wrap=document.getElementById('hl-value-wrap');
+  var t={
+    weight:'<input class="add-extra-in" type="number" placeholder="Weight (kg or lb)" step="0.1" min="0"/>',
+    bp:'<div style="display:flex;gap:5px;"><input class="add-extra-in" type="number" placeholder="Systolic" min="0" max="300" style="flex:1;"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="add-extra-in" type="number" placeholder="Diastolic" min="0" max="200" style="flex:1;"/></div>',
+    hr:'<input class="add-extra-in" type="number" placeholder="Heart rate (BPM)" min="0" max="300"/>',
+    glucose:'<input class="add-extra-in" type="number" placeholder="Glucose (mg/dL)" min="0" step="1"/>',
+    steps:'<input class="add-extra-in" type="number" placeholder="Steps" min="0" step="1"/>',
+    water:'<input class="add-extra-in" type="number" placeholder="Water (ml or fl oz)" min="0" step="10"/>',
+    sleep:'<div style="display:flex;gap:5px;"><input class="add-extra-in" type="number" placeholder="Hours" min="0" max="24" step="0.5" style="flex:1;"/><select class="add-extra-in" style="flex:1;"><option>Quality 5/5</option><option>Quality 4/5</option><option selected>Quality 3/5</option><option>Quality 2/5</option><option>Quality 1/5</option></select></div>',
+    mood:'<select class="add-extra-in"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'
+  };
+  wrap.innerHTML=t[type]||'<input class="add-extra-in" type="number" placeholder="Value" step="0.1"/>';
+}
+
+/* ── Task checkbox ── */
+function toggleCb(cb){
+  var done=cb.classList.toggle('done');
+  cb.style.cssText=done?'background:var(--blue);border-color:var(--blue);':'';
+  cb.innerHTML=done?'<span style="color:#fff;font-size:8px;font-weight:700;">✓</span>':'';
+  var row=cb.closest('.task-item');
+  if(row){var nm=row.querySelector('.task-nm');if(nm){nm.style.textDecoration=done?'line-through':'';nm.style.color=done?'var(--txt3)':'';}}
+}
+
+/* ── Submit handlers ── */
+function showSt(id,msg,col){
+  var el=document.getElementById(id);if(!el)return;
+  el.style.color=col;el.textContent=msg;
+  setTimeout(function(){el.textContent='';},2500);
+}
+function submitEv(){
+  if(!document.getElementById('ev-title').value.trim()){showSt('ev-st','Title required.','var(--red)');return;}
+  showSt('ev-st','✅ Event added!','var(--teal)');
+  document.getElementById('ev-title').value='';invitees=[];renderChips();
+}
+function submitTask(){
+  if(!document.getElementById('tk-title').value.trim()){showSt('tk-st','Title required.','var(--red)');return;}
+  showSt('tk-st','✅ Task added!','var(--teal)');
+  document.getElementById('tk-title').value='';
+}
+function submitFin(){
+  var a=document.getElementById('fin-amt').value;
+  var cat=document.getElementById('fin-cat').value;
+  if(!a||!cat){showSt('fin-st','Amount & category required.','var(--red)');return;}
+  showSt('fin-st','✅ Entry recorded!','var(--teal)');
+  document.getElementById('fin-amt').value='';
+  document.getElementById('fin-desc').value='';
+}
+function submitHealth(){
+  if(!document.getElementById('hl-type').value){showSt('hl-st','Select a metric.','var(--red)');return;}
+  showSt('hl-st','✅ Health record saved!','var(--teal)');
+  document.getElementById('hl-notes').value='';
+}
+function submitProject(){
+  if(!document.getElementById('pr-name').value.trim()){showSt('pr-st','Project name required.','var(--red)');return;}
+  showSt('pr-st','✅ Project created!','var(--teal)');
+  document.getElementById('pr-name').value='';
+}
+
+function filterTasks(sel){console.log('Filter:',sel.value);}
+function openEvModal(id){console.log('Open event:',id);}
+
+// Init dates
+(function(){
+  var nd=new Date().toISOString().slice(0,10);
+  ['ev-date','tk-due','fin-date','hl-date'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value=nd;
+  });
+})();
+</script>
+</body>
+</html>
