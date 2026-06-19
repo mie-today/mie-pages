@@ -1,1770 +1,887 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>MIE Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
-body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
-.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f2f5;padding:24px;}
-.auth-card{background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
-.auth-logo{width:56px;height:56px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
-.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;}
-.auth-sub{font-size:13px;color:#5f6368;margin-bottom:26px;line-height:1.6;}
-.connect-btn{background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.connect-btn:hover{background:#1765cc;}
-.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
-.spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-#dashboard{display:none;height:100vh;flex-direction:column;overflow:hidden;position:relative;}
-.topbar{flex-shrink:0;height:46px;background:#fff;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:relative;z-index:10;}
-.tb-left{display:flex;align-items:center;gap:12px;}
-.hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px;border-radius:6px;}
-.hamburger:hover{background:#f1f3f4;}
-.hamburger span{display:block;width:16px;height:1.5px;background:#5f6368;border-radius:2px;transition:transform .22s,opacity .22s;}
-.hamburger.is-open span:nth-child(1){transform:translateY(5.5px) rotate(45deg);}
-.hamburger.is-open span:nth-child(2){opacity:0;}
-.hamburger.is-open span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg);}
-.tb-logo{width:30px;height:30px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;}
-.tb-brand{font-size:16px;font-weight:600;color:#1a73e8;}
-.tb-welcome{font-size:14px;color:#5f6368;}
-.tb-right{display:flex;align-items:center;gap:16px;}
-.tb-meta{display:flex;align-items:center;gap:10px;font-size:13px;color:#5f6368;}
-.tb-sep{color:#dadce0;}
-.tb-weather{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:500;color:#202124;}
-.signout-btn{font-size:13px;color:#1a73e8;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.signout-btn:hover{text-decoration:underline;}
-.sidebar-overlay{position:fixed;top:46px;left:0;right:0;bottom:0;z-index:100;pointer-events:none;display:flex;}
-.sidebar-overlay.is-open{pointer-events:auto;}
-.sidebar-dim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .25s;cursor:pointer;}
-.sidebar-overlay.is-open .sidebar-dim{background:rgba(0,0,0,.2);}
-.sidebar-drawer{position:relative;z-index:1;width:220px;height:100%;background:#fff;border-right:1px solid #e0e0e0;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .26s cubic-bezier(.4,0,.2,1);flex-shrink:0;}
-.sidebar-overlay.is-open .sidebar-drawer{transform:translateX(0);box-shadow:4px 0 16px rgba(0,0,0,.08);}
-.sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #f1f3f4;height:46px;flex-shrink:0;}
-.sidebar-logo-row{display:flex;align-items:center;gap:8px;}
-.sidebar-logo{width:26px;height:26px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;}
-.sidebar-brand{font-size:15px;font-weight:600;color:#1a73e8;}
-.sidebar-close{background:none;border:none;cursor:pointer;color:#5f6368;font-size:18px;padding:2px 4px;border-radius:4px;}
-.sidebar-close:hover{background:#f1f3f4;}
-.sidebar-nav{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;}
-.sidebar-sec{font-size:9px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.08em;padding:8px 8px 4px;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:#3c4043;font-size:13px;font-weight:500;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;}
-.nav-item:hover{background:#f1f3f4;}
-.nav-item.active{background:#e8f0fe;color:#1a73e8;}
-.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:.65;}
-.nav-item.active .nav-icon{opacity:1;}
-.sidebar-foot{padding:12px 16px;border-top:1px solid #f1f3f4;font-size:10px;color:#9aa0a6;}
-.body-wrap{flex:1;display:flex;overflow:hidden;min-height:0;padding:6px 16px 6px;max-width:1440px;width:100%;margin:0 auto;align-items:stretch;gap:12px;}
-.col-left{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;padding-top:0;position:relative;}
-.col-right{flex:0 0 calc(40% - 14px);min-width:0;display:flex;flex-direction:column;overflow:hidden;gap:10px;}
-.module{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
-.module.active{display:flex;}
-.module-top-space{height:4px;flex-shrink:0;}
-.ov-panels{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 16px 4px;flex-shrink:0;}
-.ov-panel{background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 8px;overflow:hidden;transition:background .12s,border-color .12s;}
-.ov-panel.clickable{cursor:pointer;}
-.ov-panel.clickable:hover{background:#e8f0fe;border-color:#1a73e8;}
-.ov-panel-hd{display:flex;align-items:center;justify-content:space-between;}
-.ov-panel-title{font-size:13px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
-.ov-panel.clickable:hover .ov-panel-title{color:#1a73e8;}
-.ov-panel-count{font-size:11px;font-weight:600;color:#1a73e8;background:#e8f0fe;border-radius:10px;padding:1px 7px;flex-shrink:0;}
-.cal-topbar{display:flex;align-items:center;gap:8px;padding:4px 14px 4px;flex-shrink:0;}
-.cal-title-btn{display:flex;align-items:center;gap:5px;cursor:pointer;flex:0 0 auto;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;}
-.cal-nav-group{display:flex;align-items:center;gap:4px;flex:0 0 auto;margin-right:auto;}
-.cal-month-title{font-size:16px;font-weight:500;color:#202124;padding:0 6px;}
-.cal-title-arrow{font-size:12px;color:#5f6368;transition:transform .2s;}
-.cal-title-arrow.open{transform:rotate(180deg);}
-.cal-nav-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 12px;font-size:13px;cursor:pointer;color:#5f6368;}
-.cal-nav-btn:hover{background:#f1f3f4;}
-.cal-today-btn{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 12px;font-size:13px;cursor:pointer;color:#5f6368;font-weight:500;}
-.cal-today-btn:hover{background:#f1f3f4;}
-.cal-view-sel{appearance:none;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:5px 22px 5px 12px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
-.mini-cal-popover{display:none;position:absolute;top:108px;left:18px;z-index:60;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:12px;width:260px;user-select:none;}
-.mini-cal-popover.open{display:block;}
-.mc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.mc-title{font-size:13px;font-weight:600;color:#202124;}
-.mc-nav{background:none;border:none;cursor:pointer;color:#5f6368;font-size:16px;padding:2px 6px;border-radius:4px;}
-.mc-nav:hover{background:#f1f3f4;}
-.mc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-.mc-dow{font-size:9px;font-weight:600;color:#70757a;text-align:center;padding:2px 0;}
-.mc-day{font-size:11px;color:#3c4043;text-align:center;padding:4px 2px;border-radius:50%;cursor:pointer;min-width:28px;height:28px;display:flex;align-items:center;justify-content:center;margin:1px auto;}
-.mc-day:hover{background:#f1f3f4;}
-.mc-day.mc-today{background:#1a73e8;color:#fff;font-weight:600;}
-.mc-day.mc-other-month{color:#b0b8c1;}
-.mc-day.mc-selected{background:#e8f0fe;color:#1a73e8;font-weight:600;}
-.year-picker-popover{display:none;position:absolute;top:108px;left:18px;z-index:61;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);padding:14px 16px;width:240px;user-select:none;}
-.year-picker-popover.open{display:block;}
-.yp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.yp-year-lbl{font-size:15px;font-weight:700;color:#202124;}
-.yp-nav{background:none;border:none;cursor:pointer;color:#5f6368;font-size:18px;padding:2px 8px;border-radius:4px;font-weight:700;}
-.yp-nav:hover{background:#f1f3f4;}
-.yp-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.yp-month{font-size:12px;font-weight:500;color:#3c4043;text-align:center;padding:8px 4px;border-radius:8px;cursor:pointer;border:1px solid transparent;}
-.yp-month:hover{background:#f1f3f4;}
-.yp-month.yp-current{background:#1a73e8;color:#fff;border-color:#1a73e8;}
-.yp-month.yp-this-month{border-color:#1a73e8;color:#1a73e8;}
-.cal-nav-inline{font-size:16px;padding:3px 8px;font-weight:400;min-width:28px;background:none !important;border:none !important;color:#5f6368;}
-/* Day cell layout — stronger specificity to beat FullCalendar defaults */
-.fc-daygrid-day .fc-daygrid-day-frame{display:flex;flex-direction:column;}
-.fc-daygrid-day .fc-daygrid-day-top{display:flex !important;flex-direction:row !important;justify-content:flex-start !important;align-items:center !important;padding:3px 5px 2px !important;overflow:visible !important;}
-.fc-daygrid-day .fc-daygrid-day-number{width:22px !important;height:22px !important;font-size:12px !important;font-weight:500;color:#3c4043 !important;cursor:pointer !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;transition:background .12s;flex-shrink:0 !important;}
-.fc-daygrid-day .fc-daygrid-day-number:hover{background:#e8f0fe;color:#1a73e8 !important;}
-.fc-daygrid-day.fc-day-today .fc-daygrid-day-number{background:#1a73e8 !important;color:#fff !important;font-weight:600 !important;}
-.mie-day-icons{display:inline-flex;align-items:center;gap:1px;padding-left:2px;font-size:11px;line-height:1.4;flex-wrap:nowrap;overflow:visible;}
-/* ── Week/Day view icon row ── */
-.mie-timegrid-icon-row{display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1.4;padding:1px 2px;min-height:16px;overflow:visible;width:100%;}
-/* ── Task mini bullet (clickable) ── */
-.ov-task-mini-dot{width:14px;height:14px;min-width:14px;border-radius:50%;border:1.5px solid #9aa0a6;background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s;padding:0;font-family:inherit;}
-.ov-task-mini-dot:hover{border-color:#1a73e8;background:#e8f0fe;}
-.ov-task-mini-dot.done{background:#1a73e8 !important;border-color:#1a73e8 !important;}
-.ov-task-mini-dot.done::after{content:'✓';color:#fff;font-size:8px;font-weight:700;line-height:1;}
-.ov-task-mini-dot.loading{opacity:.45;cursor:wait;}
-.ov-task-mini-dot.overdue-dot{border-color:#c5221f;}
-.ov-task-mini-dot.today-dot{border-color:#b06000;}
-/* ── Task box + add button (borderless) ── */
-.ov-task-add-btn{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:none;color:#1a73e8;border:none;cursor:pointer;font-size:20px;line-height:1;flex-shrink:0;transition:color .15s;font-family:inherit;padding:0;}
-.ov-task-add-btn:hover{color:#1557b0;}
-/* ── Draft UI ── */
-.draft-row{display:flex;align-items:center;gap:6px;margin-top:6px;}
-.draft-check-lbl{display:flex;align-items:center;gap:5px;font-size:11px;color:#5f6368;cursor:pointer;user-select:none;}
-.draft-check-lbl input[type="checkbox"]{width:12px;height:12px;accent-color:#1a73e8;cursor:pointer;flex-shrink:0;}
-.draft-list-wrap{margin-top:4px;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;max-height:120px;overflow-y:auto;}
-.draft-list-wrap::-webkit-scrollbar{width:3px;}
-.draft-list-wrap::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px;}
-.draft-item{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:background .1s;border-bottom:1px solid #f1f3f4;}
-.draft-item:last-child{border-bottom:none;}
-.draft-item:hover{background:#f8f9fa;}
-.draft-item-text{flex:1;font-size:11px;color:#3c4043;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.draft-item-del{background:none;border:none;color:#9aa0a6;cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0;transition:color .12s;}
-.draft-item-del:hover{color:#d93025;}
-.fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
-.fc .fc-col-header-cell{text-align:center !important;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KLAIVE - Calendar</title>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* 0626dash-prod.html 기준 CSS 변수 및 초기화 */
+    :root {
+      --bg: #FFFFFF; --bg2: #FAFAF8; --bg3: #F2F1EE;
+      --txt: #111111; --txt2: #5F5E5A; --txt3: #999896;
+      --blue: #1C7ED6; --teal: #1D9E75;
+      --b1: rgba(0,0,0,0.07); --b2: rgba(0,0,0,0.12);
+      --red: #E24B4A; --purple: #534AB7; --amber: #EF9F27;
+      --r: 12px;
+    }
 
-.fc .fc-event,.fc .fc-event-main,.fc .fc-daygrid-event,.fc .fc-timegrid-event,.fc .fc-event-main-frame,.fc .fc-daygrid-event-harness .fc-event{background:transparent !important;background-color:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
-.fc .fc-daygrid-event-dot{display:none !important;}
-.fc .fc-col-header-cell{background:#f8f9fa !important;font-size:12px !important;font-weight:600 !important;color:#70757a !important;border:none !important;padding-top:3px !important;padding-bottom:3px !important;}
-.fc .fc-col-header-cell .fc-col-header-cell-cushion{padding:3px 4px !important;}
-/* Remove inter-cell borders — outer calendar border only */
-.fc .fc-daygrid-day{border:none !important;background:#fff !important;}
-.fc .fc-daygrid-day.fc-day-today{background:#f0f6ff !important;}
-.fc-theme-standard .fc-scrollgrid{border:1px solid #e8eaed !important;}
-.fc-theme-standard td,.fc-theme-standard th{border:none !important;}
-/* Restore subtle row separators only */
-.fc .fc-daygrid-body tr{border-bottom:1px solid #f1f3f4 !important;}
-.fc .fc-daygrid-more-link{display:none !important;}
-.mie-more{display:block;margin:1px 4px;font-size:10px;color:#5f6368;cursor:pointer;font-weight:500;}
-.mie-more:hover{color:#1a73e8;}
-.fc .fc-timegrid-slot{height:2.2em !important;}
-.fc .fc-timegrid-axis{font-size:9px !important;color:#70757a !important;}
-.fc .fc-timegrid-axis-cushion{display:none !important;}
-.fc-timegrid-col.fc-day-today{background:#fff !important;}
-.cal-wrap{flex:1;min-height:0;padding:0 10px;overflow:hidden;position:relative;}
-.cal-footer-row{padding:2px 14px 4px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.cal-popup{display:none;position:absolute;bottom:44px;left:18px;z-index:50;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:12px 14px;min-width:190px;}
-.cal-popup.open{display:block;}
-.cal-popup-title{font-size:9px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
-.cal-row{display:flex;align-items:center;gap:7px;padding:5px 3px;border-radius:6px;}
-.cal-row:hover{background:#f8f9fa;}
-.cal-row-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
-.cal-row-lock{font-size:10px;flex-shrink:0;opacity:.5;}
-.cal-row input[type="checkbox"]{width:12px;height:12px;accent-color:#1a73e8;cursor:pointer;flex-shrink:0;}
-.cal-row-name{font-size:12px;color:#202124;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-.cal-row-name.is-primary{font-weight:600;}
-.cal-cals-btn{display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #dadce0;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:500;color:#5f6368;cursor:pointer;}
-.cal-cals-btn:hover{background:#f1f3f4;}
-.add-fab{display:flex;align-items:center;gap:6px;background:#1a73e8;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(26,115,232,.35);transition:background .15s;}
-.add-fab:hover{background:#1765cc;}
-.cal-task-section{flex-shrink:0;border-top:1px solid #f1f3f4;overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1);max-height:0;}
-.cal-task-section.expanded{max-height:280px;}
-.cal-task-list{padding:6px 12px 12px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:262px;}
-.cal-task-list::-webkit-scrollbar{width:3px;}
-.cal-task-list::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:2px;}
-.ov-panel-arrow{font-size:9px;color:#9aa0a6;transition:transform .22s;margin-left:4px;flex-shrink:0;}
-.ov-panel-right{display:flex;align-items:center;gap:4px;flex-shrink:0;}
-.ov-panel.task-open .ov-panel-arrow{transform:rotate(180deg);}
-.ov-panel.task-open{background:#e8f0fe;border-color:#1a73e8;}
-.ov-panel.task-open .ov-panel-title{color:#1a73e8;}
-.cal-task-header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px 4px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.04em;}
-.cal-task-header-link{font-size:11px;color:#1a73e8;font-weight:500;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;text-decoration:none;}
-.cal-task-header-link:hover{text-decoration:underline;}
-.cal-task-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .1s;}
-.cal-task-item:hover{background:#f8f9fa;}
-.cal-task-cb{width:14px;height:14px;min-width:14px;border:1.5px solid #9aa0a6;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;cursor:pointer;background:transparent;}
-.cal-task-cb:hover{border-color:#1a73e8;background:#e8f0fe;}
-.cal-task-cb.checked{border-color:#1a73e8;background:#1a73e8;}
-.cal-task-cb.checked::after{content:'✓';color:#fff;font-size:8px;font-weight:700;line-height:1;}
-.cal-task-name{flex:1;font-size:12px;color:#202124;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cal-task-name.done{text-decoration:line-through;color:#9aa0a6;}
-.cal-task-badge{font-size:10px;font-weight:500;border-radius:8px;padding:1px 6px;flex-shrink:0;}
-.cal-task-badge.today-badge{background:#fef7e0;color:#b06000;}
-.cal-task-badge.overdue-badge{background:#fce8e6;color:#c5221f;}
-.cal-task-badge.future-badge{background:#f1f3f4;color:#5f6368;}
-.cal-task-empty{font-size:11px;color:#9aa0a6;text-align:center;padding:12px 0;font-style:italic;}
-.mod-hd{padding:14px 18px 0;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
-.mod-title{font-size:20px;font-weight:500;color:#202124;}
-.task-layout{flex:1;display:flex;min-height:0;overflow:hidden;}
-.task-sidebar{width:200px;flex-shrink:0;border-right:1px solid #f1f3f4;padding:12px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
-.task-sidebar::-webkit-scrollbar{width:3px;}
-.task-sidebar::-webkit-scrollbar-thumb{background:#e0e0e0;}
-.tl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;color:#3c4043;transition:background .12s;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;}
-.tl-item:hover{background:#f1f3f4;}
-.tl-item.active{background:#e8f0fe;color:#1a73e8;}
-.tl-item svg{width:16px;height:16px;flex-shrink:0;}
-.tl-count{margin-left:auto;font-size:11px;color:#9aa0a6;font-weight:400;}
-.tl-sep{height:1px;background:#f1f3f4;margin:6px 8px;}
-.tl-create{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:20px;cursor:pointer;font-size:13px;color:#5f6368;border:none;background:none;width:100%;font-family:'DM Sans',sans-serif;text-align:left;transition:background .12s;}
-.tl-create:hover{background:#f1f3f4;color:#202124;}
-.task-content{flex:1;overflow-y:auto;padding:12px 16px;min-height:0;}
-.task-content::-webkit-scrollbar{width:4px;}
-.task-content::-webkit-scrollbar-thumb{background:#e0e0e0;border-radius:4px;}
-.task-lists-grid{display:grid;gap:14px;}
-.task-lists-grid.multi{grid-template-columns:1fr 1fr;}
-.task-lists-grid.single{grid-template-columns:1fr;max-width:600px;margin:0 auto;}
-.task-list-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;}
-.tlc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.tlc-name{font-size:14px;font-weight:500;color:#202124;}
-.tlc-add{display:flex;align-items:center;gap:8px;padding:6px 4px;color:#1a73e8;cursor:pointer;font-size:13px;font-weight:500;border:none;background:none;font-family:'DM Sans',sans-serif;width:100%;text-align:left;border-radius:4px;}
-.tlc-add:hover{background:#f1f3f4;}
-.tlc-add svg{width:16px;height:16px;flex-shrink:0;}
-.tlc-task{display:flex;align-items:flex-start;gap:10px;padding:7px 4px;border-radius:6px;transition:background .1s;}
-.tlc-task:hover{background:#f8f9fa;}
-.tlc-cb{width:18px;height:18px;border:1.5px solid #9aa0a6;border-radius:50%;cursor:pointer !important;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s;position:relative;z-index:10;user-select:none;-webkit-user-select:none;pointer-events:auto !important;}
-.tlc-cb:hover{border-color:#1a73e8;background:#e8f0fe;}
-.tlc-cb.checked{border-color:#1a73e8 !important;background:#1a73e8 !important;}
-.tlc-cb.checked::after{content:'✓';color:#fff;font-size:10px;line-height:1;font-weight:700;}
-.tlc-cb.loading{opacity:.45;border-color:#a8c7fa !important;background:#e8f0fe !important;}
-.tlc-cb.loading::after{content:'';display:none;}
-.tlc-task-body{flex:1;min-width:0;cursor:default;}
-.tlc-task-name{font-size:13px;color:#202124;line-height:1.4;}
-.tlc-task-name.done{text-decoration:line-through;color:#9aa0a6;}
-.tlc-task-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
-.tlc-due-chip{display:flex;align-items:center;gap:3px;font-size:11px;padding:2px 7px;border-radius:12px;font-weight:500;}
-.tlc-due-chip.overdue{background:#fce8e6;color:#c5221f;}
-.tlc-due-chip.today{background:#fef7e0;color:#b06000;}
-.tlc-due-chip.future{background:#f1f3f4;color:#5f6368;}
-.tlc-completed-section{display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer;color:#5f6368;font-size:12px;margin-top:4px;}
-.tlc-completed-section svg{width:14px;height:14px;transition:transform .2s;}
-.tlc-completed-section.expanded svg{transform:rotate(90deg);}
-.tlc-completed-tasks{display:none;}
-.tlc-completed-tasks.show{display:block;}
-.mod-hd-plain{padding:14px 18px 0;flex-shrink:0;}
-.mod-title-plain{font-size:20px;font-weight:500;color:#202124;margin-bottom:12px;}
-.coming-soon{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9aa0a6;}
-.coming-soon-icon{font-size:40px;}
-.coming-soon-title{font-size:16px;font-weight:500;color:#5f6368;}
-.coming-soon-sub{font-size:13px;}
-.r-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:12px 14px;}
-.r-label{font-size:11px;font-weight:600;color:#5f6368;letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase;flex-shrink:0;}
-.tag-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.tag-chip{background:#f1f3f4;border:1px solid #e0e0e0;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:500;color:#5f6368;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif;user-select:none;-webkit-user-select:none;}
-.tag-chip:hover{background:#e8f0fe;border-color:#1a73e8;color:#1a73e8;}
-.tag-chip.selected{background:#1a73e8;border-color:#1a73e8;color:#fff;}
-.msg-ta{width:100%;min-height:72px;border:1px solid #dadce0;border-radius:6px;padding:10px 12px;font-size:13px;resize:vertical;font-family:'DM Sans',sans-serif;color:#202124;outline:none;}
-.msg-ta:focus{border-color:#1a73e8;}
-.msg-actions{display:flex;gap:8px;margin-top:10px;}
-.attach-lbl{background:#fff;border:1px solid #dadce0;border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:#5f6368;display:flex;align-items:center;gap:5px;}
-.attach-lbl:hover{background:#f1f3f4;}
-.fname{font-size:10px;color:#5f6368;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.rm-btn{background:none;border:none;color:#d93025;cursor:pointer;font-size:12px;}
-.send-btn{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.send-btn:hover:not(:disabled){background:#1765cc;}
-.send-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
-.send-status{font-size:11px;text-align:center;margin-top:6px;min-height:14px;}
-/* ── Overview widget (replaces Quick Actions) ── */
-.ov-widget{display:flex;flex-direction:column;gap:8px;}
-.ov-fin-card,.ov-health-card{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:8px 10px;cursor:pointer;transition:border-color .15s;flex-shrink:0;}
-.ov-fin-card:hover,.ov-health-card:hover{border-color:#1a73e8;background:#f0f5ff;}
-.ov-health-card{flex-shrink:0;display:flex;flex-direction:column;}
-.ov-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-shrink:0;}
-.ov-card-title{font-size:10px;font-weight:700;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;}
-.ov-card-link{font-size:10px;color:#1a73e8;font-weight:500;}
-.ov-remaining{font-size:18px;font-weight:700;line-height:1;}
-.ov-stacked-bar{height:8px;border-radius:5px;overflow:hidden;display:flex;width:100%;margin-bottom:4px;background:#f1f3f4;}
-.ov-sb-seg{height:100%;}
-.ov-legend{display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;}
-.ov-leg-item{display:flex;align-items:center;gap:4px;font-size:10.5px;color:#3c4043;}
-.ov-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-/* health card */
-.dh-cal-label{font-size:9.5px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;}
-.dh-cal-block{display:flex;align-items:baseline;gap:4px;}
-.dh-cal-num{font-size:22px;font-weight:700;color:#202124;line-height:1;}
-.dh-cal-unit{font-size:11.5px;color:#9aa0a6;}
-.dh-cal-goal{font-size:10.5px;color:#9aa0a6;margin-bottom:3px;}
-.dh-cal-bigbar{height:5px;border-radius:3px;background:#f1f3f4;overflow:hidden;margin-bottom:4px;}
-.dh-cal-bigfill{height:100%;border-radius:3px;background:#34a853;}
-.dh-cal-stats{display:flex;gap:10px;margin-bottom:6px;}
-.dh-cal-stat-item{font-size:10.5px;color:#5f6368;}
-.dh-cal-stat-item span{font-weight:600;color:#202124;}
-.dh-divider-h{height:1px;background:#f1f3f4;margin:3px 0;}
-.dh-activity-row{display:flex;align-items:center;gap:2px;margin-bottom:4px;}
-.dh-metric-item{display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;border-radius:8px;padding:2px 1px;}
-.dh-metric-icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;}
-.dh-metric-val{font-size:10px;font-weight:600;color:#202124;text-align:center;line-height:1.2;}
-.dh-metric-label{font-size:9px;color:#9aa0a6;text-align:center;}
-.dh-divider-v{width:1px;background:#f1f3f4;align-self:stretch;flex-shrink:0;}
-.dh-body-row{display:flex;align-items:center;gap:2px;margin-bottom:6px;}
-.dh-bc-item{text-align:center;flex:1;border-radius:8px;padding:3px 2px;}
-.dh-bc-label{font-size:9.5px;color:#9aa0a6;margin-bottom:1px;line-height:1.3;}
-.dh-bc-val{font-size:12px;font-weight:700;color:#202124;}
-.dh-bc-sub{font-size:10px;color:#5f6368;}
-.dh-section-lbl{font-size:10px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-.dh-vitals-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:2px;}
-.dh-vital-item{display:flex;align-items:center;gap:4px;}
-.dh-vital-icon{font-size:13px;flex-shrink:0;}
-.dh-vital-val{font-size:11.5px;font-weight:600;color:#202124;}
-.dh-vital-label{font-size:9.5px;color:#9aa0a6;}
-.dh-hs-divider{height:1px;background:#f1f3f4;margin:4px 0;}
-.dh-sleep-mood{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.dh-sm-tile{background:#f8f9fa;border-radius:8px;padding:4px 6px;display:flex;flex-direction:column;gap:1px;}
-.dh-sm-label{font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.05em;}
-.dh-sm-val{font-size:12px;font-weight:600;color:#202124;}
-.dh-sm-sub{font-size:9.5px;color:#9aa0a6;}
-.dh-skeleton{animation:dhPulse 1.4s ease-in-out infinite;}
-@keyframes dhPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.dh-skel-line{height:10px;background:#e8eaed;border-radius:4px;margin-bottom:6px;}
-.dh-skel-bar{height:5px;background:#e8eaed;border-radius:3px;margin-bottom:8px;}
-.dh-skel-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;}
-.dh-skel-icon{height:26px;background:#e8eaed;border-radius:50%;}
-/* projects+lists row */
-.ov-pl-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;flex:1;min-height:0;}
-.ov-pl-btn{background:#fafafa;border:1px solid #e0e0e0;border-radius:10px;padding:10px;text-align:center;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.ov-pl-tasks{text-align:left !important;align-items:stretch !important;justify-content:flex-start !important;}
-.ov-pl-icon{font-size:18px;margin-bottom:3px;}
-.ov-pl-name{font-size:12px;font-weight:500;color:#3c4043;}
-.ov-task-mini-item{display:flex;align-items:center;gap:5px;padding:2px 0;font-size:10.5px;color:#3c4043;line-height:1.3;cursor:default;}
-.ov-task-mini-done{text-decoration:line-through;color:#bdc1c6;}
-.ov-task-mini-badge{font-size:9px;padding:1px 4px;border-radius:6px;flex-shrink:0;}
-.ov-task-mini-badge.overdue{background:#fce8e6;color:#c5221f;}
-.ov-task-mini-badge.today{background:#fef7e0;color:#b06000;}
-.ov-task-mini-empty{font-size:10px;color:#9aa0a6;text-align:center;padding:8px 0;font-style:italic;}
-.ov-loading{font-size:11px;color:#9aa0a6;text-align:center;padding:8px 0;}
-/* keep qa-btn for potential reuse, but hide old grid */
-.qa-grid{display:none;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
-.modal-bg.hidden{display:none;}
-.modal-box{background:#fff;border-radius:12px;padding:20px;max-width:380px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.day-modal-box{background:#fff;border-radius:12px;padding:20px;max-width:400px;width:100%;max-height:78vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.15);}
-.modal-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px;}
-.modal-title{font-size:14px;font-weight:600;color:#202124;}
-.modal-x{background:none;border:none;font-size:18px;color:#9aa0a6;cursor:pointer;}
-.modal-row{font-size:12px;color:#5f6368;margin-bottom:4px;line-height:1.5;}
-.modal-link{display:inline-block;margin-top:10px;background:#1a73e8;color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;text-decoration:none;}
-.modal-link:hover{background:#1765cc;}
-.ev-view-box{background:#fff;border-radius:14px;padding:0;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);animation:mIn .16s ease;overflow:hidden;}
-.ev-view-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:10px 12px 6px;border-bottom:1px solid #f1f3f4;position:relative;z-index:10;}
-.ev-view-icon-btn{background:none;border:none;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#5f6368;transition:background .12s;flex-shrink:0;position:relative;z-index:20;pointer-events:auto;}
-.ev-view-icon-btn:hover{background:#f1f3f4;}
-.ev-view-icon-btn svg{width:18px;height:18px;}
-.ev-view-body{padding:16px 20px 20px;}
-.ev-view-color-bar{width:14px;height:14px;border-radius:3px;flex-shrink:0;margin-top:2px;}
-.ev-view-title-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
-.ev-view-title{font-size:18px;font-weight:500;color:#202124;line-height:1.3;flex:1;}
-.ev-view-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
-.ev-view-row-icon{width:18px;height:18px;flex-shrink:0;margin-top:1px;color:#5f6368;}
-.ev-view-row-icon svg{width:18px;height:18px;}
-.ev-view-row-text{font-size:13px;color:#3c4043;line-height:1.5;flex:1;}
-.ev-view-row-text a{color:#1a73e8;text-decoration:none;}
-.ev-view-row-text a:hover{text-decoration:underline;}
-.ev-view-cal-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
-.day-ev-item{display:flex;align-items:flex-start;gap:8px;padding:8px 4px;border-bottom:1px solid #f1f3f4;cursor:pointer;border-radius:6px;transition:all .1s;}
-.day-ev-item:hover{background:#f8f9fa;}
-.day-ev-item:last-child{border-bottom:none;}
-.day-ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
-.day-ev-info{flex:1;min-width:0;}
-.day-ev-time{font-size:10px;color:#9aa0a6;margin-bottom:1px;}
-.day-ev-title{font-size:13px;font-weight:500;color:#202124;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.day-ev-loc{font-size:10px;color:#9aa0a6;margin-top:1px;}
-.add-event-box,.add-task-box,.new-list-box{background:#fff;border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:mIn .18s ease;}
-.edit-modal-box{background:#fff;border-radius:12px;padding:22px;max-width:440px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.14);animation:mIn .18s ease;}
-@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
-.m-title{font-size:15px;font-weight:600;margin-bottom:14px;color:#202124;}
-.edit-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.edit-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#e8f0fe;color:#1a73e8;border-radius:4px;padding:2px 7px;}
-.f-field{margin-bottom:10px;}
-.f-lbl{font-size:10px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
-.f-input{width:100%;border:1px solid #dadce0;border-radius:6px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:#202124;background:#f8f9fa;outline:none;transition:border-color .12s;}
-.f-input:focus{border-color:#1a73e8;background:#fff;}
-.f-input.large{height:68px;resize:none;}
-.f-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.edit-actions{display:flex;gap:7px;margin-top:14px;}
-.btn-save{flex:1;background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-save:hover{background:#1765cc;}
-.btn-cancel{flex:1;background:#f1f3f4;color:#3c4043;border:1px solid #dadce0;border-radius:6px;padding:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.btn-cancel:hover{background:#e0e0e0;}
-.btn-delete{background:#fff;color:#d93025;border:1px solid #fad2cf;border-radius:6px;padding:8px 10px;font-size:13px;cursor:pointer;}
-.btn-delete:hover{background:#fce8e6;border-color:#d93025;}
-.modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
-@media(max-width:900px){
-  html,body{overflow:auto;}
-  #dashboard{height:auto;min-height:100vh;overflow:visible;}
-  .body-wrap{flex-direction:column;overflow:visible;height:auto;padding:8px 14px 16px;gap:12px;}
-  .col-left{flex:0 0 auto;width:100%;min-height:520px;}
-  .col-right{flex:0 0 auto;width:100%;display:flex;overflow:visible;}
-  .cal-wrap{min-height:420px;height:420px;}
-  #calendar{height:420px !important;}
-}
-@media(max-width:767px){
-  .tb-meta{display:none;}
-  .topbar{padding:0 12px;}
-  .body-wrap{padding:8px 10px 16px;}
-  .col-left{min-height:480px;}
-  .cal-wrap{min-height:380px;height:380px;}
-  #calendar{height:380px !important;}
-}
-@media(max-width:480px){
-  .ov-panels{grid-template-columns:1fr 1fr;}
-  .cal-topbar{flex-wrap:wrap;gap:6px;padding:0 12px 8px;}
-  .cal-month-title{font-size:15px;}
-  .col-left{min-height:440px;}
-  .cal-wrap{min-height:340px;height:340px;}
-  #calendar{height:340px !important;}
-  .task-layout{flex-direction:column;}
-  .task-sidebar{width:100%;border-right:none;border-bottom:1px solid #f1f3f4;flex-direction:row;flex-wrap:wrap;padding:8px;height:auto;}
-  .task-lists-grid.multi{grid-template-columns:1fr;}
-  .r-card{padding:12px 14px;}
-  .qa-grid{grid-template-columns:1fr 1fr;gap:6px;}
-  .qa-btn{padding:10px 4px;}
-  .qa-icon{font-size:18px;}
-  .qa-name{font-size:12px;}
-}
-</style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--txt); font-size: 13px; }
+    
+    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* Topbar Style (52px) */
+    .topbar { flex-shrink: 0; height: 52px; border-bottom: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); }
+    .topbar-left { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
+    .logo { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; color: var(--txt); }
+    .logo span { color: var(--blue); }
+    .divider { width: 1px; height: 16px; background: var(--b1); }
+    .welcome-msg { color: var(--txt2); font-size: 13px; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; color: var(--txt2); font-size: 13px; }
+    .logout-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 13px; font-family: inherit; }
+    .logout-btn:hover { color: var(--red); }
+    .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; color: var(--txt2); border: 1px solid var(--b1); }
+
+    /* Main Content Layout (Split 55:45 지정으로 가로 스크롤 완전 방지) */
+    .main-container { flex: 1; display: flex; overflow: hidden; background: var(--bg2); }
+    
+    /* 달력 영역 (55%) */
+    #calendar-section { flex: 55; display: flex; flex-direction: column; padding: 16px; overflow: hidden; position: relative; border-right: 1px solid var(--b1); }
+    
+    /* 커스텀 캘린더 헤더 */
+    .custom-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; position: relative; }
+    .cal-nav-group { display: flex; align-items: center; gap: 8px; position: relative; }
+    .cal-nav-btn { background: var(--bg); border: 1px solid var(--b1); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--txt2); }
+    .cal-nav-btn:hover { background: var(--bg3); }
+    .cal-title-text { font-size: 16px; font-weight: 600; cursor: pointer; padding: 2px 6px; border-radius: 4px; color: var(--txt); }
+    .cal-title-text:hover { background: var(--bg3); }
+    .today-btn { background: var(--bg); border: 1px solid var(--b1); padding: 0 12px; height: 28px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--txt2); }
+    .today-btn:hover { background: var(--bg3); }
+    
+    .cal-actions-group { display: flex; align-items: center; gap: 8px; position: relative; }
+    .dropdown-btn-wrap { position: relative; }
+    .view-select-btn { background: var(--bg); border: 1px solid var(--b1); padding: 0 12px; height: 28px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--txt2); }
+    .view-select-btn:hover { background: var(--bg3); }
+    
+    /* 드롭다운 메뉴 공통 */
+    .custom-dropdown-menu { display: none; position: absolute; top: 32px; right: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 1000; min-width: 110px; padding: 4px 0; }
+    .dropdown-item { padding: 8px 12px; font-size: 13px; color: var(--txt); cursor: pointer; }
+    .dropdown-item:hover { background: var(--bg2); color: var(--blue); }
+
+    /* 달력 본체 컨테이너 (스크롤 없음) */
+    .calendar-body-wrapper { flex: 1; overflow: hidden; background: var(--bg); border: 1px solid var(--b1); border-radius: var(--r); padding: 12px; }
+    #calendar { height: 100%; }
+    
+    /* FullCalendar 내부 스타일 오버라이드 */
+    .fc { font-family: 'Inter', sans-serif; --fc-border-color: rgba(0,0,0,0.05); }
+    .fc .fc-col-header-cell-cushion { padding: 8px 0; font-weight: 600; color: var(--txt2); font-size: 12px; text-transform: uppercase; }
+    .fc .fc-daygrid-day-number { font-size: 12px; font-weight: 500; color: var(--txt2); padding: 6px; }
+    .fc-day-today { background: rgba(28, 126, 214, 0.04) !important; }
+    .fc-day-today .fc-daygrid-day-number { color: var(--blue); font-weight: 700; }
+    
+    /* 이벤트 렌더링 스타일 */
+    .fc-event-pill { font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    .fc-event-dot-row { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fc-event-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Calendars 필터 버튼 및 팝업 */
+    .calendar-bottom-actions { margin-top: 10px; flex-shrink: 0; position: relative; }
+    .calendars-toggle-btn { background: var(--bg); border: 1px solid var(--b1); padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--txt2); width: fit-content; }
+    .calendars-toggle-btn:hover { background: var(--bg3); }
+    .calendars-popup { display: none; position: absolute; bottom: 38px; left: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: var(--r); padding: 14px; box-shadow: 0 -4px 16px rgba(0,0,0,0.08); z-index: 1010; width: 220px; }
+    .popup-section-title { font-size: 11px; font-weight: 600; color: var(--txt3); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .filter-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--txt2); cursor: pointer; }
+    .filter-item input { cursor: pointer; }
+    .color-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+    /* 우측 패널 레이아웃 (45%) */
+    #right-panel { flex: 45; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+    
+    /* Today Card 영역 (상단 절반 배치) */
+    .today-card { flex: 50; border-bottom: 1px solid var(--b1); display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
+    .today-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
+    .today-title { font-size: 16px; font-weight: 700; color: var(--txt); }
+    .today-date-label { font-size: 13px; color: var(--txt3); font-weight: 500; }
+    
+    /* 세부 스크롤 구획 */
+    .panel-scroll-container { flex: 1; overflow-y: auto; padding-right: 4px; }
+    .panel-scroll-container::-webkit-scrollbar { width: 4px; }
+    .panel-scroll-container::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+    
+    .section-label { font-size: 11px; font-weight: 600; color: var(--txt3); margin: 12px 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; }
+    .task-filter-select { border: none; background: none; color: var(--blue); font-size: 11px; font-weight: 600; cursor: pointer; outline: none; }
+
+    /* 이벤트 및 태스크 로우 디자인 */
+    .panel-item-row { display: flex; align-items: center; padding: 8px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 6px; font-size: 12.5px; gap: 8px; cursor: pointer; transition: background 0.15s; }
+    .panel-item-row:hover { background: var(--bg3); }
+    .event-bar { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    .item-time { font-size: 11px; color: var(--txt3); font-weight: 500; width: 65px; flex-shrink: 0; }
+    .item-text { font-weight: 500; color: var(--txt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .item-loc { font-size: 11px; color: var(--txt3); margin-left: auto; }
+    .task-checkbox { width: 14px; height: 14px; cursor: pointer; }
+    .task-badge { font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; margin-left: auto; background: var(--bg3); color: var(--txt2); }
+    .task-badge.today { background: rgba(28,126,214,0.1); color: var(--blue); }
+
+    /* Input Card 영역 (하단 절반 배치) */
+    .input-card { flex: 50; display: flex; flex-direction: column; background: var(--bg2); border-top: 1px solid var(--b1); overflow: hidden; }
+    .input-tabs { display: flex; border-bottom: 1px solid var(--b1); background: var(--bg); flex-shrink: 0; }
+    .input-tab-btn { flex: 1; padding: 10px 0; text-align: center; border: none; background: none; font-size: 13px; font-weight: 600; color: var(--txt3); cursor: pointer; position: relative; }
+    .input-tab-btn.active { color: var(--blue); }
+    .input-tab-btn.active::after { content:''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--blue); }
+    
+    .input-panel-content { flex: 1; display: flex; flex-direction: column; padding: 14px; overflow: hidden; }
+    .form-panel { display: none; height: 100%; flex-direction: column; }
+    .form-panel.active { display: flex; }
+
+    /* 메시지 작성 전용 */
+    .msg-box { flex: 1; border: 1px solid var(--b1); border-radius: 8px; background: var(--bg); padding: 10px; display: flex; flex-direction: column; margin-bottom: 10px; }
+    .msg-textarea { width: 100%; flex: 1; border: none; resize: none; outline: none; font-family: inherit; font-size: 13px; color: var(--txt); }
+    .msg-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .draft-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--txt2); cursor: pointer; }
+
+    /* 단일 행으로 정렬 구현된 5개 Add 서브 탭바 (가로 스크롤 없음) */
+    .sub-tabs-row { display: flex; background: var(--bg3); padding: 3px; border-radius: 8px; margin-bottom: 12px; flex-shrink: 0; width: 100%; justify-content: space-between; }
+    .sub-tab-btn { flex: 1; border: none; background: none; padding: 6px 0; font-size: 11.5px; font-weight: 600; color: var(--txt2); cursor: pointer; border-radius: 6px; text-align: center; white-space: nowrap; }
+    .sub-tab-btn.active { background: var(--bg); color: var(--txt); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* 내부 입력 필드 공통 */
+    .sub-form-container { flex: 1; overflow-y: auto; padding-right: 2px; margin-bottom: 10px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--txt2); margin-bottom: 4px; text-transform: uppercase; }
+    .form-control { width: 100%; border: 1px solid var(--b1); border-radius: 6px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; background: var(--bg); color: var(--txt); outline: none; }
+    .form-control:focus { border-color: var(--blue); }
+    .row-fields { display: flex; gap: 8px; }
+    .row-fields .form-group { flex: 1; }
+
+    /* 푸터 액션 고정 영역 */
+    .form-submit-row { flex-shrink: 0; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+    .btn { padding: 8px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+    .btn-neutral { background: var(--bg3); color: var(--txt2); }
+    .btn-neutral:hover { background: var(--b1); }
+    .btn-primary { background: var(--blue); color: #FFFFFF; }
+    .btn-primary:hover { opacity: 0.9; }
+
+    /* Bottom Nav Style (48px) */
+    .bottom-nav { flex-shrink: 0; height: 48px; border-top: 1px solid var(--b1); display: flex; align-items: center; justify-content: center; background: var(--bg); gap: 24px; }
+    .nav-item { font-size: 13px; font-weight: 600; color: var(--txt3); text-decoration: none; padding: 13px 4px; cursor: pointer; position: relative; border: none; background: none; font-family: inherit; }
+    .nav-item:hover { color: var(--txt2); }
+    .nav-item.active { color: var(--blue); }
+    .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--blue); }
+
+    /* 모달 레이어 공통 스타일 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 2000; align-items: center; justify-content: center; }
+    .modal-box { background: var(--bg); border-radius: var(--r); width: 420px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; padding: 16px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .modal-title { font-size: 15px; font-weight: 700; color: var(--txt); }
+    .modal-close { font-size: 18px; color: var(--txt3); cursor: pointer; border: none; background: none; }
+    .modal-body { overflow-y: auto; max-height: 350px; }
+
+    /* 미니 년월 선택기 팝업 전용 */
+    .month-year-picker-popup { display: none; position: absolute; top: 34px; left: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1050; padding: 10px; width: 240px; }
+    .picker-year-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--b1); padding-bottom: 6px; }
+    .picker-year-btn { border: none; background: none; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+    .picker-year-btn:hover { background: var(--bg3); }
+    .months-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
+    .picker-month-cell { padding: 6px 0; font-size: 11.5px; cursor: pointer; border-radius: 4px; color: var(--txt2); font-weight: 500; }
+    .picker-month-cell:hover { background: var(--blue); color: white; }
+  </style>
 </head>
 <body>
 
-<div id="auth-wrap" class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">M</div>
-    <div class="auth-title">MIE</div>
-    <div class="auth-sub">Your messages. Your calendar. Zero effort.</div>
-    <button class="connect-btn" id="connect-btn">Connect Google</button>
-  </div>
-</div>
-<div id="loading-wrap" class="spinner-wrap" style="display:none;">
-  <div class="spinner"></div>
-  <div style="font-size:12px;color:#5f6368;margin-top:4px;">Loading…</div>
-</div>
-
-<div id="dashboard">
-  <div class="sidebar-overlay" id="sidebar-overlay">
-    <div class="sidebar-dim" id="sidebar-dim"></div>
-    <div class="sidebar-drawer">
-      <div class="sidebar-head">
-        <div class="sidebar-logo-row"><div class="sidebar-logo">M</div><span class="sidebar-brand">MIE</span></div>
-        <button class="sidebar-close" id="sidebar-close">&times;</button>
-      </div>
-      <nav class="sidebar-nav">
-        <div class="sidebar-sec">Menu</div>
-        <button class="nav-item active" data-mod="calendar"><svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Overview</button>
-        <button class="nav-item" data-mod="tasks"><svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>Tasks</button>
-        <button class="nav-item" data-mod="trackers"><svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,12 5,7 8,9 12,4 15,6" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="14" x2="15" y2="14" stroke-linecap="round"/></svg>Trackers</button>
-        <button class="nav-item" data-mod="playbook"><svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg>Playbook</button>
-        <button class="nav-item" data-mod="templates"><svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="5" rx="1"/><rect x="1" y="8" width="6" height="7" rx="1"/><rect x="9" y="8" width="6" height="7" rx="1"/></svg>Templates</button>
-      </nav>
-      <div class="sidebar-foot">MIE · Personal Productivity</div>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo">KL<span>[AI]VE</span></div>
+      <div class="divider"></div>
+      <div class="welcome-msg">Welcome, <span id="user-display-name">User</span> (<span id="user-display-email">loading...</span>)</div>
     </div>
-  </div>
-
-  <div class="topbar">
-    <div class="tb-left">
-      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-      <div class="tb-logo">M</div>
-      <span class="tb-brand">MIE</span>
-      <span class="tb-welcome" id="welcome-text">Welcome</span>
+    <div class="topbar-right">
+      <span id="current-clock">00:00:00 PM</span>
+      <span>·</span>
+      <span id="current-date">June 19, 2026</span>
+      <span>·</span>
+      <span id="weather-info">🌤 --°F / --°C</span>
+      <div class="avatar" id="user-avatar">U</div>
+      <button class="logout-btn" onclick="handleLogout()">Sign out</button>
     </div>
-    <div class="tb-right">
-      <div class="tb-meta">
-        <span id="wb-date"></span><span class="tb-sep">·</span><span id="wb-time"></span>
-        <span class="tb-sep">·</span>
-        <div class="tb-weather"><span id="wb-icon" style="font-size:15px;"></span><span id="wb-temp"></span></div>
-      </div>
-      <button class="signout-btn" id="signout-btn">Sign out</button>
-    </div>
-  </div>
+  </header>
 
-  <div class="body-wrap">
-    <div class="col-left">
-      <div class="mini-cal-popover" id="mini-cal-popover">
-        <div class="mc-header"><button class="mc-nav" id="mc-prev">&#8249;</button><span class="mc-title" id="mc-title"></span><button class="mc-nav" id="mc-next">&#8250;</button></div>
-        <div class="mc-grid" id="mc-grid"></div>
-      </div>
-      <div class="year-picker-popover" id="year-picker-popover">
-        <div class="yp-header"><button class="yp-nav" id="yp-prev">&#8249;</button><span class="yp-year-lbl" id="yp-year-lbl"></span><button class="yp-nav" id="yp-next">&#8250;</button></div>
-        <div class="yp-months" id="yp-months"></div>
-      </div>
-
-      <div class="module active" id="mod-calendar">
-        <div class="module-top-space"></div>
-        <div class="cal-topbar">
-          <div class="cal-nav-group">
-            <button class="cal-nav-btn cal-nav-inline" id="cal-prev">&#8249;</button>
-            <button class="cal-title-btn" id="cal-title-btn" type="button">
-              <span class="cal-month-title" id="cal-title"></span>
-              <span class="cal-title-arrow" id="cal-title-arrow" style="display:none;"></span>
-            </button>
-            <button class="cal-nav-btn cal-nav-inline" id="cal-next">&#8250;</button>
-          </div>
-          <button class="cal-today-btn" id="cal-today">Today</button>
-          <select class="cal-view-sel" id="cal-view">
-            <option value="dayGridMonth">Month</option>
-            <option value="timeGridWeek">Week</option>
-            <option value="timeGridDay">Day</option>
-          </select>
-          <button class="add-fab" id="cal-add-fab" onclick="openUniversalAdd()">+ Add</button>
-        </div>
-        <div class="cal-wrap" id="cal-wrap">
-          <div id="calendar" style="height:100%;"></div>
-          <div class="cal-popup" id="cal-popup">
-            <div class="cal-popup-title">My Calendars</div>
-            <div id="cal-popup-list"></div>
-          </div>
-        </div>
-        <div class="cal-task-section" id="cal-task-section">
-          <div class="cal-task-list" id="cal-task-list"></div>
-        </div>
-        <div class="cal-footer-row">
-          <button class="cal-cals-btn" id="cal-list-btn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Calendars</button>
-        </div>
-      </div>
-
-      <div class="module" id="mod-tasks">
-        <div class="module-top-space"></div>
-        <div class="mod-hd"><div class="mod-title">✅ Tasks</div><button class="add-fab" id="task-add-fab" onclick="openUniversalAdd('task')">+ Add</button></div>
-        <div class="task-layout">
-          <div class="task-sidebar" id="task-sidebar">
-            <button class="tl-item active" data-list="all" id="tl-all"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>All tasks</button>
-            <div class="tl-sep"></div>
-            <div style="font-size:10px;font-weight:600;color:#5f6368;padding:4px 10px 2px;text-transform:uppercase;letter-spacing:.06em;">Lists</div>
-            <div id="task-list-sidebar-items"></div>
-            <div class="tl-sep"></div>
-            <button class="tl-create" id="tl-create-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Create new list</button>
-          </div>
-          <div class="task-content" id="task-content">
-            <div class="task-lists-grid single" id="task-lists-grid"><div style="text-align:center;padding:30px 0;font-size:13px;color:#9aa0a6;">Loading tasks…</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="module" id="mod-projecttracker"><div class="module-top-space"></div><div class="mod-hd"><div class="mod-title">📊 Project Trackers</div></div><div class="coming-soon"><div class="coming-soon-icon">📊</div><div class="coming-soon-title">Trackers</div><div class="coming-soon-sub">Coming soon</div></div></div>
-      <div class="module" id="mod-playbook"><div class="module-top-space"></div><div class="mod-hd"><div class="mod-title">📖 Work Playbook</div></div><div class="coming-soon"><div class="coming-soon-icon">📖</div><div class="coming-soon-title">Work Playbook</div><div class="coming-soon-sub">Coming soon</div></div></div>
-      <div class="module" id="mod-templates"><div class="module-top-space"></div><div class="mod-hd-plain"><div class="mod-title-plain">🗂️ Templates</div></div><div class="coming-soon"><div class="coming-soon-icon">🗂️</div><div class="coming-soon-title">Templates</div><div class="coming-soon-sub">Coming soon</div></div></div>
-      <div class="module" id="mod-monthlybudget"><div class="module-top-space"></div><div class="mod-hd"><div class="mod-title">💰 Monthly Budget</div></div><div class="coming-soon"><div class="coming-soon-icon">💰</div><div class="coming-soon-title">Financial Tracking</div><div class="coming-soon-sub">Coming soon</div></div></div>
-      <div class="module" id="mod-summaries"><div class="module-top-space"></div><div class="mod-hd-plain"><div class="mod-title-plain">📋 Summaries</div></div><div class="coming-soon"><div class="coming-soon-icon">📋</div><div class="coming-soon-title">Summaries</div><div class="coming-soon-sub">Coming soon</div></div></div>
-      <div class="module" id="mod-settings"><div class="module-top-space"></div><div class="mod-hd-plain"><div class="mod-title-plain">⚙️ Settings</div></div><div class="coming-soon"><div class="coming-soon-icon">⚙️</div><div class="coming-soon-title">Settings</div><div class="coming-soon-sub">Coming soon</div></div></div>
-    </div>
-
-    <div class="col-right">
-      <div class="r-card">
-        <textarea class="msg-ta" id="msg-input" placeholder="Type your message…"></textarea>
-        <div class="msg-actions">
-          <label class="attach-lbl" for="file-input">📎 Attach</label>
-          <input type="file" id="file-input" style="display:none;"/>
-          <span class="fname" id="fname" style="display:none;"></span>
-          <button class="rm-btn" id="rm-file" style="display:none;">✕</button>
-          <button class="send-btn" id="send-btn" disabled>Send</button>
-        </div>
-        <div class="draft-row">
-          <label class="draft-check-lbl">
-            <input type="checkbox" id="draft-check"/>
-            <span>Save as draft</span>
-          </label>
-        </div>
-        <div class="draft-list-wrap" id="draft-list-wrap" style="display:none;">
-          <div class="draft-list" id="draft-list"></div>
-        </div>
-        <div class="send-status" id="send-status"></div>
-      </div>
-      <div class="r-card" style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
-        <div class="r-label">Overview</div>
-        <div class="ov-widget" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:6px;min-height:0;">
-
-          <!-- Finance card -->
-          <div class="ov-fin-card" onclick="window.location.href='/finance'" title="Go to Finance" style="flex-shrink:0;">
-            <div class="ov-card-hd">
-              <span class="ov-card-title">💰 Finance &mdash; Monthly</span>
-              <span class="ov-card-link">›</span>
+  <main class="main-container">
+    <section id="calendar-section">
+      <div class="custom-cal-header">
+        <div class="cal-nav-group">
+          <button class="cal-nav-btn" onclick="calendar.prev(); updateHeaderTitle();">‹</button>
+          <div class="cal-title-text" id="calendar-title-display" onclick="toggleMonthYearPicker(event)">June 2026</div>
+          <button class="cal-nav-btn" onclick="calendar.next(); updateHeaderTitle();">›</button>
+          <button class="today-btn" onclick="calendar.today(); updateHeaderTitle();">Today</button>
+          
+          <div class="month-year-picker-popup" id="month-year-picker">
+            <div class="picker-year-row">
+              <button class="picker-year-btn" onclick="adjustPickerYear(-1, event)">◄</button>
+              <span id="picker-year-label" style="font-weight:600;">2026</span>
+              <button class="picker-year-btn" onclick="adjustPickerYear(1, event)">►</button>
             </div>
-            <div id="dash-fin-body"><div class="ov-loading">Loading…</div></div>
+            <div class="months-grid" id="months-grid-container"></div>
           </div>
+        </div>
 
-          <!-- Health card -->
-          <div class="ov-health-card" onclick="window.location.href='/health'" title="Go to Health">
-            <div class="ov-card-hd">
-              <span class="ov-card-title">💪 Health &mdash; Daily</span>
-              <span class="ov-card-link">›</span>
+        <div class="cal-actions-group">
+          <div class="dropdown-btn-wrap">
+            <button class="view-select-btn" id="view-dropdown-btn" onclick="toggleViewDropdown(event)">Month ▾</button>
+            <div class="custom-dropdown-menu" id="view-dropdown-menu">
+              <div class="dropdown-item" onclick="changeCalendarView('dayGridMonth', 'Month ▾')">Month</div>
+              <div class="dropdown-item" onclick="changeCalendarView('timeGridWeek', 'Week ▾')">Week</div>
             </div>
+          </div>
+          <button class="btn btn-primary" style="padding:0 12px; height:28px; font-size:12px;" onclick="focusAddTab()">+ Add</button>
+        </div>
+      </div>
 
-            <!-- skeleton shown while loading -->
-            <div id="dash-health-skeleton" class="dh-skeleton" style="padding:4px 0;">
-              <div class="dh-skel-line" style="width:40%;margin-bottom:5px;"></div>
-              <div class="dh-skel-bar" style="margin-bottom:6px;"></div>
-              <div class="dh-skel-grid" style="margin-bottom:6px;">
-                <div class="dh-skel-icon"></div><div class="dh-skel-icon"></div>
-                <div class="dh-skel-icon"></div><div class="dh-skel-icon"></div>
-                <div class="dh-skel-icon"></div>
+      <div class="calendar-body-wrapper">
+        <div id="calendar"></div>
+      </div>
+
+      <div class="calendar-bottom-actions">
+        <button class="calendars-toggle-btn" onclick="toggleCalendarsPopup(event)">⊞ Calendars</button>
+        <div class="calendars-popup" id="calendars-popup-layer">
+          <div class="popup-section-title">My Calendars</div>
+          <label class="filter-item"><input type="checkbox" checked data-cal="default"> <span class="color-dot" style="background:var(--blue)"></span> Default</label>
+          <label class="filter-item"><input type="checkbox" checked data-cal="private"> <span class="color-dot" style="background:var(--purple)"></span> Private</label>
+          <label class="filter-item"><input type="checkbox" checked data-cal="klaive"> <span class="color-dot" style="background:var(--teal)"></span> KLAIVE</label>
+          <label class="filter-item"><input type="checkbox" checked data-cal="health"> <span class="color-dot" style="background:var(--red)"></span> Women's Health</label>
+          <div class="popup-section-title" style="margin-top:12px;">Other Calendars</div>
+          <label class="filter-item"><input type="checkbox" checked id="toggle-other-cal" onchange="toggleOtherCalendarsVisibility()"> Show Events</label>
+        </div>
+      </div>
+    </section>
+
+    <section id="right-panel">
+      <div class="today-card">
+        <div class="today-card-header">
+          <div class="today-title">Today</div>
+          <div class="today-date-label" id="today-panel-date">Jun 19, 2026</div>
+        </div>
+        
+        <div class="panel-scroll-container">
+          <div class="section-label">EVENTS</div>
+          <div id="today-events-list"></div>
+          
+          <div class="section-label">
+            <span>TASKS</span>
+            <select class="task-filter-select" id="task-list-filter" onchange="loadTasks()">
+              <option value="all">All List ▾</option>
+            </select>
+          </div>
+          <div id="today-tasks-list"></div>
+        </div>
+      </div>
+
+      <div class="input-card">
+        <div class="input-tabs">
+          <button class="input-tab-btn active" id="tab-msg-btn" onclick="switchMainTab('msg')">Send Message</button>
+          <button class="input-tab-btn" id="tab-add-btn" onclick="switchMainTab('add')">+ Add</button>
+        </div>
+        
+        <div class="input-panel-content">
+          <div class="form-panel active" id="panel-msg">
+            <div class="msg-box">
+              <textarea class="msg-textarea" id="msg-textarea" placeholder="Type your message"></textarea>
+              <div class="msg-actions">
+                <button class="btn btn-neutral" style="padding:4px 10px; font-size:11px;">Attach</button>
+                <label class="draft-label"><input type="checkbox" id="msg-draft-chk"> Save as draft</label>
               </div>
-              <div class="dh-skel-line" style="width:100%;margin-bottom:4px;"></div>
-              <div class="dh-skel-line" style="width:100%;"></div>
             </div>
+            <div class="form-submit-row">
+              <button class="btn btn-primary" onclick="submitMessageForm()">SEND</button>
+            </div>
+          </div>
 
-            <!-- actual content — 2-column layout matching health/index.html overview -->
-            <div id="dash-health-body" style="display:none;">
-              <div style="display:flex;gap:8px;">
-
-                <!-- LEFT: Calories + bar + activity icons + weight -->
-                <div style="flex:0 0 58%;display:flex;flex-direction:column;gap:0;min-width:0;">
-                  <div class="dh-cal-label">Calories</div>
-                  <div style="display:flex;align-items:baseline;gap:3px;flex-wrap:nowrap;">
-                    <span class="dh-cal-num" id="dash-h-cal">—</span>
-                    <span class="dh-cal-unit">/ </span>
-                    <span class="dh-cal-unit" id="dash-h-cal-goal">—</span>
-                    <span class="dh-cal-unit">cal</span>
-                  </div>
-                  <div class="dh-cal-bigbar" style="margin-bottom:4px;display:flex;gap:1px;">
-                    <div id="dash-h-bar-carbs" style="height:100%;border-radius:3px 0 0 3px;background:#1a73e8;width:0%;transition:width .3s;"></div>
-                    <div id="dash-h-bar-fat"   style="height:100%;background:#fbbc04;width:0%;transition:width .3s;"></div>
-                    <div id="dash-h-bar-fiber" style="height:100%;background:#00897b;width:0%;transition:width .3s;"></div>
-                    <div id="dash-h-bar-prot"  style="height:100%;border-radius:0 3px 3px 0;background:#ea4335;width:0%;transition:width .3s;"></div>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
-                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#1a73e8;display:inline-block;flex-shrink:0;"></span>Carbs: <b id="dash-h-carbs">—</b> g</span>
-                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#fbbc04;display:inline-block;flex-shrink:0;"></span>Fat: <b id="dash-h-fat-g">—</b> g</span>
-                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#00897b;display:inline-block;flex-shrink:0;"></span>Fiber: <b id="dash-h-fiber">—</b> g</span>
-                    <span style="display:flex;align-items:center;gap:2px;font-size:9.5px;color:#3c4043;"><span style="width:7px;height:7px;border-radius:50%;background:#ea4335;display:inline-block;flex-shrink:0;"></span>Protein: <b id="dash-h-prot">—</b> g</span>
-                  </div>
-                  <!-- Activity icons: 🔥 👟 📍 💧 ⚖️ — 5개 균등 한 줄 -->
-                  <div style="display:flex;align-items:flex-start;margin-top:3px;width:100%;">
-                    <div class="dh-metric-item" style="flex:1;min-width:0;">
-                      <div class="dh-metric-icon" style="background:#e8f5e9;">🔥</div>
-                      <div class="dh-metric-val" id="dash-h-cals-b">—</div>
-                      <div class="dh-metric-label">Cals</div>
-                    </div>
-                    <div class="dh-metric-item" style="flex:1;min-width:0;">
-                      <div class="dh-metric-icon" style="background:#e3f2fd;">👟</div>
-                      <div class="dh-metric-val" id="dash-h-steps">—</div>
-                      <div class="dh-metric-label">Steps</div>
-                    </div>
-                    <div class="dh-metric-item" style="flex:1;min-width:0;">
-                      <div class="dh-metric-icon" style="background:#f3e5f5;">📍</div>
-                      <div class="dh-metric-val" id="dash-h-dist">—</div>
-                      <div class="dh-metric-label" id="dash-h-dist-lbl">km</div>
-                    </div>
-                    <div class="dh-metric-item" style="flex:1;min-width:0;">
-                      <div class="dh-metric-icon" style="background:#e0f7fa;">💧</div>
-                      <div class="dh-metric-val" id="dash-h-water">—</div>
-                      <div class="dh-metric-label">ml</div>
-                    </div>
-                    <div class="dh-metric-item" style="flex:1;min-width:0;">
-                      <div class="dh-metric-icon" style="background:#f3e5f5;font-size:11px;">⚖️</div>
-                      <div class="dh-metric-val" id="dash-h-weight" style="font-size:9.5px;">—</div>
-                      <div class="dh-metric-label" id="dash-h-weight-sub">kg</div>
-                    </div>
-                  </div>
+          <div class="form-panel" id="panel-add">
+            <div class="sub-tabs-row">
+              <button class="sub-tab-btn active" id="subtab-event" onclick="switchSubForm('event')">Event</button>
+              <button class="sub-tab-btn" id="subtab-task" onclick="switchSubForm('task')">Task</button>
+              <button class="sub-tab-btn" id="subtab-finance" onclick="switchSubForm('finance')">Finance</button>
+              <button class="sub-tab-btn" id="subtab-health" onclick="switchSubForm('health')">Health</button>
+              <button class="sub-tab-btn" id="subtab-project" onclick="switchSubForm('project')">Project</button>
+            </div>
+            
+            <div class="sub-form-container">
+              <div class="sub-form-section" id="form-event">
+                <div class="form-group"><label>Title</label><input type="text" class="form-control" id="ev-title" placeholder="Event Summary"></div>
+                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="ev-date"></div>
+                <div class="row-fields">
+                  <div class="form-group"><label>Start</label><input type="time" class="form-control" id="ev-start" value="09:00"></div>
+                  <div class="form-group"><label>End</label><input type="time" class="form-control" id="ev-end" value="10:00"></div>
                 </div>
-
-                <!-- vertical divider -->
-                <div style="width:1px;background:#f1f3f4;flex-shrink:0;align-self:stretch;"></div>
-
-                <!-- RIGHT: Vitals + Sleep/Mood -->
-                <div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">
-                  <!-- Vitals grid -->
-                  <div class="dh-vitals-grid" style="margin-bottom:2px;">
-                    <div class="dh-vital-item">
-                      <span class="dh-vital-icon">🩺</span>
-                      <div><div class="dh-vital-val" id="dash-h-bp">—</div><div class="dh-vital-label">Blood Pressure</div></div>
-                    </div>
-                    <div class="dh-vital-item">
-                      <span class="dh-vital-icon">🫀</span>
-                      <div><div class="dh-vital-val" id="dash-h-hr">—</div><div class="dh-vital-label">Heart Rate</div></div>
-                    </div>
-                    <div class="dh-vital-item">
-                      <span class="dh-vital-icon">💨</span>
-                      <div><div class="dh-vital-val" id="dash-h-spo2">—</div><div class="dh-vital-label">SpO2</div></div>
-                    </div>
-                    <div class="dh-vital-item">
-                      <span class="dh-vital-icon">🩸</span>
-                      <div><div class="dh-vital-val" id="dash-h-glucose">—</div><div class="dh-vital-label">Glucose</div></div>
-                    </div>
-                  </div>
-                  <div class="dh-hs-divider"></div>
-                  <!-- Sleep + Mood -->
-                  <div class="dh-sleep-mood">
-                    <div class="dh-sm-tile">
-                      <div class="dh-sm-label">Sleep</div>
-                      <div class="dh-sm-val" id="dash-h-sleep">—</div>
-                      <div class="dh-sm-sub" id="dash-h-sleep-q"></div>
-                    </div>
-                    <div class="dh-sm-tile">
-                      <div class="dh-sm-label">Mood</div>
-                      <div class="dh-sm-val" id="dash-h-mood">—</div>
-                    </div>
-                  </div>
-                </div>
-
+                <div class="form-group"><label>Location</label><input type="text" class="form-control" id="ev-loc" placeholder="Add Location"></div>
+                <div class="form-group"><label>Notes</label><input type="text" class="form-control" id="ev-notes" placeholder="Add Description"></div>
               </div>
-            </div><!-- /dash-health-body -->
-          </div>
 
-          <!-- Tasks + Projects + Lists -->
-          <div class="ov-pl-row">
-            <!-- TASKS box -->
-            <div class="ov-pl-btn ov-pl-tasks" title="Tasks">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;width:100%;">
-                <div style="display:flex;align-items:center;gap:5px;">
-                  <span style="font-size:15px;line-height:1;">✅</span>
-                  <span style="font-size:11px;font-weight:700;color:#202124;">Task</span>
-                </div>
-                <select id="ov-task-list-filter" style="font-size:10px;border:1px solid #e0e0e0;border-radius:4px;padding:2px 18px 2px 5px;color:#5f6368;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%226%22 height=%224%22%3E%3Cpath d=%22M0 0l3 4 3-4z%22 fill=%22%235f6368%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 5px center;max-width:80px;">
-                  <option value="all">All Lists</option>
-                </select>
+              <div class="sub-form-section" id="form-task" style="display:none;">
+                <div class="form-group"><label>Task Title</label><input type="text" class="form-control" id="tk-title" placeholder="What needs to be done?"></div>
+                <div class="form-group"><label>List Selection</label><select class="form-control" id="tk-list-select"></select></div>
+                <div class="form-group"><label>Due Date</label><input type="date" class="form-control" id="tk-due"></div>
+                <div class="form-group"><label>Priority</label><select class="form-control" id="tk-priority"><option value="normal">Normal</option><option value="high">High</option></select></div>
               </div>
-              <div id="ov-task-mini-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;min-height:0;width:100%;"></div>
-              <div style="display:flex;justify-content:flex-end;padding-top:4px;flex-shrink:0;">
-                <button class="ov-task-add-btn" id="ov-task-add-btn" title="Add task">+</button>
+
+              <div class="sub-form-section" id="form-finance" style="display:none;">
+                <div class="form-group"><label>Amount ($)</label><input type="number" class="form-control" id="fin-amount" placeholder="0.00"></div>
+                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="fin-date"></div>
+                <div class="form-group"><label>Category</label><input type="text" class="form-control" id="fin-category" placeholder="Food, Rent, etc."></div>
+                <div class="form-group"><label>Description</label><input type="text" class="form-control" id="fin-desc" placeholder="Notes"></div>
+              </div>
+
+              <div class="sub-form-section" id="form-health" style="display:none;">
+                <div class="form-group"><label>Metric Type</label><select class="form-control" id="he-metric"><option value="weight">Weight (kg)</option><option value="blood_pressure">Blood Pressure</option><option value="heart_rate">Heart Rate</option></select></div>
+                <div class="form-group"><label>Value</label><input type="text" class="form-control" id="he-value" placeholder="Enter measurement"></div>
+                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="he-date"></div>
+              </div>
+
+              <div class="sub-form-section" id="form-project" style="display:none;">
+                <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="pj-title" placeholder="Project name"></div>
+                <div class="form-group"><label>Deadline</label><input type="date" class="form-control" id="pj-due"></div>
+                <div class="form-group"><label>Status</label><select class="form-control" id="pj-status"><option value="active">Active</option><option value="planning">Planning</option></select></div>
+                <div class="form-group"><label>Members</label><input type="text" class="form-control" id="pj-members" placeholder="Emails separated by comma"></div>
               </div>
             </div>
-            <div class="ov-pl-btn" title="Coming soon">
-              <div class="ov-pl-icon">🎯</div>
-              <div class="ov-pl-name">Projects</div>
-            </div>
-            <div class="ov-pl-btn" title="Coming soon">
-              <div class="ov-pl-icon">📋</div>
-              <div class="ov-pl-name">Lists</div>
+
+            <div class="form-submit-row">
+              <button class="btn btn-primary" onclick="submitAddForm()">Submit</button>
             </div>
           </div>
-
         </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom-nav">
+    <button class="nav-item" onclick="location.href='/'">Overview</button>
+    <button class="nav-item active" onclick="void(0)">Calendar</button>
+    <button class="nav-item" onclick="location.href='/finance'">Finance</button>
+    <button class="nav-item" onclick="location.href='/health'">Health</button>
+    <button class="nav-item" onclick="location.href='/task'">Tasks</button>
+    <button class="nav-item" onclick="location.href='/documents'">Documents</button>
+    <button class="nav-item" onclick="location.href='/settings'">Settings</button>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="day-events-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="day-modal-header-text">Events</div>
+      <button class="modal-close" onclick="closeModal('day-events-modal')">×</button>
+    </div>
+    <div class="modal-body" id="day-modal-events-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="event-view-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="evt-view-title" style="font-size:16px;">Event Details</div>
+      <button class="modal-close" onclick="closeModal('event-view-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:10px; font-weight:500; id="evt-view-time">🕒 Time label</div>
+      <div style="margin-bottom:10px; display:none;" id="evt-view-loc-row">📍 <span id="evt-view-loc">Location</span></div>
+      <div style="margin-bottom:12px; color:var(--txt2); white-space:pre-wrap;" id="evt-view-desc">Description text</div>
+      <div style="display:flex; align-items:center; gap:6px; font-size:12px; padding-top:10px; border-top:1px solid var(--b1);">
+        <span class="color-dot" id="evt-view-dot"></span> <span id="evt-view-calname" style="color:var(--txt2);">Calendar Name</span>
       </div>
     </div>
   </div>
 </div>
-
-<div class="modal-bg hidden" id="add-task-modal"><div class="add-task-box"><div class="m-title">Add Task</div><div class="f-field"><label class="f-lbl">Title</label><input class="f-input" type="text" id="at-title" placeholder="Task title"/></div><div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="at-notes" placeholder="Optional notes"/></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Due Date</label><input class="f-input" type="date" id="at-due"/></div><div class="f-field"><label class="f-lbl">Priority</label><select class="f-input" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div><div class="f-field"><label class="f-lbl">Task List</label><select class="f-input" id="at-list"></select></div><div class="edit-actions"><button class="btn-cancel" id="at-cancel">Cancel</button><button class="btn-save" id="at-save">Add Task</button></div><div class="modal-status" id="at-status"></div></div></div>
-<div class="modal-bg hidden" id="new-list-modal"><div class="new-list-box"><div class="m-title">Create New List</div><div class="f-field"><label class="f-lbl">List Name</label><input class="f-input" type="text" id="nl-name" placeholder="e.g. Work, Personal, Health…"/></div><div class="edit-actions"><button class="btn-cancel" id="nl-cancel">Cancel</button><button class="btn-save" id="nl-save">Create</button></div><div class="modal-status" id="nl-status"></div></div></div>
-<div class="modal-bg hidden" id="event-view-modal">
-  <div class="ev-view-box">
-    <div class="ev-view-toolbar">
-      <button class="ev-view-icon-btn" id="ev-edit-btn" title="Edit event" type="button"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5l3 3L6 17H3v-3L14.5 2.5z"/></svg></button>
-      <button class="ev-view-icon-btn" id="ev-delete-btn" title="Delete event" type="button"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,6 15,6"/><path d="M8 6V4h4v2"/><rect x="6" y="6" width="8" height="11" rx="1"/><line x1="9" y1="10" x2="9" y2="15"/><line x1="11" y1="10" x2="11" y2="15"/></svg></button>
-      <button class="ev-view-icon-btn" id="ev-close-btn" title="Close" type="button"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
-    </div>
-    <div class="ev-view-body">
-      <div class="ev-view-title-row"><div class="ev-view-color-bar" id="ev-color-bar"></div><div class="ev-view-title" id="ev-view-title"></div></div>
-      <div class="ev-view-row" id="ev-time-row"><div class="ev-view-row-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><polyline points="10,6 10,10 13,13" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ev-view-row-text" id="ev-view-time"></div></div>
-      <div class="ev-view-row" id="ev-loc-row" style="display:none;"><div class="ev-view-row-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6z" stroke-linejoin="round"/><circle cx="10" cy="8" r="2"/></svg></div><div class="ev-view-row-text" id="ev-view-loc"></div></div>
-      <div class="ev-view-row" id="ev-desc-row" style="display:none;"><div class="ev-view-row-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="6" x2="16" y2="6" stroke-linecap="round"/><line x1="4" y1="10" x2="16" y2="10" stroke-linecap="round"/><line x1="4" y1="14" x2="11" y2="14" stroke-linecap="round"/></svg></div><div class="ev-view-row-text" id="ev-view-desc"></div></div>
-      <div class="ev-view-row" id="ev-cal-row"><div class="ev-view-row-icon"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="15" rx="1.5"/><line x1="2" y1="8" x2="18" y2="8"/><line x1="6" y1="1.5" x2="6" y2="4.5" stroke-linecap="round"/><line x1="14" y1="1.5" x2="14" y2="4.5" stroke-linecap="round"/></svg></div><div class="ev-view-row-text"><div style="display:flex;align-items:center;gap:6px;"><div class="ev-view-cal-dot" id="ev-cal-dot"></div><span id="ev-view-cal-name"></span></div></div></div>
-    </div>
-    <div class="ev-view-delete-confirm" id="ev-delete-confirm" style="display:none;padding:12px 20px 16px;border-top:1px solid #f1f3f4;">
-      <div style="font-size:13px;color:#202124;margin-bottom:10px;">Delete this event?</div>
-      <div style="display:flex;gap:8px;"><button class="btn-cancel" id="ev-delete-cancel" style="flex:1;padding:7px;font-size:13px;">Cancel</button><button class="btn-save" id="ev-delete-confirm-btn" style="flex:1;padding:7px;font-size:13px;background:#d93025;">Delete</button></div>
-      <div class="modal-status" id="ev-delete-status"></div>
-    </div>
-  </div>
-</div>
-<div class="modal-bg hidden" id="day-modal"><div class="day-modal-box"><div class="modal-hd"><div class="modal-title" id="day-modal-title"></div><button class="modal-x" id="day-modal-close">&times;</button></div><div id="day-modal-list"></div></div></div>
-<div class="modal-bg hidden" id="edit-modal"><div class="edit-modal-box"><div class="edit-hd"><div class="m-title" style="margin-bottom:0;">Edit Event</div><div style="display:flex;align-items:center;gap:8px;"><span class="edit-badge">Google Calendar</span><button class="modal-x" id="edit-modal-close">&times;</button></div></div><div class="f-field"><label class="f-lbl">Event Title</label><input class="f-input" type="text" id="edit-title" placeholder="Add a title"/></div><div class="f-row2"><div class="f-field"><label class="f-lbl">Start Date</label><input class="f-input" type="date" id="edit-date"/></div><div class="f-field"><label class="f-lbl">Start Time</label><input class="f-input" type="time" id="edit-time"/></div></div><div class="f-row2"><div class="f-field"><label class="f-lbl">End Date</label><input class="f-input" type="date" id="edit-end-date"/></div><div class="f-field"><label class="f-lbl">End Time</label><input class="f-input" type="time" id="edit-end-time"/></div></div><div class="f-field"><label class="f-lbl">Location</label><input class="f-input" type="text" id="edit-location" placeholder="Add a location"/></div><div class="f-field"><label class="f-lbl">Description</label><textarea class="f-input large" id="edit-desc" placeholder="Add a description"></textarea></div><div class="edit-actions"><button class="btn-cancel" id="edit-cancel-btn">Cancel</button><button class="btn-save" id="edit-save-btn">Save Changes</button><button class="btn-delete" id="edit-delete-btn">🗑</button></div><div class="modal-status" id="edit-save-status"></div></div></div>
 
 <script>
-'use strict';
-var BACKEND='https://api.mie.today';
-var MAX_VISIBLE=3;
-var authWrap=document.getElementById('auth-wrap');
-var loadWrap=document.getElementById('loading-wrap');
-var dash=document.getElementById('dashboard');
-var cal=null,eventsByDate={},allEvents=[],calendarMeta=[];
-var allTasks=[],taskLists=[],currentTaskFilter='all';
-var currentMod='calendar';
+  const BACKEND = 'https://api.mie.today';
+  let calendar;
+  let calendarMeta = {};
+  let currentActiveTab = 'msg';
+  let currentSubForm = 'event';
+  let pickerCurrentYear = 2026;
 
-var PASTEL_MAP={'#d50000':{bg:'#fdd5d5',text:'#b71c1c'},'#e67c73':{bg:'#fce4e3',text:'#c5221f'},'#f4511e':{bg:'#fde8e1',text:'#b83000'},'#f6bf26':{bg:'#fef3cd',text:'#a07000'},'#33b679':{bg:'#d3ead9',text:'#0b6b37'},'#0b8043':{bg:'#d3ead9',text:'#0b6b37'},'#039be5':{bg:'#cdeaf8',text:'#0277a8'},'#3f51b5':{bg:'#e0e4f7',text:'#283593'},'#7986cb':{bg:'#e8eaf6',text:'#3949ab'},'#8e24aa':{bg:'#ead5f5',text:'#6a1899'},'#616161':{bg:'#e8eaed',text:'#3c4043'},'#1a73e8':{bg:'#dce8fd',text:'#1a56b0'},'#4285f4':{bg:'#dce8fd',text:'#1a56b0'},'#4986e7':{bg:'#dce8fd',text:'#1a56b0'},'#0f9d58':{bg:'#d3ead9',text:'#0b6b37'},'#51b749':{bg:'#d3ead9',text:'#0b6b37'},'#f09300':{bg:'#fef3cd',text:'#a07000'},'#e4c441':{bg:'#fef7cd',text:'#8a6800'},'#9e69af':{bg:'#ead5f5',text:'#6a1899'},'#a142f4':{bg:'#ead5f5',text:'#6a1899'},'#ad1457':{bg:'#fce4ec',text:'#880e4f'},'#e91e63':{bg:'#fce4ec',text:'#880e4f'},'#a79b8e':{bg:'#ede9e5',text:'#5d4037'},'#795548':{bg:'#ede9e5',text:'#5d4037'},'#8d6e63':{bg:'#f0e6e2',text:'#7b3f2b'},'#ac725e':{bg:'#f0e6e2',text:'#7b3f2b'}};
-function pastelFor(hex){if(!hex)return{bg:'#dce8fd',text:'#1a56b0'};var k=hex.toLowerCase();if(PASTEL_MAP[k])return PASTEL_MAP[k];var h=k.replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];if(h.length!==6)return{bg:'#dce8fd',text:'#1a56b0'};var r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);var pr=Math.round(r*0.22+255*0.78),pg=Math.round(g*0.22+255*0.78),pb=Math.round(b*0.22+255*0.78);var tr=Math.round(r*0.55),tg=Math.round(g*0.55),tb=Math.round(b*0.55);function hx(n){return n.toString(16).padStart(2,'0');}return{bg:'#'+hx(pr)+hx(pg)+hx(pb),text:'#'+hx(tr)+hx(tg)+hx(tb)};}
-function pastelForCalId(rawCc,calId){if(rawCc)return pastelFor(rawCc);var meta=calendarMeta.find(function(c){return c.id===calId;});if(meta&&meta.color)return pastelFor(meta.color);return{bg:'#dce8fd',text:'#1a56b0'};}
-
-function show(el){[authWrap,loadWrap,dash].forEach(function(e){e.style.display='none';});if(el===dash){dash.style.display='flex';dash.style.flexDirection='column';}else el.style.display='';}
-function formatDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),td=new Date();td.setHours(0,0,0,0);var diff=Math.round((dt-td)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
-function isoDate(d){var m=d.getMonth()+1,day=d.getDate();return d.getFullYear()+'-'+(m<10?'0'+m:m)+'-'+(day<10?'0'+day:day);}
-
-function switchModule(modId){currentMod=modId;closeMiniCal();document.querySelectorAll('.module').forEach(function(m){m.classList.remove('active');});var t=document.getElementById('mod-'+modId);if(t)t.classList.add('active');document.querySelectorAll('.qa-btn[data-mod]').forEach(function(b){b.classList.toggle('qa-active',b.getAttribute('data-mod')===modId);});document.querySelectorAll('.nav-item[data-mod]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-mod')===modId);});if(modId==='tasks')renderTaskModule();if(modId==='calendar'&&cal)setTimeout(function(){cal.updateSize();calcCalHeight();},60);}
-
-document.querySelectorAll('.qa-btn[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}switchModule(btn.getAttribute('data-mod'));});});
-document.querySelectorAll('.nav-item[data-mod]').forEach(function(btn){btn.addEventListener('click',function(){if(btn.getAttribute('data-mod')==='tasks'){window.location.href='/task';return;}switchModule(btn.getAttribute('data-mod'));closeSidebar();});});
-
-// ov-panels removed — listeners no longer needed
-
-var sidebarOverlay=document.getElementById('sidebar-overlay');
-function openSidebar(){sidebarOverlay.classList.add('is-open');document.getElementById('hamburger').classList.add('is-open');}
-function closeSidebar(){sidebarOverlay.classList.remove('is-open');document.getElementById('hamburger').classList.remove('is-open');}
-document.getElementById('hamburger').addEventListener('click',function(){sidebarOverlay.classList.contains('is-open')?closeSidebar():openSidebar();});
-document.getElementById('sidebar-dim').addEventListener('click',closeSidebar);
-document.getElementById('sidebar-close').addEventListener('click',closeSidebar);
-
-// tag-chip removed
-
-function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){var u=d.user||{},name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'';document.getElementById('welcome-text').textContent=name?'Welcome, '+name:'Welcome';show(dash);loadCalendarList(function(){initCal();});loadTasks();startClock();loadWeather();loadDashFinance();loadDashHealth();}else{show(authWrap);}}).catch(function(){show(authWrap);});}
-document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
-document.getElementById('signout-btn').addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
-function startClock(){function tick(){var now=new Date();document.getElementById('wb-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});document.getElementById('wb-time').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
-function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';if(c<=99)return'⛈️';return'🌡️';}
-function fetchWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32);document.getElementById('wb-icon').textContent=wIcon(w.current.weathercode);document.getElementById('wb-temp').textContent=f+'°F / '+c+'°C';}).catch(function(){});}
-function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){fetchWeather(p.coords.latitude,p.coords.longitude);},function(){fetchWeather(37.7749,-122.4194);},{timeout:5000});else fetchWeather(37.7749,-122.4194);}
-
-var yearPickerPopover=document.getElementById('year-picker-popover');
-var yearPickerOpen=false,ypYear=new Date().getFullYear();
-function openYearPicker(){if(cal){ypYear=cal.getDate().getFullYear();}renderYearPicker();yearPickerPopover.classList.add('open');yearPickerOpen=true;document.getElementById('cal-title-arrow').classList.add('open');}
-function closeYearPicker(){yearPickerPopover.classList.remove('open');yearPickerOpen=false;document.getElementById('cal-title-arrow').classList.remove('open');}
-function renderYearPicker(){document.getElementById('yp-year-lbl').textContent=ypYear;var grid=document.getElementById('yp-months');grid.innerHTML='';var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var now=new Date(),curYear=cal?cal.getDate().getFullYear():now.getFullYear(),curMonth=cal?cal.getDate().getMonth():now.getMonth();MONTHS.forEach(function(mn,i){var el=document.createElement('div');el.className='yp-month';el.textContent=mn;if(ypYear===curYear&&i===curMonth)el.classList.add('yp-current');else if(ypYear===now.getFullYear()&&i===now.getMonth())el.classList.add('yp-this-month');el.addEventListener('click',function(e){e.stopPropagation();if(!cal)return;cal.gotoDate(new Date(ypYear,i,1));syncTitle();closeYearPicker();});grid.appendChild(el);});}
-document.getElementById('yp-prev').addEventListener('click',function(e){e.stopPropagation();ypYear--;renderYearPicker();});
-document.getElementById('yp-next').addEventListener('click',function(e){e.stopPropagation();ypYear++;renderYearPicker();});
-document.addEventListener('click',function(e){if(yearPickerOpen&&!yearPickerPopover.contains(e.target)&&!document.getElementById('cal-title-btn').contains(e.target))closeYearPicker();});
-
-var miniCalPopover=document.getElementById('mini-cal-popover');
-var miniCalOpen=false,miniCalDisplayDate=new Date();
-function openMiniCal(){if(cal){var d=cal.getDate();miniCalDisplayDate=new Date(d.getFullYear(),d.getMonth(),1);}renderMiniCal();miniCalPopover.classList.add('open');miniCalOpen=true;document.getElementById('cal-title-arrow').classList.add('open');}
-function closeMiniCal(){miniCalPopover.classList.remove('open');miniCalOpen=false;document.getElementById('cal-title-arrow').classList.remove('open');}
-function toggleMiniCal(){if(!cal)return;cal.view.type==='dayGridMonth'?(yearPickerOpen?closeYearPicker():openYearPicker()):(miniCalOpen?closeMiniCal():openMiniCal());}
-document.getElementById('cal-title-btn').addEventListener('click',function(e){e.stopPropagation();toggleMiniCal();});
-document.getElementById('mc-prev').addEventListener('click',function(e){e.stopPropagation();miniCalDisplayDate=new Date(miniCalDisplayDate.getFullYear(),miniCalDisplayDate.getMonth()-1,1);renderMiniCal();});
-document.getElementById('mc-next').addEventListener('click',function(e){e.stopPropagation();miniCalDisplayDate=new Date(miniCalDisplayDate.getFullYear(),miniCalDisplayDate.getMonth()+1,1);renderMiniCal();});
-document.addEventListener('click',function(e){if(miniCalOpen&&!miniCalPopover.contains(e.target)&&!document.getElementById('cal-title-btn').contains(e.target))closeMiniCal();});
-function renderMiniCal(){var y=miniCalDisplayDate.getFullYear(),m=miniCalDisplayDate.getMonth();document.getElementById('mc-title').textContent=miniCalDisplayDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});var grid=document.getElementById('mc-grid');grid.innerHTML='';['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(d){var el=document.createElement('div');el.className='mc-dow';el.textContent=d;grid.appendChild(el);});var first=new Date(y,m,1),startDow=first.getDay(),offset=(startDow===0)?6:startDow-1;var today=new Date();today.setHours(0,0,0,0);var calDate=cal?cal.getDate():null;var prevDays=new Date(y,m,0).getDate();for(var i=0;i<offset;i++){var el=document.createElement('div');el.className='mc-day mc-other-month';el.textContent=prevDays-offset+1+i;grid.appendChild(el);}var dim=new Date(y,m+1,0).getDate();for(var d=1;d<=dim;d++){var el=document.createElement('div');el.className='mc-day';var td2=new Date(y,m,d);td2.setHours(0,0,0,0);if(td2.getTime()===today.getTime())el.classList.add('mc-today');if(calDate){var cd=new Date(calDate);cd.setHours(0,0,0,0);if(cd.getTime()===td2.getTime())el.classList.add('mc-selected');}el.textContent=d;(function(dt){el.addEventListener('click',function(e){e.stopPropagation();if(!cal)return;var vt=cal.view.type;if(vt==='timeGridWeek'){cal.gotoDate(dt);syncTitle();}else{cal.changeView('timeGridDay',dt);document.getElementById('cal-view').value='timeGridDay';syncTitle();}closeMiniCal();});})(new Date(y,m,d));grid.appendChild(el);}var total=offset+dim,trailing=(7-total%7)%7;for(var i=1;i<=trailing;i++){var el=document.createElement('div');el.className='mc-day mc-other-month';el.textContent=i;grid.appendChild(el);}}
-
-function openAddTaskModal(){document.getElementById('at-title').value='';document.getElementById('at-notes').value='';document.getElementById('at-due').value='';document.getElementById('at-prio').value='medium';document.getElementById('at-status').textContent='';var sel=document.getElementById('at-list');sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});if(!taskLists.length){var o=document.createElement('option');o.value='@default';o.textContent='My Tasks';sel.appendChild(o);}document.getElementById('add-task-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('at-title').focus();},50);}
-document.getElementById('at-cancel').addEventListener('click',function(){document.getElementById('add-task-modal').classList.add('hidden');});
-document.getElementById('add-task-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-document.getElementById('at-save').addEventListener('click',function(){var title=document.getElementById('at-title').value.trim(),notes=document.getElementById('at-notes').value.trim(),due=document.getElementById('at-due').value,prio=document.getElementById('at-prio').value,listId=document.getElementById('at-list').value||'@default';var st=document.getElementById('at-status');if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}var payload={title:title,listId:listId};if(notes||prio)payload.notes=(notes?notes+' ':'')+'[priority:'+prio+']';if(due)payload.due=due+'T00:00:00.000Z';document.getElementById('at-save').disabled=true;st.style.color='#5f6368';st.textContent='Saving…';fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Added!';document.getElementById('at-title').value='';document.getElementById('at-notes').value='';document.getElementById('at-due').value='';setTimeout(function(){document.getElementById('add-task-modal').classList.add('hidden');st.textContent='';loadTasks();},600);}else{st.style.color='#d93025';st.textContent='❌ Failed.';}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';}).finally(function(){document.getElementById('at-save').disabled=false;});});
-document.getElementById('tl-create-btn').addEventListener('click',function(){document.getElementById('nl-name').value='';document.getElementById('nl-status').textContent='';document.getElementById('new-list-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('nl-name').focus();},50);});
-document.getElementById('nl-cancel').addEventListener('click',function(){document.getElementById('new-list-modal').classList.add('hidden');});
-document.getElementById('new-list-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-document.getElementById('nl-save').addEventListener('click',function(){var name=document.getElementById('nl-name').value.trim(),st=document.getElementById('nl-status');if(!name){st.style.color='#d93025';st.textContent='Name is required.';return;}document.getElementById('nl-save').disabled=true;st.style.color='#5f6368';st.textContent='Creating…';fetch(BACKEND+'/api/me/tasks/lists/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:name})}).then(function(r){if(r.ok){st.style.color='#1e8e3e';st.textContent='✅ Created!';setTimeout(function(){document.getElementById('new-list-modal').classList.add('hidden');st.textContent='';loadTasks();},600);}else{st.style.color='#d93025';st.textContent='❌ Failed.';}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';}).finally(function(){document.getElementById('nl-save').disabled=false;});});
-
-function loadTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){allTasks=[];taskLists=[];}else{taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});}renderOvTaskMini();renderTaskSidebar();renderCalTaskSection();if(currentMod==='tasks')renderTaskModule();}).catch(function(){allTasks=[];taskLists=[];renderOvTaskMini();renderCalTaskSection();});}
-
-function renderOvTaskMini(){
-  var filterEl=document.getElementById('ov-task-list-filter');
-  var listEl=document.getElementById('ov-task-mini-list');
-  if(!filterEl||!listEl)return;
-  // Rebuild dropdown options
-  var currentVal=filterEl.value||'all';
-  filterEl.innerHTML='<option value="all">All Lists</option>';
-  taskLists.forEach(function(l){
-    var o=document.createElement('option');
-    o.value=l.id;
-    o.textContent=l.title||l.id;
-    filterEl.appendChild(o);
+  // 초기 시작 함수 묶음
+  document.addEventListener('DOMContentLoaded', function() {
+    initApp();
   });
-  if(currentVal!=='all'&&taskLists.find(function(l){return l.id===currentVal;})){
-    filterEl.value=currentVal;
-  } else {
-    filterEl.value='all';
-  }
-  var filterVal=filterEl.value;
-  var now=new Date();now.setHours(0,0,0,0);
-  var tasks=allTasks.filter(function(t){
-    if(t.status==='completed')return false;
-    if(filterVal!=='all'&&t.listId!==filterVal)return false;
-    return true;
-  });
-  tasks.sort(function(a,b){
-    function score(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);if(diff<0)return 0;if(diff===0)return 1;return 2;}
-    var sa=score(a),sb=score(b);
-    if(sa!==sb)return sa-sb;
-    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);
-    return 0;
-  });
-  listEl.innerHTML='';
-  if(!tasks.length){
-    var empty=document.createElement('div');
-    empty.className='ov-task-mini-empty';
-    empty.textContent='All caught up!';
-    listEl.appendChild(empty);
-    return;
-  }
-  tasks.forEach(function(t){
-    var isOverdue=false,isToday=false;
-    if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);isOverdue=diff<0;isToday=diff===0;}
-    var row=document.createElement('div');
-    row.className='ov-task-mini-item';
-    // ── Clickable bullet button (2-1) ──
-    var dot=document.createElement('button');
-    dot.type='button';
-    dot.className='ov-task-mini-dot'+(isOverdue?' overdue-dot':isToday?' today-dot':'');
-    dot.title='Mark complete';
-    (function(task, dotEl, rowEl){
-      dotEl.addEventListener('click',function(e){
-        e.stopPropagation();
-        if(task._miniPending)return;
-        task._miniPending=true;
-        dotEl.classList.add('loading');
-        toggleTaskFromCal_(task, dotEl, rowEl, function(){
-          task._miniPending=false;
-          dotEl.classList.remove('loading');
-        });
-      });
-    })(t, dot, row);
-    var txt=document.createElement('div');
-    txt.style.cssText='flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;';
-    txt.textContent=t.title||'Untitled';
-    row.appendChild(dot);
-    row.appendChild(txt);
-    if(isOverdue){var b=document.createElement('span');b.className='ov-task-mini-badge overdue';b.textContent='Late';row.appendChild(b);}
-    else if(isToday){var b=document.createElement('span');b.className='ov-task-mini-badge today';b.textContent='Today';row.appendChild(b);}
-    listEl.appendChild(row);
-  });
-}
-// Wire dropdown filter
-(function(){
-  var filterEl=document.getElementById('ov-task-list-filter');
-  if(filterEl)filterEl.addEventListener('change',renderOvTaskMini);
-})();
-// Wire + button (2-2): open modal pre-selecting current filter list
-(function(){
-  var addBtn=document.getElementById('ov-task-add-btn');
-  if(!addBtn)return;
-  addBtn.addEventListener('click',function(){
-    var filterEl=document.getElementById('ov-task-list-filter');
-    var preselect=(filterEl&&filterEl.value!=='all')?filterEl.value:null;
-    openAddTaskModal();
-    if(preselect){
-      setTimeout(function(){
-        var sel=document.getElementById('at-list');
-        for(var i=0;i<sel.options.length;i++){
-          if(sel.options[i].value===preselect){sel.selectedIndex=i;break;}
+
+  function initApp() {
+    // 1. 사용자 인증 체크 및 기본 정보 할당
+    fetch(`${BACKEND}/api/me/status`, { credentials: 'include' })
+      .then(res => {
+        if(!res.ok) throw new Error();
+        return res.json();
+      })
+      .then(data => {
+        if(!data.connected) {
+          window.location.replace('/');
+          return;
         }
-      },60);
+        document.getElementById('user-display-name').textContent = data.user.given_name || 'User';
+        document.getElementById('user-display-email').textContent = data.user.email || '';
+        document.getElementById('user-avatar').textContent = (data.user.given_name || 'U')[0].toUpperCase();
+        
+        // 인증 통과 후 달력 및 부속 위젯 연동
+        startClock();
+        loadWeather();
+        initFullCalendar();
+        loadTasks();
+        setupGlobalClickHandlers();
+      })
+      .catch(() => {
+        window.location.replace('/');
+      });
+  }
+
+  // 상단 바 시계 구동 로직
+  function startClock() {
+    const clockEl = document.getElementById('current-clock');
+    const dateEl = document.getElementById('current-date');
+    function update() {
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+      dateEl.textContent = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     }
-  });
-})();
-function renderCalTaskSection(){var now=new Date();now.setHours(0,0,0,0);var listEl=document.getElementById('cal-task-list');if(!listEl)return;listEl.innerHTML='';var activeTasks=allTasks.filter(function(t){return t.status!=='completed';});activeTasks.sort(function(a,b){function score(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);if(diff<0)return 0;if(diff===0)return 1;return 2;}var sa=score(a),sb=score(b);if(sa!==sb)return sa-sb;if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;});var hdr=document.createElement('div');hdr.className='cal-task-header';hdr.innerHTML='<span>All tasks ('+activeTasks.length+')</span><a class="cal-task-header-link" href="/task">View all →</a>';listEl.appendChild(hdr);if(!activeTasks.length){var empty=document.createElement('div');empty.className='cal-task-empty';empty.textContent='All caught up! No pending tasks.';listEl.appendChild(empty);return;}activeTasks.forEach(function(t){var isOverdue=false,isToday=false;if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-now)/86400000);isOverdue=diff<0;isToday=diff===0;}var item=document.createElement('div');item.className='cal-task-item';var cb=document.createElement('div');cb.className='cal-task-cb';cb.addEventListener('click',function(e){e.stopPropagation();if(t._calPending)return;t._calPending=true;toggleTaskFromCal_(t,cb,item,function(){t._calPending=false;});});var name=document.createElement('div');name.className='cal-task-name';name.textContent=t.title||'Untitled';var badge=document.createElement('span');if(isOverdue){badge.className='cal-task-badge overdue-badge';badge.textContent='⚠ Overdue';}else if(isToday){badge.className='cal-task-badge today-badge';badge.textContent='Today';}else if(t.due){var dt2=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));badge.className='cal-task-badge future-badge';badge.textContent=dt2.toLocaleDateString('en-US',{month:'short',day:'numeric'});}item.appendChild(cb);item.appendChild(name);if(badge.textContent)item.appendChild(badge);listEl.appendChild(item);});}
-function toggleTaskFromCal_(t,cb,row,onDone){var wasDone=t.status==='completed';var newStatus=wasDone?'needsAction':'completed';cb.classList.toggle('checked',!wasDone);var nameEl=row.querySelector('.cal-task-name');if(nameEl)nameEl.classList.toggle('done',!wasDone);t.status=newStatus;renderOvPanels();function attempt(listId){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})});}attempt(t.listId||'@default').then(function(r){if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;}).then(function(r){if(r&&r.ok){renderCalTaskSection();renderOvPanels();if(currentMod==='tasks')renderTaskModule();}else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();}if(onDone)onDone();}).catch(function(){t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();if(onDone)onDone();});}
-function renderOvPanels(){renderOvTaskMini();}
-function renderTaskSidebar(){var sidebar=document.getElementById('task-list-sidebar-items');sidebar.innerHTML='';taskLists.forEach(function(l){var count=allTasks.filter(function(t){return t.listId===l.id&&t.status!=='completed';}).length;var btn=document.createElement('button');btn.className='tl-item'+(currentTaskFilter===l.id?' active':'');btn.innerHTML='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/></svg>'+l.title+'<span class="tl-count">'+count+'</span>';btn.addEventListener('click',function(){currentTaskFilter=l.id;document.querySelectorAll('.tl-item').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderTaskModule();});sidebar.appendChild(btn);});document.getElementById('tl-all').className='tl-item'+(currentTaskFilter==='all'?' active':'');}
-document.getElementById('tl-all').addEventListener('click',function(){currentTaskFilter='all';document.querySelectorAll('.tl-item').forEach(function(b){b.classList.remove('active');});this.classList.add('active');renderTaskModule();});
-function renderTaskModule(){var grid=document.getElementById('task-lists-grid');grid.innerHTML='';var listsToShow=currentTaskFilter==='all'?taskLists.slice():[taskLists.find(function(l){return l.id===currentTaskFilter;})||{id:currentTaskFilter,title:'Tasks'}];if(!listsToShow.length||!listsToShow[0])listsToShow=[{id:'@default',title:'My Tasks'}];grid.className='task-lists-grid '+(listsToShow.length>1?'multi':'single');listsToShow.forEach(function(lst){grid.appendChild(buildListCard(lst));});}
-function buildListCard(lst){var tasks=allTasks.filter(function(t){return t.listId===lst.id;});var active=tasks.filter(function(t){return t.status!=='completed';});var done=tasks.filter(function(t){return t.status==='completed';});var card=document.createElement('div');card.className='task-list-card';var hd=document.createElement('div');hd.className='tlc-header';var nm=document.createElement('div');nm.className='tlc-name';nm.textContent=lst.title||'My Tasks';hd.appendChild(nm);card.appendChild(hd);var addBtn=document.createElement('button');addBtn.className='tlc-add';addBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#1a73e8" stroke-width="1.5"><line x1="8" y1="2" x2="8" y2="14" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke-linecap="round"/></svg>Add a task';addBtn.addEventListener('click',function(){openAddTaskModal();setTimeout(function(){var sel=document.getElementById('at-list');for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===lst.id){sel.selectedIndex=i;break;}}},60);});card.appendChild(addBtn);active.forEach(function(t){card.appendChild(buildTaskRow(t));});if(done.length){var compSec=document.createElement('div');compSec.className='tlc-completed-section';compSec.innerHTML='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="4,6 8,10 12,6"/></svg>Completed ('+done.length+')';var compList=document.createElement('div');compList.className='tlc-completed-tasks';done.forEach(function(t){compList.appendChild(buildTaskRow(t));});compSec.addEventListener('click',function(){compSec.classList.toggle('expanded');compList.classList.toggle('show');});card.appendChild(compSec);card.appendChild(compList);}return card;}
-function buildTaskRow(t){var isDone=t.status==='completed';var row=document.createElement('div');row.className='tlc-task';var cb=document.createElement('div');cb.className='tlc-cb'+(isDone?' checked':'');cb.setAttribute('role','checkbox');cb.setAttribute('aria-checked',isDone?'true':'false');cb.setAttribute('tabindex','0');cb.addEventListener('mousedown',function(e){e.stopPropagation();});cb.addEventListener('click',function(e){e.stopPropagation();if(t._pending)return;t._pending=true;toggleTask(t,cb,row,function(){t._pending=false;});});cb.addEventListener('keydown',function(e){if((e.key===' '||e.key==='Enter')&&!t._pending){e.preventDefault();t._pending=true;toggleTask(t,cb,row,function(){t._pending=false;});}});var body=document.createElement('div');body.className='tlc-task-body';var nm=document.createElement('div');nm.className='tlc-task-name'+(isDone?' done':'');nm.textContent=t.title||'Untitled';body.appendChild(nm);if(!isDone&&t.due){var df=formatDue(t.due);if(df){var meta=document.createElement('div');meta.className='tlc-task-meta';var chip=document.createElement('span');chip.className='tlc-due-chip '+df.cls;chip.innerHTML='📅 '+df.label;meta.appendChild(chip);body.appendChild(meta);}}row.appendChild(cb);row.appendChild(body);return row;}
-function toggleTask(t,cb,row,onDone){var wasDone=t.status==='completed';var newStatus=wasDone?'needsAction':'completed';cb.classList.add('loading');cb.classList.toggle('checked',!wasDone);cb.setAttribute('aria-checked',(!wasDone).toString());var nameEl=row.querySelector('.tlc-task-name');if(nameEl)nameEl.classList.toggle('done',!wasDone);t.status=newStatus;renderOvPanels();renderCalTaskSection();function attemptUpdate(listId){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})});}attemptUpdate(t.listId||'@default').then(function(r){if(r.status===404&&t.listId!=='@default')return attemptUpdate('@default');return r;}).then(function(r){cb.classList.remove('loading');if(r&&r.ok){renderTaskSidebar();if(currentMod==='tasks')renderTaskModule();renderOvPanels();renderCalTaskSection();}else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);cb.setAttribute('aria-checked',wasDone.toString());if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();renderCalTaskSection();}if(onDone)onDone();}).catch(function(){cb.classList.remove('loading');t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nameEl)nameEl.classList.toggle('done',wasDone);renderOvPanels();renderCalTaskSection();if(onDone)onDone();});}
+    update();
+    setInterval(update, 1000);
+  }
 
-function loadCalendarList(cb){fetch(BACKEND+'/api/me/calendars',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){buildCalMeta(data);cb();}).catch(function(){buildCalMeta(null);cb();});}
-function buildCalMeta(data){calendarMeta=[];var items=(data&&Array.isArray(data.calendars))?data.calendars:(data&&Array.isArray(data.items))?data.items:[];items.forEach(function(c){calendarMeta.push({id:c.id,summary:c.summary||c.id,color:c.backgroundColor||'#1a73e8',primary:!!c.primary,enabled:!!c.primary});});if(!calendarMeta.length)calendarMeta.push({id:'primary',summary:'My Calendar',color:'#1a73e8',primary:true,enabled:true});renderCalPopup();}
-function renderCalPopup(){var list=document.getElementById('cal-popup-list');list.innerHTML='';calendarMeta.forEach(function(c){var row=document.createElement('div');row.className='cal-row';var dot=document.createElement('div');dot.className='cal-row-dot';dot.style.background=c.color;var nm=document.createElement('span');nm.className='cal-row-name'+(c.primary?' is-primary':'');nm.textContent=c.summary;nm.title=c.summary;if(c.primary){var lk=document.createElement('span');lk.className='cal-row-lock';lk.textContent='🔒';row.appendChild(dot);row.appendChild(nm);row.appendChild(lk);}else{var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled;(function(meta){chk.addEventListener('change',function(){meta.enabled=chk.checked;applyFilter();});})(c);row.appendChild(chk);row.appendChild(dot);row.appendChild(nm);}list.appendChild(row);});}
-var calPopup=document.getElementById('cal-popup'),calListBtn=document.getElementById('cal-list-btn');
-calListBtn.addEventListener('click',function(e){e.stopPropagation();calPopup.classList.toggle('open');});
-document.addEventListener('click',function(e){if(!calPopup.contains(e.target)&&e.target!==calListBtn)calPopup.classList.remove('open');});
+  // 상단 바 실시간 날씨 구동 로직
+  function loadWeather() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+          .then(res => res.json())
+          .then(data => {
+            if(data && data.current_weather) {
+              const tempC = Math.round(data.current_weather.temperature);
+              const tempF = Math.round((tempC * 9/5) + 32);
+              document.getElementById('weather-info').textContent = `🌤 ${tempF}°F / ${tempC}°C`;
+            }
+          }).catch(()=>{});
+      }, () => {});
+    }
+  }
 
-// ── Women's Health icons from panel-logs-womens localStorage ──
-function getMieDayIcons(dateStr) {
-  try {
-    var raw = localStorage.getItem('mie_womens_' + dateStr);
-    if (!raw) return [];
-    var d = JSON.parse(raw);
-    var icons = [];
-    if (d.note && d.note.trim()) icons.push('📝');
-    if (d.period_start || d.period_end) icons.push('🔴');
-    if (d.sex && d.sex.had_sex) icons.push('💜');
-    if (d.symptoms && d.symptoms.length) icons.push('⚡');
-    if (d.medications && d.medications.some(function(m){return m.taken;})) icons.push('💊');
-    if (d.ovulation) icons.push('🌸');
-    if (d.pregnancy_test && d.pregnancy_test.result === 'Positive') icons.push('✅');
-    else if (d.pregnancy_test && d.pregnancy_test.result) icons.push('🤰');
-    if (d.ovulation_test && d.ovulation_test.result === 'Positive') icons.push('✅');
-    else if (d.ovulation_test && d.ovulation_test.result) icons.push('🔬');
-    if (d.cervical_mucus && d.cervical_mucus.feeling) icons.push('💧');
-    if (d.fetal_movement && d.fetal_movement.count) icons.push('👶');
-    if (d.clinic_visit && d.clinic_visit.type) icons.push('🏥');
-    if (d.baby_kick && d.baby_kick.count) icons.push('👣');
-    if (d.blood_pressure && d.blood_pressure.systolic) icons.push('❤️');
-    if (d.morning_sickness && d.morning_sickness.count) icons.push('🤢');
-    if (d.womens_mood && d.womens_mood.mood) icons.push('🌈');
-    return icons;
-  } catch(e) { return []; }
-}
-function fmtDateKey(date) {
-  var y = date.getFullYear();
-  var m = String(date.getMonth()+1).padStart(2,'0');
-  var dd = String(date.getDate()).padStart(2,'0');
-  return y+'-'+m+'-'+dd;
-}
-// ── Week/Day view: inject icon row above all-day area per column ──
-function injectTimegridIcons(){
-  if(!cal)return;
-  var vt=cal.view.type;
-  if(vt!=='timeGridWeek'&&vt!=='timeGridDay')return;
-  // Remove old icon rows
-  document.querySelectorAll('.mie-timegrid-icon-row').forEach(function(el){el.remove();});
-  // Each col-header-cell has a data-date attribute
-  document.querySelectorAll('.fc-col-header-cell[data-date]').forEach(function(cell){
-    var ds=cell.getAttribute('data-date');
-    if(!ds)return;
-    var icons=getMieDayIcons(ds);
-    if(!icons.length)return;
-    var iconRow=document.createElement('div');
-    iconRow.className='mie-timegrid-icon-row';
-    iconRow.textContent=icons.join('');
-    // Insert inside the cushion div so it flows under the day label
-    var cushion=cell.querySelector('.fc-col-header-cell-cushion');
-    if(cushion){
-      // Wrap cushion content + icons in a flex column
-      cushion.style.display='flex';
-      cushion.style.flexDirection='column';
-      cushion.style.alignItems='center';
-      cushion.style.gap='1px';
-      cushion.appendChild(iconRow);
+  // 로그아웃 핸들러
+  function handleLogout() {
+    fetch(`${BACKEND}/auth/logout`, { method: 'POST', credentials: 'include' })
+      .then(() => window.location.replace('/'));
+  }
+
+  // 운영 캘린더 색상 로직 적용 (index_14_.html 완벽 변환 함수)
+  function pastelForCalId(calId, summary, visibility) {
+    if (visibility === 'private') return { bg: '#F3E5F5', text: '#534AB7' }; 
+    if (summary && summary.toUpperCase().includes('KLAIVE')) return { bg: '#E8F5E9', text: '#1D9E75' }; 
+    if (summary && (summary.includes("Women's Health") || summary.toUpperCase().includes('HEALTH'))) return { bg: '#FFEBEE', text: '#E24B4A' }; 
+    return { bg: '#E3F2FD', text: '#1C7ED6' };
+  }
+
+  // FullCalendar 구조 빌드 및 설정
+  function initFullCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      fixedWeekCount: false,
+      showNonCurrentDates: false,
+      height: 'parent',
+      headerToolbar: false, // 전용 커스텀 헤더 사용
+      firstDay: 0,
+      dayMaxEvents: 4, 
+      events: function(info, successCallback, failureCallback) {
+        const url = `${BACKEND}/api/me/events?timeMin=${info.startStr}&timeMax=${info.endStr}`;
+        fetch(url, { credentials: 'include' })
+          .then(res => res.json())
+          .then(data => {
+            const list = data.events || [];
+            renderTodayEventsPanel(list); // 오늘 패널 실시간 드로잉 연동
+            successCallback(list);
+          })
+          .catch(() => successCallback([]));
+      },
+      eventContent: function(arg) {
+        const ext = arg.event.extendedProps;
+        const isAllDay = arg.event.allDay;
+        const colorMeta = pastelForCalId(ext.calendarId, arg.event.title || ext.summary, ext.visibility);
+        
+        if (isAllDay) {
+          return {
+            html: `<div class="fc-event-pill" style="background:${colorMeta.bg}; color:${colorMeta.text};">${arg.event.title}</div>`
+          };
+        } else {
+          const timeText = arg.timeText || '';
+          return {
+            html: `<div class="fc-event-dot-row">
+                     <span class="fc-event-dot" style="background:${colorMeta.text}"></span>
+                     <span style="font-weight:600; color:${colorMeta.text}; margin-right:2px;">${timeText}</span>
+                     <span>${arg.event.title}</span>
+                   </div>`
+          };
+        }
+      },
+      dateClick: function(arg) {
+        // [수정 요구 1] 날짜 클릭 시 Day 뷰로 자동 점프 연동 및 드롭다운 명칭 자동 보정 반영
+        calendar.changeView('timeGridDay', arg.dateStr);
+        updateHeaderTitle();
+        document.getElementById('view-dropdown-btn').innerHTML = `Day ▾`;
+      },
+      eventClick: function(arg) {
+        openEventView(arg.event);
+      },
+      moreLinkClick: function(arg) {
+        openDayModal(arg.date, arg.allSegs);
+        return 'none';
+      }
+    });
+    
+    calendar.render();
+    updateHeaderTitle();
+    buildMonthYearPickerGrid();
+  }
+
+  // 커스텀 타이틀 및 명칭 싱크
+  function updateHeaderTitle() {
+    const view = calendar.view;
+    document.getElementById('calendar-title-display').textContent = view.title;
+  }
+
+  // 드롭다운 및 모달 토글 차단 공통 레이어 제어
+  function setupGlobalClickHandlers() {
+    window.addEventListener('click', function() {
+      document.getElementById('view-dropdown-menu').style.display = 'none';
+      document.getElementById('calendars-popup-layer').style.display = 'none';
+      document.getElementById('month-year-picker').style.display = 'none';
+    });
+  }
+
+  function toggleViewDropdown(e) {
+    e.stopPropagation();
+    const m = document.getElementById('view-dropdown-menu');
+    m.style.display = (m.style.display === 'block') ? 'none' : 'block';
+  }
+
+  function changeCalendarView(viewName, label) {
+    calendar.changeView(viewName);
+    document.getElementById('view-dropdown-btn').innerHTML = label;
+    updateHeaderTitle();
+  }
+
+  function toggleCalendarsPopup(e) {
+    e.stopPropagation();
+    const p = document.getElementById('calendars-popup-layer');
+    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+  }
+
+  // 월/년도 피커 셀랙션 오픈 구조 [요구 2 반영]
+  function toggleMonthYearPicker(e) {
+    e.stopPropagation();
+    const p = document.getElementById('month-year-picker');
+    if(p.style.display === 'block') {
+      p.style.display = 'none';
     } else {
-      cell.appendChild(iconRow);
+      p.style.display = 'block';
+      const currentFullDate = calendar.getDate();
+      pickerCurrentYear = currentFullDate.getFullYear();
+      document.getElementById('picker-year-label').textContent = pickerCurrentYear;
     }
-  });
-}
-
-function injectDayIcons(cellEl, date) {
-  var dateStr = fmtDateKey(date);
-  var icons = getMieDayIcons(dateStr);
-  // Remove any existing icon span to avoid duplication
-  var existing = cellEl.querySelector('.mie-day-icons');
-  if (existing) existing.remove();
-  if (!icons.length) return;
-  // Insert inline inside .fc-daygrid-day-top, right after the date number anchor
-  var top = cellEl.querySelector('.fc-daygrid-day-top');
-  if (!top) return;
-  var iconSpan = document.createElement('span');
-  iconSpan.className = 'mie-day-icons';
-  iconSpan.textContent = icons.join('');
-  // Append after the day number link (which is the only child of day-top)
-  top.appendChild(iconSpan);
-}
-
-function calcCalHeight(){
-  // Measure the actual available height inside col-left for the calendar
-  var colLeft=document.querySelector('.col-left');
-  if(!colLeft||!cal)return;
-  var total=colLeft.getBoundingClientRect().height;
-  // Subtract fixed chrome: module-top-space + cal-topbar + cal-footer + scrollgrid header
-  var topSpace=document.querySelector('.module-top-space');
-  var calTopbar=document.querySelector('.cal-topbar');
-  var calFooter=document.querySelector('.cal-footer-row');
-  var used=(topSpace?topSpace.getBoundingClientRect().height:4)
-          +(calTopbar?calTopbar.getBoundingClientRect().height:38)
-          +(calFooter?calFooter.getBoundingClientRect().height:26)
-          +2; // border safety
-  var h=Math.floor(total-used);
-  if(h>100)cal.setOption('height',h);
-}
-
-function initCal(){if(cal)cal.destroy();eventsByDate={};allEvents=[];cal=new FullCalendar.Calendar(document.getElementById('calendar'),{initialView:'dayGridMonth',fixedWeekCount:false,showNonCurrentDates:false,height:600,headerToolbar:false,dayMaxEvents:false,events:fetchEvents,firstDay:0,datesSet:function(){syncTitle();setTimeout(rebuildPills,60);setTimeout(function(){if(cal.view.type==='dayGridMonth'){document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var d=new Date(ds+'T12:00:00');injectDayIcons(cell,d);});}else{injectTimegridIcons();}},80);attachDayClicks();closeMiniCal();closeYearPicker();setTimeout(calcCalHeight,30);setTimeout(extractCalendarInsights,200);},eventsSet:function(){setTimeout(rebuildPills,100);setTimeout(attachDayClicks,120);},eventDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;if(!cell._mc)cell._mc=0;if(cell._mc>=MAX_VISIBLE)info.el.style.display='none';cell._mc++;},dayCellDidMount:function(info){if(cal.view.type!=='dayGridMonth')return;injectDayIcons(info.el,info.date);},eventContent:function(arg){var rawColor=(arg.event.extendedProps&&arg.event.extendedProps.cc)||null;var calId=(arg.event.extendedProps&&arg.event.extendedProps.calId)||'primary';var p=pastelForCalId(rawColor,calId);var viewType=arg.view.type;var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';if(arg.event.allDay){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:600;color:'+p.text+';line-height:1.4;';tx.textContent=arg.event.title||'';w.appendChild(tx);}else if(viewType==='dayGridMonth'){w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';var dot=document.createElement('span');dot.style.cssText='width:7px;height:7px;min-width:7px;border-radius:50%;background:'+p.text+';display:inline-block;';var tx=document.createElement('span');tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;font-weight:500;color:#3c4043;line-height:1.4;flex:1;';tx.textContent=(arg.timeText?arg.timeText+' ':'')+(arg.event.title||'');w.appendChild(dot);w.appendChild(tx);}else{w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';if(arg.timeText){var ttime=document.createElement('span');ttime.style.cssText='font-size:9px;color:'+p.text+';white-space:nowrap;opacity:.85;';ttime.textContent=arg.timeText;w.appendChild(ttime);}var ttitle=document.createElement('span');ttitle.style.cssText='font-size:11.5px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';ttitle.textContent=arg.event.title||'';w.appendChild(ttitle);}return{domNodes:[w]};},eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);}});cal.render();syncTitle();setTimeout(calcCalHeight,60);var _calResizeTmr=null;window.addEventListener('resize',function(){if(_calResizeTmr)clearTimeout(_calResizeTmr);_calResizeTmr=setTimeout(function(){if(cal){cal.updateSize();calcCalHeight();}},150);});document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});document.getElementById('cal-today').addEventListener('click',function(){cal.today();syncTitle();});document.getElementById('cal-view').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();closeMiniCal();setTimeout(calcCalHeight,60);});}
-function syncTitle(){if(!cal)return;document.getElementById('cal-title').textContent=cal.view.title||'';}
-function attachDayClicks(){document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('.fc-daygrid-day');if(!cell)return;var ds=cell.getAttribute('data-date');if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});document.querySelectorAll('.fc-col-header-cell-cushion').forEach(function(el){if(el._dcb)return;el._dcb=true;el.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var cell=el.closest('[data-date]');var ds=cell?cell.getAttribute('data-date'):null;if(!ds)return;cal.changeView('timeGridDay',ds);document.getElementById('cal-view').value='timeGridDay';syncTitle();closeMiniCal();});});}
-function applyFilter(){if(!cal)return;var ids=calendarMeta.filter(function(c){return c.enabled;}).map(function(c){return c.id;});eventsByDate={};var filtered=allEvents.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});cal.removeAllEventSources();cal.addEventSource(function(fi,ok){ok(filtered);});setTimeout(rebuildPills,120);}
-function rebuildPills(){if(!cal||cal.view.type!=='dayGridMonth')return;document.querySelectorAll('.mie-more').forEach(function(el){el.remove();});document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){var ds=cell.getAttribute('data-date');if(!ds)return;var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VISIBLE)return;var pill=document.createElement('div');pill.className='mie-more';pill.textContent='+ '+(evs.length-MAX_VISIBLE)+' more';pill.addEventListener('click',function(e){e.stopPropagation();openDayModal(ds,evs);});var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');if(bot)bot.appendChild(pill);});}
-function fetchEvents(fi,ok,fail){var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}}).then(function(r){if(r.status===401){show(authWrap);fail(new Error('401'));return null;}if(!r.ok){fail(new Error('HTTP '+r.status));return null;}return r.json();}).then(function(data){if(!data)return;var items=Array.isArray(data.events)?data.events:[];var enabledMeta=calendarMeta.filter(function(c){return c.enabled;});var ids=enabledMeta.map(function(c){return c.id;});var primaryMeta=calendarMeta.find(function(c){return c.primary;});allEvents=[];eventsByDate={};var mapped=items.map(function(e){var start=(e.start&&(e.start.dateTime||e.start.date))||null;var end=(e.end&&(e.end.dateTime||e.end.date))||null;var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);var rawCid=e.calendarId||'primary';var cid=rawCid;if(primaryMeta&&rawCid===primaryMeta.id)cid=primaryMeta.id;if(!calendarMeta.find(function(m){return m.id===cid;})){var byRaw=calendarMeta.find(function(m){return m.id===rawCid;});if(byRaw)cid=byRaw.id;}return{id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,url:e.htmlLink||'',extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:cid}};});allEvents=mapped;var filtered=mapped.filter(function(ev){return ids.indexOf(ev.extendedProps.calId)!==-1;});filtered.forEach(function(ev){if(ev.start){var k=ev.allDay?ev.start:ev.start.split('T')[0];if(!eventsByDate[k])eventsByDate[k]=[];eventsByDate[k].push(ev);}});ok(filtered);setTimeout(extractCalendarInsights,0);}).catch(function(err){fail(err);});}
-function openDayModal(ds,evs){var d=new Date(ds+'T12:00:00');document.getElementById('day-modal-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});var list=document.getElementById('day-modal-list');list.innerHTML='';if(!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px 0;font-size:13px;color:#9aa0a6;';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('hidden');return;}evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){var p=pastelForCalId((ev.extendedProps&&ev.extendedProps.cc)||null,(ev.extendedProps&&ev.extendedProps.calId)||'primary');var item=document.createElement('div');item.className='day-ev-item';var dot=document.createElement('div');dot.className='day-ev-dot';dot.style.background=p.text;var info=document.createElement('div');info.className='day-ev-info';var tDiv=document.createElement('div');tDiv.className='day-ev-time';var ttDiv=document.createElement('div');ttDiv.className='day-ev-title';if(ev.allDay)tDiv.textContent='All-day';else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;tDiv.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}ttDiv.textContent=ev.title||'No Title';info.appendChild(tDiv);info.appendChild(ttDiv);if(ev.extendedProps&&ev.extendedProps.loc){var lDiv=document.createElement('div');lDiv.className='day-ev-loc';lDiv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lDiv);}item.appendChild(dot);item.appendChild(info);item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');openEventView(ev);});list.appendChild(item);});document.getElementById('day-modal').classList.remove('hidden');}
-document.getElementById('day-modal-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('hidden');});
-document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-var currentEditEvent=null;
-function openEditModal(ev){currentEditEvent=ev;document.getElementById('edit-save-status').textContent='';document.getElementById('edit-title').value=ev.title||'';var ss=ev.start?(typeof ev.start==='string'?ev.start:ev.start.toISOString()):'';var sd=ss?ss.slice(0,10):'';document.getElementById('edit-date').value=sd;var st='';if(!ev.allDay&&ss&&ss.includes('T')){var so=new Date(ss);st=String(so.getHours()).padStart(2,'0')+':'+String(so.getMinutes()).padStart(2,'0');}document.getElementById('edit-time').value=st;var es=ev.end?(typeof ev.end==='string'?ev.end:ev.end.toISOString()):'';document.getElementById('edit-end-date').value=es?es.slice(0,10):sd;var et='';if(!ev.allDay&&es&&es.includes('T')){var eo=new Date(es);et=String(eo.getHours()).padStart(2,'0')+':'+String(eo.getMinutes()).padStart(2,'0');}document.getElementById('edit-end-time').value=et;document.getElementById('edit-location').value=(ev.extendedProps&&ev.extendedProps.loc)||'';document.getElementById('edit-desc').value=(ev.extendedProps&&ev.extendedProps.desc)||'';document.getElementById('edit-modal').classList.remove('hidden');}
-document.getElementById('edit-modal-close').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;});
-document.getElementById('edit-cancel-btn').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;});
-document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('hidden');currentEditEvent=null;}});
-document.getElementById('edit-save-btn').addEventListener('click',function(){if(!currentEditEvent)return;var status=document.getElementById('edit-save-status');var nt=document.getElementById('edit-title').value.trim(),nd=document.getElementById('edit-date').value;if(!nt){status.style.color='#d93025';status.textContent='Title is required.';return;}var nti=document.getElementById('edit-time').value,ned=document.getElementById('edit-end-date').value,neti=document.getElementById('edit-end-time').value;var nl=document.getElementById('edit-location').value.trim(),nde=document.getElementById('edit-desc').value.trim();var ns=nti?nd+'T'+nti+':00':nd,ne=null;if(ned)ne=neti?ned+'T'+neti+':00':ned;var payload={eventId:currentEditEvent.id,calendarId:(currentEditEvent.extendedProps&&currentEditEvent.extendedProps.calId)||'primary',title:nt,start:ns,end:ne,location:nl,description:nde};document.getElementById('edit-save-btn').disabled=true;status.style.color='#5f6368';status.textContent='Saving…';fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(r.ok){status.style.color='#1e8e3e';status.textContent='✅ Saved!';var fcEv=cal?cal.getEventById(currentEditEvent.id):null;if(fcEv){fcEv.setProp('title',nt);fcEv.setStart(ns);if(ne)fcEv.setEnd(ne);fcEv.setExtendedProp('loc',nl);fcEv.setExtendedProp('desc',nde);}allEvents=allEvents.map(function(e){if(e.id!==currentEditEvent.id)return e;return Object.assign({},e,{title:nt,start:ns,end:ne||e.end,extendedProps:Object.assign({},e.extendedProps,{loc:nl,desc:nde})});});setTimeout(function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;status.textContent='';rebuildPills();},400);}else{status.style.color='#d93025';status.textContent='❌ Save failed.';}}).catch(function(){status.style.color='#d93025';status.textContent='❌ Network error.';}).finally(function(){document.getElementById('edit-save-btn').disabled=false;});});
-document.getElementById('edit-delete-btn').addEventListener('click',function(){if(!currentEditEvent)return;if(!confirm('Delete "'+(currentEditEvent.title||'this event')+'"?'))return;var status=document.getElementById('edit-save-status');document.getElementById('edit-delete-btn').disabled=true;status.style.color='#5f6368';status.textContent='Deleting…';fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:currentEditEvent.id,calendarId:(currentEditEvent.extendedProps&&currentEditEvent.extendedProps.calId)||'primary'})}).then(function(r){if(r.ok){status.style.color='#1e8e3e';status.textContent='🗑 Deleted';var fd=cal?cal.getEventById(currentEditEvent.id):null;if(fd)fd.remove();allEvents=allEvents.filter(function(e){return e.id!==currentEditEvent.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==currentEditEvent.id;});});setTimeout(function(){document.getElementById('edit-modal').classList.add('hidden');currentEditEvent=null;status.textContent='';rebuildPills();},400);}else{status.style.color='#d93025';status.textContent='❌ Delete failed.';}}).catch(function(){status.style.color='#d93025';status.textContent='❌ Network error.';}).finally(function(){document.getElementById('edit-delete-btn').disabled=false;});});
-
-var currentViewEvent=null;
-function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function linkifyHtml(escapedHtml){return escapedHtml.replace(/(https?:\/\/[^\s<>"]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color:#1a73e8;word-break:break-all;">$1</a>');}
-function fmtEvTime(ev){if(!ev.start)return'';var allDay=(typeof ev.allDay!=='undefined')?ev.allDay:false;if(allDay){var sd=new Date((typeof ev.start==='string'?ev.start:ev.start.toISOString()).slice(0,10)+'T12:00:00');return sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · All day';}var ss=typeof ev.start==='string'?ev.start:ev.start.toISOString();var es=ev.end?(typeof ev.end==='string'?ev.end:ev.end.toISOString()):null;var sd=new Date(ss);var dateStr=sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});var startT=sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});var endT=es?new Date(es).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';return dateStr+' · '+startT+(endT?' – '+endT:'');}
-function openEventView(ev){currentViewEvent=ev;document.getElementById('ev-delete-confirm').style.display='none';document.getElementById('ev-delete-status').textContent='';document.getElementById('ev-delete-confirm-btn').disabled=false;var rawCc=(ev.extendedProps&&ev.extendedProps.cc)||null;var calId=(ev.extendedProps&&ev.extendedProps.calId)||'primary';var p=pastelForCalId(rawCc,calId);document.getElementById('ev-color-bar').style.background=p.text;document.getElementById('ev-view-title').textContent=ev.title||'(No title)';document.getElementById('ev-view-time').textContent=fmtEvTime(ev);var loc=(ev.extendedProps&&ev.extendedProps.loc)||'';if(loc){var mapsUrl='https://maps.google.com/?q='+encodeURIComponent(loc);document.getElementById('ev-view-loc').innerHTML='<a href="'+mapsUrl+'" target="_blank">'+escHtml(loc)+'</a>';document.getElementById('ev-loc-row').style.display='flex';}else{document.getElementById('ev-loc-row').style.display='none';}var desc=(ev.extendedProps&&ev.extendedProps.desc)||'';if(desc){document.getElementById('ev-view-desc').innerHTML=linkifyHtml(escHtml(desc));document.getElementById('ev-desc-row').style.display='flex';}else{document.getElementById('ev-desc-row').style.display='none';}var calMeta=calendarMeta.find(function(c){return c.id===calId;});var calName=calMeta?calMeta.summary:(calId==='primary'?'My Calendar':calId);document.getElementById('ev-cal-dot').style.background=p.text;document.getElementById('ev-view-cal-name').textContent=calName;document.getElementById('event-view-modal').classList.remove('hidden');}
-function closeEventView(){document.getElementById('event-view-modal').classList.add('hidden');currentViewEvent=null;}
-document.getElementById('ev-close-btn').addEventListener('click',closeEventView);
-document.getElementById('event-view-modal').addEventListener('click',function(e){if(e.target===this)closeEventView();});
-document.getElementById('ev-edit-btn').addEventListener('click',function(){if(!currentViewEvent)return;var evToEdit=currentViewEvent;closeEventView();openEditModal(evToEdit);});
-document.getElementById('ev-delete-btn').addEventListener('click',function(){document.getElementById('ev-delete-confirm').style.display='block';});
-document.getElementById('ev-delete-cancel').addEventListener('click',function(){document.getElementById('ev-delete-confirm').style.display='none';});
-document.getElementById('ev-delete-confirm-btn').addEventListener('click',function(){if(!currentViewEvent)return;var btn=this,st=document.getElementById('ev-delete-status');btn.disabled=true;st.style.color='#5f6368';st.textContent='Deleting…';fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:currentViewEvent.id,calendarId:(currentViewEvent.extendedProps&&currentViewEvent.extendedProps.calId)||'primary'})}).then(function(r){if(r.ok){var fd=cal?cal.getEventById(currentViewEvent.id):null;if(fd)fd.remove();allEvents=allEvents.filter(function(e){return e.id!==currentViewEvent.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==currentViewEvent.id;});});rebuildPills();closeEventView();}else{st.style.color='#d93025';st.textContent='❌ Delete failed.';btn.disabled=false;}}).catch(function(){st.style.color='#d93025';st.textContent='❌ Network error.';btn.disabled=false;});});
-
-var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status'),filIn=document.getElementById('file-input'),fnm=document.getElementById('fname'),rmf=document.getElementById('rm-file'),selFile=null;
-function updateSendBtn(){sndBtn.disabled=!msgIn.value.trim()&&!selFile;}
-msgIn.addEventListener('input',updateSendBtn);
-filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;if(selFile){fnm.textContent=selFile.name;fnm.style.display='';rmf.style.display='';}else{fnm.style.display='none';rmf.style.display='none';}updateSendBtn();});
-rmf.addEventListener('click',function(){selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';updateSendBtn();});
-
-// ── Draft management ──────────────────────────────────
-var DRAFT_KEY='mie_drafts';
-function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
-function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
-function renderDraftList(){
-  var drafts=getDrafts();
-  var wrap=document.getElementById('draft-list-wrap');
-  var list=document.getElementById('draft-list');
-  if(!wrap||!list)return;
-  if(!drafts.length){wrap.style.display='none';return;}
-  wrap.style.display='';
-  list.innerHTML='';
-  drafts.forEach(function(d,i){
-    var item=document.createElement('div');
-    item.className='draft-item';
-    var txt=document.createElement('span');
-    txt.className='draft-item-text';
-    txt.title=d.text;
-    txt.textContent=d.text.length>40?d.text.slice(0,40)+'…':d.text;
-    var del=document.createElement('button');
-    del.className='draft-item-del';
-    del.textContent='✕';
-    del.title='Delete draft';
-    del.addEventListener('click',function(e){
-      e.stopPropagation();
-      var arr=getDrafts();
-      arr.splice(i,1);
-      saveDrafts(arr);
-      renderDraftList();
-    });
-    item.addEventListener('click',function(){
-      msgIn.value=d.text;
-      msgIn.dispatchEvent(new Event('input'));
-      msgIn.focus();
-    });
-    item.appendChild(txt);
-    item.appendChild(del);
-    list.appendChild(item);
-  });
-}
-renderDraftList();
-
-sndBtn.addEventListener('click',function(){
-  var txt=msgIn.value.trim();
-  if(!txt&&!selFile)return;
-  var isDraft=document.getElementById('draft-check')&&document.getElementById('draft-check').checked;
-  if(isDraft){
-    // A안: 로컬 저장만, API 미전송
-    if(txt){
-      var arr=getDrafts();
-      arr.unshift({id:Date.now(),text:txt});
-      saveDrafts(arr);
-    }
-    sndSt.style.color='#1a73e8';
-    sndSt.textContent='📝 Saved as draft';
-    msgIn.value='';
-    selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';
-    document.getElementById('draft-check').checked=false;
-    renderDraftList();
-    updateSendBtn();
-    setTimeout(function(){sndSt.textContent='';},2500);
-    return;
   }
-  // 기존 API 전송
-  sndBtn.disabled=true;sndSt.textContent='';
-  fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
-    .then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';fnm.style.display='none';rmf.style.display='none';}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}  )
-    .catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';})
-    .finally(function(){setTimeout(function(){sndSt.textContent='';updateSendBtn();},3000);});
-});
 
-/* ── Overview widget: Finance ── */
-function loadDashFinance(){
-  var now=new Date();
-  var ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">No data</div>';return;}
-      renderDashFinance(data);
-    })
-    .catch(function(){document.getElementById('dash-fin-body').innerHTML='<div class="ov-loading">—</div>';});
-}
-function renderDashFinance(data){
-  var s=data.summary;
-  var inc=s.income.actual||1;
-  var rem=s.remaining;
-  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
-  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
-  var needsActual=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
-  var wantsActual=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
-  function pct(v,t){return t?Math.round(v/t*100):0;}
-  var savPct=pct(s.savings.actual,inc);
-  var expPct=pct(needsActual,inc);
-  var remPct=pct(wantsActual,inc);
-  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
-  // bar widths
-  var wE=expPct>0?Math.max(expPct,3):0;
-  var wS=s.savings.actual>0?Math.max(savPct,3):0;
-  var wR=wantsActual>0?Math.max(remPct,3):0;
-  var tot=wE+wS+wR;
-  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
-  var remColor=rem>=0?'#1e8e3e':'#c5221f';
-  var html=
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'+
-      '<div style="flex-shrink:0;"><span class="ov-remaining" style="color:'+remColor+';">'+fmtS(rem)+'</span><span style="font-size:9.5px;color:#9aa0a6;margin-left:4px;">Remaining</span></div>'+
-      '<div class="ov-stacked-bar" style="flex:1;margin-bottom:0;">'+
-        (wE>0?'<div class="ov-sb-seg" style="width:'+wE+'%;background:#c0522b;border-radius:3px 0 0 3px;"></div>':'')+
-        (wS>0?'<div class="ov-sb-seg" style="width:'+wS+'%;background:#34a853;margin-left:1px;"></div>':'')+
-        (wR>0?'<div class="ov-sb-seg" style="width:'+wR+'%;background:#dadce0;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')+
-      '</div>'+
-    '</div>'+
-    '<div class="ov-legend">'+
-      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#7c3aed;"></div><span>Income '+fmtS(s.income.actual)+' (100%)</span></div>'+
-      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#34a853;"></div><span>Savings '+fmtS(s.savings.actual)+' ('+savPct+'%)</span></div>'+
-      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#c0522b;"></div><span>Needs '+fmtS(needsActual)+' ('+expPct+'%)</span></div>'+
-      '<div class="ov-leg-item"><div class="ov-leg-dot" style="background:#dadce0;"></div><span>Wants '+fmtS(wantsActual)+' ('+remPct+'%)</span></div>'+
-    '</div>';
-  document.getElementById('dash-fin-body').innerHTML=html;
-}
+  function adjustPickerYear(dir, e) {
+    e.stopPropagation();
+    pickerCurrentYear += dir;
+    document.getElementById('picker-year-label').textContent = pickerCurrentYear;
+  }
 
-/* ── Overview widget: Health ── */
-function loadDashHealth(){
-  // Fetch the AMS panel (activity/sleep/mood) and body panel in parallel
-  // then parse the returned HTML to extract today's data values
-  var panelBase='/health/';
-  Promise.all([
-    fetch(panelBase+'panel-logs-ams.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
-    fetch(panelBase+'panel-logs-body.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;}),
-    fetch(panelBase+'panel-logs-food.html?v='+Date.now(),{credentials:'include'}).then(function(r){return r.ok?r.text():null;}).catch(function(){return null;})
-  ]).then(function(results){
-    populateDashHealth(results[0], results[1], results[2]);
-  }).catch(function(){
-    dashHealthShowData();
-  });
-}
+  function buildMonthYearPickerGrid() {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const container = document.getElementById('months-grid-container');
+    container.innerHTML = '';
+    months.forEach((m, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'picker-month-cell';
+      cell.textContent = m;
+      cell.onclick = function(e) {
+        e.stopPropagation();
+        const targetDate = new Date(pickerCurrentYear, idx, 1);
+        calendar.gotoDate(targetDate);
+        updateHeaderTitle();
+        document.getElementById('month-year-picker').style.display = 'none';
+      };
+      container.appendChild(cell);
+    });
+  }
 
-function dashHealthParseVal(doc,selector,fallback){
-  try{var el=doc.querySelector(selector);return el?el.textContent.trim():fallback;}catch(e){return fallback;}
-}
+  // 우측 상단 오늘 날짜 라벨 처리 및 오늘 이벤트 필터 바인딩
+  function renderTodayEventsPanel(events) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('today-panel-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    const container = document.getElementById('today-events-list');
+    container.innerHTML = '';
+    
+    // 오늘 날짜에 해당하는 이벤트 정렬 바인딩
+    const todays = events.filter(e => {
+      const sStr = typeof e.start === 'string' ? e.start : (e.start.toISOString ? e.start.toISOString() : '');
+      return sStr.startsWith(todayStr);
+    });
 
-function dashHealthShowData(){
-  document.getElementById('dash-health-skeleton').style.display='none';
-  document.getElementById('dash-health-body').style.display='';
-}
+    if(todays.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--txt3); padding:4px;">No events today.</div>`;
+      return;
+    }
 
-function populateDashHealth(amsHtml, bodyHtml, foodHtml){
-  // Parse AMS panel HTML (activity, sleep, mood)
-  if(amsHtml){
-    try{
-      var parser=new DOMParser();
-      var amsDoc=parser.parseFromString(amsHtml,'text/html');
+    todays.forEach(ev => {
+      const row = document.createElement('div');
+      row.className = 'panel-item-row';
+      
+      const ext = ev.extendedProps || ev;
+      const colorMeta = pastelForCalId(ext.calendarId, ev.summary || ev.title, ext.visibility);
+      
+      let timeLbl = 'All day';
+      if(!ev.allDay && ev.start) {
+        const d = new Date(ev.start);
+        timeLbl = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      }
 
-      // Activity: look for numeric values in known patterns
-      // panel-logs-ams renders rows — grab first entry values if present
-      // Steps: look for a cell containing step-like data
-      var allCells=Array.from(amsDoc.querySelectorAll('td,span,div'));
+      row.innerHTML = `
+        <div class="event-bar" style="background:${colorMeta.text}"></div>
+        <div class="item-time">${timeLbl}</div>
+        <div class="item-text">${ev.title || ev.summary}</div>
+        <div class="item-loc">${ext.location ? '📍' : ''}</div>
+      `;
+      
+      row.onclick = () => openEventView(calendar ? calendar.getEventById(ev.id) || ev : ev);
+      container.appendChild(row);
+    });
+  }
 
-      // Helper: find element whose text matches a label nearby
-      function findNear(label,els){
-        for(var i=0;i<els.length;i++){
-          if(els[i].textContent.toLowerCase().indexOf(label)!==-1){
-            // look at siblings and parent
-            var sib=els[i].nextElementSibling;
-            if(sib&&/\d/.test(sib.textContent))return sib.textContent.trim();
-            var par=els[i].parentElement;
-            if(par){var kids=Array.from(par.children);for(var j=0;j<kids.length;j++){if(kids[j]!==els[i]&&/\d/.test(kids[j].textContent))return kids[j].textContent.trim();}}
+  // 실시간 태스크 로드 및 갱신 필터링
+  function loadTasks() {
+    fetch(`${BACKEND}/api/me/tasks`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById('task-list-filter');
+        const formSelect = document.getElementById('tk-list-select');
+        
+        // 기존 옵션 리셋
+        select.innerHTML = '<option value="all">All List ▾</option>';
+        formSelect.innerHTML = '';
+
+        const lists = data.lists || data.taskLists || [];
+        lists.forEach(l => {
+          select.innerHTML += `<option value="${l.id}">${l.title}</option>`;
+          formSelect.innerHTML += `<option value="${l.id}">${l.title}</option>`;
+        });
+
+        const filterVal = select.value;
+        const tasksContainer = document.getElementById('today-tasks-list');
+        tasksContainer.innerHTML = '';
+
+        const tasks = data.tasks || [];
+        const incomplete = tasks.filter(t => t.status !== 'completed');
+
+        if(incomplete.length === 0) {
+          tasksContainer.innerHTML = `<div style="font-size:12px; color:var(--txt3); padding:4px;">No tasks left.</div>`;
+          return;
+        }
+
+        incomplete.forEach(t => {
+          if(filterVal !== 'all' && t.listId !== filterVal) return;
+          
+          const row = document.createElement('div');
+          row.className = 'panel-item-row';
+          
+          let badgeHtml = '';
+          const todayStr = new Date().toISOString().split('T')[0];
+          if(t.due && t.due.startsWith(todayStr)) {
+            badgeHtml = `<span class="task-badge today">Today</span>`;
+          } else if(t.due) {
+            badgeHtml = `<span class="task-badge">${t.due}</span>`;
           }
-        }
-        return null;
-      }
 
-      // Sleep: look for duration pattern like "7h 20m" or "7:20"
-      var sleepMatch=amsHtml.match(/(\d+)h\s*(\d+)m/);
-      if(sleepMatch){
-        document.getElementById('dash-h-sleep').textContent=sleepMatch[1]+'h '+sleepMatch[2]+'m';
-      }
-      // Sleep quality: look for "Quality: X/5" or "4/5"
-      var sqMatch=amsHtml.match(/[Qq]uality[:\s]*(\d)\/5/);
-      if(sqMatch){
-        document.getElementById('dash-h-sleep-q').textContent='😴 Quality: '+sqMatch[1]+'/5';
-      }
-      // Mood: look for mood label value
-      var moodMatch=amsHtml.match(/[Mm]ood[^<]*<[^>]+>([A-Za-z\s😊😐😢😠😴]+)<\//) ||
-                    amsHtml.match(/class="[^"]*mood[^"]*"[^>]*>([A-Za-z\s😊😐😢😠😴]+)</i);
-      if(moodMatch){
-        var moodVal=moodMatch[1].trim();
-        if(moodVal&&moodVal.length<20)document.getElementById('dash-h-mood').textContent=moodVal;
-      }
-      // Steps: pattern like "11,256" or "11256" near "steps"
-      var stepsMatch=amsHtml.match(/steps[^<]*?(\d[\d,]+)/i) ||
-                     amsHtml.match(/(\d[\d,]+)\s*steps/i);
-      if(stepsMatch){var stepsNum=parseInt(stepsMatch[1].replace(/,/g,''),10);document.getElementById('dash-h-steps').textContent=isNaN(stepsNum)?'—':stepsNum.toLocaleString();}
-      // Distance
-      var distMatch=amsHtml.match(/(\d+\.?\d*)\s*(km|mi)/i);
-      if(distMatch){var dNum=parseFloat(distMatch[1]);document.getElementById('dash-h-dist').textContent=isNaN(dNum)?distMatch[1]:dNum.toLocaleString(undefined,{maximumFractionDigits:2});document.getElementById('dash-h-dist-lbl').textContent=distMatch[2];}
-      // Calories burned
-      var burnMatch=amsHtml.match(/burned[^<]*?(\d[\d,]+)/i)||amsHtml.match(/(\d[\d,]+)[^<]*burned/i);
-      if(burnMatch){var burnNum=parseInt(burnMatch[1].replace(/,/g,''),10);var burnFmt=isNaN(burnNum)?'—':burnNum.toLocaleString();document.getElementById('dash-h-cals-b').textContent=burnFmt;document.getElementById('dash-h-burned').textContent=burnFmt;}
-
-    }catch(e){console.warn('AMS parse error',e);}
-  }
-
-  // Parse Body panel HTML (vitals, weight, body composition)
-  if(bodyHtml){
-    try{
-      // Blood pressure
-      var bpMatch=bodyHtml.match(/(\d{2,3}\/\d{2,3})/);
-      if(bpMatch)document.getElementById('dash-h-bp').textContent=bpMatch[1];
-      // Heart rate
-      var hrMatch=bodyHtml.match(/(\d{2,3})\s*bpm/i);
-      if(hrMatch)document.getElementById('dash-h-hr').textContent=hrMatch[1]+' bpm';
-      // SpO2
-      var spo2Match=bodyHtml.match(/(\d{2,3})%\s*(?:SpO2|spo2|oxygen)/i)||bodyHtml.match(/SpO2[^<]*?(\d{2,3})%/i);
-      if(spo2Match)document.getElementById('dash-h-spo2').textContent=spo2Match[1]+'%';
-      // Glucose
-      var glucMatch=bodyHtml.match(/(\d{2,3})\s*mg\/dL/i)||bodyHtml.match(/glucose[^<]*?(\d{2,3})/i);
-      if(glucMatch)document.getElementById('dash-h-glucose').textContent=glucMatch[1]+' mg/dL';
-      // Weight
-      var wMatch=bodyHtml.match(/(\d+\.?\d*)\s*kg/i);
-      if(wMatch){
-        var wVal=parseFloat(wMatch[1]);
-        document.getElementById('dash-h-weight').textContent=isNaN(wVal)?'—':wVal.toFixed(1);
-        var lbs=(wVal*2.20462).toFixed(1);
-        document.getElementById('dash-h-weight-sub').textContent=isNaN(wVal)?'kg':wVal.toFixed(1)+' kg';
-      }
-      // Muscle mass
-      var muscMatch=bodyHtml.match(/[Mm]uscle[^<]*?(\d+\.?\d*)\s*kg/i);
-      if(muscMatch){document.getElementById('dash-h-muscle').textContent=muscMatch[1]+' kg';}
-      // Body fat
-      var fatMatch=bodyHtml.match(/[Ff]at[^<]*?(\d+\.?\d*)\s*kg/i);
-      if(fatMatch){document.getElementById('dash-h-fat').textContent=fatMatch[1]+' kg';}
-
-    }catch(e){console.warn('Body parse error',e);}
-  }
-
-  // Parse Food panel (macros: carbs/fat/fiber/protein + calories)
-  if(foodHtml){
-    try{
-      // Calories consumed: look for large cal number
-      var calMatch=foodHtml.match(/(\d[\d,]*)\s*(?:cal|kcal)/i);
-      if(calMatch){
-        var calNum=parseInt(calMatch[1].replace(/,/g,''),10);
-        if(!isNaN(calNum)){
-          document.getElementById('dash-h-cal').textContent=calNum.toLocaleString();
-        }
-      }
-      // Macro patterns: look for 'Carbs', 'Fat', 'Fiber', 'Protein' near a number
-      function getMacro(html,label){
-        var re=new RegExp(label+'[^<]*?([\\d\\.]+)\\s*g','i');
-        var m=html.match(re);
-        if(!m){re=new RegExp('([\\d\\.]+)\\s*g[^<]*'+label,'i');m=html.match(re);}
-        return m?parseFloat(m[1]):null;
-      }
-      var carbs=getMacro(foodHtml,'Carbs');
-      var fat=getMacro(foodHtml,'Fat');
-      var fiber=getMacro(foodHtml,'Fiber');
-      var prot=getMacro(foodHtml,'Protein');
-      if(carbs!==null)document.getElementById('dash-h-carbs').textContent=carbs.toFixed(0);
-      if(fat!==null)document.getElementById('dash-h-fat-g').textContent=fat.toFixed(0);
-      if(fiber!==null)document.getElementById('dash-h-fiber').textContent=fiber.toFixed(0);
-      if(prot!==null)document.getElementById('dash-h-prot').textContent=prot.toFixed(0);
-      // Update macro bar segments (% of total macros by weight)
-      var total=(carbs||0)+(fat||0)+(fiber||0)+(prot||0);
-      function barPct(v){return total>0?Math.round((v||0)/total*100):0;}
-      var pCarbs=barPct(carbs),pFat=barPct(fat),pFiber=barPct(fiber),pProt=100-pCarbs-pFat-pFiber;
-      if(total>0){
-        var bc=document.getElementById('dash-h-bar-carbs');
-        var bf=document.getElementById('dash-h-bar-fat');
-        var bfi=document.getElementById('dash-h-bar-fiber');
-        var bp=document.getElementById('dash-h-bar-prot');
-        if(bc)bc.style.width=pCarbs+'%';
-        if(bf)bf.style.width=pFat+'%';
-        if(bfi)bfi.style.width=pFiber+'%';
-        if(bp)bp.style.width=Math.max(pProt,0)+'%';
-      }
-    }catch(e){console.warn('Food parse error',e);}
-  }
-
-  dashHealthShowData();
-  // Q1: loadDashHealth 완료 후 calendar insights 적용
-  // (fetchEvents가 먼저 끝났을 경우 allEvents가 채워진 상태로 실행됨)
-  extractCalendarInsights();
-}
-
-/* ── Calendar → Overview Insights ────────────────────────────────────────
-   extractCalendarInsights()
-     오늘 날짜의 allEvents에서 title+desc 텍스트를 수집하고
-     CALENDAR_KEYWORD_MAP 기준으로 숫자를 추출한 뒤
-     applyCalendarInsights(insights) 로 전달한다.
-
-   applyCalendarInsights(insights)
-     각 dash-h-* 필드가 현재 '—' 상태일 때만 값을 업데이트한다.
-     Finance 카드는 감지된 지출 항목을 "from calendar" 섹션으로 append한다.
-   ─────────────────────────────────────────────────────────────────────── */
-
-// ── 키워드 매핑 객체 배열 ──
-// 항목 추가/삭제는 이 배열만 수정하면 된다.
-// type: 'int' | 'float' | 'text' | 'finance'
-// unit: 표시 단위 문자열 (없으면 null)
-// numIndex: 'first' | 'last' | 'all'  — 숫자 여러 개일 때 처리 방식
-var CALENDAR_KEYWORD_MAP = [
-  // ── 혈당/혈압/맥박/산소/체중 ──────────────────────────────────────
-  {
-    keywords: ['혈당','glucose','sugar','글루코스'],
-    field: 'dash-h-glucose',
-    unit: 'mg/dL',
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['혈압','blood pressure','bp'],
-    field: 'dash-h-bp',
-    unit: null,          // "120/80" 형식 그대로 사용
-    type: 'bp',
-    numIndex: 'first'
-  },
-  {
-    keywords: ['맥박','심박','heart rate','hr','bpm'],
-    field: 'dash-h-hr',
-    unit: 'bpm',
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['산소','spo2','산소포화도','oxygen'],
-    field: 'dash-h-spo2',
-    unit: '%',
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['체중','몸무게','weight'],
-    field: 'dash-h-weight',
-    unit: 'kg',
-    type: 'float',
-    numIndex: 'all'
-  },
-  // ── 활동 ─────────────────────────────────────────────────────────
-  {
-    keywords: ['걸음','steps','보행'],
-    field: 'dash-h-steps',
-    unit: null,
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['칼로리 소모','칼로리소모','소모','burned','kcal burn','cal burn'],
-    field: 'dash-h-cals-b',
-    unit: null,
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['거리','distance','km run','km 달리기'],
-    field: 'dash-h-dist',
-    unit: 'km',
-    type: 'float',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['물','수분','음수','water'],
-    field: 'dash-h-water',
-    unit: 'ml',
-    type: 'int',
-    numIndex: 'all'
-  },
-  // ── 식사/영양 ────────────────────────────────────────────────────
-  {
-    keywords: ['칼로리','kcal','cal','열량'],
-    field: 'dash-h-cal',
-    unit: null,
-    type: 'int',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['단백질','protein'],
-    field: 'dash-h-prot',
-    unit: 'g',
-    type: 'float',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['탄수화물','carb','탄수'],
-    field: 'dash-h-carbs',
-    unit: 'g',
-    type: 'float',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['지방','fat g','fat:'],
-    field: 'dash-h-fat-g',
-    unit: 'g',
-    type: 'float',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['섬유','fiber','식이섬유'],
-    field: 'dash-h-fiber',
-    unit: 'g',
-    type: 'float',
-    numIndex: 'all'
-  },
-  // ── 수면/기분 ────────────────────────────────────────────────────
-  {
-    keywords: ['수면','sleep','잠','취침'],
-    field: 'dash-h-sleep',
-    unit: null,
-    type: 'sleep',   // "7h 30m" 패턴 특수 처리
-    numIndex: 'first'
-  },
-  {
-    keywords: ['기분','mood','감정'],
-    field: 'dash-h-mood',
-    unit: null,
-    type: 'text',    // 숫자 추출 없이 키워드 뒤 단어 추출
-    numIndex: 'first'
-  },
-  // ── 체성분 ───────────────────────────────────────────────────────
-  {
-    keywords: ['근육','근육량','muscle','muscle mass'],
-    field: 'dash-h-muscle',
-    unit: 'kg',
-    type: 'float',
-    numIndex: 'all'
-  },
-  {
-    keywords: ['체지방','body fat','지방량'],
-    field: 'dash-h-fat',
-    unit: 'kg',
-    type: 'float',
-    numIndex: 'all'
-  },
-  // ── Finance (숫자 추출 대신 텍스트 항목으로 수집) ─────────────────
-  {
-    keywords: ['지출','결제','구매','샀다','paid','bought','payment','pay'],
-    field: '_finance_expense',
-    unit: null,
-    type: 'finance',
-    numIndex: 'first'
-  },
-  {
-    keywords: ['수입','월급','받았','income','salary','received'],
-    field: '_finance_income',
-    unit: null,
-    type: 'finance',
-    numIndex: 'first'
-  }
-];
-
-// ── 오늘 날짜 키 반환 (YYYY-MM-DD) ──
-function _calTodayKey() {
-  var now = new Date();
-  var m = now.getMonth() + 1;
-  var d = now.getDate();
-  return now.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
-}
-
-// ── 숫자 추출 헬퍼 ──
-// text에서 숫자(정수/소수) 배열을 반환한다.
-function _extractNums(text) {
-  var matches = text.match(/\d+(?:\.\d+)?/g);
-  return matches ? matches.map(Number) : [];
-}
-
-// ── 혈압 패턴 추출 헬퍼 ("120/80" 형태) ──
-function _extractBP(text) {
-  var m = text.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
-  return m ? m[1] + '/' + m[2] : null;
-}
-
-// ── 수면 패턴 추출 헬퍼 ("7h 30m" or "7:30" 형태) ──
-function _extractSleep(text) {
-  var m1 = text.match(/(\d+)\s*h\s*(\d+)\s*m/i);
-  if (m1) return m1[1] + 'h ' + m1[2] + 'm';
-  var m2 = text.match(/(\d+):(\d{2})/);
-  if (m2) return m2[1] + 'h ' + m2[2] + 'm';
-  return null;
-}
-
-// ── 기분 텍스트 추출 헬퍼 (키워드 뒤 단어) ──
-function _extractMood(text, keyword) {
-  var re = new RegExp(keyword + '[:\\s]+([가-힣a-zA-Z]+)', 'i');
-  var m = re.exec(text);
-  return m ? m[1].trim() : null;
-}
-
-// ── 숫자 배열 → 표시 문자열 ──
-// numIndex: 'all' → "98/145/127", 'first' → "98", 'last' → "127"
-function _formatNums(nums, type, unit, numIndex) {
-  if (!nums.length) return null;
-  var selected;
-  if (numIndex === 'first') {
-    selected = [nums[0]];
-  } else if (numIndex === 'last') {
-    selected = [nums[nums.length - 1]];
-  } else {
-    selected = nums; // 'all'
-  }
-  var formatted = selected.map(function(n) {
-    return type === 'float' ? parseFloat(n.toFixed(1)) : Math.round(n);
-  });
-  var numStr = formatted.join('/');
-  return unit ? numStr + ' ' + unit : numStr;
-}
-
-// ── extractCalendarInsights 메인 ──
-function extractCalendarInsights() {
-  var todayKey = _calTodayKey();
-
-  // 오늘 날짜 이벤트 필터 (allDay는 start가 'YYYY-MM-DD', timed는 start가 'YYYY-MM-DDT...')
-  var todayEvents = allEvents.filter(function(ev) {
-    if (!ev.start) return false;
-    var dateStr = ev.allDay ? ev.start : ev.start.split('T')[0];
-    return dateStr === todayKey;
-  });
-
-  if (!todayEvents.length) return;
-
-  // 이벤트별 title + desc 합치기
-  var texts = todayEvents.map(function(ev) {
-    var title = (ev.title || '').toLowerCase();
-    var desc  = ((ev.extendedProps && ev.extendedProps.desc) || '').toLowerCase();
-    return title + ' ' + desc;
-  });
-
-  var insights = {
-    health: {},       // { fieldId: displayString }
-    finance: []       // [{ label: string, raw: string }]
-  };
-
-  CALENDAR_KEYWORD_MAP.forEach(function(mapping) {
-    // 이미 이 필드에 값을 찾았으면 skip (첫 번째 이벤트 매치 우선)
-    if (mapping.type !== 'finance' && insights.health[mapping.field]) return;
-
-    texts.forEach(function(text, evIdx) {
-      // 키워드 중 하나라도 포함되어 있는지 확인
-      var hit = mapping.keywords.some(function(kw) {
-        return text.indexOf(kw.toLowerCase()) !== -1;
-      });
-      if (!hit) return;
-
-      var ev = todayEvents[evIdx];
-      var rawText = (ev.title || '') + ' ' + ((ev.extendedProps && ev.extendedProps.desc) || '');
-
-      // Finance 타입: 텍스트 항목으로 수집
-      if (mapping.type === 'finance') {
-        insights.finance.push({
-          label: mapping.field === '_finance_income' ? '수입' : '지출',
-          raw: ev.title || rawText.trim().slice(0, 60)
+          row.innerHTML = `
+            <input type="checkbox" class="task-checkbox" onclick="completeTask('${t.id}', event)">
+            <div class="item-text" style="font-weight:400;">${t.title}</div>
+            ${badgeHtml}
+          `;
+          tasksContainer.appendChild(row);
         });
-        return;
-      }
+      }).catch(()=>{});
+  }
 
-      // 이미 이 필드에 값이 있으면 skip
-      if (insights.health[mapping.field]) return;
+  function completeTask(id, event) {
+    event.stopPropagation();
+    fetch(`${BACKEND}/api/me/tasks/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, status: 'completed' }),
+      credentials: 'include'
+    }).then(() => loadTasks());
+  }
 
-      // 혈압 특수 처리
-      if (mapping.type === 'bp') {
-        var bp = _extractBP(rawText);
-        if (bp) insights.health[mapping.field] = bp;
-        return;
-      }
+  // 탭 대분류 전환 스크립트
+  function switchMainTab(type) {
+    currentActiveTab = type;
+    document.getElementById('tab-msg-btn').className = 'input-tab-btn' + (type === 'msg' ? ' active' : '');
+    document.getElementById('tab-add-btn').className = 'input-tab-btn' + (type === 'add' ? ' active' : '');
+    
+    document.getElementById('panel-msg').className = 'form-panel' + (type === 'msg' ? ' active' : '');
+    document.getElementById('panel-add').className = 'form-panel' + (type === 'add' ? ' active' : '');
+  }
 
-      // 수면 특수 처리
-      if (mapping.type === 'sleep') {
-        var sl = _extractSleep(rawText);
-        if (sl) insights.health[mapping.field] = sl;
-        return;
-      }
+  // +Add 버튼 연동 서브 인풋 활성화 초점 이동 포커싱 처리
+  function focusAddTab() {
+    switchMainTab('add');
+    document.getElementById('ev-title').focus();
+  }
 
-      // 기분 텍스트 처리
-      if (mapping.type === 'text') {
-        var moodKeyword = mapping.keywords.find(function(kw) {
-          return text.indexOf(kw.toLowerCase()) !== -1;
-        });
-        if (moodKeyword) {
-          var moodVal = _extractMood(rawText, moodKeyword);
-          if (moodVal && moodVal.length < 20) insights.health[mapping.field] = moodVal;
-        }
-        return;
-      }
-
-      // 일반 숫자 추출 (int / float)
-      // 키워드 위치 뒤의 텍스트에서만 숫자를 추출해 오매칭 방지
-      var lowerRaw = rawText.toLowerCase();
-      var hitKw = mapping.keywords.find(function(kw) {
-        return lowerRaw.indexOf(kw.toLowerCase()) !== -1;
-      });
-      if (!hitKw) return;
-
-      var afterKw = rawText.slice(lowerRaw.indexOf(hitKw.toLowerCase()) + hitKw.length);
-      var nums = _extractNums(afterKw);
-      if (!nums.length) return;
-
-      // 단위에 맞는 값만 필터 (체중/체성분은 10~300kg 범위, 혈당은 40~600, 등)
-      nums = nums.filter(function(n) {
-        if (mapping.field === 'dash-h-glucose') return n >= 40 && n <= 600;
-        if (mapping.field === 'dash-h-hr')      return n >= 30 && n <= 220;
-        if (mapping.field === 'dash-h-spo2')    return n >= 60 && n <= 100;
-        if (mapping.field === 'dash-h-weight')  return n >= 20 && n <= 300;
-        if (mapping.field === 'dash-h-steps')   return n >= 100 && n <= 100000;
-        if (mapping.field === 'dash-h-cals-b')  return n >= 100 && n <= 10000;
-        if (mapping.field === 'dash-h-cal')     return n >= 100 && n <= 10000;
-        if (mapping.field === 'dash-h-water')   return n >= 50  && n <= 10000;
-        if (mapping.field === 'dash-h-muscle')  return n >= 5   && n <= 150;
-        if (mapping.field === 'dash-h-fat')     return n >= 1   && n <= 150;
-        return true;
-      });
-      if (!nums.length) return;
-
-      var str = _formatNums(nums, mapping.type, mapping.unit, mapping.numIndex);
-      if (str) insights.health[mapping.field] = str;
+  // 서브폼 단일행 구성 탭 전환 스크립트 (가로 스크롤 완전 해결)
+  function switchSubForm(subType) {
+    currentSubForm = subType;
+    const subs = ['event', 'task', 'finance', 'health', 'project'];
+    subs.forEach(s => {
+      document.getElementById(`subtab-${s}`).className = 'sub-tab-btn' + (s === subType ? ' active' : '');
+      document.getElementById(`form-${s}`).style.display = (s === subType) ? 'block' : 'none';
     });
-  });
+  }
 
-  applyCalendarInsights(insights);
-}
+  // 메시지 전송 서브밋
+  function submitMessageForm() {
+    const msg = document.getElementById('msg-textarea').value;
+    if(!msg) return alert("Please type a message.");
+    
+    fetch(`${BACKEND}/api/me/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, draft: document.getElementById('msg-draft-chk').checked }),
+      credentials: 'include'
+    }).then(() => {
+      alert("Message sent successfully!");
+      document.getElementById('msg-textarea').value = '';
+    });
+  }
 
-// ── applyCalendarInsights ──
-function applyCalendarInsights(insights) {
-  // Health: 각 필드가 '—' 상태일 때만 calendar 값으로 보완
-  Object.keys(insights.health).forEach(function(fieldId) {
-    var el = document.getElementById(fieldId);
-    if (!el) return;
-    var current = el.textContent.trim();
-    if (current === '—' || current === '') {
-      el.textContent = insights.health[fieldId];
-      // calendar 출처임을 나타내는 스타일 (연한 색)
-      el.style.color = '#9aa0a6';
-      el.title = 'from calendar';
+  // 복합 개체 추가 폼 일괄 처리 스크립트
+  function submitAddForm() {
+    let url = '';
+    let bodyData = {};
+
+    if(currentSubForm === 'event') {
+      url = '/api/me/events/create';
+      bodyData = {
+        title: document.getElementById('ev-title').value,
+        date: document.getElementById('ev-date').value,
+        start: document.getElementById('ev-start').value,
+        end: document.getElementById('ev-end').value,
+        location: document.getElementById('ev-loc').value,
+        notes: document.getElementById('ev-notes').value
+      };
+    } else if(currentSubForm === 'task') {
+      url = '/api/me/tasks/create';
+      bodyData = {
+        title: document.getElementById('tk-title').value,
+        listId: document.getElementById('tk-list-select').value,
+        due: document.getElementById('tk-due').value,
+        priority: document.getElementById('tk-priority').value
+      };
+    } else if(currentSubForm === 'finance') {
+      url = '/api/me/finance/add';
+      bodyData = {
+        amount: document.getElementById('fin-amount').value,
+        date: document.getElementById('fin-date').value,
+        category: document.getElementById('fin-category').value,
+        description: document.getElementById('fin-desc').value
+      };
+    } else if(currentSubForm === 'health') {
+      url = '/api/me/health/add';
+      bodyData = {
+        metric: document.getElementById('he-metric').value,
+        value: document.getElementById('he-value').value,
+        date: document.getElementById('he-date').value
+      };
+    } else if(currentSubForm === 'project') {
+      url = '/api/me/projects/create';
+      bodyData = {
+        title: document.getElementById('pj-title').value,
+        due: document.getElementById('pj-due').value,
+        status: document.getElementById('pj-status').value,
+        members: document.getElementById('pj-members').value
+      };
     }
-  });
 
-  // Finance: renderDashFinance() 완료 후 "from calendar" 섹션 append
-  if (insights.finance.length) {
-    var finBody = document.getElementById('dash-fin-body');
-    if (!finBody) return;
+    if(!bodyData.title && !bodyData.amount && !bodyData.value) {
+      alert("Please fill in the required fields.");
+      return;
+    }
 
-    // 기존 from-calendar 섹션이 있으면 제거 후 재생성
-    var old = finBody.querySelector('.cal-finance-section');
-    if (old) old.remove();
-
-    var section = document.createElement('div');
-    section.className = 'cal-finance-section';
-    section.style.cssText = 'margin-top:5px;padding-top:5px;border-top:1px dashed #e0e0e0;';
-
-    var hd = document.createElement('div');
-    hd.style.cssText = 'font-size:9px;font-weight:600;color:#9aa0a6;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;';
-    hd.textContent = 'from calendar';
-    section.appendChild(hd);
-
-    insights.finance.forEach(function(item) {
-      var row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10.5px;color:#5f6368;line-height:1.4;';
-      var badge = document.createElement('span');
-      badge.style.cssText = 'font-size:9px;font-weight:600;border-radius:3px;padding:0 4px;flex-shrink:0;' +
-        (item.label === '수입'
-          ? 'background:#d3ead9;color:#0b6b37;'
-          : 'background:#fce8e6;color:#c5221f;');
-      badge.textContent = item.label;
-      var txt = document.createElement('span');
-      txt.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
-      txt.textContent = item.raw;
-      txt.title = item.raw;
-      row.appendChild(badge);
-      row.appendChild(txt);
-      section.appendChild(row);
+    fetch(`${BACKEND}${url}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyData),
+      credentials: 'include'
+    }).then(res => {
+      if(res.ok) {
+        alert("Successfully added!");
+        if(currentSubForm === 'event') calendar.refetchEvents();
+        else if(currentSubForm === 'task') loadTasks();
+      }
     });
-
-    finBody.appendChild(section);
   }
-}
 
-init();
+  // 모달 보기 / 닫기 공통 처리 로직
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  function openDayModal(date, segs) {
+    const modal = document.getElementById('day-events-modal');
+    document.getElementById('day-modal-header-text').textContent = `Events on ${date.toLocaleDateString()}`;
+    const container = document.getElementById('day-modal-events-list');
+    container.innerHTML = '';
+
+    segs.forEach(s => {
+      const ev = s.footprint ? s.footprint.eventInstance.def : (s.event || s);
+      const row = document.createElement('div');
+      row.className = 'panel-item-row';
+      row.innerHTML = `<div class="item-text">${ev.title}</div>`;
+      row.onclick = () => { closeModal('day-events-modal'); openEventView(ev); };
+      container.appendChild(row);
+    });
+    modal.style.display = 'flex';
+  }
+
+  function openEventView(eventObj) {
+    const modal = document.getElementById('event-view-modal');
+    const ext = eventObj.extendedProps || eventObj;
+    
+    document.getElementById('evt-view-title').textContent = eventObj.title || ext.summary;
+    
+    let timeString = 'All day';
+    if(eventObj.start) {
+      const s = new Date(eventObj.start);
+      timeString = s.toLocaleString();
+    }
+    document.getElementById('evt-view-time').textContent = `🕒 ${timeString}`;
+    
+    if(ext.location) {
+      document.getElementById('evt-view-loc-row').style.display = 'block';
+      document.getElementById('evt-view-loc').textContent = ext.location;
+    } else {
+      document.getElementById('evt-view-loc-row').style.display = 'none';
+    }
+
+    document.getElementById('evt-view-desc').textContent = ext.description || ext.notes || 'No description provided.';
+    
+    const colorMeta = pastelForCalId(ext.calendarId, eventObj.title || ext.summary, ext.visibility);
+    document.getElementById('evt-view-dot').style.background = colorMeta.text;
+    document.getElementById('evt-view-calname').textContent = ext.visibility === 'private' ? 'Private Calendar' : 'Primary Calendar';
+
+    modal.style.display = 'flex';
+  }
+
+  function toggleOtherCalendarsVisibility() {
+    const chk = document.getElementById('toggle-other-cal').checked;
+    if(!chk) {
+      calendar.getEventSources().forEach(src => src.remove());
+    } else {
+      calendar.refetchEvents();
+    }
+  }
 </script>
-
-<script src="/common/addbutton.js"></script>
 </body>
 </html>
