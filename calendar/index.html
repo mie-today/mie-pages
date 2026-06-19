@@ -7,12 +7,13 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* 0626dash-prod.html 기준 Root 변수 */
     :root {
       --bg: #FFFFFF; --bg2: #FAFAF8; --bg3: #F2F1EE;
       --txt: #111111; --txt2: #5F5E5A; --txt3: #999896;
       --blue: #1C7ED6; --teal: #1D9E75;
       --b1: rgba(0,0,0,0.07); --b2: rgba(0,0,0,0.12);
-      --red: #E24B4A; --purple: #534AB7; --amber: #EF9F27;
+      --red: #E24B4A; --purple: #534AB7; --cblue: #378ADD; --amber: #EF9F27;
       --r: 12px;
     }
 
@@ -22,52 +23,56 @@
       height: 100%;
       overflow: hidden;
       font-family: 'Inter', sans-serif;
-      background: var(--bg2);
+      background: var(--bg3); /* 전체 앱 배경은 약간 어둡게 하여 카드가 돋보이게 함 */
       color: var(--txt);
       font-size: 13px;
     }
 
-    /* 전체 앱 레이아웃 */
     .app {
       display: flex;
       flex-direction: column;
-      height: 100vh; /* 화면 꽉 차게 고정 */
+      height: 100vh;
+      overflow: hidden;
     }
 
-    /* 상단 탑바 (52px 고정) */
+    /* =========================================
+       1. TOP NAV PANEL (52px)
+       ========================================= */
     .topbar {
       flex-shrink: 0;
       height: 52px;
+      background: var(--bg);
       border-bottom: 1px solid var(--b1);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
-      background: var(--bg);
+      padding: 0 24px;
       z-index: 10;
     }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .logo { font-weight: 700; font-size: 15px; letter-spacing: -0.3px; }
+    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .logo { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
     .logo span { color: var(--blue); }
-    .topbar-divider { width: 1px; height: 14px; background: var(--b1); }
-    .welcome-msg { font-size: 13px; color: var(--txt2); }
-    .topbar-right { display: flex; align-items: center; gap: 16px; }
-    .clock-weather-wrap { font-size: 13px; color: var(--txt2); display: flex; gap: 8px; }
-    .avatar-circle { width: 26px; height: 26px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; }
+    .topbar-divider { width: 1px; height: 16px; background: var(--b1); }
+    .welcome-msg, .clock-weather-wrap, .signout-link { font-size: 13px; font-weight: 500; color: var(--txt2); }
+    .clock-weather-wrap { display: flex; align-items: center; gap: 8px; }
+    .avatar-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; color: var(--txt); }
+    .signout-link { text-decoration: none; cursor: pointer; }
+    .signout-link:hover { color: var(--txt); }
 
-    /* 중간 메인 컨테이너 */
+    /* =========================================
+       2. MAIN CONTAINER (60:40 Layout)
+       ========================================= */
     .main-container {
       display: flex;
-      flex: 1; /* 남은 높이 모두 차지 */
-      overflow: hidden; /* 내부 스크롤 사용을 위해 숨김 */
+      flex: 1;
+      overflow: hidden;
     }
 
-    /* -------------------------------------
-       왼쪽 캘린더 (60%) 
-    ------------------------------------- */
-    .calendar-pane {
+    /* --- LEFT PANE (60%): 캘린더 영역 --- */
+    .left-pane {
       width: 60%;
       background: var(--bg);
+      border-right: 1px solid var(--b1);
       padding: 16px;
       display: flex;
       flex-direction: column;
@@ -76,98 +81,138 @@
     
     .cal-custom-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
     .cal-nav-group { display: flex; align-items: center; gap: 4px; }
-    .cal-nav-btn { background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; }
-    .cal-header-title { font-size: 16px; font-weight: 600; margin: 0 8px; min-width: 120px; }
+    .cal-nav-btn { background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 500;}
+    .cal-nav-btn:hover { background: var(--bg2); }
+    .cal-header-title { font-size: 16px; font-weight: 600; margin: 0 12px; min-width: 120px; text-align: center; }
     .cal-controls-right { display: flex; gap: 8px; }
-    .cal-view-dropdown { padding: 4px 8px; border: 1px solid var(--b1); border-radius: 6px; background: var(--bg); }
+    .cal-view-dropdown { padding: 4px 8px; border: 1px solid var(--b1); border-radius: 6px; background: var(--bg); cursor: pointer; }
     
-    .fc-wrapper { flex: 1; border: 1px solid var(--b1); border-radius: var(--r); padding: 12px; overflow: hidden; background: var(--bg); }
+    .fc-wrapper {
+      flex: 1; 
+      border: 1px solid var(--b1); 
+      border-radius: var(--r); 
+      padding: 12px; 
+      background: var(--bg); 
+      overflow: hidden;
+      margin-bottom: 12px; /* 하단 캘린더 필터와의 간격 */
+    }
     .fc { height: 100% !important; }
-    .fc-theme-standard th { background: var(--bg2); padding: 6px 0 !important; font-size: 11px; font-weight: 600; color: var(--txt2); }
-    .fc-daygrid-day-number { font-size: 11px; color: var(--txt2); }
+    .fc .fc-scrollgrid { border: none !important; }
+    .fc td, .fc th { border: 1px solid var(--b1) !important; }
+    .fc-theme-standard th { background: var(--bg2); border: none !important; padding: 6px 0 !important; font-size: 11px; font-weight: 600; color: var(--txt2); text-transform: uppercase; }
+    .fc-daygrid-day-number { font-size: 11px; color: var(--txt2); font-weight: 500; padding: 4px 6px !important; }
+    .fc-day-today { background: rgba(28,126,214,0.03) !important; }
+    .fc-day-today .fc-daygrid-day-number { color: var(--blue); font-weight: 700; }
+    .fc-event { background: none !important; border: none !important; margin: 1px 0 !important; }
 
-    /* -------------------------------------
-       오른쪽 패널 (40%) - 3단 구조
-    ------------------------------------- */
-    .right-panel {
+    /* 달력 하단 Calendars 체크박스 팝업 복구 */
+    .calendars-footer-area {
+      flex-shrink: 0;
+      position: relative;
+    }
+    .calendars-pop-btn {
+      background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--txt2); cursor: pointer;
+    }
+    .calendars-box-popup {
+      position: absolute; bottom: 100%; left: 0; margin-bottom: 8px;
+      background: var(--bg); border: 1px solid var(--b1); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); width: 210px; padding: 12px; z-index: 100;
+      display: none;
+    }
+    .pop-sect-title { font-size: 10px; font-weight: 600; color: var(--txt3); text-transform: uppercase; margin: 8px 0 6px 0; }
+    .pop-sect-title:first-child { margin-top: 0; }
+    .cal-chk-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+    .cal-dot-indicator { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* --- RIGHT PANE (40%): 독립된 3패널 구조 --- */
+    .right-pane {
       width: 40%;
-      border-left: 1px solid var(--b1);
+      background: var(--bg2);
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      background: var(--bg2); /* 배경을 살짝 어둡게 주어 카드 구분을 명확히 함 */
-      overflow-y: auto; /* 패널 내부 스크롤 */
-      padding: 16px;
-      gap: 16px; /* 3개 패널 사이 간격 */
+      gap: 16px;
+      overflow-y: auto; /* 내용물이 길어질 경우 우측 패널만 스크롤 됨 */
     }
 
-    /* 개별 패널 카드 스타일 */
     .panel-card {
       background: var(--bg);
       border: 1px solid var(--b1);
-      border-radius: 12px;
+      border-radius: var(--r);
       padding: 16px;
       display: flex;
       flex-direction: column;
-      flex-shrink: 0; /* 카드가 찌그러지지 않게 방지 */
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     .panel-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--txt);
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--txt);
     }
-
+    .header-sub-date { font-size: 12px; font-weight: 400; color: var(--txt3); }
     .panel-items-stack { display: flex; flex-direction: column; gap: 8px; }
 
-    /* 이벤트 및 태스크 아이템 디자인 */
-    .rt-event-pill { background: var(--bg2); padding: 8px; border-radius: 6px; display: flex; flex-direction: column; cursor: pointer; }
-    .rt-event-time { font-size: 11px; color: var(--txt2); }
-    .rt-event-title { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    /* 이벤트 & 태스크 아이템 디자인 */
+    .rt-event-pill {
+      padding: 8px 12px; background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; border-left-width: 4px; display: flex; flex-direction: column; cursor: pointer;
+    }
+    .rt-event-pill:hover { background: var(--bg2); }
+    .rt-event-time { font-size: 11px; color: var(--txt2); font-weight: 500; }
+    .rt-event-title { font-size: 13px; font-weight: 600; margin-top: 2px; }
     
-    .rt-task-row { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
-    .rt-task-text { font-size: 12px; color: var(--txt); }
+    .rt-task-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--bg3); }
+    .rt-task-row:last-child { border-bottom: none; }
+    .rt-task-chk { margin-top: 2px; cursor: pointer; }
+    .rt-task-text { font-size: 12.5px; color: var(--txt); }
 
-    /* Send Message / +Add 탭 메뉴 */
-    .panel-nav-tabs { display: flex; border-bottom: 1px solid var(--b1); margin-bottom: 12px; }
+    /* Send Message / +Add 탭 (동적 인터랙션) */
+    .panel-nav-tabs { display: flex; border-bottom: 1px solid var(--b1); margin-bottom: 14px; }
     .p-tab { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--txt2); cursor: pointer; border-bottom: 2px solid transparent; }
     .p-tab.active-tab { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
 
-    /* 폼 요소 */
-    .f-textarea, .f-input, .f-select { width: 100%; background: var(--bg2); border: 1px solid var(--b1); border-radius: 6px; padding: 8px; font-size: 12px; font-family: inherit; margin-bottom: 8px; outline: none; }
+    .add-sub-tabs { display: flex; gap: 2px; background: var(--bg2); padding: 4px; border-radius: 6px; margin-bottom: 12px; }
+    .sub-t { flex: 1; text-align: center; padding: 6px 0; font-size: 11px; font-weight: 500; color: var(--txt2); cursor: pointer; border-radius: 4px; }
+    .sub-t.active-sub { background: var(--bg); color: var(--txt); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+    .f-group { margin-bottom: 10px; }
+    .f-lbl { display: block; font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 4px; }
+    .f-row { display: flex; gap: 8px; }
+    .f-row > .f-group { flex: 1; }
+    .f-textarea, .f-input, .f-select { width: 100%; background: var(--bg2); border: 1px solid var(--b1); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; font-family: inherit; outline: none; }
     .f-textarea:focus, .f-input:focus { border-color: var(--blue); background: var(--bg); }
     
-    /* Attach 및 Send Message 버튼 위치 조정 */
-    .msg-action-area {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .btn-secondary { background: var(--bg2); border: 1px solid var(--b1); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+    .btn-secondary { background: var(--bg2); border: 1px solid var(--b1); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
     .btn-primary { background: var(--blue); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; }
+    .btn-primary:hover { background: #1565C0; }
 
-    /* -------------------------------------
-       하단 메뉴 (48px 고정) 
-    ------------------------------------- */
+    /* =========================================
+       3. BOTTOM NAV PANEL (48px)
+       ========================================= */
     .bottom-navbar {
-      flex-shrink: 0; /* 축소 방지 */
+      flex-shrink: 0;
       height: 48px;
+      background: var(--bg);
       border-top: 1px solid var(--b1);
       display: flex;
-      align-items: center;
+      align-items: stretch; /* 탭이 컨테이너 꽉 차게 */
       justify-content: center;
-      gap: 32px;
-      background: var(--bg);
+      gap: 40px;
       z-index: 10;
     }
-    .b-nav-item { font-size: 13px; font-weight: 500; color: var(--txt2); text-decoration: none; padding: 14px 4px; border-bottom: 2px solid transparent; }
+    .b-nav-item {
+      display: flex; align-items: center;
+      padding: 0 4px; font-size: 13px; font-weight: 500; color: var(--txt2);
+      text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
     .b-nav-item:hover { color: var(--txt); }
     .b-nav-item.active-nav { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
 
+    /* MODAL SYSTEM (API 로직용) */
+    .overlay-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .dialog-box { background: var(--bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); width: 380px; max-height: 75vh; display: flex; flex-direction: column; overflow: hidden; }
+    .dialog-header { padding: 12px 16px; border-bottom: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; }
+    .dialog-close { background: none; border: none; font-size: 18px; color: var(--txt3); cursor: pointer; }
+    .dialog-body { padding: 16px; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -177,98 +222,139 @@
     <div class="topbar-left">
       <div class="logo">KL<span>AI</span>VE</div>
       <div class="topbar-divider"></div>
-      <div class="welcome-msg">Welcome, User</div>
+      <div class="welcome-msg" id="user-welcome">Welcome, User</div>
     </div>
     <div class="topbar-right">
       <div class="clock-weather-wrap">
-        <span>10:30 AM</span>
+        <span id="live-clock">00:00 AM</span>
         <span class="topbar-divider"></span>
-        <span>🌤 64°F</span>
+        <span id="live-weather">Loading weather...</span>
       </div>
-      <div class="avatar-circle">U</div>
+      <div class="avatar-circle" id="user-avatar">U</div>
+      <a class="signout-link" onclick="handleSignOut()">Sign out</a>
     </div>
   </header>
 
   <div class="main-container">
     
-    <section class="calendar-pane">
+    <section class="left-pane">
       <div class="cal-custom-header">
         <div class="cal-nav-group">
-          <button class="cal-nav-btn" onclick="calendar.prev()">‹</button>
-          <div class="cal-header-title">June 2026</div>
-          <button class="cal-nav-btn" onclick="calendar.next()">›</button>
+          <button class="cal-nav-btn" onclick="calendar.prev(); syncHeaderLabel();">‹</button>
+          <div class="cal-header-title" id="calendar-title-label">June 2026</div>
+          <button class="cal-nav-btn" onclick="calendar.next(); syncHeaderLabel();">›</button>
         </div>
         <div class="cal-controls-right">
-          <select class="cal-view-dropdown" onchange="calendar.changeView(this.value)">
+          <select class="cal-view-dropdown" id="view-selector" onchange="handleViewChange(this.value)">
             <option value="dayGridMonth">Month</option>
             <option value="timeGridWeek">Week</option>
           </select>
         </div>
       </div>
+
       <div class="fc-wrapper">
         <div id="calendar-root"></div>
       </div>
+
+      <div class="calendars-footer-area">
+        <button class="calendars-pop-btn" onclick="toggleCalendarsPopup(event)">⊞ Calendars</button>
+        <div class="calendars-box-popup" id="calendars-popup-box">
+          <div class="pop-sect-title">My Calendars</div>
+          <div class="cal-chk-row"><input type="checkbox" id="cal-default" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--blue);"></div><span>Default</span></div>
+          <div class="cal-chk-row"><input type="checkbox" id="cal-private" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--purple);"></div><span>Private</span></div>
+          <div class="cal-chk-row"><input type="checkbox" id="cal-klaive" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--teal);"></div><span>KLAIVE</span></div>
+          <div class="cal-chk-row"><input type="checkbox" id="cal-womens" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--red);"></div><span>Women's Health</span></div>
+        </div>
+      </div>
     </section>
 
-    <aside class="right-panel">
+    <aside class="right-pane">
       
       <div class="panel-card">
         <div class="panel-card-header">
           <span>Today's Events</span>
-          <span style="font-size:12px; color:var(--txt3); font-weight:400;">Jun 19, 2026</span>
+          <span class="header-sub-date" id="panel-date-sync">Loading...</span>
         </div>
-        <div class="panel-items-stack">
-          <div class="rt-event-pill" style="border-left: 3px solid var(--blue);">
-            <span class="rt-event-time">10:00 AM - 11:30 AM</span>
-            <span class="rt-event-title">Team Strategy Meeting</span>
+        <div class="panel-items-stack" id="today-events-container">
           </div>
-          <div class="rt-event-pill" style="border-left: 3px solid var(--purple);">
-            <span class="rt-event-time">2:00 PM - 3:00 PM</span>
-            <span class="rt-event-title">Client Review Sync</span>
-          </div>
-        </div>
       </div>
 
       <div class="panel-card">
         <div class="panel-card-header">
           <span>Tasks</span>
-          <select style="border:none; outline:none; font-size:12px; color:var(--txt2); cursor:pointer;">
-            <option>All List ▾</option>
+          <select style="border:none; outline:none; font-size:12px; color:var(--txt2); cursor:pointer;" id="task-list-filter" onchange="renderTasksList()">
+            <option value="all">All List ▾</option>
           </select>
         </div>
-        <div class="panel-items-stack">
-          <div class="rt-task-row">
-            <input type="checkbox">
-            <span class="rt-task-text">Update Q3 Financial Report</span>
+        <div class="panel-items-stack" id="today-tasks-container">
           </div>
-          <div class="rt-task-row">
-            <input type="checkbox">
-            <span class="rt-task-text">Review new design mockups</span>
-          </div>
-        </div>
       </div>
 
       <div class="panel-card">
         <div class="panel-nav-tabs">
-          <div class="p-tab active-tab">Send Message</div>
-          <div class="p-tab">+ Add</div>
+          <div class="p-tab active-tab" id="tab-trigger-msg" onclick="switchMainTab('msg')">Send Message</div>
+          <div class="p-tab" id="tab-trigger-add" onclick="switchMainTab('add')">+ Add</div>
         </div>
         
-        <div>
-          <textarea class="f-textarea" rows="4" placeholder="Type your message..."></textarea>
-          
-          <div style="margin-bottom: 12px; font-size:12px; color:var(--txt2);">
-            <input type="checkbox" id="draft-chk"> <label for="draft-chk">Save as draft</label>
+        <div id="pane-content-msg">
+          <textarea class="f-textarea" id="msg-textarea" rows="4" placeholder="Type your message..."></textarea>
+          <div style="margin-bottom: 12px;">
+            <input type="checkbox" id="msg-draft-chk"> <label for="msg-draft-chk" style="font-size:12px; color:var(--txt2);">Save as draft</label>
           </div>
-          
-          <div class="msg-action-area">
-            <button class="btn-secondary">📎 Attach File</button>
-            <button class="btn-primary">Send Message</button>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn-secondary" style="align-self: flex-start;">📎 Attach File</button>
+            <button class="btn-primary" style="width:100%;" onclick="executeSubmit()">Send Message</button>
           </div>
         </div>
 
-      </div>
+        <div id="pane-content-add" style="display: none;">
+          <div class="add-sub-tabs">
+            <div class="sub-t active-sub" id="sub-t-event" onclick="switchSubForm('event')">Event</div>
+            <div class="sub-t" id="sub-t-task" onclick="switchSubForm('task')">Task</div>
+            <div class="sub-t" id="sub-t-finance" onclick="switchSubForm('finance')">Finance</div>
+            <div class="sub-t" id="sub-t-health" onclick="switchSubForm('health')">Health</div>
+            <div class="sub-t" id="sub-t-project" onclick="switchSubForm('project')">Project</div>
+          </div>
+          
+          <div id="form-block-event">
+            <div class="f-group"><label class="f-lbl">Title</label><input type="text" class="f-input" id="ev-title"></div>
+            <div class="f-group"><label class="f-lbl">Date</label><input type="date" class="f-input" id="ev-date"></div>
+            <div class="f-row">
+              <div class="f-group"><label class="f-lbl">Start Time</label><input type="time" class="f-input" id="ev-start"></div>
+              <div class="f-group"><label class="f-lbl">End Time</label><input type="time" class="f-input" id="ev-end"></div>
+            </div>
+          </div>
+          <div id="form-block-task" style="display:none;">
+            <div class="f-group"><label class="f-lbl">Task Title</label><input type="text" class="f-input" id="tk-title"></div>
+            <div class="f-group"><label class="f-lbl">Select List</label><select class="f-select" id="tk-list-select"></select></div>
+            <div class="f-group"><label class="f-lbl">Due Date</label><input type="date" class="f-input" id="tk-due"></div>
+          </div>
+          <div id="form-block-finance" style="display:none;">
+            <div class="f-group"><label class="f-lbl">Amount</label><input type="number" class="f-input" id="fn-amount"></div>
+            <div class="f-group"><label class="f-lbl">Date</label><input type="date" class="f-input" id="fn-date"></div>
+          </div>
+          <div id="form-block-health" style="display:none;">
+            <div class="f-group"><label class="f-lbl">Metric</label>
+              <select class="f-select" id="ht-metric" onchange="adjustHealthInputs(this.value)">
+                <option value="bp">Blood Pressure</option>
+                <option value="hr">Heart Rate</option>
+              </select>
+            </div>
+            <div id="dynamic-health-fields">
+              <div class="f-row">
+                <div class="f-group"><label class="f-lbl">Sys</label><input type="number" class="f-input" id="ht-val-sys"></div>
+                <div class="f-group"><label class="f-lbl">Dia</label><input type="number" class="f-input" id="ht-val-dia"></div>
+              </div>
+            </div>
+          </div>
+          <div id="form-block-project" style="display:none;">
+            <div class="f-group"><label class="f-lbl">Project Name</label><input type="text" class="f-input" id="pj-name"></div>
+            <div class="f-group"><label class="f-lbl">Deadline</label><input type="date" class="f-input" id="pj-deadline"></div>
+          </div>
 
+          <button class="btn-primary" id="panel-main-submit" style="width:100%; margin-top:12px;" onclick="executeSubmit()">Add Event</button>
+        </div>
+      </div>
     </aside>
   </div>
 
@@ -284,23 +370,273 @@
 
 </div>
 
+<div class="overlay-modal" id="day-events-modal">
+  <div class="dialog-box">
+    <div class="dialog-header">
+      <div style="font-size:14px; font-weight:600;" id="day-modal-header-text">Events</div>
+      <button class="dialog-close" onclick="closeDayModal()">×</button>
+    </div>
+    <div class="dialog-body" id="day-modal-items-container"></div>
+  </div>
+</div>
+
 <script>
-  // FullCalendar 초기화 로직
-  document.addEventListener('DOMContentLoaded', function() {
+  // ==========================================
+  // API 및 비즈니스 로직 복구 공간
+  // ==========================================
+  const BACKEND = 'https://api.mie.today';
+  let currentActiveTab = 'msg';
+  let currentSubForm = 'event';
+  let cachedEvents = [];
+  let cachedTasks = [];
+  let cachedTaskLists = [];
+  let calendar;
+
+  window.addEventListener('DOMContentLoaded', init);
+
+  async function init() {
+    try {
+      // 1. 인증 확인
+      const res = await fetch(`${BACKEND}/api/me/status`, { credentials: 'include' });
+      if(!res.ok) throw new Error('Not connected');
+      const data = await res.json();
+      if(!data.connected) throw new Error('Not connected');
+      
+      // 2. 탑바 유저 정보 세팅
+      const name = data.user.given_name || 'User';
+      document.getElementById('user-welcome').textContent = `Welcome, ${name} (${data.user.email || ''})`;
+      document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+
+      startClock();
+      loadWeather();
+      initCalendar();
+      loadTasks();
+
+      document.addEventListener('click', function() {
+        document.getElementById('calendars-popup-box').style.display = 'none';
+      });
+    } catch(e) {
+      console.warn("Session error: Redirecting to login...", e);
+      window.location.replace('/');
+    }
+  }
+
+  function startClock() {
+    setInterval(() => {
+      document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute:'2-digit' });
+    }, 1000);
+  }
+
+  function loadWeather() {
+    document.getElementById('live-weather').textContent = "🌤 64°F"; // Fallback
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`)
+          .then(r=>r.json()).then(d=>{
+            if(d.current_weather) {
+              const f = Math.round((d.current_weather.temperature * 9/5) + 32);
+              document.getElementById('live-weather').textContent = `🌤 ${f}°F`;
+            }
+          });
+      });
+    }
+  }
+
+  function handleSignOut() {
+    fetch(`${BACKEND}/auth/logout`, { method: 'POST', credentials: 'include' }).finally(() => window.location.replace('/'));
+  }
+
+  // 캘린더 초기화 및 API 통신
+  function initCalendar() {
     var calendarEl = document.getElementById('calendar-root');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
       headerToolbar: false,
-      height: '100%',
-      events: [
-        { title: 'Team Strategy Meeting', start: '2026-06-19T10:00:00', color: '#1C7ED6' },
-        { title: 'Client Review Sync', start: '2026-06-19T14:00:00', color: '#534AB7' }
-      ]
+      dayMaxEvents: false,
+      events: function(info, successCallback, failureCallback) {
+        const tMin = info.start.toISOString();
+        const tMax = info.end.toISOString();
+        fetch(`${BACKEND}/api/me/events?timeMin=${tMin}&timeMax=${tMax}`, { credentials: 'include' })
+          .then(r => r.json())
+          .then(data => {
+            cachedEvents = data.events || [];
+            updateTodayPanelEvents(); // 우측 Today 패널 즉시 업데이트
+
+            const mapped = cachedEvents.map(ev => {
+              let color = '#1C7ED6';
+              if(ev.visibility === 'private') color = '#534AB7';
+              else if(ev.summary && ev.summary.includes('KLAIVE')) color = '#1D9E75';
+              else if(ev.summary && ev.summary.includes("Women's Health")) color = '#E24B4A';
+              
+              return {
+                id: ev.id, title: ev.summary || '(No Title)',
+                start: ev.start.dateTime || ev.start.date, end: ev.end.dateTime || ev.end.date,
+                allDay: !!ev.start.date || ev.allDay,
+                extendedProps: { derivedColor: color, visibility: ev.visibility }
+              };
+            });
+
+            // 체크박스 필터링 연동
+            const filtered = mapped.filter(item => {
+              if(item.extendedProps.visibility === 'private') return document.getElementById('cal-private').checked;
+              if(item.title.includes('KLAIVE')) return document.getElementById('cal-klaive').checked;
+              if(item.title.includes("Women's Health")) return document.getElementById('cal-womens').checked;
+              return document.getElementById('cal-default').checked;
+            });
+            successCallback(filtered);
+          }).catch(err => successCallback([]));
+      },
+      eventContent: function(arg) {
+        const hex = arg.event.extendedProps.derivedColor || '#1C7ED6';
+        if (arg.isAllDay) {
+          const pill = document.createElement('div');
+          pill.style.cssText = `background:${hex}1A; color:${hex}; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600; overflow:hidden; white-space:nowrap; width:100%;`;
+          pill.textContent = arg.event.title;
+          return { domNodes: [pill] };
+        } else {
+          const row = document.createElement('div');
+          row.style.cssText = `display:flex; align-items:center; font-size:11px; font-weight:500; overflow:hidden; white-space:nowrap;`;
+          row.innerHTML = `<span style="width:6px; height:6px; border-radius:50%; background:${hex}; margin-right:4px; flex-shrink:0;"></span><span style="color:var(--txt);">${arg.event.title}</span>`;
+          return { domNodes: [row] };
+        }
+      },
+      eventsSet: function() { setTimeout(applyCustomCellOverflow, 50); },
+      dateClick: function(info) {
+        if(info.jsEvent.target.classList.contains('fc-daygrid-day-number')) {
+          calendar.changeView('timeGridDay', info.dateStr); document.getElementById('view-selector').value = 'timeGridDay'; syncHeaderLabel();
+        } else { openDayModal(info.dateStr); }
+      }
     });
     calendar.render();
-    window.calendar = calendar;
-  });
-</script>
+    syncHeaderLabel();
+  }
 
+  function applyCustomCellOverflow() {
+    document.querySelectorAll('.fc-daygrid-day').forEach(cell => {
+      const dateStr = cell.getAttribute('data-date');
+      cell.querySelectorAll('.fc-custom-more').forEach(n => n.remove());
+      const evs = cell.querySelectorAll('.fc-daygrid-event-harness');
+      evs.forEach(h => h.style.display = '');
+      if(evs.length > 4) {
+        for(let i=3; i<evs.length; i++) evs[i].style.display = 'none';
+        const more = document.createElement('div');
+        more.className = 'fc-custom-more';
+        more.style.cssText = `font-size:11px; font-weight:600; color:var(--blue); padding:2px 6px; cursor:pointer;`;
+        more.textContent = `+ ${evs.length - 3} more`;
+        more.onclick = (e) => { e.stopPropagation(); openDayModal(dateStr); };
+        cell.querySelector('.fc-daygrid-day-events').appendChild(more);
+      }
+    });
+  }
+
+  function syncHeaderLabel() { document.getElementById('calendar-title-label').textContent = calendar.view.title; }
+  function handleViewChange(val) { calendar.changeView(val); syncHeaderLabel(); }
+  function toggleCalendarsPopup(e) { e.stopPropagation(); const p = document.getElementById('calendars-popup-box'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
+
+  // API 데이터: 우측 Today's Events 바인딩
+  function updateTodayPanelEvents() {
+    const box = document.getElementById('today-events-container');
+    box.innerHTML = '';
+    const today = new Date().toISOString().substring(0, 10);
+    document.getElementById('panel-date-sync').textContent = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+
+    const todays = cachedEvents.filter(ev => (ev.start.dateTime || ev.start.date).substring(0, 10) === today);
+    if(todays.length === 0) { box.innerHTML = `<span style="font-size:12px; color:var(--txt3);">No events today</span>`; return; }
+
+    todays.forEach(ev => {
+      let col = ev.mieCalendarColor || '#1C7ED6';
+      if(ev.visibility === 'private') col = '#534AB7';
+      let tStr = 'All day';
+      if(ev.start.dateTime) tStr = new Date(ev.start.dateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      
+      const div = document.createElement('div');
+      div.className = 'rt-event-pill';
+      div.style.borderLeftColor = col;
+      div.innerHTML = `<span class="rt-event-time">${tStr}</span><span class="rt-event-title">${ev.summary||'(No Title)'}</span>`;
+      box.appendChild(div);
+    });
+  }
+
+  // API 데이터: 우측 Tasks 로드
+  function loadTasks() {
+    fetch(`${BACKEND}/api/me/tasks`, { credentials: 'include' }).then(r=>r.json()).then(data => {
+      if(data.taskLists) {
+        cachedTaskLists = data.taskLists;
+        cachedTasks = []; data.taskLists.forEach(l => { if(l.tasks) cachedTasks.push(...l.tasks); });
+      }
+      const filter = document.getElementById('task-list-filter');
+      const sForm = document.getElementById('tk-list-select');
+      filter.innerHTML = `<option value="all">All List ▾</option>`; sForm.innerHTML = '';
+      cachedTaskLists.forEach(l => {
+        filter.innerHTML += `<option value="${l.id}">${l.title}</option>`;
+        sForm.innerHTML += `<option value="${l.id}">${l.title}</option>`;
+      });
+      renderTasksList();
+    });
+  }
+
+  function renderTasksList() {
+    const box = document.getElementById('today-tasks-container');
+    box.innerHTML = '';
+    const fVal = document.getElementById('task-list-filter').value;
+    let list = cachedTasks.filter(t => t.status !== 'completed');
+    if(fVal !== 'all') list = list.filter(t => t.listId === fVal);
+    
+    if(list.length === 0) { box.innerHTML = `<span style="font-size:12px; color:var(--txt3);">No tasks pending</span>`; return; }
+    list.forEach(t => {
+      const row = document.createElement('div'); row.className = 'rt-task-row';
+      row.innerHTML = `<input type="checkbox" class="rt-task-chk"><span class="rt-task-text">${t.title}</span>`;
+      box.appendChild(row);
+    });
+  }
+
+  // 우측 패널 3: 탭 인터랙션 로직
+  function switchMainTab(tab) {
+    currentActiveTab = tab;
+    document.getElementById('tab-trigger-msg').classList.toggle('active-tab', tab === 'msg');
+    document.getElementById('tab-trigger-add').classList.toggle('active-tab', tab === 'add');
+    document.getElementById('pane-content-msg').style.display = tab === 'msg' ? 'block' : 'none';
+    document.getElementById('pane-content-add').style.display = tab === 'add' ? 'block' : 'none';
+  }
+
+  function switchSubForm(type) {
+    currentSubForm = type;
+    ['event', 'task', 'finance', 'health', 'project'].forEach(t => {
+      document.getElementById(`sub-t-${t}`).classList.toggle('active-sub', t === type);
+      document.getElementById(`form-block-${t}`).style.display = t === type ? 'block' : 'none';
+    });
+    document.getElementById('panel-main-submit').textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  }
+  
+  function adjustHealthInputs(val) {
+    const box = document.getElementById('dynamic-health-fields');
+    if(val === 'bp') box.innerHTML = `<div class="f-row"><div class="f-group"><label class="f-lbl">Sys</label><input type="number" class="f-input" id="ht-val-sys"></div><div class="f-group"><label class="f-lbl">Dia</label><input type="number" class="f-input" id="ht-val-dia"></div></div>`;
+    else box.innerHTML = `<div class="f-group"><label class="f-lbl">Value</label><input type="number" class="f-input" id="ht-val-single"></div>`;
+  }
+
+  // 통합 Submit 통신 (API)
+  function executeSubmit() {
+    if(currentActiveTab === 'msg') {
+      const msg = document.getElementById('msg-textarea').value;
+      if(!msg) return alert("Enter a message");
+      fetch(`${BACKEND}/api/me/message`, { method:'POST', body:JSON.stringify({message:msg}), headers:{'Content-Type':'application/json'}, credentials:'include'})
+        .then(() => { alert("Sent!"); document.getElementById('msg-textarea').value=''; });
+    } else {
+      let url = '', bodyData = {};
+      if(currentSubForm === 'event') {
+        url = '/api/me/events/create'; bodyData = { title: document.getElementById('ev-title').value, date: document.getElementById('ev-date').value };
+      } else if(currentSubForm === 'task') {
+        url = '/api/me/tasks/create'; bodyData = { title: document.getElementById('tk-title').value, listId: document.getElementById('tk-list-select').value };
+      }
+      if(!url) return;
+      fetch(`${BACKEND}${url}`, { method:'POST', body:JSON.stringify(bodyData), headers:{'Content-Type':'application/json'}, credentials:'include'})
+        .then(() => { alert("Added!"); if(currentSubForm==='event') calendar.refetchEvents(); else loadTasks(); });
+    }
+  }
+
+  // 모달 닫기 제어
+  function openDayModal(dateStr) { document.getElementById('day-events-modal').style.display = 'flex'; document.getElementById('day-modal-header-text').textContent = `Events on ${dateStr}`; }
+  function closeDayModal() { document.getElementById('day-events-modal').style.display = 'none'; }
+</script>
 </body>
 </html>
