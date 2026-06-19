@@ -465,6 +465,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 var BACKEND='https://api.mie.today';
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
+/* ── Auto-state: 각 데이터 로드 결과 추적 ── */
+var _dataFlags={events:null,tasks:null,finance:null,health:null,projects:null};
+var _autoStateDone=false; // 이미 자동 전환했으면 다시 안 함
+
 var selectedDateStr=null; // 달력에서 클릭된 날짜
 var calHasTodayCard=false; // S2/S4에서는 Today카드가 이벤트를 담당
 var calYear=2026, calMonth=5;
@@ -787,7 +791,7 @@ function renderGrid(s){
   var g=document.getElementById('main-grid');
   g.innerHTML='';
   if(s===1){
-    g.style.gridTemplateColumns='60fr 40fr';
+    g.style.gridTemplateColumns='1fr 1fr';
     var L=document.createElement('div');L.className='col-left';L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
     var R=document.createElement('div');R.className='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=s1TaskCardHTML()+inputCardHTML();
     g.appendChild(L);g.appendChild(R);
@@ -839,7 +843,8 @@ function setState(s){
   renderProjects(s);
   renderDraftList();
   // Finance/Health 카드는 setState 후 innerHTML이 재생성되므로 데이터 재주입
-  setTimeout(function(){loadFinance();loadHealth();setTimeout(function(){setUnit(currentUnit2);},60);},50);
+  // _autoStateDone=true 이후(초기 자동전환 완료)에만 재로드 (decideState 루프 방지)
+  setTimeout(function(){if(window._lastFinData)renderFinance(window._lastFinData);if(window._lastHealthData)renderHealthData(window._lastHealthData);setTimeout(function(){setUnit(currentUnit2);},30);},50);
 }
 
 function bindAll(s){
@@ -1319,12 +1324,14 @@ function loadProjects(){
   fetch(BACKEND+'/api/me/projects',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data){allProjects=[];renderProjects(currentState);return;}
+      if(!data){allProjects=[];_dataFlags.projects=false;_checkAllLoaded();renderProjects(currentState);return;}
       var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
       allProjects=items;
+      _dataFlags.projects=(items.length>0);
+      _checkAllLoaded();
       renderProjects(currentState);
     })
-    .catch(function(){allProjects=[];renderProjects(currentState);});
+    .catch(function(){allProjects=[];_dataFlags.projects=false;_checkAllLoaded();renderProjects(currentState);});
 }
 
 /* ── Input tab ── */
@@ -1632,14 +1639,18 @@ function loadEvents(){
       buildCalGridFromEvents();
       renderTodayEvents();
       renderCalEventList();
+      // 오늘 이벤트 유무로 판단
+      var tod=new Date();var todStr=tod.getFullYear()+'-'+String(tod.getMonth()+1).padStart(2,'0')+'-'+String(tod.getDate()).padStart(2,'0');
+      _dataFlags.events=(allEvents.length>0);
+      _checkAllLoaded();
     })
-    .catch(function(){});
+    .catch(function(){_dataFlags.events=false;_checkAllLoaded();});
 }
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks(currentState);return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks(currentState);})
-    .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks(currentState);});
+    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks(currentState);return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();_dataFlags.tasks=(allTasks.filter(function(t){return t.status!=='completed';}).length>0);_checkAllLoaded();renderTasks(currentState);})
+    .catch(function(){allTasks=DEMO_TASKS.slice();_dataFlags.tasks=false;_checkAllLoaded();renderTasks(currentState);});
 }
 
 
@@ -1651,12 +1662,14 @@ function loadFinance(){
   fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data||!data.summary){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      if(!data||!data.summary){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();return;}
+      _dataFlags.finance=true;_checkAllLoaded();
       renderFinance(data);
     })
-    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();});
 }
 function renderFinance(data){
+  window._lastFinData=data;
   var body=document.getElementById('fin-card-body');if(!body)return;
   var s=data.summary;
   var inc=(s.income&&s.income.actual)||0;
@@ -1697,10 +1710,15 @@ function loadHealth(){
   fetch(BACKEND+'/api/me/health?date='+ds+'&period=daily&tab=all',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data){var body=document.getElementById('health-card-body');if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';return;}
+      if(!data){var hbody=document.getElementById('health-card-body');if(hbody)hbody.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.health=false;_checkAllLoaded();return;}
+      // 실제 데이터가 있는지 확인 (빈 배열/빈 summary 제외)
+      var s=data.summary||{};var arr=data.health||[];
+      var hasRealData=(arr.length>0)||Object.keys(s).some(function(k){return s[k]!=null&&s[k]!==0;});
+      _dataFlags.health=hasRealData;
+      _checkAllLoaded();
       renderHealthData(data);
     })
-    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';});
+    .catch(function(){_dataFlags.health=false;_checkAllLoaded();});
 }
 function renderHealth(data){
   var body=document.getElementById('health-card-body');if(!body)return;
@@ -1928,10 +1946,52 @@ function submitAdd2(type){
   }
 }
 
+
+/* ══════════════════════════════════════════════════
+   decideState(): 모든 데이터 로드 완료 후 최적 State 결정
+   
+   State 매트릭스:
+   S1 (50:50): 데이터 없음 — Calendar | Task+Input
+   S2 (3col) : Events 또는 Tasks 있음, Health/Projects 없음 — Calendar | Today | Finance+Input
+   S3 (3col) : Projects 있음, Health 없음 — Calendar | Task+Proj | Finance+Input
+   S4 (3col) : Health 있음, Projects 없음 — Calendar | Today | Finance+Health(compact)+Input
+   S5 (3col) : Health + Projects 모두 있음 — Calendar | Task+Proj | Finance+Health+Input
+════════════════════════════════════════════════════ */
+function _checkAllLoaded(){
+  // 5개 중 null 이 남아있으면 (아직 미완료) 대기
+  var flags=_dataFlags;
+  if(flags.events===null||flags.tasks===null||flags.finance===null||flags.health===null||flags.projects===null)return;
+  if(_autoStateDone)return;
+  _autoStateDone=true;
+  decideState();
+}
+function decideState(){
+  var hasEvents  = _dataFlags.events   === true;
+  var hasTasks   = _dataFlags.tasks    === true;
+  var hasFinance = _dataFlags.finance  === true;
+  var hasHealth  = _dataFlags.health   === true;
+  var hasProjects= _dataFlags.projects === true;
+  var hasActivity= hasEvents || hasTasks;
+  var target;
+  if(hasHealth && hasProjects){
+    target=5; // Full: Task+Proj + Health
+  } else if(hasHealth && !hasProjects){
+    target=4; // Health compact + Today
+  } else if(!hasHealth && hasProjects){
+    target=3; // Task+Proj, no Health
+  } else if(hasActivity || hasFinance){
+    target=2; // Today card: Events+Tasks
+  } else {
+    target=1; // 데이터 없음: S1 (50:50)
+  }
+  console.log('[KLAIVE] Auto-state: events='+hasEvents+' tasks='+hasTasks+' finance='+hasFinance+' health='+hasHealth+' projects='+hasProjects+' → S'+target);
+  setState(target);
+}
+
 /* ── Init ── */
 function init(){
   startClock();loadWeather();
-  setState(5);
+  setState(1); // S1으로 시작 (50:50), 데이터 로드 완료 후 decideState()가 최적 State로 전환
   loadUserInfo();
   loadCalendarList();
   loadEvents();
