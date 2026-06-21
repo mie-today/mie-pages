@@ -39,7 +39,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .main{flex:1;display:flex;overflow:hidden;padding:12px;gap:12px;min-height:0;}
 
 /* ══ Calendar column ══ */
-.cal-col{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
+.cal-col{flex:3;min-width:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
 
 /* Calendar header */
 .cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
@@ -87,7 +87,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .fc-theme-standard td,.fc-theme-standard th{border:none !important;}
 .fc .fc-daygrid-body tr{border-bottom:.5px solid var(--b1) !important;}
 .fc .fc-daygrid-more-link{display:none !important;}
-.fc .fc-daygrid-day .fc-daygrid-day-top{padding:2px 4px !important;overflow:visible !important;}
+.fc .fc-daygrid-day .fc-daygrid-day-top{padding:2px 4px !important;overflow:visible !important;flex-direction:row !important;}
 .fc .fc-daygrid-day-number{font-size:11px !important;font-weight:500;color:var(--txt2) !important;cursor:pointer !important;width:20px !important;height:20px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;text-decoration:none !important;transition:background .1s;}
 .fc .fc-daygrid-day-number:hover{background:rgba(28,126,214,0.1);color:var(--blue) !important;}
 .fc .fc-day-today .fc-daygrid-day-number{background:var(--teal) !important;color:#fff !important;font-weight:600 !important;}
@@ -99,7 +99,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .fc-timegrid-col.fc-day-today{background:rgba(28,126,214,0.02) !important;}
 
 /* ══ Right panel ══ */
-.right-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;min-height:0;}
+.right-panel{flex:2;min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0;}
 
 /* Today card */
 .today-card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
@@ -280,7 +280,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <option value="timeGridWeek">Week</option>
         <option value="timeGridDay">Day</option>
       </select>
-      <button class="cal-add-btn" id="cal-add-btn">+ Add</button>
     </div>
     <div id="cal-wrap"><div id="calendar"></div></div>
     <div class="cal-foot">
@@ -543,8 +542,10 @@ function buildCalLegend(){
   if(!leg)return;
   leg.innerHTML='';
   var seen={};
+  /* Default와 Private는 범례에서 숨김 (요청 #3) */
   primaryCals.forEach(function(c){
     if(seen[c.summary])return;seen[c.summary]=true;
+    if(c.summary==='Default'||c.summary==='Private')return;
     var li=document.createElement('div');li.className='leg-item';
     var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
     var tx=document.createElement('span');tx.className='leg-txt';tx.textContent=c.summary;tx.style.opacity=c.enabled?'1':'0.4';
@@ -554,6 +555,7 @@ function buildCalLegend(){
     pMy.innerHTML='';var seen2={};
     primaryCals.forEach(function(c){
       if(seen2[c.summary])return;seen2[c.summary]=true;
+      if(c.summary==='Default'||c.summary==='Private')return;
       var row=document.createElement('div');row.className='cal-row';
       var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
       var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
@@ -652,7 +654,10 @@ function attachDayClicks(){
       e.preventDefault();e.stopPropagation();
       var cell=el.closest('.fc-daygrid-day');if(!cell)return;
       var ds=cell.getAttribute('data-date');if(!ds)return;
-      openDayModal(ds,eventsByDate[ds]||[]);
+      /* Day view로 전환 (요청 #5) */
+      cal.changeView('timeGridDay',ds);
+      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';
+      syncTitle();setTimeout(calcCalHeight,60);
     });
   });
 }
@@ -665,7 +670,7 @@ function rebuildPills(){
     var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VIS)return;
     var pill=document.createElement('div');pill.className='mie-more';
     pill.textContent='+ '+(evs.length-MAX_VIS)+' more';
-    pill.addEventListener('click',function(e){e.stopPropagation();openDayModal(ds,evs);});
+    pill.addEventListener('click',function(e){e.stopPropagation();cal.changeView('timeGridDay',ds);var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';syncTitle();setTimeout(calcCalHeight,60);});
     var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');
     if(bot)bot.appendChild(pill);
   });
@@ -765,7 +770,11 @@ function initCal(){
       return{domNodes:[w]};
     },
     eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);},
-    dateClick:function(info){openDayModal(info.dateStr,eventsByDate[info.dateStr]||[]);}
+    dateClick:function(info){
+      cal.changeView('timeGridDay',info.dateStr);
+      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';
+      syncTitle();setTimeout(calcCalHeight,60);
+    }
   });
   cal.render();
   syncTitle();
@@ -775,7 +784,7 @@ function initCal(){
   document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
   document.getElementById('cal-today-btn').addEventListener('click',function(){cal.today();syncTitle();});
   document.getElementById('cal-view-sel').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();setTimeout(calcCalHeight,60);});
-  document.getElementById('cal-add-btn').addEventListener('click',function(){switchTab('add');});
+  /* + Add btn removed from header */
 
   /* 캘린더 팝업 */
   var cb=document.getElementById('cals-btn'),cp=document.getElementById('cal-popup');
