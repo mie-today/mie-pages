@@ -43,10 +43,22 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 /* Calendar header */
 .cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;}
+.cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;position:relative;}
 .cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .cal-nbtn:hover{background:var(--bg2);}
-.cal-mo{font-size:14px;font-weight:500;color:var(--txt);padding:0 8px;min-width:90px;text-align:center;}
+.cal-mo{font-size:14px;font-weight:500;color:var(--txt);padding:0 8px;min-width:90px;text-align:center;cursor:pointer;border-radius:4px;transition:background .12s;}
+.cal-mo:hover{background:var(--bg2);}
+/* Month/Year picker */
+.mo-picker{position:absolute;top:calc(100% + 6px);left:0;z-index:200;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.13);padding:14px;min-width:210px;display:none;}
+.mo-picker.open{display:block;}
+.mpy-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mpy-yr{font-size:13px;font-weight:600;color:var(--txt);}
+.mpy-nav{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--txt2);}
+.mpy-nav:hover{background:var(--bg2);}
+.mpy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.mpy-m{padding:6px 4px;border:none;background:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--txt2);text-align:center;}
+.mpy-m:hover{background:var(--bg2);}
+.mpy-m.cur{background:var(--blue);color:#fff;font-weight:600;}
 .cal-today-btn{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .cal-today-btn:hover{background:var(--bg3);}
 .cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;border-radius:4px;padding:4px 24px 4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
@@ -273,6 +285,15 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <button class="cal-nbtn" id="cal-prev">‹</button>
         <span class="cal-mo" id="cal-title">June 2026</span>
         <button class="cal-nbtn" id="cal-next">›</button>
+        <!-- Month/Year picker popup -->
+        <div class="mo-picker" id="mo-picker">
+          <div class="mpy-hd">
+            <button class="mpy-nav" id="mpy-prev">‹</button>
+            <span class="mpy-yr" id="mpy-yr">2026</span>
+            <button class="mpy-nav" id="mpy-next">›</button>
+          </div>
+          <div class="mpy-grid" id="mpy-grid"></div>
+        </div>
       </div>
       <button class="cal-today-btn" id="cal-today-btn">Today</button>
       <select class="cal-view-sel" id="cal-view-sel">
@@ -647,6 +668,53 @@ function syncTitle(){
   if(el)el.textContent=cal.view.title||'';
 }
 
+/* ══ Month/Year Picker (cal-title 클릭 시 팝업) ══ */
+var mpYear=new Date().getFullYear();
+var MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildMPGrid(){
+  var grid=document.getElementById('mpy-grid'),yrEl=document.getElementById('mpy-yr');
+  if(!grid||!yrEl)return;
+  yrEl.textContent=mpYear;
+  grid.innerHTML='';
+  var curDate=cal?cal.getDate():new Date();
+  MNAMES.forEach(function(m,i){
+    var btn=document.createElement('button');
+    btn.className='mpy-m';
+    btn.textContent=m;
+    if(curDate.getFullYear()===mpYear&&curDate.getMonth()===i)btn.classList.add('cur');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(cal.view.type!=='dayGridMonth')cal.changeView('dayGridMonth');
+      cal.gotoDate(new Date(mpYear,i,1));
+      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='dayGridMonth';
+      syncTitle();
+      document.getElementById('mo-picker').classList.remove('open');
+      setTimeout(calcCalHeight,60);
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function initMoPicker(){
+  var title=document.getElementById('cal-title'),picker=document.getElementById('mo-picker');
+  var prevBtn=document.getElementById('mpy-prev'),nextBtn=document.getElementById('mpy-next');
+  if(!title||!picker)return;
+  title.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(!picker.classList.contains('open')){
+      mpYear=cal?cal.getDate().getFullYear():new Date().getFullYear();
+      buildMPGrid();
+    }
+    picker.classList.toggle('open');
+  });
+  if(prevBtn)prevBtn.addEventListener('click',function(e){e.stopPropagation();mpYear--;buildMPGrid();});
+  if(nextBtn)nextBtn.addEventListener('click',function(e){e.stopPropagation();mpYear++;buildMPGrid();});
+  document.addEventListener('click',function(e){
+    if(picker&&!picker.contains(e.target)&&e.target!==title)picker.classList.remove('open');
+  });
+}
+
 function attachDayClicks(){
   document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){
     if(el._dcb)return;el._dcb=true;
@@ -778,6 +846,7 @@ function initCal(){
   });
   cal.render();
   syncTitle();
+  initMoPicker();
 
   /* 컨트롤 바인딩 */
   document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
@@ -904,19 +973,28 @@ function loadTasks(){
 }
 
 /* ══ 유저 정보 ══ */
-function loadUserInfo(){
+function loadUserInfo(statusData){
+  function populate(d){
+    if(!d)return;
+    var u=d.user||d;
+    /* 이름 필드 폭넓게 시도 → 최후 fallback: 이메일 앞부분 */
+    var name=u.given_name||u.givenName||u.first_name||u.firstName
+            ||u.displayName||u.display_name
+            ||(u.name?u.name.split(' ')[0]:'')
+            ||(u.email?u.email.split('@')[0]:'')
+            ||'—';
+    name=name.charAt(0).toUpperCase()+name.slice(1);
+    var email=u.email||'';
+    var ul=document.getElementById('tb-userline');
+    if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
+    var av=document.getElementById('tb-av');
+    if(av)av.textContent=name.charAt(0).toUpperCase();
+  }
+  if(statusData){populate(statusData);return;}
+  /* statusData 없으면 직접 fetch */
   fetch(BACKEND+'/api/me/status',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(!d)return;
-      var u=d.user||{};
-      var name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'—';
-      var email=u.email||'';
-      var ul=document.getElementById('tb-userline');
-      if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
-      var av=document.getElementById('tb-av');
-      if(av)av.textContent=name.charAt(0).toUpperCase();
-    }).catch(function(){});
+    .then(populate).catch(function(){});
 }
 
 /* ══ 이벤트 뷰 모달 ══ */
@@ -1116,7 +1194,7 @@ function init(){
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.connected){window.location.replace('/');return;}
-      loadUserInfo();
+      loadUserInfo(d);
       startClock();
       loadWeather();
       renderTodayDate();
