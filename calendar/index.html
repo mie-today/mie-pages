@@ -1,642 +1,1123 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KLAIVE - Calendar</title>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    /* 0626dash-prod.html 기준 Root 변수 */
-    :root {
-      --bg: #FFFFFF; --bg2: #FAFAF8; --bg3: #F2F1EE;
-      --txt: #111111; --txt2: #5F5E5A; --txt3: #999896;
-      --blue: #1C7ED6; --teal: #1D9E75;
-      --b1: rgba(0,0,0,0.07); --b2: rgba(0,0,0,0.12);
-      --red: #E24B4A; --purple: #534AB7; --cblue: #378ADD; --amber: #EF9F27;
-      --r: 12px;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>KLAIVE · Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
+<style>
+/* ══ Root (0626dash-prod.html 기준) ══ */
+:root{
+  --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
+  --blue:#1C7ED6;--teal:#1D9E75;
+  --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
+  --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ══ Topbar — 0626dash-prod.html 완전 동일 ══ */
+.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
+.logo .ai{color:var(--blue);}
+.tb-div{width:.5px;height:28px;background:var(--b2);}
+.tb-userline{font-size:12px;font-weight:500;color:var(--txt);}
+.tb-userline span{font-weight:400;color:var(--txt3);margin-left:2px;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px;}
+.tb-sep{color:var(--b2);}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
+.tb-signout:hover{text-decoration:underline;}
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg3); /* 전체 앱 배경은 약간 어둡게 하여 카드가 돋보이게 함 */
-      color: var(--txt);
-      font-size: 13px;
-    }
+/* ══ Main ══ */
+.main{flex:1;display:flex;overflow:hidden;padding:12px;gap:12px;min-height:0;}
 
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+/* ══ Calendar column ══ */
+.cal-col{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
 
-    /* =========================================
-       1. TOP NAV PANEL (52px)
-       ========================================= */
-    .topbar {
-      flex-shrink: 0;
-      height: 52px;
-      background: var(--bg);
-      border-bottom: 1px solid var(--b1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      z-index: 10;
-    }
-    .topbar-left, .topbar-right { display: flex; align-items: center; gap: 16px; }
-    .logo { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
-    .logo span { color: var(--blue); }
-    .topbar-divider { width: 1px; height: 16px; background: var(--b1); }
-    .welcome-msg, .clock-weather-wrap, .signout-link { font-size: 13px; font-weight: 500; color: var(--txt2); }
-    .clock-weather-wrap { display: flex; align-items: center; gap: 8px; }
-    .avatar-circle { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; color: var(--txt); }
-    .signout-link { text-decoration: none; cursor: pointer; }
-    .signout-link:hover { color: var(--txt); }
+/* Calendar header */
+.cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;}
+.cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.cal-nbtn:hover{background:var(--bg2);}
+.cal-mo{font-size:14px;font-weight:500;color:var(--txt);padding:0 8px;min-width:90px;text-align:center;}
+.cal-today-btn{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.cal-today-btn:hover{background:var(--bg3);}
+.cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;border-radius:4px;padding:4px 24px 4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+.cal-add-btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+.cal-add-btn:hover{opacity:.9;}
 
-    /* =========================================
-       2. MAIN CONTAINER (60:40 Layout)
-       ========================================= */
-    .main-container {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+/* FullCalendar container — flex:1 so it fills remaining space */
+#cal-wrap{flex:1;min-height:0;overflow:hidden;padding:0 8px 4px;}
+#cal-wrap .fc{height:100%;}
 
-    /* --- LEFT PANE (60%): 캘린더 영역 --- */
-    .left-pane {
-      width: 60%;
-      background: var(--bg);
-      border-right: 1px solid var(--b1);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    
-    .cal-custom-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
-    .cal-nav-group { display: flex; align-items: center; gap: 4px; }
-    .cal-nav-btn { background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 500;}
-    .cal-nav-btn:hover { background: var(--bg2); }
-    .cal-header-title { font-size: 16px; font-weight: 600; margin: 0 12px; min-width: 120px; text-align: center; }
-    .cal-controls-right { display: flex; gap: 8px; }
-    .cal-view-dropdown { padding: 4px 8px; border: 1px solid var(--b1); border-radius: 6px; background: var(--bg); cursor: pointer; }
-    
-    .fc-wrapper {
-      flex: 1; 
-      border: 1px solid var(--b1); 
-      border-radius: var(--r); 
-      padding: 12px; 
-      background: var(--bg); 
-      overflow: hidden;
-      margin-bottom: 12px; /* 하단 캘린더 필터와의 간격 */
-    }
-    .fc { height: 100% !important; }
-    .fc .fc-scrollgrid { border: none !important; }
-    .fc td, .fc th { border: 1px solid var(--b1) !important; }
-    .fc-theme-standard th { background: var(--bg2); border: none !important; padding: 6px 0 !important; font-size: 11px; font-weight: 600; color: var(--txt2); text-transform: uppercase; }
-    .fc-daygrid-day-number { font-size: 11px; color: var(--txt2); font-weight: 500; padding: 4px 6px !important; }
-    .fc-day-today { background: rgba(28,126,214,0.03) !important; }
-    .fc-day-today .fc-daygrid-day-number { color: var(--blue); font-weight: 700; }
-    .fc-event { background: none !important; border: none !important; margin: 1px 0 !important; }
+/* Calendar footer */
+.cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
+.leg-items{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:7px;height:7px;border-radius:50%;}
+.leg-txt{font-size:10px;color:var(--txt2);}
+.cals-btn{display:flex;align-items:center;gap:4px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:4px 9px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0;}
+.cals-btn:hover{background:var(--bg2);}
+.cal-popup{position:absolute;bottom:42px;right:14px;z-index:50;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.1);padding:12px 14px;min-width:200px;display:none;}
+.cal-popup.open{display:block;}
+.cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;}
+.cal-pop-sec:first-child{margin-top:0;}
+.cal-row{display:flex;align-items:center;gap:6px;padding:4px 3px;border-radius:6px;}
+.cal-row:hover{background:var(--bg2);}
+.cal-row-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.cal-row input[type=checkbox]{width:11px;height:11px;accent-color:var(--blue);cursor:pointer;}
+.cal-row-name{font-size:11px;color:var(--txt);flex:1;}
 
-    /* 달력 하단 Calendars 체크박스 팝업 복구 */
-    .calendars-footer-area {
-      flex-shrink: 0;
-      position: relative;
-    }
-    .calendars-pop-btn {
-      background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--txt2); cursor: pointer;
-    }
-    .calendars-box-popup {
-      position: absolute; bottom: 100%; left: 0; margin-bottom: 8px;
-      background: var(--bg); border: 1px solid var(--b1); border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); width: 210px; padding: 12px; z-index: 100;
-      display: none;
-    }
-    .pop-sect-title { font-size: 10px; font-weight: 600; color: var(--txt3); text-transform: uppercase; margin: 8px 0 6px 0; }
-    .pop-sect-title:first-child { margin-top: 0; }
-    .cal-chk-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
-    .cal-dot-indicator { width: 8px; height: 8px; border-radius: 50%; }
+/* ══ FullCalendar overrides (index_14_.html 방식) ══ */
+.fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
+.fc .fc-event,.fc .fc-event-main,.fc .fc-daygrid-event,.fc .fc-daygrid-event-harness .fc-event{background:transparent !important;background-color:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
+.fc .fc-daygrid-event-dot{display:none !important;}
+.fc .fc-col-header-cell{background:var(--bg2) !important;font-size:10px !important;font-weight:600 !important;color:var(--txt3) !important;border:none !important;}
+.fc .fc-col-header-cell .fc-col-header-cell-cushion{padding:4px !important;color:var(--txt3) !important;text-decoration:none !important;}
+.fc .fc-daygrid-day{border:none !important;background:var(--bg) !important;}
+.fc .fc-daygrid-day.fc-day-today{background:rgba(28,126,214,0.04) !important;}
+.fc-theme-standard .fc-scrollgrid{border:.5px solid var(--b1) !important;}
+.fc-theme-standard td,.fc-theme-standard th{border:none !important;}
+.fc .fc-daygrid-body tr{border-bottom:.5px solid var(--b1) !important;}
+.fc .fc-daygrid-more-link{display:none !important;}
+.fc .fc-daygrid-day .fc-daygrid-day-top{padding:2px 4px !important;overflow:visible !important;}
+.fc .fc-daygrid-day-number{font-size:11px !important;font-weight:500;color:var(--txt2) !important;cursor:pointer !important;width:20px !important;height:20px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;text-decoration:none !important;transition:background .1s;}
+.fc .fc-daygrid-day-number:hover{background:rgba(28,126,214,0.1);color:var(--blue) !important;}
+.fc .fc-day-today .fc-daygrid-day-number{background:var(--teal) !important;color:#fff !important;font-weight:600 !important;}
+.mie-more{display:block;margin:1px 4px;font-size:10px;color:var(--txt3);cursor:pointer;font-weight:500;}
+.mie-more:hover{color:var(--blue);}
+/* Week / Day timegrid */
+.fc .fc-timegrid-slot{height:2em !important;}
+.fc .fc-timegrid-axis-cushion{font-size:9px !important;color:var(--txt3) !important;}
+.fc-timegrid-col.fc-day-today{background:rgba(28,126,214,0.02) !important;}
 
-    /* --- RIGHT PANE (40%): 독립된 3패널 구조 --- */
-    .right-pane {
-      width: 40%;
-      background: var(--bg2);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow-y: auto; /* 내용물이 길어질 경우 우측 패널만 스크롤 됨 */
-    }
+/* ══ Right panel ══ */
+.right-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;min-height:0;}
 
-    .panel-card {
-      background: var(--bg);
-      border: 1px solid var(--b1);
-      border-radius: var(--r);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
+/* Today card */
+.today-card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.today-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 0;flex-shrink:0;}
+.today-title{font-size:13px;font-weight:500;color:var(--txt);}
+.today-dt{font-size:10px;color:var(--txt3);}
+.today-inner{flex:1;overflow-y:auto;padding:0 14px 10px;}
+.today-inner::-webkit-scrollbar{width:3px;}
+.today-inner::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.sec-row{display:flex;align-items:center;gap:8px;padding:9px 0 5px;}
+.sec-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);flex-shrink:0;}
+.sec-line{flex:1;height:.5px;background:var(--b1);}
+.all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;flex-shrink:0;}
+.ev-item{display:flex;align-items:flex-start;gap:8px;background:var(--bg2);border-radius:7px;padding:6px 8px;margin-bottom:4px;cursor:pointer;}
+.ev-item:hover{background:var(--bg3);}
+.ev-bar{width:2px;border-radius:1px;flex-shrink:0;align-self:stretch;min-height:16px;}
+.ev-time{font-size:9px;color:var(--txt3);width:70px;flex-shrink:0;padding-top:1px;line-height:1.5;}
+.ev-body{flex:1;min-width:0;}
+.ev-nm{font-size:11px;color:var(--txt);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev-sub{font-size:9px;color:var(--txt3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;}
+.task-item:hover{background:var(--bg2);}
+.task-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .12s;}
+.task-cb:hover{border-color:var(--blue);}
+.task-cb.chk{background:var(--blue);border-color:var(--blue);}
+.task-cb.chk::after{content:'✓';color:#fff;font-size:8px;font-weight:700;}
+.task-nm{flex:1;font-size:11px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-tag{font-size:9px;border-radius:6px;padding:2px 6px;flex-shrink:0;background:rgba(28,126,214,.1);color:var(--blue);}
+.task-tag.late{background:rgba(226,75,74,.1);color:var(--red);}
 
-    .panel-card-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--txt);
-    }
-    .header-sub-date { font-size: 12px; font-weight: 400; color: var(--txt3); }
-    .panel-items-stack { display: flex; flex-direction: column; gap: 8px; }
+/* Input card */
+.input-card{flex:0 0 240px;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+.inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 10px;}
+.inp-panel.on{display:flex;}
+.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:9px 11px;min-height:52px;}
+.msg-ta::placeholder{color:var(--txt3);}
+.inp-actions{display:flex;align-items:center;gap:8px;margin-top:7px;flex-shrink:0;}
+.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 9px;cursor:pointer;flex-shrink:0;}
+.attach-lbl:hover{background:var(--bg3);}
+.send-btn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.send-btn:hover{opacity:.9;}
+.draft-row{display:flex;align-items:center;gap:5px;margin-top:5px;flex-shrink:0;}
+.draft-lbl{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);cursor:pointer;user-select:none;}
+.draft-lbl input{width:11px;height:11px;accent-color:var(--blue);cursor:pointer;}
+.sst{font-size:10px;min-height:12px;margin-top:3px;flex-shrink:0;}
+.fname-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10px;color:var(--txt2);flex-shrink:0;}
+.rm-btn{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:11px;padding:0;}
+.dw{border:.5px solid var(--b1);border-radius:7px;overflow:hidden;margin-top:4px;max-height:60px;overflow-y:auto;display:none;flex-shrink:0;}
+.di{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;border-bottom:.5px solid var(--b1);}
+.di:last-child{border-bottom:none;}
+.di:hover{background:var(--bg2);}
+.di-t{flex:1;font-size:10px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.di-d{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:0;}
 
-    /* 이벤트 & 태스크 아이템 디자인 */
-    .rt-event-pill {
-      padding: 8px 12px; background: var(--bg); border: 1px solid var(--b1); border-radius: 6px; border-left-width: 4px; display: flex; flex-direction: column; cursor: pointer;
-    }
-    .rt-event-pill:hover { background: var(--bg2); }
-    .rt-event-time { font-size: 11px; color: var(--txt2); font-weight: 500; }
-    .rt-event-title { font-size: 13px; font-weight: 600; margin-top: 2px; }
-    
-    .rt-task-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--bg3); }
-    .rt-task-row:last-child { border-bottom: none; }
-    .rt-task-chk { margin-top: 2px; cursor: pointer; }
-    .rt-task-text { font-size: 12.5px; color: var(--txt); }
+/* + Add panel */
+.add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
+.att{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);cursor:pointer;white-space:nowrap;margin-bottom:-1px;}
+.att:hover{color:var(--txt2);}
+.att.sel{color:var(--blue);border-bottom-color:var(--blue);}
+.att svg{width:10px;height:10px;flex-shrink:0;}
+.afb{display:none;flex-direction:column;flex:1;min-height:0;}
+.afb.vis{display:flex;}
+.afs{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:5px;padding-bottom:4px;}
+.afs::-webkit-scrollbar{display:none;}
+.aff{flex-shrink:0;padding-top:5px;border-top:.5px solid var(--b1);}
+.asf{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.asf:hover{opacity:.9;}
+.ast{font-size:10px;min-height:12px;text-align:center;}
+.afi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.afi:focus{border-color:var(--blue);}
+.afsm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.afsm:focus{border-color:var(--blue);}
+.afr{display:flex;gap:5px;flex-shrink:0;}
+.amt{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;flex-shrink:0;}
+.aex{display:none;flex-direction:column;gap:5px;flex-shrink:0;}
+.aex.vis{display:flex;}
+.ich{display:flex;flex-wrap:wrap;gap:3px;}
+.icp{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
+.icx{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
 
-    /* Send Message / +Add 탭 (동적 인터랙션) */
-    .panel-nav-tabs { display: flex; border-bottom: 1px solid var(--b1); margin-bottom: 14px; }
-    .p-tab { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--txt2); cursor: pointer; border-bottom: 2px solid transparent; }
-    .p-tab.active-tab { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+/* ══ Bottom Nav — 0626dash-prod.html 완전 동일 ══ */
+.bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);padding:0;transition:color .12s;text-decoration:none;}
+.nav-tab:hover{color:var(--txt2);}
+.nav-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+.nav-tab svg{width:14px;height:14px;}
 
-    .add-sub-tabs { display: flex; gap: 2px; background: var(--bg2); padding: 4px; border-radius: 6px; margin-bottom: 12px; }
-    .sub-t { flex: 1; text-align: center; padding: 6px 0; font-size: 11px; font-weight: 500; color: var(--txt2); cursor: pointer; border-radius: 4px; }
-    .sub-t.active-sub { background: var(--bg); color: var(--txt); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-
-    .f-group { margin-bottom: 10px; }
-    .f-lbl { display: block; font-size: 11px; font-weight: 500; color: var(--txt2); margin-bottom: 4px; }
-    .f-row { display: flex; gap: 8px; }
-    .f-row > .f-group { flex: 1; }
-    .f-textarea, .f-input, .f-select { width: 100%; background: var(--bg2); border: 1px solid var(--b1); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; font-family: inherit; outline: none; }
-    .f-textarea:focus, .f-input:focus { border-color: var(--blue); background: var(--bg); }
-    
-    .btn-secondary { background: var(--bg2); border: 1px solid var(--b1); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
-    .btn-primary { background: var(--blue); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; }
-    .btn-primary:hover { background: #1565C0; }
-
-    /* =========================================
-       3. BOTTOM NAV PANEL (48px)
-       ========================================= */
-    .bottom-navbar {
-      flex-shrink: 0;
-      height: 48px;
-      background: var(--bg);
-      border-top: 1px solid var(--b1);
-      display: flex;
-      align-items: stretch; /* 탭이 컨테이너 꽉 차게 */
-      justify-content: center;
-      gap: 40px;
-      z-index: 10;
-    }
-    .b-nav-item {
-      display: flex; align-items: center;
-      padding: 0 4px; font-size: 13px; font-weight: 500; color: var(--txt2);
-      text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
-    }
-    .b-nav-item:hover { color: var(--txt); }
-    .b-nav-item.active-nav { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
-
-    /* MODAL SYSTEM (API 로직용) */
-    .overlay-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 1000; display: none; align-items: center; justify-content: center; }
-    .dialog-box { background: var(--bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); width: 380px; max-height: 75vh; display: flex; flex-direction: column; overflow: hidden; }
-    .dialog-header { padding: 12px 16px; border-bottom: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; }
-    .dialog-close { background: none; border: none; font-size: 18px; color: var(--txt3); cursor: pointer; }
-    .dialog-body { padding: 16px; overflow-y: auto; }
-  </style>
+/* ══ Modals ══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
+.modal-bg.h{display:none;}
+@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
+/* Event view */
+.evb{background:var(--bg);border-radius:var(--r);max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;animation:mIn .16s ease;}
+.evt{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:10px 12px 6px;border-bottom:.5px solid var(--b1);}
+.eib{background:none;border:none;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--txt3);}
+.eib:hover{background:var(--bg2);}
+.eib svg{width:16px;height:16px;}
+.evbody{padding:16px 20px 20px;}
+.evtr{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.evcb{width:12px;height:12px;border-radius:3px;flex-shrink:0;margin-top:3px;}
+.evtitle{font-size:16px;font-weight:500;color:var(--txt);line-height:1.3;flex:1;word-break:break-word;}
+.evr{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.evri{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--txt3);}
+.evri svg{width:16px;height:16px;}
+.evrt{font-size:12px;color:var(--txt2);line-height:1.5;flex:1;word-break:break-word;}
+.evrt a{color:var(--blue);text-decoration:none;}
+.evcd{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.evdc{display:none;padding:14px 20px;border-top:.5px solid var(--b1);}
+.mst{font-size:10px;text-align:center;margin-top:5px;min-height:12px;}
+/* Day modal */
+.dmb{background:var(--bg);border-radius:var(--r);padding:20px;max-width:380px;width:100%;max-height:78vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:mIn .16s ease;}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.mt{font-size:13px;font-weight:600;color:var(--txt);}
+.mx{background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;padding:0 4px;line-height:1;}
+.dei{display:flex;align-items:flex-start;gap:8px;padding:7px 4px;border-bottom:.5px solid var(--b1);cursor:pointer;border-radius:6px;transition:background .1s;}
+.dei:hover{background:var(--bg2);}
+.dei:last-child{border-bottom:none;}
+.ded{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.dei-info{flex:1;min-width:0;}
+.det{font-size:9px;color:var(--txt3);margin-bottom:1px;}
+.dett{font-size:12px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Edit modal */
+.mb{background:var(--bg);border-radius:var(--r);padding:22px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:mIn .18s ease;}
+.ebadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:rgba(28,126,214,.1);color:var(--blue);border-radius:4px;padding:2px 6px;}
+.ff{margin-bottom:9px;}
+.fl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.fi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:6px 9px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.fi:focus{border-color:var(--blue);background:var(--bg);}
+.fi.lg{height:58px;resize:none;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mac{display:flex;gap:7px;margin-top:12px;}
+.bc{flex:1;background:var(--bg2);color:var(--txt2);border:.5px solid var(--b1);border-radius:6px;padding:7px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
+.bs{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.bd{background:var(--bg);color:var(--red);border:.5px solid rgba(226,75,74,.4);border-radius:6px;padding:7px 10px;font-size:12px;cursor:pointer;}
+/* Global scrollbar */
+*::-webkit-scrollbar{width:3px;}
+*::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+</style>
 </head>
 <body>
-
 <div class="app">
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="logo">KL<span>AI</span>VE</div>
-      <div class="topbar-divider"></div>
-      <div class="welcome-msg" id="user-welcome">Welcome, User</div>
-    </div>
-    <div class="topbar-right">
-      <div class="clock-weather-wrap">
-        <span id="live-clock">00:00 AM</span>
-        <span class="topbar-divider"></span>
-        <span id="live-weather">Loading weather...</span>
-      </div>
-      <div class="avatar-circle" id="user-avatar">U</div>
-      <a class="signout-link" onclick="handleSignOut()">Sign out</a>
-    </div>
-  </header>
 
-  <div class="main-container">
-    
-    <section class="left-pane">
-      <div class="cal-custom-header">
-        <div class="cal-nav-group">
-          <button class="cal-nav-btn" onclick="calendar.prev(); syncHeaderLabel();">‹</button>
-          <div class="cal-header-title" id="calendar-title-label">June 2026</div>
-          <button class="cal-nav-btn" onclick="calendar.next(); syncHeaderLabel();">›</button>
-        </div>
-        <div class="cal-controls-right">
-          <select class="cal-view-dropdown" id="view-selector" onchange="handleViewChange(this.value)">
-            <option value="dayGridMonth">Month</option>
-            <option value="timeGridWeek">Week</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="fc-wrapper">
-        <div id="calendar-root"></div>
-      </div>
-
-      <div class="calendars-footer-area">
-        <button class="calendars-pop-btn" onclick="toggleCalendarsPopup(event)">⊞ Calendars</button>
-        <div class="calendars-box-popup" id="calendars-popup-box">
-          <div class="pop-sect-title">My Calendars</div>
-          <div class="cal-chk-row"><input type="checkbox" id="cal-default" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--blue);"></div><span>Default</span></div>
-          <div class="cal-chk-row"><input type="checkbox" id="cal-private" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--purple);"></div><span>Private</span></div>
-          <div class="cal-chk-row"><input type="checkbox" id="cal-klaive" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--teal);"></div><span>KLAIVE</span></div>
-          <div class="cal-chk-row"><input type="checkbox" id="cal-womens" checked onchange="calendar.refetchEvents()"><div class="cal-dot-indicator" style="background: var(--red);"></div><span>Women's Health</span></div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="right-pane">
-      
-      <div class="panel-card">
-        <div class="panel-card-header">
-          <span>Today's Events</span>
-          <span class="header-sub-date" id="panel-date-sync">Loading...</span>
-        </div>
-        <div class="panel-items-stack" id="today-events-container">
-          </div>
-      </div>
-
-      <div class="panel-card">
-        <div class="panel-card-header">
-          <span>Tasks</span>
-          <select style="border:none; outline:none; font-size:12px; color:var(--txt2); cursor:pointer;" id="task-list-filter" onchange="renderTasksList()">
-            <option value="all">All List ▾</option>
-          </select>
-        </div>
-        <div class="panel-items-stack" id="today-tasks-container">
-          </div>
-      </div>
-
-      <div class="panel-card">
-        <div class="panel-nav-tabs">
-          <div class="p-tab active-tab" id="tab-trigger-msg" onclick="switchMainTab('msg')">Send Message</div>
-          <div class="p-tab" id="tab-trigger-add" onclick="switchMainTab('add')">+ Add</div>
-        </div>
-        
-        <div id="pane-content-msg">
-          <textarea class="f-textarea" id="msg-textarea" rows="4" placeholder="Type your message..."></textarea>
-          <div style="margin-bottom: 12px;">
-            <input type="checkbox" id="msg-draft-chk"> <label for="msg-draft-chk" style="font-size:12px; color:var(--txt2);">Save as draft</label>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <button class="btn-secondary" style="align-self: flex-start;">📎 Attach File</button>
-            <button class="btn-primary" style="width:100%;" onclick="executeSubmit()">Send Message</button>
-          </div>
-        </div>
-
-        <div id="pane-content-add" style="display: none;">
-          <div class="add-sub-tabs">
-            <div class="sub-t active-sub" id="sub-t-event" onclick="switchSubForm('event')">Event</div>
-            <div class="sub-t" id="sub-t-task" onclick="switchSubForm('task')">Task</div>
-            <div class="sub-t" id="sub-t-finance" onclick="switchSubForm('finance')">Finance</div>
-            <div class="sub-t" id="sub-t-health" onclick="switchSubForm('health')">Health</div>
-            <div class="sub-t" id="sub-t-project" onclick="switchSubForm('project')">Project</div>
-          </div>
-          
-          <div id="form-block-event">
-            <div class="f-group"><label class="f-lbl">Title</label><input type="text" class="f-input" id="ev-title"></div>
-            <div class="f-group"><label class="f-lbl">Date</label><input type="date" class="f-input" id="ev-date"></div>
-            <div class="f-row">
-              <div class="f-group"><label class="f-lbl">Start Time</label><input type="time" class="f-input" id="ev-start"></div>
-              <div class="f-group"><label class="f-lbl">End Time</label><input type="time" class="f-input" id="ev-end"></div>
-            </div>
-          </div>
-          <div id="form-block-task" style="display:none;">
-            <div class="f-group"><label class="f-lbl">Task Title</label><input type="text" class="f-input" id="tk-title"></div>
-            <div class="f-group"><label class="f-lbl">Select List</label><select class="f-select" id="tk-list-select"></select></div>
-            <div class="f-group"><label class="f-lbl">Due Date</label><input type="date" class="f-input" id="tk-due"></div>
-          </div>
-          <div id="form-block-finance" style="display:none;">
-            <div class="f-group"><label class="f-lbl">Amount</label><input type="number" class="f-input" id="fn-amount"></div>
-            <div class="f-group"><label class="f-lbl">Date</label><input type="date" class="f-input" id="fn-date"></div>
-          </div>
-          <div id="form-block-health" style="display:none;">
-            <div class="f-group"><label class="f-lbl">Metric</label>
-              <select class="f-select" id="ht-metric" onchange="adjustHealthInputs(this.value)">
-                <option value="bp">Blood Pressure</option>
-                <option value="hr">Heart Rate</option>
-              </select>
-            </div>
-            <div id="dynamic-health-fields">
-              <div class="f-row">
-                <div class="f-group"><label class="f-lbl">Sys</label><input type="number" class="f-input" id="ht-val-sys"></div>
-                <div class="f-group"><label class="f-lbl">Dia</label><input type="number" class="f-input" id="ht-val-dia"></div>
-              </div>
-            </div>
-          </div>
-          <div id="form-block-project" style="display:none;">
-            <div class="f-group"><label class="f-lbl">Project Name</label><input type="text" class="f-input" id="pj-name"></div>
-            <div class="f-group"><label class="f-lbl">Deadline</label><input type="date" class="f-input" id="pj-deadline"></div>
-          </div>
-
-          <button class="btn-primary" id="panel-main-submit" style="width:100%; margin-top:12px;" onclick="executeSubmit()">Add Event</button>
-        </div>
-      </div>
-    </aside>
+<!-- ══ TOPBAR (0626dash-prod.html 완전 동일) ══ -->
+<div class="topbar">
+  <div class="tb-left">
+    <span class="logo">KL<span class="ai">AI</span>VE</span>
+    <div class="tb-div"></div>
+    <div class="tb-userline" id="tb-userline">Welcome, — <span></span></div>
   </div>
-
-  <nav class="bottom-navbar">
-    <a href="/dashboard" class="b-nav-item">Overview</a>
-    <a href="/calendar" class="b-nav-item active-nav">Calendar</a>
-    <a href="/finance" class="b-nav-item">Finance</a>
-    <a href="/health" class="b-nav-item">Health</a>
-    <a href="/task" class="b-nav-item">Tasks</a>
-    <a href="/documents" class="b-nav-item">Documents</a>
-    <a href="/settings" class="b-nav-item">Settings</a>
-  </nav>
-
+  <div class="tb-right">
+    <div class="tb-meta">
+      <span id="wb-date"></span><span class="tb-sep">·</span>
+      <span id="wb-time"></span><span class="tb-sep">·</span>
+      <span id="wb-wx"></span>
+    </div>
+    <div class="tb-avatar" id="tb-av">—</div>
+    <button class="tb-signout" id="signout-btn">Sign out</button>
+  </div>
 </div>
 
-<div class="overlay-modal" id="day-events-modal">
-  <div class="dialog-box">
-    <div class="dialog-header">
-      <div style="font-size:14px; font-weight:600;" id="day-modal-header-text">Events</div>
-      <button class="dialog-close" onclick="closeDayModal()">×</button>
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- Calendar column -->
+  <div class="cal-col">
+    <div class="cal-topbar">
+      <div class="cal-navg">
+        <button class="cal-nbtn" id="cal-prev">‹</button>
+        <span class="cal-mo" id="cal-title">June 2026</span>
+        <button class="cal-nbtn" id="cal-next">›</button>
+      </div>
+      <button class="cal-today-btn" id="cal-today-btn">Today</button>
+      <select class="cal-view-sel" id="cal-view-sel">
+        <option value="dayGridMonth">Month</option>
+        <option value="timeGridWeek">Week</option>
+        <option value="timeGridDay">Day</option>
+      </select>
+      <button class="cal-add-btn" id="cal-add-btn">+ Add</button>
     </div>
-    <div class="dialog-body" id="day-modal-items-container"></div>
+    <div id="cal-wrap"><div id="calendar"></div></div>
+    <div class="cal-foot">
+      <div class="leg-items" id="cal-leg"></div>
+      <button class="cals-btn" id="cals-btn">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        Calendars
+      </button>
+      <div class="cal-popup" id="cal-popup">
+        <div class="cal-pop-sec">My Calendars</div>
+        <div id="cal-pop-my"></div>
+        <div class="cal-pop-sec" id="cal-pop-other-hdr" style="display:none">Other Calendars</div>
+        <div id="cal-pop-other"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right-panel">
+    <!-- Today card -->
+    <div class="today-card">
+      <div class="today-hd">
+        <span class="today-title">Today</span>
+        <span class="today-dt" id="today-dt"></span>
+      </div>
+      <div class="today-inner">
+        <div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>
+        <div id="today-ev-list"></div>
+        <div class="sec-row">
+          <span class="sec-lbl">Tasks</span>
+          <div class="sec-line"></div>
+          <select class="all-list-sel" id="task-filter" onchange="renderTodayTasks()"><option value="all">All List ▾</option></select>
+        </div>
+        <div id="today-task-list"></div>
+      </div>
+    </div>
+
+    <!-- Input card -->
+    <div class="input-card">
+      <div class="inp-tabs">
+        <button class="inp-tab on" id="tab-send" onclick="switchTab('send')">Send Message</button>
+        <button class="inp-tab" id="tab-add" onclick="switchTab('add')">+ Add</button>
+      </div>
+      <!-- Send panel -->
+      <div class="inp-panel on" id="panel-send">
+        <textarea class="msg-ta" id="msg-input" placeholder="Type your message"></textarea>
+        <div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">✕</button></div>
+        <div class="inp-actions">
+          <label class="attach-lbl" for="file-input">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>Attach
+          </label>
+          <input type="file" id="file-input" style="display:none"/>
+          <button class="send-btn" id="send-btn">SEND</button>
+        </div>
+        <div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>
+        <div class="dw" id="dw"><div id="dl"></div></div>
+        <div class="sst" id="sst"></div>
+      </div>
+      <!-- Add panel -->
+      <div class="inp-panel" id="panel-add" style="padding:6px 12px 8px;">
+        <div class="add-type-sect">
+          <button class="att sel" id="abt-ev" onclick="selAT('ev')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event</button>
+          <button class="att" id="abt-tk" onclick="selAT('tk')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task</button>
+          <button class="att" id="abt-fin" onclick="selAT('fin')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance</button>
+          <button class="att" id="abt-hl" onclick="selAT('hl')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health</button>
+          <button class="att" id="abt-pr" onclick="selAT('pr')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project</button>
+        </div>
+        <!-- Event form -->
+        <div class="afb vis" id="afb-ev">
+          <div class="afs">
+            <input class="afi" type="text" placeholder="Event title" id="ae-title" style="margin-top:4px;"/>
+            <div class="afr"><input class="afsm" type="date" id="ae-date"/><input class="afsm" type="time" id="ae-start"/><input class="afsm" type="time" id="ae-end"/></div>
+            <button class="amt" onclick="toggleEx('aex-ev',this,'Invite / Location / Notes')">＋ Invite / Location / Notes</button>
+            <div class="aex" id="aex-ev">
+              <div style="display:flex;gap:5px;align-items:center;"><input class="afsm" type="email" id="ae-invite" placeholder="Invite (email)"/><button style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onclick="addInvitee()">+</button></div>
+              <div class="ich" id="ae-chips"></div>
+              <input class="afsm" type="text" placeholder="Location" id="ae-loc"/>
+              <textarea class="afsm" rows="2" style="resize:none;" placeholder="Notes" id="ae-notes"></textarea>
+            </div>
+          </div>
+          <div class="aff"><button class="asf" onclick="submitAdd('ev')">Add Event</button><div class="ast" id="ast-ev"></div></div>
+        </div>
+        <!-- Task form -->
+        <div class="afb" id="afb-tk">
+          <div class="afs">
+            <input class="afi" type="text" placeholder="Task title" id="at-title" style="margin-top:4px;"/>
+            <div class="afr"><select class="afsm" id="at-list"><option value="@default">My Tasks</option></select><input class="afsm" type="date" id="at-due"/></div>
+            <button class="amt" onclick="toggleEx('aex-tk',this,'Notes / Priority')">＋ Notes / Priority</button>
+            <div class="aex" id="aex-tk"><input class="afsm" type="text" placeholder="Notes" id="at-notes"/><select class="afsm" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+          </div>
+          <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
+        </div>
+        <!-- Finance form -->
+        <div class="afb" id="afb-fin">
+          <div class="afs">
+            <div class="afr" style="margin-top:4px;"><input class="afsm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/><input class="afsm" type="date" id="afin-date"/></div>
+            <select class="afsm" id="afin-cat"><option value="">Category ▾</option><optgroup label="Needs"><option>Housing</option><option>Utilities</option><option>Groceries</option><option>Transportation</option><option>Insurance</option><option>Healthcare</option><option>Phone</option><option>Internet</option><option>Subscriptions</option></optgroup><optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Travel</option><option>Personal Care</option><option>Other</option></optgroup><optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup><optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup></select>
+            <input class="afsm" type="text" placeholder="Description (optional)" id="afin-desc"/>
+          </div>
+          <div class="aff"><button class="asf" onclick="submitAdd('fin')">Add Entry</button><div class="ast" id="ast-fin"></div></div>
+        </div>
+        <!-- Health form -->
+        <div class="afb" id="afb-hl">
+          <div class="afs">
+            <div class="afr" style="margin-top:4px;"><select class="afsm" id="ahl-type" onchange="updateHlFields()"><option value="">Metric ▾</option><option value="weight">⚖️ Weight</option><option value="bp">🩺 Blood Pressure</option><option value="hr">❤️ Heart Rate</option><option value="glucose">🩸 Glucose</option><option value="steps">👟 Steps</option><option value="water">💧 Water</option><option value="sleep">😴 Sleep</option><option value="mood">😊 Mood</option></select><input class="afsm" type="date" id="ahl-date"/></div>
+            <div id="ahl-val"><input class="afsm" type="number" placeholder="Value" step="0.1"/></div>
+            <input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>
+          </div>
+          <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
+        </div>
+        <!-- Project form -->
+        <div class="afb" id="afb-pr">
+          <div class="afs">
+            <input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:4px;"/>
+            <div class="afr"><input class="afsm" type="date" id="apr-due"/><select class="afsm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select></div>
+            <button class="amt" onclick="toggleEx('aex-pr',this,'Description / Members')">＋ Description / Members</button>
+            <div class="aex" id="aex-pr"><textarea class="afsm" rows="2" style="resize:none;" placeholder="Description" id="apr-desc"></textarea><input class="afsm" type="text" placeholder="Member emails (comma sep)" id="apr-members"/></div>
+          </div>
+          <div class="aff"><button class="asf" onclick="submitAdd('pr')">Create Project</button><div class="ast" id="ast-pr"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BOTTOM NAV (0626dash-prod.html 완전 동일) ══ -->
+<nav class="bot-nav">
+  <button class="nav-tab" onclick="location.href='/'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span>Overview</span></button>
+  <button class="nav-tab on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span>Calendar</span></button>
+  <button class="nav-tab" onclick="location.href='/finance'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span>Finance</span></button>
+  <button class="nav-tab" onclick="location.href='/health'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span>Health</span></button>
+  <button class="nav-tab" onclick="location.href='/task'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="3" x2="8" y2="3" stroke-linecap="round"/><line x1="2" y1="6" x2="8" y2="6" stroke-linecap="round"/></svg><span>Tasks</span></button>
+  <button class="nav-tab" onclick="location.href='/documents'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span>Documents</span></button>
+  <button class="nav-tab" onclick="location.href='/settings'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span>Settings</span></button>
+</nav>
+
+<!-- EVENT VIEW MODAL -->
+<div class="modal-bg h" id="ev-modal">
+  <div class="evb">
+    <div class="evt">
+      <button class="eib" id="ev-edit-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5l3 3L6 17H3v-3L14.5 2.5z"/></svg></button>
+      <button class="eib" id="ev-del-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,6 15,6"/><path d="M8 6V4h4v2"/><rect x="6" y="6" width="8" height="11" rx="1"/></svg></button>
+      <button class="eib" id="ev-close-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
+    </div>
+    <div class="evbody">
+      <div class="evtr"><div class="evcb" id="ev-cbar"></div><div class="evtitle" id="ev-ttl"></div></div>
+      <div class="evr"><div class="evri"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="8"/><polyline points="10,6 10,10 13,13" stroke-linecap="round"/></svg></div><div class="evrt" id="ev-time"></div></div>
+      <div class="evr" id="ev-loc-row" style="display:none"><div class="evri"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 2a6 6 0 0 1 6 6c0 4-6 10-6 10S4 12 4 8a6 6 0 0 1 6-6z"/><circle cx="10" cy="8" r="2"/></svg></div><div class="evrt" id="ev-loc"></div></div>
+      <div class="evr" id="ev-desc-row" style="display:none"><div class="evri"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="6" x2="16" y2="6" stroke-linecap="round"/><line x1="4" y1="10" x2="16" y2="10" stroke-linecap="round"/><line x1="4" y1="14" x2="11" y2="14" stroke-linecap="round"/></svg></div><div class="evrt" id="ev-desc"></div></div>
+      <div class="evr"><div class="evri"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="16" height="15" rx="1.5"/><line x1="2" y1="8" x2="18" y2="8"/><line x1="6" y1="1.5" x2="6" y2="4.5" stroke-linecap="round"/><line x1="14" y1="1.5" x2="14" y2="4.5" stroke-linecap="round"/></svg></div><div class="evrt"><div style="display:flex;align-items:center;gap:6px;"><div class="evcd" id="ev-cald"></div><span id="ev-caln"></span></div></div></div>
+    </div>
+    <div class="evdc" id="ev-dc">
+      <div style="font-size:12px;color:var(--txt);margin-bottom:10px;">Delete this event?</div>
+      <div style="display:flex;gap:8px;"><button class="bc" id="ev-dc-no">Cancel</button><button class="bs" id="ev-dc-yes" style="background:var(--red);">Delete</button></div>
+      <div class="mst" id="ev-dc-st"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY MODAL -->
+<div class="modal-bg h" id="day-modal">
+  <div class="dmb">
+    <div class="mhd"><div class="mt" id="dm-title"></div><button class="mx" id="dm-close">×</button></div>
+    <div id="dm-list"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg h" id="edit-modal">
+  <div class="mb">
+    <div class="mhd"><div class="mt">Edit Event</div><div style="display:flex;align-items:center;gap:8px;"><span class="ebadge">Google Calendar</span><button class="mx" id="edit-close">×</button></div></div>
+    <div class="ff"><label class="fl">Title</label><input class="fi" type="text" id="ed-title" placeholder="Add a title"/></div>
+    <div class="fr2"><div class="ff"><label class="fl">Start Date</label><input class="fi" type="date" id="ed-date"/></div><div class="ff"><label class="fl">Start Time</label><input class="fi" type="time" id="ed-time"/></div></div>
+    <div class="fr2"><div class="ff"><label class="fl">End Date</label><input class="fi" type="date" id="ed-edate"/></div><div class="ff"><label class="fl">End Time</label><input class="fi" type="time" id="ed-etime"/></div></div>
+    <div class="ff"><label class="fl">Location</label><input class="fi" type="text" id="ed-loc" placeholder="Add a location"/></div>
+    <div class="ff"><label class="fl">Description</label><textarea class="fi lg" id="ed-desc"></textarea></div>
+    <div class="mac"><button class="bc" id="ed-cancel">Cancel</button><button class="bs" id="ed-save">Save</button><button class="bd" id="ed-del">🗑</button></div>
+    <div class="mst" id="ed-st"></div>
   </div>
 </div>
 
 <script>
-  // ==========================================
-  // API 및 비즈니스 로직 복구 공간
-  // ==========================================
-  const BACKEND = 'https://api.mie.today';
-  let currentActiveTab = 'msg';
-  let currentSubForm = 'event';
-  let cachedEvents = [];
-  let cachedTasks = [];
-  let cachedTaskLists = [];
-  let calendar;
+'use strict';
+var BACKEND='https://api.mie.today';
+var DRAFT_KEY='klaive_cal_drafts';
+var MAX_VIS=4;
 
-  window.addEventListener('DOMContentLoaded', init);
+/* ── 전역 상태 ── */
+var cal=null;
+var calendarMeta=[], primaryCals=[], otherCals=[], primaryId='primary';
+var allEvents=[], eventsByDate={};
+var allTasks=[], taskLists=[];
+var curViewEv=null, curEditEv=null, selFile=null, invitees=[];
 
-  async function init() {
-    try {
-      // 1. 인증 확인
-      const res = await fetch(`${BACKEND}/api/me/status`, { credentials: 'include' });
-      if(!res.ok) throw new Error('Not connected');
-      const data = await res.json();
-      if(!data.connected) throw new Error('Not connected');
-      
-      // 2. 탑바 유저 정보 세팅
-      const name = data.user.given_name || 'User';
-      document.getElementById('user-welcome').textContent = `Welcome, ${name} (${data.user.email || ''})`;
-      document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+var CAL_COLORS={'Default':'#378ADD','Private':'#534AB7','KLAIVE':'#1D9E75',"Women's Health":'#E24B4A'};
 
+/* ══ 색상 헬퍼 (index_14_.html pastelFor 방식) ══ */
+function pastelFor(hex){
+  if(!hex||hex.length<7)return{bg:'rgba(55,138,221,0.12)',text:'#378ADD'};
+  try{
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return{bg:'rgba('+r+','+g+','+b+',0.15)',text:hex};
+  }catch(e){return{bg:'rgba(55,138,221,0.12)',text:'#378ADD'};}
+}
+function pastelForCalId(rawColor,calId,vis){
+  if(vis==='private') return pastelFor('#534AB7');
+  if(rawColor) return pastelFor(rawColor);
+  var m=calendarMeta.find(function(c){return c.id===calId&&c.summary!=='Private';});
+  return pastelFor(m?m.color:'#378ADD');
+}
+
+/* ══ Clock & Weather (0626dash-prod.html 동일) ══ */
+function startClock(){
+  function tick(){
+    var n=new Date();
+    var de=document.getElementById('wb-date'),te=document.getElementById('wb-time');
+    if(de)de.textContent=n.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+    if(te)te.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
+  }
+  tick();setInterval(tick,30000);
+}
+function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';return'⛈️';}
+function loadWeather(){
+  var el=document.getElementById('wb-wx');
+  function f(lat,lon){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
+      .then(function(r){return r.json();})
+      .then(function(w){var c=Math.round(w.current.temperature_2m),fa=Math.round(c*9/5+32);if(el)el.textContent=wIcon(w.current.weathercode)+' '+fa+'°F / '+c+'°C';})
+      .catch(function(){});
+  }
+  if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){f(p.coords.latitude,p.coords.longitude);},function(){f(37.7749,-122.4194);},{timeout:5000});
+  else f(37.7749,-122.4194);
+}
+
+/* ══ 캘린더 메타 (0626dash-prod.html classifyCalendars) ══ */
+function classifyCalendars(items,pid){
+  primaryId=pid||'primary';
+  primaryCals=[
+    {id:primaryId,summary:'Default',color:CAL_COLORS['Default'],enabled:true,isPrimary:true,visFilter:'default'},
+    {id:primaryId,summary:'Private',color:CAL_COLORS['Private'],enabled:true,isPrimary:true,visFilter:'private'}
+  ];
+  otherCals=[];
+  items.forEach(function(c){
+    var s=c.summary||'';
+    if(!c.primary){
+      if(s==='KLAIVE'||s.toLowerCase().indexOf('klaive')!==-1){
+        primaryCals.push({id:c.id,summary:'KLAIVE',color:c.backgroundColor||CAL_COLORS['KLAIVE'],enabled:true});
+      }else if(s==="Women's Health"||s.toLowerCase().indexOf("women's health")!==-1){
+        primaryCals.push({id:c.id,summary:"Women's Health",color:c.backgroundColor||CAL_COLORS["Women's Health"],enabled:true});
+      }else{
+        otherCals.push({id:c.id,summary:c.summary||c.id,color:c.backgroundColor||'#9AA0A6',enabled:false});
+      }
+    }
+  });
+  calendarMeta=primaryCals.concat(otherCals);
+}
+
+function buildCalLegend(){
+  var leg=document.getElementById('cal-leg'),pMy=document.getElementById('cal-pop-my'),pOth=document.getElementById('cal-pop-other'),pOthH=document.getElementById('cal-pop-other-hdr');
+  if(!leg)return;
+  leg.innerHTML='';
+  var seen={};
+  primaryCals.forEach(function(c){
+    if(seen[c.summary])return;seen[c.summary]=true;
+    var li=document.createElement('div');li.className='leg-item';
+    var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
+    var tx=document.createElement('span');tx.className='leg-txt';tx.textContent=c.summary;tx.style.opacity=c.enabled?'1':'0.4';
+    li.appendChild(dot);li.appendChild(tx);leg.appendChild(li);
+  });
+  if(pMy){
+    pMy.innerHTML='';var seen2={};
+    primaryCals.forEach(function(c){
+      if(seen2[c.summary])return;seen2[c.summary]=true;
+      var row=document.createElement('div');row.className='cal-row';
+      var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+      var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+      var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+      (function(cm,ck,ld){
+        ck.addEventListener('change',function(){
+          primaryCals.forEach(function(pc){if(pc.summary===cm.summary)pc.enabled=ck.checked;});
+          ld.style.background=ck.checked?cm.color:'#ccc';
+          leg.querySelectorAll('.leg-txt').forEach(function(t){
+            if(t.textContent===cm.summary){var d=t.previousElementSibling;if(d)d.style.background=ck.checked?cm.color:'#ccc';t.style.opacity=ck.checked?'1':'0.4';}
+          });
+          applyFilter();
+        });
+      })(c,chk,rdot);
+      row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);pMy.appendChild(row);
+    });
+  }
+  if(pOth&&pOthH){
+    pOth.innerHTML='';
+    if(otherCals.length){
+      pOthH.style.display='';
+      otherCals.forEach(function(c){
+        var row=document.createElement('div');row.className='cal-row';
+        var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+        var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+        var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+        (function(cm,ck){ck.addEventListener('change',function(){cm.enabled=ck.checked;applyFilter();});})(c,chk);
+        row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);pOth.appendChild(row);
+      });
+    }else pOthH.style.display='none';
+  }
+}
+
+function loadCalendarList(cb){
+  fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      var items=data?(Array.isArray(data.calendars)?data.calendars:(Array.isArray(data.items)?data.items:[])):[];
+      var pi=items.find(function(c){return c.primary;});
+      classifyCalendars(items,pi?pi.id:'primary');
+      buildCalLegend();if(cb)cb();
+    })
+    .catch(function(){classifyCalendars([],'primary');buildCalLegend();if(cb)cb();});
+}
+
+/* ══ 이벤트 필터 (visibility + calendarId 기반) ══ */
+function filterEvents(events){
+  var defEntry=primaryCals.find(function(c){return c.summary==='Default';});
+  var privEntry=primaryCals.find(function(c){return c.summary==='Private';});
+  var enabledIds=calendarMeta.filter(function(c){return c.enabled&&!c.isPrimary;}).map(function(c){return c.id;});
+  return events.filter(function(ev){
+    var cid=ev.extendedProps.calId,vis=ev.extendedProps.vis;
+    if(cid===primaryId){
+      return vis==='private'?(privEntry&&privEntry.enabled):(defEntry&&defEntry.enabled);
+    }
+    return enabledIds.indexOf(cid)!==-1;
+  });
+}
+
+function applyFilter(){
+  if(!cal)return;
+  eventsByDate={};
+  var filtered=filterEvents(allEvents);
+  filtered.forEach(function(ev){
+    if(!ev.start)return;
+    var k=ev.allDay?ev.start:ev.start.split('T')[0];
+    if(!eventsByDate[k])eventsByDate[k]=[];
+    eventsByDate[k].push(ev);
+  });
+  cal.removeAllEventSources();
+  cal.addEventSource(function(fi,ok){ok(filtered);});
+  setTimeout(rebuildPills,120);
+  renderTodayEvents();
+}
+
+/* ══ FullCalendar 초기화 ══ */
+function calcCalHeight(){
+  var wrap=document.getElementById('cal-wrap');
+  if(!wrap||!cal)return;
+  requestAnimationFrame(function(){
+    var h=wrap.getBoundingClientRect().height;
+    if(h>80)cal.setOption('height',h);
+  });
+}
+
+function syncTitle(){
+  if(!cal)return;
+  var el=document.getElementById('cal-title');
+  if(el)el.textContent=cal.view.title||'';
+}
+
+function attachDayClicks(){
+  document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){
+    if(el._dcb)return;el._dcb=true;
+    el.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      var cell=el.closest('.fc-daygrid-day');if(!cell)return;
+      var ds=cell.getAttribute('data-date');if(!ds)return;
+      openDayModal(ds,eventsByDate[ds]||[]);
+    });
+  });
+}
+
+function rebuildPills(){
+  if(!cal||cal.view.type!=='dayGridMonth')return;
+  document.querySelectorAll('.mie-more').forEach(function(el){el.remove();});
+  document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){
+    var ds=cell.getAttribute('data-date');if(!ds)return;
+    var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VIS)return;
+    var pill=document.createElement('div');pill.className='mie-more';
+    pill.textContent='+ '+(evs.length-MAX_VIS)+' more';
+    pill.addEventListener('click',function(e){e.stopPropagation();openDayModal(ds,evs);});
+    var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');
+    if(bot)bot.appendChild(pill);
+  });
+}
+
+/* fetchEvents: FullCalendar events 콜백 (index_14_.html 방식) */
+function fetchEvents(fi,ok,fail){
+  var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});
+  fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}})
+    .then(function(r){
+      if(r.status===401){window.location.replace('/');fail(new Error('401'));return null;}
+      if(!r.ok){fail(new Error('HTTP '+r.status));return null;}
+      return r.json();
+    })
+    .then(function(data){
+      if(!data)return;
+      var items=Array.isArray(data.events)?data.events:[];
+      allEvents=[];eventsByDate={};
+      var mapped=items.map(function(e){
+        var start=(e.start&&(e.start.dateTime||e.start.date))||null;
+        var end=(e.end&&(e.end.dateTime||e.end.date))||null;
+        var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);
+        return{
+          id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,
+          extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:e.calendarId||'primary',vis:e.visibility||'default'}
+        };
+      });
+      allEvents=mapped;
+      var filtered=filterEvents(mapped);
+      filtered.forEach(function(ev){
+        if(!ev.start)return;
+        var k=ev.allDay?ev.start:ev.start.split('T')[0];
+        if(!eventsByDate[k])eventsByDate[k]=[];
+        eventsByDate[k].push(ev);
+      });
+      ok(filtered);
+      setTimeout(renderTodayEvents,100);
+    })
+    .catch(function(err){fail(err);});
+}
+
+function initCal(){
+  if(cal)cal.destroy();
+  cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
+    initialView:'dayGridMonth',
+    fixedWeekCount:false,
+    showNonCurrentDates:false,
+    height:600,
+    headerToolbar:false,
+    dayMaxEvents:false,
+    firstDay:0,
+    events:fetchEvents,
+    datesSet:function(){
+      document.querySelectorAll('.fc-daygrid-day').forEach(function(c){c._mc=0;});
+      syncTitle();
+      setTimeout(rebuildPills,80);
+      setTimeout(attachDayClicks,100);
+      setTimeout(calcCalHeight,50);
+    },
+    eventsSet:function(){
+      setTimeout(rebuildPills,100);
+      setTimeout(attachDayClicks,120);
+    },
+    eventDidMount:function(info){
+      if(cal.view.type!=='dayGridMonth')return;
+      var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;
+      if(!cell._mc)cell._mc=0;
+      if(cell._mc>=MAX_VIS)info.el.style.display='none';
+      cell._mc++;
+    },
+    eventContent:function(arg){
+      var ext=arg.event.extendedProps||{};
+      var p=pastelForCalId(ext.cc||null,ext.calId||'primary',ext.vis||'default');
+      var vt=arg.view.type;
+      var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';
+      if(arg.event.allDay){
+        w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';
+        var tx=document.createElement('span');
+        tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;color:'+p.text+';line-height:1.4;';
+        tx.textContent=arg.event.title||'';w.appendChild(tx);
+      }else if(vt==='dayGridMonth'){
+        w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';
+        var dot=document.createElement('span');
+        dot.style.cssText='width:6px;height:6px;min-width:6px;border-radius:50%;background:'+p.text+';display:inline-block;flex-shrink:0;';
+        var tx=document.createElement('span');
+        tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:var(--txt);line-height:1.4;flex:1;';
+        var s=arg.event.start,tStr='';
+        if(s){var h=s.getHours(),m=s.getMinutes(),ap=h>=12?'p':'a';h=h%12||12;tStr=h+(m?':'+String(m).padStart(2,'0'):'')+ap+' ';}
+        tx.textContent=tStr+(arg.event.title||'');
+        w.appendChild(dot);w.appendChild(tx);
+      }else{
+        w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';
+        if(arg.timeText){var tt=document.createElement('span');tt.style.cssText='font-size:9px;color:'+p.text+';opacity:.85;white-space:nowrap;';tt.textContent=arg.timeText;w.appendChild(tt);}
+        var ttl=document.createElement('span');ttl.style.cssText='font-size:11px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        ttl.textContent=arg.event.title||'';w.appendChild(ttl);
+      }
+      return{domNodes:[w]};
+    },
+    eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);},
+    dateClick:function(info){openDayModal(info.dateStr,eventsByDate[info.dateStr]||[]);}
+  });
+  cal.render();
+  syncTitle();
+
+  /* 컨트롤 바인딩 */
+  document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
+  document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
+  document.getElementById('cal-today-btn').addEventListener('click',function(){cal.today();syncTitle();});
+  document.getElementById('cal-view-sel').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();setTimeout(calcCalHeight,60);});
+  document.getElementById('cal-add-btn').addEventListener('click',function(){switchTab('add');});
+
+  /* 캘린더 팝업 */
+  var cb=document.getElementById('cals-btn'),cp=document.getElementById('cal-popup');
+  cb.addEventListener('click',function(e){e.stopPropagation();cp.classList.toggle('open');});
+  document.addEventListener('click',function(e){if(cp&&!cp.contains(e.target)&&e.target!==cb)cp.classList.remove('open');});
+
+  /* 리사이즈 */
+  var _rt=null;
+  window.addEventListener('resize',function(){if(_rt)clearTimeout(_rt);_rt=setTimeout(function(){if(cal){cal.updateSize();calcCalHeight();}},150);});
+
+  /* ResizeObserver로 정확한 높이 계산 */
+  var wrap=document.getElementById('cal-wrap');
+  if(wrap&&window.ResizeObserver){new ResizeObserver(function(){calcCalHeight();}).observe(wrap);}
+  else setTimeout(calcCalHeight,300);
+}
+
+/* ══ Today 패널 ══ */
+function renderTodayDate(){
+  var d=new Date(),ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var el=document.getElementById('today-dt');
+  if(el)el.textContent=ms[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+}
+
+function renderTodayEvents(){
+  var today=new Date();
+  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var list=document.getElementById('today-ev-list');if(!list)return;
+  list.innerHTML='';
+  var evs=eventsByDate[ds]||[];
+  if(!evs.length){list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">No events today</div>';return;}
+  evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);})
+    .forEach(function(ev){
+      var p=pastelForCalId(ev.extendedProps.cc,ev.extendedProps.calId,ev.extendedProps.vis);
+      var item=document.createElement('div');item.className='ev-item';
+      item.addEventListener('click',function(){openEventView(ev);});
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=p.text;
+      var tDiv=document.createElement('div');tDiv.className='ev-time';
+      if(ev.allDay){tDiv.textContent='All day';}
+      else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;tDiv.innerHTML=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?'<br>'+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=ev.title||'No Title';
+      body.appendChild(nm);
+      if(ev.extendedProps&&ev.extendedProps.loc){var sub=document.createElement('div');sub.className='ev-sub';sub.textContent='📍 '+ev.extendedProps.loc;body.appendChild(sub);}
+      item.appendChild(bar);item.appendChild(tDiv);item.appendChild(body);
+      list.appendChild(item);
+    });
+}
+
+function renderTodayTasks(){
+  var fEl=document.getElementById('task-filter'),filterVal=fEl?fEl.value:'all';
+  if(fEl){
+    var cur=fEl.value;fEl.innerHTML='<option value="all">All List ▾</option>';
+    taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;fEl.appendChild(o);});
+    fEl.value=(cur&&taskLists.find(function(l){return l.id===cur;}))?cur:'all';
+    filterVal=fEl.value;
+  }
+  var list=document.getElementById('today-task-list');if(!list)return;
+  var now=new Date();now.setHours(0,0,0,0);
+  var tasks=allTasks.filter(function(t){
+    if(t.status==='completed')return false;
+    if(filterVal!=='all'&&t.listId!==filterVal)return false;
+    return true;
+  });
+  tasks.sort(function(a,b){
+    function sc(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var d=Math.round((dt-now)/86400000);return d<0?0:d===0?1:2;}
+    var sa=sc(a),sb=sc(b);if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;
+  });
+  list.innerHTML='';
+  if(!tasks.length){list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">All caught up!</div>';return;}
+  tasks.forEach(function(t){
+    var n2=new Date();n2.setHours(0,0,0,0);
+    var isLate=false,isToday=false;
+    if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-n2)/86400000);isLate=diff<0;isToday=diff===0;}
+    var item=document.createElement('div');item.className='task-item';
+    var cb=document.createElement('div');cb.className='task-cb';
+    (function(task,cbEl){
+      cbEl.addEventListener('click',function(e){
+        e.stopPropagation();if(task._p)return;task._p=true;
+        cbEl.classList.add('chk');
+        setTimeout(function(){
+          task.status='completed';
+          function attempt(lid){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:task.id,listId:lid,status:'completed',title:task.title||'',notes:task.notes||''})});}
+          attempt(task.listId||'@default').then(function(r){if(r.status===404&&task.listId!=='@default')return attempt('@default');return r;})
+            .then(function(){setTimeout(renderTodayTasks,200);}).catch(function(){task.status='needsAction';renderTodayTasks();})
+            .finally(function(){task._p=false;});
+        },150);
+      });
+    })(t,cb);
+    var nm=document.createElement('div');nm.className='task-nm';nm.textContent=t.title||'Untitled';
+    item.appendChild(cb);item.appendChild(nm);
+    if(isLate){var tg=document.createElement('span');tg.className='task-tag late';tg.textContent='Late';item.appendChild(tg);}
+    else if(isToday){var tg=document.createElement('span');tg.className='task-tag';tg.textContent='today';item.appendChild(tg);}
+    list.appendChild(item);
+  });
+}
+
+/* ══ 태스크 로드 ══ */
+function loadTasks(){
+  fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){allTasks=[];taskLists=[];renderTodayTasks();return;}
+      taskLists=Array.isArray(data.lists)?data.lists:[];
+      var raw=Array.isArray(data.tasks)?data.tasks:[];
+      if(!raw.length&&Array.isArray(data.taskLists)){
+        taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});
+        data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){raw.push(Object.assign({},t,{listId:l.id}));});});
+      }
+      allTasks=raw.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});
+      renderTodayTasks();
+      /* +Add 태스크 폼 드롭다운 채우기 */
+      var sel=document.getElementById('at-list');
+      if(sel&&taskLists.length){sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});}
+    })
+    .catch(function(){allTasks=[];taskLists=[];renderTodayTasks();});
+}
+
+/* ══ 유저 정보 ══ */
+function loadUserInfo(){
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d)return;
+      var u=d.user||{};
+      var name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'—';
+      var email=u.email||'';
+      var ul=document.getElementById('tb-userline');
+      if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
+      var av=document.getElementById('tb-av');
+      if(av)av.textContent=name.charAt(0).toUpperCase();
+    }).catch(function(){});
+}
+
+/* ══ 이벤트 뷰 모달 ══ */
+function escH(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function fmtEvTime(ev){
+  var start=ev.start,end=ev.end,allDay=ev.allDay;
+  if(start instanceof Date)start=start.toISOString();
+  if(end instanceof Date)end=end.toISOString();
+  if(!start)return'';
+  if(allDay){var d=new Date(start.slice(0,10)+'T12:00:00');return d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · All day';}
+  var sd=new Date(start);
+  var str=sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  if(end)str+=' – '+new Date(end).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  return str;
+}
+
+function openEventView(ev){
+  var ext=ev.extendedProps||{};
+  var rawColor=ext.cc||null,calId=ext.calId||'primary',vis=ext.vis||'default';
+  var p=pastelForCalId(rawColor,calId,vis);
+  var start=ev.start,end=ev.end,allDay=ev.allDay;
+  if(start instanceof Date)start=start.toISOString();
+  if(end instanceof Date)end=end.toISOString();
+  curViewEv={id:ev.id,title:ev.title||'',start:start||'',end:end||'',allDay:allDay,calId:calId,loc:ext.loc||'',desc:ext.desc||'',cc:rawColor};
+  document.getElementById('ev-cbar').style.background=p.text;
+  document.getElementById('ev-ttl').textContent=ev.title||'(No title)';
+  document.getElementById('ev-time').textContent=fmtEvTime({start:start,end:end,allDay:allDay});
+  var loc=ext.loc||'';
+  if(loc){document.getElementById('ev-loc').innerHTML='<a href="https://maps.google.com/?q='+encodeURIComponent(loc)+'" target="_blank" rel="noopener">'+escH(loc)+'</a>';document.getElementById('ev-loc-row').style.display='flex';}
+  else document.getElementById('ev-loc-row').style.display='none';
+  var desc=ext.desc||'';
+  if(desc){document.getElementById('ev-desc').textContent=desc;document.getElementById('ev-desc-row').style.display='flex';}
+  else document.getElementById('ev-desc-row').style.display='none';
+  var meta=calendarMeta.find(function(m){return m.id===calId;});
+  document.getElementById('ev-cald').style.background=p.text;
+  document.getElementById('ev-caln').textContent=meta?meta.summary:(calId||'Calendar');
+  document.getElementById('ev-dc').style.display='none';
+  document.getElementById('ev-dc-st').textContent='';
+  document.getElementById('ev-modal').classList.remove('h');
+}
+function closeEvView(){document.getElementById('ev-modal').classList.add('h');curViewEv=null;}
+document.getElementById('ev-close-btn').addEventListener('click',closeEvView);
+document.getElementById('ev-modal').addEventListener('click',function(e){if(e.target===this)closeEvView();});
+document.getElementById('ev-edit-btn').addEventListener('click',function(){if(!curViewEv)return;var ev=curViewEv;closeEvView();openEditModal(ev);});
+document.getElementById('ev-del-btn').addEventListener('click',function(){document.getElementById('ev-dc').style.display='block';});
+document.getElementById('ev-dc-no').addEventListener('click',function(){document.getElementById('ev-dc').style.display='none';});
+document.getElementById('ev-dc-yes').addEventListener('click',function(){
+  if(!curViewEv)return;
+  var btn=this,st=document.getElementById('ev-dc-st');
+  btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
+    .then(function(r){
+      if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderTodayEvents();if(cal)cal.refetchEvents();}
+      else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}
+    }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
+});
+
+/* ══ Day 모달 ══ */
+function openDayModal(ds,evs){
+  var d=new Date(ds+'T12:00:00');
+  document.getElementById('dm-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var list=document.getElementById('dm-list');list.innerHTML='';
+  if(!evs||!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px;font-size:12px;color:var(--txt3);';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('h');return;}
+  evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);})
+    .forEach(function(ev){
+      var p=pastelForCalId((ev.extendedProps&&ev.extendedProps.cc)||null,(ev.extendedProps&&ev.extendedProps.calId)||'primary',(ev.extendedProps&&ev.extendedProps.vis)||'default');
+      var item=document.createElement('div');item.className='dei';
+      var dot=document.createElement('div');dot.className='ded';dot.style.background=p.text;
+      var info=document.createElement('div');info.className='dei-info';
+      var td=document.createElement('div');td.className='det';var tt=document.createElement('div');tt.className='dett';
+      if(ev.allDay)td.textContent='All day';
+      else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;td.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
+      tt.textContent=ev.title||'No Title';
+      info.appendChild(td);info.appendChild(tt);
+      if(ev.extendedProps&&ev.extendedProps.loc){var lv=document.createElement('div');lv.style.cssText='font-size:9px;color:var(--txt3);margin-top:1px;';lv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lv);}
+      item.appendChild(dot);item.appendChild(info);
+      item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');openEventView(ev);});
+      list.appendChild(item);
+    });
+  document.getElementById('day-modal').classList.remove('h');
+}
+document.getElementById('dm-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');});
+document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('h');});
+
+/* ══ Edit 모달 ══ */
+function openEditModal(ev){
+  curEditEv=ev;document.getElementById('ed-st').textContent='';
+  document.getElementById('ed-title').value=ev.title||'';
+  var ss=ev.start||'';document.getElementById('ed-date').value=ss?ss.slice(0,10):'';
+  var st='';if(!ev.allDay&&ss&&ss.includes('T')){var so=new Date(ss);st=String(so.getHours()).padStart(2,'0')+':'+String(so.getMinutes()).padStart(2,'0');}
+  document.getElementById('ed-time').value=st;
+  var es=ev.end||'';document.getElementById('ed-edate').value=es?es.slice(0,10):'';
+  var et='';if(!ev.allDay&&es&&es.includes('T')){var eo=new Date(es);et=String(eo.getHours()).padStart(2,'0')+':'+String(eo.getMinutes()).padStart(2,'0');}
+  document.getElementById('ed-etime').value=et;
+  document.getElementById('ed-loc').value=ev.loc||'';
+  document.getElementById('ed-desc').value=ev.desc||'';
+  document.getElementById('edit-modal').classList.remove('h');
+}
+document.getElementById('edit-close').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
+document.getElementById('ed-cancel').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
+document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditEv=null;}});
+document.getElementById('ed-save').addEventListener('click',function(){
+  if(!curEditEv)return;var s=document.getElementById('ed-st');
+  var nt=document.getElementById('ed-title').value.trim(),nd=document.getElementById('ed-date').value;
+  if(!nt){s.style.color='var(--red)';s.textContent='Title required.';return;}
+  var nti=document.getElementById('ed-time').value,ned=document.getElementById('ed-edate').value,neti=document.getElementById('ed-etime').value;
+  var nl=document.getElementById('ed-loc').value.trim(),nde=document.getElementById('ed-desc').value.trim();
+  var ns=nti?nd+'T'+nti+':00':nd,ne=ned?(neti?ned+'T'+neti+':00':ned):null;
+  this.disabled=true;s.style.color='var(--txt3)';s.textContent='Saving…';var self=this;
+  fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary',title:nt,start:ns,end:ne,location:nl,description:nde})})
+    .then(function(r){if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();},600);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('ed-del').addEventListener('click',function(){
+  if(!curEditEv||!confirm('Delete "'+( curEditEv.title||'this event')+'"?'))return;
+  var s=document.getElementById('ed-st');this.disabled=true;s.style.color='var(--txt3)';s.textContent='Deleting…';var self=this;
+  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary'})})
+    .then(function(r){if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curEditEv.id;});});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();renderTodayEvents();},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
+});
+
+/* ══ Input 탭 ══ */
+function switchTab(tab){
+  ['send','add'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('on',t===tab);
+    document.getElementById('panel-'+t).classList.toggle('on',t===tab);
+  });
+}
+function selAT(type){
+  ['ev','tk','fin','hl','pr'].forEach(function(t){
+    var btn=document.getElementById('abt-'+t),form=document.getElementById('afb-'+t);
+    if(btn)btn.classList.toggle('sel',t===type);
+    if(form)form.classList.toggle('vis',t===type);
+  });
+  var nd=new Date().toISOString().slice(0,10);
+  var mp={ev:'ae-date',tk:'at-due',fin:'afin-date',hl:'ahl-date'};
+  if(mp[type]){var el=document.getElementById(mp[type]);if(el&&!el.value)el.value=nd;}
+  if(type==='tk'){var sel=document.getElementById('at-list');if(sel&&sel.options.length<=1&&taskLists.length){sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});}}
+}
+function toggleEx(id,btn,label){var el=document.getElementById(id);if(!el)return;el.classList.toggle('vis');btn.textContent=(el.classList.contains('vis')?'− ':'＋ ')+label;}
+function addInvitee(){var inp=document.getElementById('ae-invite');if(!inp)return;var em=inp.value.trim();if(!em||!em.includes('@')){inp.style.borderColor='var(--red)';return;}inp.style.borderColor='';if(invitees.indexOf(em)===-1)invitees.push(em);renderChips();inp.value='';inp.focus();}
+function renderChips(){var w=document.getElementById('ae-chips');if(!w)return;w.innerHTML='';invitees.forEach(function(e){var c=document.createElement('div');c.className='icp';var n=document.createElement('span');n.textContent=e;var x=document.createElement('button');x.className='icx';x.textContent='×';x.onclick=(function(em){return function(){invitees=invitees.filter(function(v){return v!==em;});renderChips();};})(e);c.appendChild(n);c.appendChild(x);w.appendChild(c);});}
+function updateHlFields(){var type=document.getElementById('ahl-type');if(!type)return;var w=document.getElementById('ahl-val');if(!w)return;var t={weight:'<input class="afsm" type="number" placeholder="Weight (kg or lb)" step="0.1" min="0"/>',bp:'<div class="afr"><input class="afsm" type="number" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afsm" type="number" placeholder="Diastolic" min="0"/></div>',hr:'<input class="afsm" type="number" placeholder="BPM" min="0"/>',glucose:'<input class="afsm" type="number" placeholder="mg/dL" min="0" step="1"/>',steps:'<input class="afsm" type="number" placeholder="Steps" min="0" step="1"/>',water:'<input class="afsm" type="number" placeholder="ml or fl oz" min="0" step="10"/>',sleep:'<div class="afr"><input class="afsm" type="number" placeholder="Hours" min="0" max="24" step="0.5"/><select class="afsm"><option>Q5/5</option><option>Q4/5</option><option selected>Q3/5</option><option>Q2/5</option><option>Q1/5</option></select></div>',mood:'<select class="afsm"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'};w.innerHTML=t[type.value]||'<input class="afsm" type="number" placeholder="Value" step="0.1"/>';}
+function showAST(type,msg,col){var el=document.getElementById('ast-'+type);if(!el)return;el.style.color=col;el.textContent=msg;setTimeout(function(){el.textContent='';},2500);}
+function submitAdd(type){
+  var nd=new Date().toISOString().slice(0,10);
+  if(type==='ev'){var t=document.getElementById('ae-title');if(!t||!t.value.trim()){showAST('ev','Title required.','var(--red)');return;}var d=document.getElementById('ae-date'),s=document.getElementById('ae-start'),e=document.getElementById('ae-end'),loc=document.getElementById('ae-loc'),notes=document.getElementById('ae-notes');var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:invitees})}).then(function(r){if(r.ok){showAST('ev','✅ Event added!','var(--teal)');t.value='';invitees=[];renderChips();if(cal)cal.refetchEvents();}else showAST('ev','❌ Failed.','var(--red)');}).catch(function(){showAST('ev','❌ Error.','var(--red)');});}
+  else if(type==='tk'){var t=document.getElementById('at-title');if(!t||!t.value.trim()){showAST('tk','Title required.','var(--red)');return;}var due=document.getElementById('at-due'),list=document.getElementById('at-list');fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:list?list.value:'@default'})}).then(function(r){if(r.ok){showAST('tk','✅ Task added!','var(--teal)');t.value='';setTimeout(function(){loadTasks();},1000);}else showAST('tk','❌ Failed.','var(--red)');}).catch(function(){showAST('tk','❌ Error.','var(--red)');});}
+  else if(type==='fin'){var a=document.getElementById('afin-amt'),cat=document.getElementById('afin-cat');if(!a||!a.value||!cat||!cat.value){showAST('fin','Amount & category required.','var(--red)');return;}var desc=document.getElementById('afin-desc'),date=document.getElementById('afin-date');fetch(BACKEND+'/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat.value,description:desc?desc.value:'',date:date?date.value:nd})}).then(function(r){if(r.ok){showAST('fin','✅ Recorded!','var(--teal)');a.value='';if(desc)desc.value='';}else showAST('fin','❌ Failed.','var(--red)');}).catch(function(){showAST('fin','❌ Error.','var(--red)');});}
+  else if(type==='hl'){var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}var notes=document.getElementById('ahl-notes'),hdate=document.getElementById('ahl-date');fetch(BACKEND+'/api/me/health/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:ht.value,date:hdate?hdate.value:nd,notes:notes?notes.value:''})}).then(function(r){if(r.ok){showAST('hl','✅ Saved!','var(--teal)');if(notes)notes.value='';}else showAST('hl','❌ Failed.','var(--red)');}).catch(function(){showAST('hl','❌ Error.','var(--red)');});}
+  else if(type==='pr'){var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAST('pr','Name required.','var(--red)');return;}var due=document.getElementById('apr-due'),status=document.getElementById('apr-status');fetch(BACKEND+'/api/me/projects/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),due:due?due.value:'',status:status?status.value:'Planning'})}).then(function(r){if(r.ok){showAST('pr','✅ Created!','var(--teal)');n.value='';}else showAST('pr','❌ Failed.','var(--red)');}).catch(function(){showAST('pr','❌ Error.','var(--red)');});}
+}
+
+/* ══ Send Message ══ */
+(function(){
+  var mi=document.getElementById('msg-input'),sb=document.getElementById('send-btn');
+  var fi=document.getElementById('file-input'),fr=document.getElementById('fname-row'),fn=document.getElementById('fname'),rb=document.getElementById('rm-file'),ss=document.getElementById('sst');
+  if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
+  if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
+  if(sb)sb.addEventListener('click',function(){
+    var txt=mi?mi.value.trim():'';if(!txt&&!selFile)return;
+    var dc=document.getElementById('draft-check');
+    if(dc&&dc.checked){if(txt){var arr=getDrafts();arr.unshift({id:Date.now(),text:txt});saveDrafts(arr);}if(ss){ss.style.color='var(--blue)';ss.textContent='📝 Saved as draft';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';if(dc)dc.checked=false;renderDraftList();setTimeout(function(){if(ss)ss.textContent='';},2500);return;}
+    sb.disabled=true;
+    fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
+      .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';}else if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';}})
+      .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
+      .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
+  });
+})();
+
+function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
+function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
+function renderDraftList(){
+  var drafts=getDrafts(),wrap=document.getElementById('dw'),list=document.getElementById('dl');
+  if(!wrap||!list)return;
+  if(!drafts.length){wrap.style.display='none';return;}
+  wrap.style.display='block';list.innerHTML='';
+  drafts.forEach(function(d,i){
+    var item=document.createElement('div');item.className='di';
+    var tx=document.createElement('span');tx.className='di-t';tx.textContent=d.text.length>40?d.text.slice(0,40)+'…':d.text;tx.title=d.text;
+    var del=document.createElement('button');del.className='di-d';del.textContent='✕';
+    del.addEventListener('click',function(e){e.stopPropagation();var arr=getDrafts();arr.splice(i,1);saveDrafts(arr);renderDraftList();});
+    item.addEventListener('click',function(){var mi=document.getElementById('msg-input');if(mi)mi.value=d.text;});
+    item.appendChild(tx);item.appendChild(del);list.appendChild(item);
+  });
+}
+
+/* ══ Sign out ══ */
+document.getElementById('signout-btn').addEventListener('click',function(){
+  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){window.location.replace('/');});
+});
+
+/* ══ Init ══ */
+function init(){
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d||!d.connected){window.location.replace('/');return;}
+      loadUserInfo();
       startClock();
       loadWeather();
-      initCalendar();
+      renderTodayDate();
+      renderDraftList();
+      loadCalendarList(function(){initCal();});
       loadTasks();
-
-      document.addEventListener('click', function() {
-        document.getElementById('calendars-popup-box').style.display = 'none';
-      });
-    } catch(e) {
-      console.warn("Session error: Redirecting to login...", e);
-      window.location.replace('/');
-    }
-  }
-
-  function startClock() {
-    setInterval(() => {
-      document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute:'2-digit' });
-    }, 1000);
-  }
-
-  function loadWeather() {
-    document.getElementById('live-weather').textContent = "🌤 64°F"; // Fallback
-    if(navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`)
-          .then(r=>r.json()).then(d=>{
-            if(d.current_weather) {
-              const f = Math.round((d.current_weather.temperature * 9/5) + 32);
-              document.getElementById('live-weather').textContent = `🌤 ${f}°F`;
-            }
-          });
-      });
-    }
-  }
-
-  function handleSignOut() {
-    fetch(`${BACKEND}/auth/logout`, { method: 'POST', credentials: 'include' }).finally(() => window.location.replace('/'));
-  }
-
-  // 캘린더 초기화 및 API 통신
-  function initCalendar() {
-    var calendarEl = document.getElementById('calendar-root');
-    calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      headerToolbar: false,
-      dayMaxEvents: false,
-      events: function(info, successCallback, failureCallback) {
-        const tMin = info.start.toISOString();
-        const tMax = info.end.toISOString();
-        fetch(`${BACKEND}/api/me/events?timeMin=${tMin}&timeMax=${tMax}`, { credentials: 'include' })
-          .then(r => r.json())
-          .then(data => {
-            cachedEvents = data.events || [];
-            updateTodayPanelEvents(); // 우측 Today 패널 즉시 업데이트
-
-            const mapped = cachedEvents.map(ev => {
-              let color = '#1C7ED6';
-              if(ev.visibility === 'private') color = '#534AB7';
-              else if(ev.summary && ev.summary.includes('KLAIVE')) color = '#1D9E75';
-              else if(ev.summary && ev.summary.includes("Women's Health")) color = '#E24B4A';
-              
-              return {
-                id: ev.id, title: ev.summary || '(No Title)',
-                start: ev.start.dateTime || ev.start.date, end: ev.end.dateTime || ev.end.date,
-                allDay: !!ev.start.date || ev.allDay,
-                extendedProps: { derivedColor: color, visibility: ev.visibility }
-              };
-            });
-
-            // 체크박스 필터링 연동
-            const filtered = mapped.filter(item => {
-              if(item.extendedProps.visibility === 'private') return document.getElementById('cal-private').checked;
-              if(item.title.includes('KLAIVE')) return document.getElementById('cal-klaive').checked;
-              if(item.title.includes("Women's Health")) return document.getElementById('cal-womens').checked;
-              return document.getElementById('cal-default').checked;
-            });
-            successCallback(filtered);
-          }).catch(err => successCallback([]));
-      },
-      eventContent: function(arg) {
-        const hex = arg.event.extendedProps.derivedColor || '#1C7ED6';
-        if (arg.isAllDay) {
-          const pill = document.createElement('div');
-          pill.style.cssText = `background:${hex}1A; color:${hex}; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600; overflow:hidden; white-space:nowrap; width:100%;`;
-          pill.textContent = arg.event.title;
-          return { domNodes: [pill] };
-        } else {
-          const row = document.createElement('div');
-          row.style.cssText = `display:flex; align-items:center; font-size:11px; font-weight:500; overflow:hidden; white-space:nowrap;`;
-          row.innerHTML = `<span style="width:6px; height:6px; border-radius:50%; background:${hex}; margin-right:4px; flex-shrink:0;"></span><span style="color:var(--txt);">${arg.event.title}</span>`;
-          return { domNodes: [row] };
-        }
-      },
-      eventsSet: function() { setTimeout(applyCustomCellOverflow, 50); },
-      dateClick: function(info) {
-        if(info.jsEvent.target.classList.contains('fc-daygrid-day-number')) {
-          calendar.changeView('timeGridDay', info.dateStr); document.getElementById('view-selector').value = 'timeGridDay'; syncHeaderLabel();
-        } else { openDayModal(info.dateStr); }
-      }
-    });
-    calendar.render();
-    syncHeaderLabel();
-  }
-
-  function applyCustomCellOverflow() {
-    document.querySelectorAll('.fc-daygrid-day').forEach(cell => {
-      const dateStr = cell.getAttribute('data-date');
-      cell.querySelectorAll('.fc-custom-more').forEach(n => n.remove());
-      const evs = cell.querySelectorAll('.fc-daygrid-event-harness');
-      evs.forEach(h => h.style.display = '');
-      if(evs.length > 4) {
-        for(let i=3; i<evs.length; i++) evs[i].style.display = 'none';
-        const more = document.createElement('div');
-        more.className = 'fc-custom-more';
-        more.style.cssText = `font-size:11px; font-weight:600; color:var(--blue); padding:2px 6px; cursor:pointer;`;
-        more.textContent = `+ ${evs.length - 3} more`;
-        more.onclick = (e) => { e.stopPropagation(); openDayModal(dateStr); };
-        cell.querySelector('.fc-daygrid-day-events').appendChild(more);
-      }
-    });
-  }
-
-  function syncHeaderLabel() { document.getElementById('calendar-title-label').textContent = calendar.view.title; }
-  function handleViewChange(val) { calendar.changeView(val); syncHeaderLabel(); }
-  function toggleCalendarsPopup(e) { e.stopPropagation(); const p = document.getElementById('calendars-popup-box'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; }
-
-  // API 데이터: 우측 Today's Events 바인딩
-  function updateTodayPanelEvents() {
-    const box = document.getElementById('today-events-container');
-    box.innerHTML = '';
-    const today = new Date().toISOString().substring(0, 10);
-    document.getElementById('panel-date-sync').textContent = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-
-    const todays = cachedEvents.filter(ev => (ev.start.dateTime || ev.start.date).substring(0, 10) === today);
-    if(todays.length === 0) { box.innerHTML = `<span style="font-size:12px; color:var(--txt3);">No events today</span>`; return; }
-
-    todays.forEach(ev => {
-      let col = ev.mieCalendarColor || '#1C7ED6';
-      if(ev.visibility === 'private') col = '#534AB7';
-      let tStr = 'All day';
-      if(ev.start.dateTime) tStr = new Date(ev.start.dateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      
-      const div = document.createElement('div');
-      div.className = 'rt-event-pill';
-      div.style.borderLeftColor = col;
-      div.innerHTML = `<span class="rt-event-time">${tStr}</span><span class="rt-event-title">${ev.summary||'(No Title)'}</span>`;
-      box.appendChild(div);
-    });
-  }
-
-  // API 데이터: 우측 Tasks 로드
-  function loadTasks() {
-    fetch(`${BACKEND}/api/me/tasks`, { credentials: 'include' }).then(r=>r.json()).then(data => {
-      if(data.taskLists) {
-        cachedTaskLists = data.taskLists;
-        cachedTasks = []; data.taskLists.forEach(l => { if(l.tasks) cachedTasks.push(...l.tasks); });
-      }
-      const filter = document.getElementById('task-list-filter');
-      const sForm = document.getElementById('tk-list-select');
-      filter.innerHTML = `<option value="all">All List ▾</option>`; sForm.innerHTML = '';
-      cachedTaskLists.forEach(l => {
-        filter.innerHTML += `<option value="${l.id}">${l.title}</option>`;
-        sForm.innerHTML += `<option value="${l.id}">${l.title}</option>`;
-      });
-      renderTasksList();
-    });
-  }
-
-  function renderTasksList() {
-    const box = document.getElementById('today-tasks-container');
-    box.innerHTML = '';
-    const fVal = document.getElementById('task-list-filter').value;
-    let list = cachedTasks.filter(t => t.status !== 'completed');
-    if(fVal !== 'all') list = list.filter(t => t.listId === fVal);
-    
-    if(list.length === 0) { box.innerHTML = `<span style="font-size:12px; color:var(--txt3);">No tasks pending</span>`; return; }
-    list.forEach(t => {
-      const row = document.createElement('div'); row.className = 'rt-task-row';
-      row.innerHTML = `<input type="checkbox" class="rt-task-chk"><span class="rt-task-text">${t.title}</span>`;
-      box.appendChild(row);
-    });
-  }
-
-  // 우측 패널 3: 탭 인터랙션 로직
-  function switchMainTab(tab) {
-    currentActiveTab = tab;
-    document.getElementById('tab-trigger-msg').classList.toggle('active-tab', tab === 'msg');
-    document.getElementById('tab-trigger-add').classList.toggle('active-tab', tab === 'add');
-    document.getElementById('pane-content-msg').style.display = tab === 'msg' ? 'block' : 'none';
-    document.getElementById('pane-content-add').style.display = tab === 'add' ? 'block' : 'none';
-  }
-
-  function switchSubForm(type) {
-    currentSubForm = type;
-    ['event', 'task', 'finance', 'health', 'project'].forEach(t => {
-      document.getElementById(`sub-t-${t}`).classList.toggle('active-sub', t === type);
-      document.getElementById(`form-block-${t}`).style.display = t === type ? 'block' : 'none';
-    });
-    document.getElementById('panel-main-submit').textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-  }
-  
-  function adjustHealthInputs(val) {
-    const box = document.getElementById('dynamic-health-fields');
-    if(val === 'bp') box.innerHTML = `<div class="f-row"><div class="f-group"><label class="f-lbl">Sys</label><input type="number" class="f-input" id="ht-val-sys"></div><div class="f-group"><label class="f-lbl">Dia</label><input type="number" class="f-input" id="ht-val-dia"></div></div>`;
-    else box.innerHTML = `<div class="f-group"><label class="f-lbl">Value</label><input type="number" class="f-input" id="ht-val-single"></div>`;
-  }
-
-  // 통합 Submit 통신 (API)
-  function executeSubmit() {
-    if(currentActiveTab === 'msg') {
-      const msg = document.getElementById('msg-textarea').value;
-      if(!msg) return alert("Enter a message");
-      fetch(`${BACKEND}/api/me/message`, { method:'POST', body:JSON.stringify({message:msg}), headers:{'Content-Type':'application/json'}, credentials:'include'})
-        .then(() => { alert("Sent!"); document.getElementById('msg-textarea').value=''; });
-    } else {
-      let url = '', bodyData = {};
-      if(currentSubForm === 'event') {
-        url = '/api/me/events/create'; bodyData = { title: document.getElementById('ev-title').value, date: document.getElementById('ev-date').value };
-      } else if(currentSubForm === 'task') {
-        url = '/api/me/tasks/create'; bodyData = { title: document.getElementById('tk-title').value, listId: document.getElementById('tk-list-select').value };
-      }
-      if(!url) return;
-      fetch(`${BACKEND}${url}`, { method:'POST', body:JSON.stringify(bodyData), headers:{'Content-Type':'application/json'}, credentials:'include'})
-        .then(() => { alert("Added!"); if(currentSubForm==='event') calendar.refetchEvents(); else loadTasks(); });
-    }
-  }
-
-  // 모달 닫기 제어
-  function openDayModal(dateStr) { document.getElementById('day-events-modal').style.display = 'flex'; document.getElementById('day-modal-header-text').textContent = `Events on ${dateStr}`; }
-  function closeDayModal() { document.getElementById('day-events-modal').style.display = 'none'; }
+    })
+    .catch(function(){window.location.replace('/');});
+}
+init();
 </script>
 </body>
 </html>
