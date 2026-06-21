@@ -6,7 +6,7 @@
 <title>KLAIVE · Finance</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-/* ── KLAIVE CSS Variables & Reset (레퍼런스 고정, 변경 금지) ── */
+/* ── KLAIVE CSS Variables (레퍼런스 고정, 변경 금지) ── */
 :root{
   --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
   --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
@@ -19,7 +19,7 @@
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);}
 .app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
-/* ── Topbar (레퍼런스 고정, 변경 금지) ── */
+/* ── Topbar (레퍼런스 고정) ── */
 .topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
 .tb-left{display:flex;align-items:center;gap:14px;}
 .logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;color:var(--txt);}
@@ -34,12 +34,16 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
 .tb-signout:hover{text-decoration:underline;}
 
-/* ── Bottom Nav (레퍼런스 고정, 변경 금지) ── */
+/* ── Main wrapper ── */
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── Bottom Nav (레퍼런스 고정) ── */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:500;color:var(--txt3);border:none;background:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;transition:color .15s;}
 .nav-tab:hover{color:var(--txt2);}
 .nav-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
 .nav-tab svg{width:14px;height:14px;}
+.toast{bottom:64px !important;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;font-family:'Inter',sans-serif;background:#f0f2f5;color:#202124;font-size:13px;}
 #app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
@@ -137,7 +141,7 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:#f0f2f5;color:#2
 .s-save-btn:disabled{background:#a8c7fa;cursor:not-allowed;}
 .s-status{font-size:10px;text-align:center;margin-top:3px;min-height:11px;color:#1e8e3e;}
 .body-wrap-finance{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;position:relative;}
-.content-area{width:100%;max-width:1440px;margin:0 auto;display:flex;overflow:hidden;min-height:0;padding:0;gap:16px;align-items:stretch;}
+.content-area{width:100%;max-width:1440px;margin:0 auto;display:flex;overflow:hidden;min-height:0;padding:8px 20px 10px;gap:16px;align-items:stretch;}
 .finance-centre{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;gap:5px;overflow:hidden;}
 .top-row{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .page-title{font-size:17px;font-weight:600;color:#202124;display:flex;align-items:center;gap:6px;}
@@ -402,15 +406,12 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .spinner{width:24px;height:24px;border:2.5px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin2 .7s linear infinite;}
 @keyframes spin2{to{transform:rotate(360deg);}}
 </style>
-
-/* toast 위치: bottom nav(48px) 위로 */
-.toast{bottom:64px !important;}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ── Topbar HTML (레퍼런스 고정, 변경 금지) ── -->
+  <!-- ── KLAIVE Topbar (레퍼런스 고정) ── -->
   <div class="topbar">
     <div class="tb-left">
       <span class="logo">KL<span class="ai">AI</span>VE</span>
@@ -428,9 +429,8 @@ tbody tr:hover .row-pen-btn{opacity:1;}
     </div>
   </div>
 
-  <!-- ── Main (V2: 레퍼런스 padding 그대로 — padding:12px gap:12px) ── -->
-  <!-- Finance .content-area의 padding은 제거되어 .main padding이 전체 여백 담당 -->
-  <div class="main" style="flex:1;display:flex;overflow:hidden;min-height:0;padding:12px;gap:12px;">
+  <!-- ── Main ── -->
+  <div class="main">
   <div class="ham-overlay" id="ham-overlay">
     <div class="ham-backdrop" onclick="closeHamburger()"></div>
     <div class="ham-menu">
@@ -442,30 +442,12 @@ tbody tr:hover .row-pen-btn{opacity:1;}
       <div class="ham-item active"><span class="ham-item-icon">&#128176;</span>Finance</div>
       <a class="ham-item" href="/health"><span class="ham-item-icon">&#10084;&#65039;</span>Health</a>
       <a class="ham-item" href="/settings"><span class="ham-item-icon">&#128196;</span>Documents</a>
-      <a class="ham-item" href="/settings"><span class="ham-item-icon">
+      <a class="ham-item" href="/settings"><span class="ham-item-icon">&#9881;&#65039;</span>Settings</a>
       <a class="ham-item" href="/settings"><span class="ham-item-icon">
       <div class="ham-sep"></div>
       <div class="ham-item" id="ham-signout" style="color:#d93025;cursor:pointer;"><span class="ham-item-icon">&#128682;</span>Sign out</div>
     </div>
   </div>
-
-  <div class="topbar">
-    <div class="tb-left">
-      <button class="hamburger-btn" onclick="openHamburger()" aria-label="Menu"><span></span><span></span><span></span></button>
-      <div class="tb-sep-line"></div>
-      <div class="tb-logo">M</div>
-    </div>
-    <div class="tb-right">
-      <div class="tb-meta">
-        <span id="wb-date"></span><span class="tb-sep">&middot;</span>
-        <span id="wb-time"></span><span class="tb-sep">&middot;</span>
-        <div class="tb-weather"><span id="wb-icon" style="font-size:14px;"></span><span id="wb-temp"></span></div>
-      </div>
-      <button class="signout-btn" onclick="fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).then(function(){window.location.href=BACKEND+'/auth/google';})">Sign out</button>
-    </div>
-  </div>
-
-  <!-- MOBILE NAV BAR -->
   <div class="app-body">
     <div class="task-sidebar" id="task-sidebar">
       <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
@@ -691,7 +673,6 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 
       <div class="right-col">
         <div class="r-card">
-          <div class="r-label">Send to KLAIVE</div>
           <div class="tag-chips">
             <button class="tag-chip" data-tag="@draft">@draft</button>
             <button class="tag-chip" data-tag="@calendar">@calendar</button>
@@ -709,27 +690,10 @@ tbody tr:hover .row-pen-btn{opacity:1;}
           </div>
           <div class="send-status" id="send-status"></div>
         </div>
-        <div class="r-card" style="flex:1;overflow-y:auto;">
-          <div class="r-label">Quick Actions</div>
-          <div class="qa-grid">
-            <a class="qa-btn" href="/calendar"><div class="qa-icon">&#128197;</div><div class="qa-name">Calendar</div></a>
-            <a class="qa-btn" href="/task"><div class="qa-icon">&#9989;</div><div class="qa-name">Tasks</div></a>
-            <div class="qa-btn qa-active"><div class="qa-icon">&#128176;</div><div class="qa-name">Finance</div></div>
-            <div class="qa-btn" onclick="navigate('health')"><div class="qa-icon">&#128170;</div><div class="qa-name">Health</div></div>
-            <div class="qa-btn" onclick="location.href='/settings'"><div class="qa-icon">&#128202;</div><div class="qa-name">Trackers</div></div>
-            <div class="qa-btn" onclick="location.href='/documents'"><div class="qa-icon">&#128214;</div><div class="qa-name">Playbook</div></div>
-            <div class="qa-btn" onclick="location.href='/documents'"><div class="qa-icon">&#128203;</div><div class="qa-name">Summaries</div></div>
-            <div class="qa-btn" onclick="location.href='/settings'"><div class="qa-icon">&#9881;&#65039;</div><div class="qa-name">Settings</div></div>
-          </div>
-        </div>
       </div>
-    </div>
-    </div>
-  </div>
-</div>
   </div><!-- /main -->
 
-  <!-- ── Bottom Nav (레퍼런스 고정 — Finance = 3번째 탭 .on) ── -->
+  <!-- ── Bottom Nav (레퍼런스 고정 — Finance = 3번째 .on) ── -->
   <nav class="bot-nav">
     <button class="nav-tab" onclick="location.href='/'">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="1" y="10" width="6" height="6" rx="1"/><rect x="9" y="10" width="6" height="6" rx="1"/></svg>
@@ -798,7 +762,7 @@ function loadUserInfo(statusData){
     name=name.charAt(0).toUpperCase()+name.slice(1);
     var email=u.email||'';
     var ul=document.getElementById('tb-userline');
-    if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'')+'';
+    if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
     var av=document.getElementById('tb-av');
     if(av)av.textContent=name.charAt(0).toUpperCase();
   }
@@ -809,16 +773,14 @@ function loadUserInfo(statusData){
 }
 document.getElementById('signout-btn').addEventListener('click',function(){
   fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'})
-    .catch(function(){})
-    .finally(function(){window.location.replace('/');});
+    .catch(function(){}).finally(function(){window.location.replace('/');});
 });
 document.getElementById('ham-signout').addEventListener('click',function(){
   fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'})
-    .catch(function(){})
-    .finally(function(){window.location.replace('/');});
+    .catch(function(){}).finally(function(){window.location.replace('/');});
 });
 
-/* auth/show logic removed — KLAIVE uses init() redirect pattern */
+/* auth wrapper removed — KLAIVE init() handles redirect */
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var now=new Date();
@@ -917,7 +879,8 @@ var MOB_NAV_ICONS={overview:'<svg viewBox="0 0 16 16" fill="none" stroke="curren
 var MOB_NAV_LABELS={overview:'Overview',trends:'Trends',budget:'Budget',income:'Income',expenses:'Expenses',savings:'Savings'};
 function mobNavToggle(){_mobNavOpen=!_mobNavOpen;var panel=document.getElementById('mob-nav-panel'),arrow=document.getElementById('mob-nav-arrow');if(panel)panel.classList.toggle('open',_mobNavOpen);if(arrow){arrow.textContent=_mobNavOpen?'▲':'▼';arrow.classList.toggle('open',_mobNavOpen);}}
 function mobNavSelect(view,btn){document.querySelectorAll('.mob-nav-item').forEach(function(el){el.classList.remove('active');});if(btn)btn.classList.add('active');var iconEl=document.getElementById('mob-nav-icon'),labelEl=document.getElementById('mob-nav-label');if(iconEl&&MOB_NAV_ICONS[view])iconEl.innerHTML=MOB_NAV_ICONS[view];if(labelEl&&MOB_NAV_LABELS[view])labelEl.textContent=MOB_NAV_LABELS[view];showView(view);}
-/* ── KLAIVE Init 패턴 (레퍼런스 고정) ── */
+
+/* ── KLAIVE Init (레퍼런스 고정) ── */
 function loadPageData(){
   renderDateDisplay();
   loadFinanceData();
@@ -937,6 +900,7 @@ function init(){
     .catch(function(){window.location.replace('/');});
 }
 init();
+
 </script>
 
 </script>
