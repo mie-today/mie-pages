@@ -248,17 +248,31 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .btn-delete{flex:1;background:#d93025;color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-delete:hover{background:#b52a1d;}
 .btn-delete:disabled{background:#f4a49a;cursor:not-allowed;}
-.right-col{flex:0 0 calc(40% - 16px);min-width:0;display:flex;flex-direction:column;gap:10px;overflow:hidden;}
-/* 미니 캘린더 카드 */
-.fin-cal-card{flex-shrink:0;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
-.fin-cal-topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:.5px solid var(--b1);}
-.fin-cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;}
+/* ── 오른쪽 단일 통합 카드 ── */
+.right-col{flex:0 0 calc(40% - 16px);min-width:0;display:flex;flex-direction:column;overflow:hidden;}
+.fin-right-card{flex:1;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
+/* 미니 캘린더 */
+.fin-cal-topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.fin-cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;position:relative;}
 .fin-cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .fin-cal-nbtn:hover{background:var(--bg2);}
-.fin-cal-mo{font-size:12px;font-weight:500;color:var(--txt);padding:0 6px;min-width:80px;text-align:center;}
+.fin-cal-mo{font-size:12px;font-weight:500;color:var(--txt);padding:0 6px;min-width:80px;text-align:center;cursor:pointer;border-radius:4px;transition:background .12s;}
+.fin-cal-mo:hover{background:var(--bg2);}
 .fin-cal-today{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .fin-cal-today:hover{background:var(--bg3);}
-.fin-cal-wrap{padding:4px 8px 6px;}
+/* Month/Year picker */
+.fin-mo-picker{position:absolute;top:calc(100% + 6px);left:0;z-index:200;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.13);padding:14px;min-width:210px;display:none;}
+.fin-mo-picker.open{display:block;}
+.fmpy-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.fmpy-yr{font-size:13px;font-weight:600;color:var(--txt);}
+.fmpy-nav{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--txt2);}
+.fmpy-nav:hover{background:var(--bg2);}
+.fmpy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
+.fmpy-m{padding:6px 4px;border:none;background:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--txt2);text-align:center;}
+.fmpy-m:hover{background:var(--bg2);}
+.fmpy-m.cur{background:var(--blue);color:#fff;font-weight:600;}
+/* 캘린더 그리드 */
+.fin-cal-wrap{padding:4px 8px 0;flex-shrink:0;}
 .fin-cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
 .fin-cal-dow{font-size:8px;font-weight:600;color:var(--txt3);text-align:center;padding:2px 0;}
 .fin-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:.5px solid var(--b1);}
@@ -272,14 +286,14 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .fin-cal-day.selected-fin .fin-cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
 .fin-cal-dots{display:flex;gap:2px;justify-content:center;margin-top:1px;}
 .fin-cal-dot{width:4px;height:4px;border-radius:50%;}
-/* Finance 날짜 상세 카드 */
-.fin-day-card{flex:0 0 auto;max-height:180px;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;}
-.fin-day-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 5px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.fin-day-hdr-title{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;}
+/* Finance 날짜 상세 — 구분선으로 연결, 고정 높이 */
+.fin-day-sect{flex:0 0 140px;border-top:.5px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;}
+.fin-day-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 12px 4px;flex-shrink:0;}
+.fin-day-hdr-title{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;}
 .fin-day-hdr-date{font-size:10px;color:var(--txt2);}
-.fin-day-list{flex:1;overflow-y:auto;padding:6px 10px 8px;display:flex;flex-direction:column;gap:3px;}
-.fin-day-list::-webkit-scrollbar{width:3px;}
-.fin-day-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+.fin-day-list{flex:1;overflow-y:scroll;padding:4px 10px 8px;display:flex;flex-direction:column;gap:3px;}
+.fin-day-list::-webkit-scrollbar{display:none;}
+.fin-day-list{-ms-overflow-style:none;scrollbar-width:none;}
 .fin-day-row{display:flex;align-items:center;gap:8px;padding:3px 4px;border-radius:5px;}
 .fin-day-row:hover{background:var(--bg2);}
 .fin-day-bar{width:2.5px;border-radius:2px;align-self:stretch;min-height:14px;flex-shrink:0;}
@@ -287,14 +301,15 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .fin-day-amt{font-size:11px;font-weight:600;flex-shrink:0;}
 .fin-day-amt.income{color:var(--teal);}
 .fin-day-amt.expense{color:var(--red);}
-.fin-day-empty{font-size:11px;color:var(--txt3);text-align:center;padding:14px 0;font-style:italic;}
-.input-card{flex:1;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.fin-day-empty{font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;font-style:italic;}
+/* Send/Add 영역 — 구분선으로 연결 */
+.fin-inp-sect{flex:1;display:flex;flex-direction:column;border-top:.5px solid var(--b1);min-height:0;overflow:hidden;}
 .inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
 .inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
 .inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
 .inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 10px;}
 .inp-panel.on{display:flex;}
-.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:9px 11px;min-height:80px;}
+.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:9px 11px;min-height:60px;}
 .msg-ta::placeholder{color:var(--txt3);}
 .inp-actions{display:flex;align-items:center;gap:8px;margin-top:7px;flex-shrink:0;}
 .attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 9px;cursor:pointer;flex-shrink:0;}
@@ -306,7 +321,7 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .sst{font-size:10px;min-height:12px;margin-top:3px;flex-shrink:0;}
 .fname-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10px;color:var(--txt2);flex-shrink:0;}
 .rm-btn{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:12px;padding:0;}
-.dw{border:.5px solid var(--b1);border-radius:7px;overflow:hidden;margin-top:4px;max-height:60px;overflow-y:auto;display:none;flex-shrink:0;}
+.dw{border:.5px solid var(--b1);border-radius:7px;overflow:hidden;margin-top:4px;max-height:50px;overflow-y:auto;display:none;flex-shrink:0;}
 .di{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;font-size:11px;border-bottom:.5px solid var(--b1);cursor:pointer;}
 .di:hover{background:var(--bg2);}
 .di:last-child{border-bottom:none;}
@@ -707,83 +722,94 @@ tbody tr:hover .row-pen-btn{opacity:1;}
       </div>
 
       <div class="right-col">
-        <!-- 1. 미니 캘린더 -->
-        <div class="fin-cal-card">
+        <div class="fin-right-card">
+          <!-- 캘린더 topbar -->
           <div class="fin-cal-topbar">
             <div class="fin-cal-navg">
               <button class="fin-cal-nbtn" id="fin-cal-prev">&#x2039;</button>
               <span class="fin-cal-mo" id="fin-cal-mo">June 2026</span>
               <button class="fin-cal-nbtn" id="fin-cal-next">&#x203a;</button>
+              <!-- Month/Year picker -->
+              <div class="fin-mo-picker" id="fin-mo-picker">
+                <div class="fmpy-hd">
+                  <button class="fmpy-nav" id="fmpy-prev">&#x2039;</button>
+                  <span class="fmpy-yr" id="fmpy-yr">2026</span>
+                  <button class="fmpy-nav" id="fmpy-next">&#x203a;</button>
+                </div>
+                <div class="fmpy-grid" id="fmpy-grid"></div>
+              </div>
             </div>
             <button class="fin-cal-today" id="fin-cal-today">Today</button>
           </div>
+          <!-- 캘린더 그리드 -->
           <div class="fin-cal-wrap">
             <div class="fin-cal-dow-row">
               <div class="fin-cal-dow">S</div><div class="fin-cal-dow">M</div><div class="fin-cal-dow">T</div><div class="fin-cal-dow">W</div><div class="fin-cal-dow">T</div><div class="fin-cal-dow">F</div><div class="fin-cal-dow">S</div>
             </div>
             <div class="fin-cal-grid" id="fin-cal-grid"></div>
           </div>
+          <!-- Finance 날짜 상세 (구분선으로 연결) -->
+          <div class="fin-day-sect">
+            <div class="fin-day-hdr">
+              <span class="fin-day-hdr-title">Finance</span>
+              <span class="fin-day-hdr-date" id="fin-day-date">&#x2014;</span>
+            </div>
+            <div class="fin-day-list" id="fin-day-list">
+              <div class="fin-day-empty">Select a date to view transactions</div>
+            </div>
+          </div>
+          <!-- Send Message / + Add (구분선으로 연결) -->
+          <div class="fin-inp-sect">
+            <div class="inp-tabs">
+              <button class="inp-tab on" id="tab-send" onclick="switchTab('send')">Send Message</button>
+              <button class="inp-tab" id="tab-add" onclick="switchTab('add')">+ Add</button>
+            </div>
+            <div class="inp-panel on" id="panel-send">
+              <textarea class="msg-ta" id="msg-input" placeholder="Type your message"></textarea>
+              <div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">&#x2715;</button></div>
+              <div class="inp-actions">
+                <label class="attach-lbl" for="file-input">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>Attach
+                </label>
+                <input type="file" id="file-input" style="display:none"/>
+                <button class="send-btn" id="send-btn">SEND</button>
+              </div>
+              <div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>
+              <div class="dw" id="dw"><div id="dl"></div></div>
+              <div class="sst" id="sst"></div>
+            </div>
+            <div class="inp-panel" id="panel-add" style="padding:6px 12px 8px;">
+              <div class="add-type-sect">
+                <button class="att sel" id="abt-ev" onclick="selAT('ev')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event</button>
+                <button class="att" id="abt-tk" onclick="selAT('tk')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task</button>
+                <button class="att" id="abt-fin" onclick="selAT('fin')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance</button>
+                <button class="att" id="abt-hl" onclick="selAT('hl')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health</button>
+                <button class="att" id="abt-pr" onclick="selAT('pr')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project</button>
+              </div>
+              <div class="afb vis" id="afb-ev">
+                <div class="afs"><input class="afi" type="text" placeholder="Event title" id="ae-title" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="ae-date"/><input class="afsm" type="time" id="ae-start"/><input class="afsm" type="time" id="ae-end"/></div><button class="amt" onclick="toggleEx('aex-ev',this,'Invite / Location / Notes')">&#xFF0B; Invite / Location / Notes</button><div class="aex" id="aex-ev"><div style="display:flex;gap:5px;align-items:center;"><input class="afsm" type="email" id="ae-invite" placeholder="Invite (email)"/><button style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onclick="addInvitee()">+</button></div><div class="ich" id="ae-chips"></div><input class="afsm" type="text" placeholder="Location" id="ae-loc"/><textarea class="afsm" rows="2" style="resize:none;" placeholder="Notes" id="ae-notes"></textarea></div></div>
+                <div class="aff"><button class="asf" onclick="submitAdd('ev')">Add Event</button><div class="ast" id="ast-ev"></div></div>
+              </div>
+              <div class="afb" id="afb-tk">
+                <div class="afs"><input class="afi" type="text" placeholder="Task title" id="at-title" style="margin-top:4px;"/><div class="afr"><select class="afsm" id="at-list"><option value="@default">My Tasks</option></select><input class="afsm" type="date" id="at-due"/></div><button class="amt" onclick="toggleEx('aex-tk',this,'Notes / Priority')">&#xFF0B; Notes / Priority</button><div class="aex" id="aex-tk"><input class="afsm" type="text" placeholder="Notes" id="at-notes"/><select class="afsm" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
+                <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
+              </div>
+              <div class="afb" id="afb-fin">
+                <div class="afs"><div class="afr" style="margin-top:4px;"><input class="afsm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/><input class="afsm" type="date" id="afin-date"/></div><select class="afsm" id="afin-cat"><option value="">Category &#x25be;</option><optgroup label="Needs"><option>Housing</option><option>Groceries</option><option>Transportation</option><option>Healthcare</option><option>Subscriptions</option></optgroup><optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Other</option></optgroup><optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup><optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup></select><input class="afsm" type="text" placeholder="Description (optional)" id="afin-desc"/></div>
+                <div class="aff"><button class="asf" onclick="submitAdd('fin')">Add Entry</button><div class="ast" id="ast-fin"></div></div>
+              </div>
+              <div class="afb" id="afb-hl">
+                <div class="afs"><div class="afr" style="margin-top:4px;"><select class="afsm" id="ahl-type" onchange="updateHlFields()"><option value="">Metric &#x25be;</option><option value="weight">&#x2696; Weight</option><option value="bp">Blood Pressure</option><option value="hr">Heart Rate</option><option value="glucose">Glucose</option><option value="steps">Steps</option><option value="water">Water</option><option value="sleep">Sleep</option><option value="mood">Mood</option></select><input class="afsm" type="date" id="ahl-date"/></div><div id="ahl-val"><input class="afsm" type="number" placeholder="Value" step="0.1"/></div><input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes"/></div>
+                <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
+              </div>
+              <div class="afb" id="afb-pr">
+                <div class="afs"><input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="apr-due"/><select class="afsm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select></div><button class="amt" onclick="toggleEx('aex-pr',this,'Description / Members')">&#xFF0B; Description / Members</button><div class="aex" id="aex-pr"><textarea class="afsm" rows="2" style="resize:none;" placeholder="Description" id="apr-desc"></textarea><input class="afsm" type="text" placeholder="Member emails (comma sep)" id="apr-members"/></div></div>
+                <div class="aff"><button class="asf" onclick="submitAdd('pr')">Create Project</button><div class="ast" id="ast-pr"></div></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <!-- 2. 선택 날짜 Finance 상세 -->
-        <div class="fin-day-card">
-          <div class="fin-day-hdr">
-            <span class="fin-day-hdr-title">Finance</span>
-            <span class="fin-day-hdr-date" id="fin-day-date">&#x2014;</span>
-          </div>
-          <div class="fin-day-list" id="fin-day-list">
-            <div class="fin-day-empty">Select a date to view transactions</div>
-          </div>
-        </div>
-        <!-- 3. Send Message / + Add -->
-        <div class="input-card">
-          <div class="inp-tabs">
-            <button class="inp-tab on" id="tab-send" onclick="switchTab('send')">Send Message</button>
-            <button class="inp-tab" id="tab-add" onclick="switchTab('add')">+ Add</button>
-          </div>
-          <div class="inp-panel on" id="panel-send">
-            <textarea class="msg-ta" id="msg-input" placeholder="Type your message"></textarea>
-            <div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">&#x2715;</button></div>
-            <div class="inp-actions">
-              <label class="attach-lbl" for="file-input">
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>Attach
-              </label>
-              <input type="file" id="file-input" style="display:none"/>
-              <button class="send-btn" id="send-btn">SEND</button>
-            </div>
-            <div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>
-            <div class="dw" id="dw"><div id="dl"></div></div>
-            <div class="sst" id="sst"></div>
-          </div>
-          <div class="inp-panel" id="panel-add" style="padding:6px 12px 8px;">
-            <div class="add-type-sect">
-              <button class="att sel" id="abt-ev" onclick="selAT('ev')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event</button>
-              <button class="att" id="abt-tk" onclick="selAT('tk')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task</button>
-              <button class="att" id="abt-fin" onclick="selAT('fin')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance</button>
-              <button class="att" id="abt-hl" onclick="selAT('hl')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health</button>
-              <button class="att" id="abt-pr" onclick="selAT('pr')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project</button>
-            </div>
-            <div class="afb vis" id="afb-ev">
-              <div class="afs"><input class="afi" type="text" placeholder="Event title" id="ae-title" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="ae-date"/><input class="afsm" type="time" id="ae-start"/><input class="afsm" type="time" id="ae-end"/></div><button class="amt" onclick="toggleEx('aex-ev',this,'Invite / Location / Notes')">&#xFF0B; Invite / Location / Notes</button><div class="aex" id="aex-ev"><div style="display:flex;gap:5px;align-items:center;"><input class="afsm" type="email" id="ae-invite" placeholder="Invite (email)"/><button style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onclick="addInvitee()">+</button></div><div class="ich" id="ae-chips"></div><input class="afsm" type="text" placeholder="Location" id="ae-loc"/><textarea class="afsm" rows="2" style="resize:none;" placeholder="Notes" id="ae-notes"></textarea></div></div>
-              <div class="aff"><button class="asf" onclick="submitAdd('ev')">Add Event</button><div class="ast" id="ast-ev"></div></div>
-            </div>
-            <div class="afb" id="afb-tk">
-              <div class="afs"><input class="afi" type="text" placeholder="Task title" id="at-title" style="margin-top:4px;"/><div class="afr"><select class="afsm" id="at-list"><option value="@default">My Tasks</option></select><input class="afsm" type="date" id="at-due"/></div><button class="amt" onclick="toggleEx('aex-tk',this,'Notes / Priority')">&#xFF0B; Notes / Priority</button><div class="aex" id="aex-tk"><input class="afsm" type="text" placeholder="Notes" id="at-notes"/><select class="afsm" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div></div>
-              <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
-            </div>
-            <div class="afb" id="afb-fin">
-              <div class="afs"><div class="afr" style="margin-top:4px;"><input class="afsm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/><input class="afsm" type="date" id="afin-date"/></div><select class="afsm" id="afin-cat"><option value="">Category &#x25be;</option><optgroup label="Needs"><option>Housing</option><option>Groceries</option><option>Transportation</option><option>Healthcare</option><option>Subscriptions</option></optgroup><optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Other</option></optgroup><optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup><optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup></select><input class="afsm" type="text" placeholder="Description (optional)" id="afin-desc"/></div>
-              <div class="aff"><button class="asf" onclick="submitAdd('fin')">Add Entry</button><div class="ast" id="ast-fin"></div></div>
-            </div>
-            <div class="afb" id="afb-hl">
-              <div class="afs"><div class="afr" style="margin-top:4px;"><select class="afsm" id="ahl-type" onchange="updateHlFields()"><option value="">Metric &#x25be;</option><option value="weight">&#x2696;&#xfe0f; Weight</option><option value="bp">&#x1fa7a; Blood Pressure</option><option value="hr">&#x2764;&#xfe0f; Heart Rate</option><option value="glucose">&#x1fa78; Glucose</option><option value="steps">&#x1f45f; Steps</option><option value="water">&#x1f4a7; Water</option><option value="sleep">&#x1f634; Sleep</option><option value="mood">&#x1f60a; Mood</option></select><input class="afsm" type="date" id="ahl-date"/></div><div id="ahl-val"><input class="afsm" type="number" placeholder="Value" step="0.1"/></div><input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes"/></div>
-              <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
-            </div>
-            <div class="afb" id="afb-pr">
-              <div class="afs"><input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="apr-due"/><select class="afsm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select></div><button class="amt" onclick="toggleEx('aex-pr',this,'Description / Members')">&#xFF0B; Description / Members</button><div class="aex" id="aex-pr"><textarea class="afsm" rows="2" style="resize:none;" placeholder="Description" id="apr-desc"></textarea><input class="afsm" type="text" placeholder="Member emails (comma sep)" id="apr-members"/></div></div>
-              <div class="aff"><button class="asf" onclick="submitAdd('pr')">Create Project</button><div class="ast" id="ast-pr"></div></div>
-            </div>
-          </div>
-        </div>
+      </div>
       </div>
     </div>
     </div>
@@ -1037,13 +1063,50 @@ function renderFinDayDetail(ds){
     list.appendChild(row);
   });
 }
+var FIN_MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var finMpYear=new Date().getFullYear();
+function buildFinMPGrid(){
+  var grid=document.getElementById('fmpy-grid'),yrEl=document.getElementById('fmpy-yr');
+  if(!grid||!yrEl)return;
+  yrEl.textContent=finMpYear;
+  grid.innerHTML='';
+  FIN_MNAMES.forEach(function(m,i){
+    var btn=document.createElement('button');
+    btn.className='fmpy-m';
+    btn.textContent=m;
+    if(finCalYear===finMpYear&&finCalMonth===i)btn.classList.add('cur');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      finCalYear=finMpYear;finCalMonth=i;
+      buildFinCal();
+      document.getElementById('fin-mo-picker').classList.remove('open');
+    });
+    grid.appendChild(btn);
+  });
+}
 function initFinCal(){
   var prev=document.getElementById('fin-cal-prev');
   var next=document.getElementById('fin-cal-next');
   var today=document.getElementById('fin-cal-today');
+  var mo=document.getElementById('fin-cal-mo');
+  var picker=document.getElementById('fin-mo-picker');
+  var mpPrev=document.getElementById('fmpy-prev');
+  var mpNext=document.getElementById('fmpy-next');
   if(prev)prev.addEventListener('click',function(){finCalMonth--;if(finCalMonth<0){finCalMonth=11;finCalYear--;}buildFinCal();});
   if(next)next.addEventListener('click',function(){finCalMonth++;if(finCalMonth>11){finCalMonth=0;finCalYear++;}buildFinCal();});
   if(today)today.addEventListener('click',function(){var n=new Date();finCalYear=n.getFullYear();finCalMonth=n.getMonth();buildFinCal();});
+  if(mo&&picker){
+    mo.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!picker.classList.contains('open')){finMpYear=finCalYear;buildFinMPGrid();}
+      picker.classList.toggle('open');
+    });
+  }
+  if(mpPrev)mpPrev.addEventListener('click',function(e){e.stopPropagation();finMpYear--;buildFinMPGrid();});
+  if(mpNext)mpNext.addEventListener('click',function(e){e.stopPropagation();finMpYear++;buildFinMPGrid();});
+  document.addEventListener('click',function(e){
+    if(picker&&!picker.contains(e.target)&&e.target!==mo)picker.classList.remove('open');
+  });
   buildFinCal();
 }
 var invitees=[];
