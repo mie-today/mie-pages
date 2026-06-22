@@ -29,8 +29,9 @@ html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg3);color
 .welcome-msg{font-size:13px;font-weight:500;color:var(--txt2);}
 .tb-right{display:flex;align-items:center;gap:16px;}
 .clock-weather-wrap{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;color:var(--txt2);}
+.cw-sep{color:var(--txt3);}
 .topbar-divider{width:1px;height:16px;background:var(--b1);}
-.tb-dot{color:var(--txt3);}.avatar-circle{width:28px;height:28px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--txt);}
+.avatar-circle{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;}
 .signout-link{font-size:13px;font-weight:500;color:var(--txt2);text-decoration:none;cursor:pointer;}
 .signout-link:hover{color:var(--txt);}
 .ham-overlay{position:fixed;inset:0;z-index:200;display:none;}
@@ -405,8 +406,10 @@ tbody tr:hover .row-pen-btn{opacity:1;}
     </div>
     <div class="tb-right">
       <div class="clock-weather-wrap">
+        <span id="live-date"></span>
+        <span class="cw-sep">·</span>
         <span id="live-clock"></span>
-        <div class="topbar-divider"></div>
+        <span class="cw-sep">·</span>
         <span id="live-weather"></span>
       </div>
       <div class="avatar-circle" id="user-avatar">—</div>
@@ -771,21 +774,28 @@ function renderTrends(){var body=document.getElementById('trends-body');body.inn
 function navigate(mod){var impl={dashboard:'/dashboard',task:'/task',health:'/health'};if(impl[mod])window.location.href=impl[mod];else toast(mod.charAt(0).toUpperCase()+mod.slice(1)+' — Coming soon','error');}
 function startClock(){
   function tick(){
-    document.getElementById('live-clock').textContent = new Date().toLocaleTimeString('en-US',{hour12:true,hour:'numeric',minute:'2-digit'});
+    var n = new Date();
+    var dateEl = document.getElementById('live-date');
+    var clockEl = document.getElementById('live-clock');
+    if(dateEl) dateEl.textContent = n.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+    if(clockEl) clockEl.textContent = n.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true, timeZoneName:'short'});
   }
   tick();
-  setInterval(tick,1000);
+  setInterval(tick, 1000);
 }
 function loadWeather(){
-  document.getElementById('live-weather').textContent='🌤 64°F';
+  document.getElementById('live-weather').textContent='🌤 --°F / --°C';
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(pos){
       fetch('https://api.open-meteo.com/v1/forecast?latitude='+pos.coords.latitude+'&longitude='+pos.coords.longitude+'&current_weather=true')
         .then(function(r){return r.json();})
         .then(function(d){
           if(d.current_weather){
-            var f=Math.round((d.current_weather.temperature*9/5)+32);
-            document.getElementById('live-weather').textContent='🌤 '+f+'°F';
+            var c = Math.round(d.current_weather.temperature);
+            var f = Math.round((c * 9/5) + 32);
+            var wc = d.current_weather.weathercode;
+            var icon = wc===0?'☀️':wc<=2?'🌤':wc===3?'☁️':wc<=49?'🌫️':wc<=59?'🌦️':wc<=69?'🌧️':wc<=79?'❄️':'⛈️';
+            document.getElementById('live-weather').textContent = icon+' '+f+'°F / '+c+'°C';
           }
         });
     });
