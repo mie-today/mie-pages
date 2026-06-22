@@ -17,23 +17,23 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg3);color:var(--txt);font-size:13px;}
 #app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:10;}
-.tb-left{display:flex;align-items:center;gap:16px;}
+.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:14px;}
 .hamburger-btn{display:flex;flex-direction:column;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:6px;transition:background .12s;}
 .hamburger-btn:hover{background:var(--bg3);}
 .hamburger-btn span{display:block;width:16px;height:1.8px;background:var(--txt2);border-radius:2px;transition:all .2s;}
 .hamburger-btn:hover span{background:var(--txt);}
-.tb-sep-line{width:1px;height:16px;background:var(--b1);}
-.logo{font-size:16px;font-weight:700;letter-spacing:-0.5px;}
-.logo span{color:var(--blue);}
-.welcome-msg{font-size:13px;font-weight:500;color:var(--txt2);}
-.tb-right{display:flex;align-items:center;gap:16px;}
-.clock-weather-wrap{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;color:var(--txt2);}
-.cw-sep{color:var(--txt3);}
-.topbar-divider{width:1px;height:16px;background:var(--b1);}
-.avatar-circle{width:28px;height:28px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:#fff;}
-.signout-link{font-size:13px;font-weight:500;color:var(--txt2);text-decoration:none;cursor:pointer;}
-.signout-link:hover{color:var(--txt);}
+.tb-div{width:.5px;height:28px;background:var(--b2);}
+.logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
+.logo .ai{color:var(--blue);}
+.tb-userline{font-size:12px;font-weight:500;color:var(--txt);}
+.tb-userline span{font-weight:400;color:var(--txt3);margin-left:2px;}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px;}
+.tb-sep{color:var(--b2);}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
+.tb-signout:hover{text-decoration:underline;}
 .ham-overlay{position:fixed;inset:0;z-index:200;display:none;}
 .ham-overlay.open{display:block;}
 .ham-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.3);}
@@ -318,15 +318,15 @@ tbody tr:hover .row-pen-btn{opacity:1;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .toast.success{background:#1e8e3e;}
 .toast.error{background:#d93025;}
-.bottom-navbar{flex-shrink:0;height:48px;background:var(--bg);border-top:1px solid var(--b1);display:flex;align-items:stretch;justify-content:center;gap:40px;z-index:10;}
+.bottom-navbar{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;justify-content:center;gap:40px;z-index:10;}
 .b-nav-item{display:flex;align-items:center;padding:0 4px;font-size:13px;font-weight:500;color:var(--txt2);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px;}
 .b-nav-item:hover{color:var(--txt);}
 .b-nav-item.active-nav{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
 @media(max-width:900px){
   html,body{height:auto !important;overflow:auto !important;}
   #app{height:auto !important;min-height:100vh;overflow:visible !important;display:flex;flex-direction:column;}
-  .clock-weather-wrap{display:none;}
-  .welcome-msg{display:none;}
+  .tb-meta{display:none;}
+  .tb-userline{display:none;}
   .task-sidebar{display:none !important;}
   .app-body{flex-direction:column;overflow:visible;height:auto;}
   .body-wrap-finance{overflow:visible;height:auto;flex-direction:column;}
@@ -399,21 +399,19 @@ tbody tr:hover .row-pen-btn{opacity:1;}
   <div class="topbar">
     <div class="tb-left">
       <button class="hamburger-btn" onclick="openHamburger()" aria-label="Menu"><span></span><span></span><span></span></button>
-      <div class="tb-sep-line"></div>
-      <div class="logo">KL<span>AI</span>VE</div>
-      <div class="tb-sep-line"></div>
-      <div class="welcome-msg" id="user-welcome">Welcome, —</div>
+      <div class="tb-div"></div>
+      <span class="logo">KL<span class="ai">AI</span>VE</span>
+      <div class="tb-div"></div>
+      <div class="tb-userline" id="tb-userline">Welcome, — <span></span></div>
     </div>
     <div class="tb-right">
-      <div class="clock-weather-wrap">
-        <span id="live-date"></span>
-        <span class="cw-sep">·</span>
-        <span id="live-clock"></span>
-        <span class="cw-sep">·</span>
-        <span id="live-weather"></span>
+      <div class="tb-meta">
+        <span id="wb-date"></span><span class="tb-sep">·</span>
+        <span id="wb-time"></span><span class="tb-sep">·</span>
+        <span id="wb-wx"></span>
       </div>
-      <div class="avatar-circle" id="user-avatar">—</div>
-      <a class="signout-link" onclick="handleSignOut()">Sign out</a>
+      <div class="tb-avatar" id="tb-av">—</div>
+      <button class="tb-signout" id="signout-btn">Sign out</button>
     </div>
   </div>
 
@@ -714,11 +712,32 @@ var loadWrap=document.getElementById('loading-wrap');
 var appEl=document.getElementById('app');
 function show(el){[authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});if(el===appEl){appEl.style.display='flex';appEl.style.flexDirection='column';if(window.innerWidth>900){appEl.style.height='100vh';appEl.style.overflow='hidden';}else{appEl.style.height='auto';appEl.style.overflow='visible';}}else if(el)el.style.display='';}
 document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
-function handleSignOut(){
+function loadUserInfo(statusData){
+  function populate(d){
+    if(!d)return;
+    var u=d.user||d;
+    var name=u.given_name||u.givenName||u.first_name||u.firstName
+            ||u.displayName||u.display_name
+            ||(u.name?u.name.split(' ')[0]:'')
+            ||(u.email?u.email.split('@')[0]:'')
+            ||'—';
+    name=name.charAt(0).toUpperCase()+name.slice(1);
+    var email=u.email||'';
+    var ul=document.getElementById('tb-userline');
+    if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
+    var av=document.getElementById('tb-av');
+    if(av)av.textContent=name.charAt(0).toUpperCase();
+  }
+  if(statusData){populate(statusData);return;}
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(populate).catch(function(){});
+}
+document.getElementById('signout-btn').addEventListener('click',function(){
   fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'})
     .catch(function(){})
     .finally(function(){window.location.href=BACKEND+'/auth/google';});
-}
+});
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var now=new Date();
@@ -774,32 +793,24 @@ function renderTrends(){var body=document.getElementById('trends-body');body.inn
 function navigate(mod){var impl={dashboard:'/dashboard',task:'/task',health:'/health'};if(impl[mod])window.location.href=impl[mod];else toast(mod.charAt(0).toUpperCase()+mod.slice(1)+' — Coming soon','error');}
 function startClock(){
   function tick(){
-    var n = new Date();
-    var dateEl = document.getElementById('live-date');
-    var clockEl = document.getElementById('live-clock');
-    if(dateEl) dateEl.textContent = n.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
-    if(clockEl) clockEl.textContent = n.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true, timeZoneName:'short'});
+    var n=new Date();
+    var de=document.getElementById('wb-date'),te=document.getElementById('wb-time');
+    if(de)de.textContent=n.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+    if(te)te.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
   }
-  tick();
-  setInterval(tick, 1000);
+  tick();setInterval(tick,30000);
 }
+function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';return'⛈️';}
 function loadWeather(){
-  document.getElementById('live-weather').textContent='🌤 --°F / --°C';
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(function(pos){
-      fetch('https://api.open-meteo.com/v1/forecast?latitude='+pos.coords.latitude+'&longitude='+pos.coords.longitude+'&current_weather=true')
-        .then(function(r){return r.json();})
-        .then(function(d){
-          if(d.current_weather){
-            var c = Math.round(d.current_weather.temperature);
-            var f = Math.round((c * 9/5) + 32);
-            var wc = d.current_weather.weathercode;
-            var icon = wc===0?'☀️':wc<=2?'🌤':wc===3?'☁️':wc<=49?'🌫️':wc<=59?'🌦️':wc<=69?'🌧️':wc<=79?'❄️':'⛈️';
-            document.getElementById('live-weather').textContent = icon+' '+f+'°F / '+c+'°C';
-          }
-        });
-    });
+  var el=document.getElementById('wb-wx');
+  function f(lat,lon){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
+      .then(function(r){return r.json();})
+      .then(function(w){var c=Math.round(w.current.temperature_2m),fa=Math.round(c*9/5+32);if(el)el.textContent=wIcon(w.current.weathercode)+' '+fa+'°F / '+c+'°C';})
+      .catch(function(){});
   }
+  if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){f(p.coords.latitude,p.coords.longitude);},function(){f(37.7749,-122.4194);},{timeout:5000});
+  else f(37.7749,-122.4194);
 }
 var toastTmr=null;
 function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
@@ -839,7 +850,7 @@ var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('s
 filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
 sndBtn.addEventListener('click',function(){var txt=msgIn.value.trim();if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){sndSt.style.color='#1e8e3e';sndSt.textContent='✅ Sent!';msgIn.value='';selFile=null;filIn.value='';document.querySelectorAll('.tag-chip.selected').forEach(function(c){c.classList.remove('selected');});document.querySelector('.tag-chip[data-tag="@finance"]').classList.add('selected');}else{sndSt.style.color='#d93025';sndSt.textContent='❌ Failed.';}}).catch(function(){sndSt.style.color='#d93025';sndSt.textContent='❌ Error.';}).finally(function(){sndBtn.disabled=false;setTimeout(function(){sndSt.textContent='';},3000);});});
 var _mobNavOpen=false;
-function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){show(appEl);var name=(d.user&&(d.user.given_name||d.user.givenName||d.user.first_name||(d.user.name?d.user.name.split(' ')[0]:'')||(d.user.email?d.user.email.split('@')[0]:'')))||'User';name=name.charAt(0).toUpperCase()+name.slice(1);var email=(d.user&&d.user.email)||'';var welcomeEl=document.getElementById('user-welcome');if(welcomeEl)welcomeEl.textContent='Welcome, '+name+(email?' ('+email+')':'');var avatarEl=document.getElementById('user-avatar');if(avatarEl)avatarEl.textContent=name.charAt(0).toUpperCase();startClock();loadWeather();renderDateDisplay();loadFinanceData();loadFinanceTasks();loadFinanceNotes();}else show(authWrap);}).catch(function(){show(authWrap);});}
+function init(){show(loadWrap);fetch(BACKEND+'/api/me/status',{credentials:'include'}).then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();}).then(function(d){if(!d)return;if(d.connected){show(appEl);loadUserInfo(d);startClock();loadWeather();renderDateDisplay();loadFinanceData();loadFinanceTasks();loadFinanceNotes();}else show(authWrap);}).catch(function(){show(authWrap);});}
 init();
 </script>
 
