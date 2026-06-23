@@ -1299,7 +1299,7 @@ function loadPanelContent(v){
     });
 }
 
-function toggleSidebar(){if(window.innerWidth>900){document.getElementById('task-sidebar').classList.toggle('collapsed');}}
+// toggleSidebar handled in second script block
 
 var _hiddenItems={};
 function hideItem(e,key){e.stopPropagation();_hiddenItems[key]=true;try{localStorage.setItem('mie_hidden_items',JSON.stringify(_hiddenItems));}catch(ex){}var btn=document.getElementById('nav-'+key);if(btn)btn.style.display='none';toast('Hidden. Use [+] to restore.');}
@@ -1321,7 +1321,7 @@ function renderWaterCups(){var container=document.getElementById('water-cups');i
 var _ynState={};
 function toggleYesNo(el,key){_ynState[key]=!_ynState[key];el.classList.toggle('checked',_ynState[key]);try{localStorage.setItem('mie_yn_'+key,_ynState[key]?'1':'0');}catch(e){}}
 
-function toggleSettings(){var body=document.getElementById('settings-body'),arrow=document.getElementById('settings-arrow');body.classList.toggle('open');arrow.classList.toggle('open');}
+// toggleSettings handled in second script block (has null guards)
 function calcAll(){var dob=document.getElementById('sf-dob').value,sex=document.getElementById('sf-sex').value,hcm=parseFloat(document.getElementById('sf-height-cm').value),wkg=parseFloat(document.getElementById('sf-weight-kg').value),act=parseFloat(document.getElementById('sf-activity').value)||1.55,goal=document.getElementById('sf-goal').value||'maintain',tkg=parseFloat(document.getElementById('sf-target-kg').value),months=parseFloat(document.getElementById('sf-goal-months').value)||4,resultsDiv=document.getElementById('sf-results');if(!dob||!sex||!hcm||!wkg){resultsDiv.style.display='none';return;}resultsDiv.style.display='flex';var today=new Date(),bd=new Date(dob),age=today.getFullYear()-bd.getFullYear()-((today.getMonth()<bd.getMonth()||(today.getMonth()===bd.getMonth()&&today.getDate()<bd.getDate()))?1:0);document.getElementById('res-age').textContent=age+' yrs';var hm=hcm/100,bmi=wkg/(hm*hm);document.getElementById('res-bmi').textContent=bmi.toFixed(1);var bmiTag=document.getElementById('res-bmi-tag');if(bmi<18.5){bmiTag.textContent='Underweight';bmiTag.className='sf-result-tag underweight';}else if(bmi<25){bmiTag.textContent='Normal';bmiTag.className='sf-result-tag normal';}else if(bmi<30){bmiTag.textContent='Overweight';bmiTag.className='sf-result-tag overweight';}else{bmiTag.textContent='Obese';bmiTag.className='sf-result-tag obese';}var bmr=(sex==='Male')?(10*wkg+6.25*hcm-5*age+5):(10*wkg+6.25*hcm-5*age-161);document.getElementById('res-bmr').textContent=Math.round(bmr)+' kcal';var tdee=bmr*act;document.getElementById('res-tdee').textContent=Math.round(tdee)+' kcal';var intakeCal=tdee,exerciseCal=0;if(!isNaN(tkg)&&goal!=='maintain'){var delta=tkg-wkg,totalKcal=delta*7700,days=months*30.44,dailyDelta=totalKcal/days;intakeCal=Math.round(tdee+dailyDelta*0.6);exerciseCal=Math.round(Math.abs(dailyDelta*0.4));document.getElementById('res-wt-delta').textContent=(delta>0?'+':'')+delta.toFixed(1)+' kg';document.getElementById('res-pace').textContent=Math.abs(delta/months).toFixed(2)+' kg/mo';}else{intakeCal=Math.round(tdee);exerciseCal=0;document.getElementById('res-wt-delta').textContent='—';document.getElementById('res-pace').textContent='Maintain';}document.getElementById('res-intake').textContent=intakeCal+' kcal';document.getElementById('res-exercise').textContent=exerciseCal>0?exerciseCal+' kcal':'0 kcal';document.getElementById('cal-goal-display').textContent='/ '+intakeCal.toLocaleString()+' goal';}
 function saveProfile(){var ids=['sf-dob','sf-sex','sf-blood','sf-allergies','sf-emcontact','sf-height-cm','sf-weight-kg','sf-activity','sf-goal','sf-goal-months','sf-target-kg'],data={};ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}calcAll();updateAllergyBanners();var s=document.getElementById('sf-saved');s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);toast('Profile saved!','success');}
 function loadProfile(){try{var raw=localStorage.getItem('mie_health_profile');if(!raw)return;var data=JSON.parse(raw);Object.keys(data).forEach(function(id){var el=document.getElementById(id);if(el)el.value=data[id];});calcAll();}catch(e){}updateAllergyBanners();}
@@ -1343,12 +1343,54 @@ function openAddModal(){var today=new Date();document.getElementById('add-date')
 function closeAddModal(){document.getElementById('add-modal').classList.add('hidden');}
 document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
 function setType(type){selectedType=type;['food','body','activity','period'].forEach(function(t){document.getElementById('type-'+t).className='type-btn'+(t===type?' active-'+t:'');var fields=document.getElementById('fields-'+t);if(fields)fields.style.display=t===type?'':'none';});}
-function saveEntry(){var st=document.getElementById('add-status'),btn=document.getElementById('add-save-btn');if(selectedType==='food'&&!document.getElementById('food-name').value.trim()){st.style.color='#d93025';st.textContent='Please fill in required fields.';return;}btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';setTimeout(function(){st.style.color='#1e8e3e';st.textContent='✅ Entry added!';setTimeout(function(){closeAddModal();st.textContent='';},900);btn.disabled=false;toast('Health entry logged!','success');},500);}
+function saveEntry(){
+  var st=document.getElementById('add-status'),btn=document.getElementById('add-save-btn');
+  var date=document.getElementById('add-date').value;
+  var notes=document.getElementById('add-notes').value.trim();
+  if(!date){st.style.color='var(--red)';st.textContent='Date is required.';return;}
+  btn.disabled=true;st.style.color='var(--txt2)';st.textContent='Saving…';
+  var payload={date:date,notes:notes};
+  var endpoint=BACKEND+'/api/me/health/add';
+  if(selectedType==='food'){
+    var name=document.getElementById('food-name').value.trim();
+    if(!name){st.style.color='var(--red)';st.textContent='Food item is required.';btn.disabled=false;return;}
+    payload.type='food';payload.name=name;
+    payload.meal_time=document.getElementById('food-meal').value;
+    payload.calories=parseInt(document.getElementById('food-cal').value)||0;
+    payload.protein=parseFloat(document.getElementById('food-protein').value)||0;
+    payload.carbs=parseFloat(document.getElementById('food-carbs').value)||0;
+  }else if(selectedType==='body'){
+    payload.type='body';
+    payload.weight=parseFloat(document.getElementById('body-weight').value)||null;
+    payload.body_fat_pct=parseFloat(document.getElementById('body-fat').value)||null;
+    payload.muscle_mass=parseFloat(document.getElementById('body-muscle').value)||null;
+    payload.amount_ml=parseFloat(document.getElementById('body-water').value)||null;
+  }else if(selectedType==='activity'){
+    payload.type='activity';
+    payload.activity=document.getElementById('act-type').value;
+    payload.duration=parseInt(document.getElementById('act-duration').value)||0;
+    payload.calories_burned=parseInt(document.getElementById('act-cal').value)||0;
+    payload.steps=parseInt(document.getElementById('act-steps').value)||0;
+  }else if(selectedType==='period'){
+    payload.type='period';
+    payload.event=document.getElementById('period-event').value.toLowerCase();
+    payload.date=document.getElementById('period-date').value||date;
+  }
+  fetch(endpoint,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(){
+      st.style.color='var(--teal)';st.textContent='✅ Entry saved!';
+      toast('Health entry logged!','success');
+      setTimeout(function(){closeAddModal();st.textContent='';loadTodayOverview();loadHlDots();},800);
+      btn.disabled=false;
+    })
+    .catch(function(err){st.style.color='var(--red)';st.textContent='❌ '+err.message;btn.disabled=false;});
+}
 
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag'),ta=document.getElementById('msg-input');if(!ta)return;chip.classList.toggle('selected');if(chip.classList.contains('selected')){if(ta.value.indexOf(tag)===-1)ta.value=(tag+' '+ta.value).trimEnd();}else{ta.value=ta.value.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.focus();});});
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status')||document.getElementById('sst'),filIn=document.getElementById('file-input'),selFile=null;
 if(filIn)filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
-if(sndBtn&&!sndBtn._origBound){sndBtn._origBound=true;sndBtn.addEventListener('click',function(){var txt=msgIn?msgIn.value.trim():'';if(!txt&&!selFile){toast('Type a message first.','error');return;}sndBtn.disabled=true;if(sndSt)sndSt.textContent='';fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})}).then(function(r){if(r.ok){if(sndSt){sndSt.style.color='var(--teal)';sndSt.textContent='✅ Sent!';}if(msgIn)msgIn.value='';selFile=null;if(filIn)filIn.value='';}else{if(sndSt){sndSt.style.color='var(--red)';sndSt.textContent='❌ Failed.';}}}).catch(function(){if(sndSt){sndSt.style.color='var(--red)';sndSt.textContent='❌ Error.';}}).finally(function(){sndBtn.disabled=false;setTimeout(function(){if(sndSt)sndSt.textContent='';},3000);});});}
+// send-btn handled in second script block (with @health tag)
 
 
 /* ── Mobile nav bar JS ── */
@@ -1512,12 +1554,7 @@ function toggleSidebar(){
     }).catch(function(){});
 })();
 
-// ── Signout via new button ──
-var signoutBtn=document.getElementById('signout-btn');
-if(signoutBtn){signoutBtn.addEventListener('click',function(){
-  fetch('https://api.mie.today/auth/logout',{method:'POST',credentials:'include'})
-    .catch(function(){}).finally(function(){window.location.href='https://api.mie.today/auth/google';});
-});}
+// ── Signout handled by original JS (line 1034) ──
 
 // ── Topbar clock + weather ──
 // startClock() and loadWeather() are defined in the original JS and called by init() on auth success.
@@ -1617,7 +1654,7 @@ function renderHlDayDetail(ds){
         var row=document.createElement('div');row.className='fin-day-row';
         var bar=document.createElement('div');bar.className='fin-day-bar';bar.style.background=col;
         var cat=document.createElement('span');cat.className='fin-day-cat';cat.textContent=lbl;
-        var amt=document.createElement('span');amt.className='fin-day-amt';amt.style.color=col;amt.textContent=val;
+        var amt=document.createElement('span');amt.className='fin-day-val';amt.style.color=col;amt.textContent=val;
         row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);list.appendChild(row);
       });
       // Update dot cache for this date
