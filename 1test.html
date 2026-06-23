@@ -1531,128 +1531,85 @@ if(signoutBtn){signoutBtn.addEventListener('click',function(){
 if(typeof startClock==='function')startClock();
 if(typeof loadWeather==='function')loadWeather();
 
-// ── Right Column Mini Calendar ──
-var _rcCal={yr:0,mo:0};
-(function initRcCal(){
-  var n=new Date();
-  _rcCal.yr=n.getFullYear();
-  _rcCal.mo=n.getMonth();
-  renderRcCal();
-  // Fetch health dots after calendar renders
-  loadHealthDots();
-  document.getElementById('fin-cal-prev').onclick=function(){_rcCal.mo--;if(_rcCal.mo<0){_rcCal.mo=11;_rcCal.yr--;}renderRcCal();loadHealthDots();};
-  document.getElementById('fin-cal-next').onclick=function(){_rcCal.mo++;if(_rcCal.mo>11){_rcCal.mo=0;_rcCal.yr++;}renderRcCal();loadHealthDots();};
-  document.getElementById('fin-cal-today').onclick=function(){var n=new Date();_rcCal.yr=n.getFullYear();_rcCal.mo=n.getMonth();renderRcCal();};
-  document.getElementById('fin-cal-mo').onclick=function(e){e.stopPropagation();var p=document.getElementById('fin-mo-picker');p.classList.toggle('open');if(p.classList.contains('open'))renderFmpy();};
-  document.addEventListener('click',function(e){var p=document.getElementById('fin-mo-picker');if(p&&!p.contains(e.target)&&e.target!==document.getElementById('fin-cal-mo'))p.classList.remove('open');});
-  document.getElementById('fmpy-prev').onclick=function(){document.getElementById('fmpy-yr').dataset.yr=(parseInt(document.getElementById('fmpy-yr').dataset.yr||_rcCal.yr)-1);renderFmpy();};
-  document.getElementById('fmpy-next').onclick=function(){document.getElementById('fmpy-yr').dataset.yr=(parseInt(document.getElementById('fmpy-yr').dataset.yr||_rcCal.yr)+1);renderFmpy();};
-})();
+// ── Right Column Mini Calendar — exact finance.html pattern ──
+var hlCalYear=new Date().getFullYear(), hlCalMonth=new Date().getMonth();
+var hlSelDate=null;
+var hlMpYear=new Date().getFullYear();
+// Health dot cache: dateStr → array of type strings
+var _hlDotCache={};
 
-var MONTHS_RC=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var MONTHS_SHORT_RC=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-// ── Health dot colors by entry type ──
-var HEALTH_DOT_COLORS={
-  weight:'weight',body:'weight',food:'food',activity:'activity',
-  bp:'bp',hr:'hr',glucose:'glucose',sleep:'sleep',mood:'mood',
-  period:'period',water:'water',womens:'period'
+// Dot color map per entry type
+var HL_DOT_COLORS={
+  weight:'var(--teal)',body:'var(--teal)',food:'var(--blue)',activity:'var(--amber)',
+  bp:'var(--red)',hr:'var(--red)',glucose:'var(--purple)',sleep:'var(--cblue)',
+  mood:'var(--teal)',period:'#e91e63',water:'var(--blue)',womens:'#e91e63'
 };
 
-// Cache: dateStr → array of type strings
-var _healthDotCache={};
-var _healthDotLoaded=false;
+function hlIsoD(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
 
-function loadHealthDots(){
-  // Fetch last 90 days of health entries to populate dots
-  var end=new Date();
-  var start=new Date(end);
-  start.setDate(start.getDate()-90);
-  var params=new URLSearchParams({
-    start:start.toISOString().split('T')[0],
-    end:end.toISOString().split('T')[0]
-  });
-  fetch('https://api.mie.today/api/me/health?'+params.toString(),{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data)return;
-      var entries=Array.isArray(data.entries)?data.entries:Array.isArray(data)?data:[];
-      _healthDotCache={};
-      entries.forEach(function(e){
-        var d=e.date||(e.timestamp?e.timestamp.split('T')[0]:null);
-        if(!d)return;
-        var type=e.type||'body';
-        if(!_healthDotCache[d])_healthDotCache[d]=[];
-        if(_healthDotCache[d].indexOf(type)===-1)_healthDotCache[d].push(type);
-      });
-      _healthDotLoaded=true;
-      renderRcCal();
-    })
-    .catch(function(){_healthDotLoaded=true;});
-}
-
-function renderRcCal(){
+function buildHlCal(){
+  var g=document.getElementById('fin-cal-grid');if(!g)return;
+  g.innerHTML='';
   var mo=document.getElementById('fin-cal-mo');
-  if(mo)mo.textContent=MONTHS_RC[_rcCal.mo]+' '+_rcCal.yr;
-  var grid=document.getElementById('fin-cal-grid');
-  if(!grid)return;
-  var today=new Date();
-  var firstDay=new Date(_rcCal.yr,_rcCal.mo,1).getDay();
-  var daysInMo=new Date(_rcCal.yr,_rcCal.mo+1,0).getDate();
-  var daysInPrev=new Date(_rcCal.yr,_rcCal.mo,0).getDate();
-  var html='';
-  var cells=firstDay+daysInMo;
-  var totalCells=cells<=28?28:cells<=35?35:42;
-  for(var i=0;i<totalCells;i++){
-    var day,mo2=_rcCal.mo,yr2=_rcCal.yr,otherMo=false;
-    if(i<firstDay){day=daysInPrev-(firstDay-1-i);mo2=_rcCal.mo-1;if(mo2<0){mo2=11;yr2--;}otherMo=true;}
-    else if(i>=firstDay+daysInMo){day=i-firstDay-daysInMo+1;mo2=_rcCal.mo+1;if(mo2>11){mo2=0;yr2++;}otherMo=true;}
-    else{day=i-firstDay+1;}
-    var isToday=(!otherMo&&day===today.getDate()&&_rcCal.mo===today.getMonth()&&_rcCal.yr===today.getFullYear());
-    // Build date key for dot lookup
-    var dateKey=yr2+'-'+String(mo2+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    var types=(!otherMo&&_healthDotCache[dateKey])||[];
-    var dotsHtml='';
-    // Show up to 4 dots, deduplicated by color class
-    var seen={};
-    types.forEach(function(t){
-      var cls=HEALTH_DOT_COLORS[t]||'body';
-      if(!seen[cls]&&Object.keys(seen).length<4){seen[cls]=1;dotsHtml+='<div class="fin-cal-dot '+cls+'"></div>';}
-    });
-    html+='<div class="fin-cal-day'+(otherMo?' other-mo':'')+(isToday?' today':'')
-      +'" onclick="rcCalDayClick('+yr2+','+mo2+','+day+',this)">'
-      +'<span class="fin-cal-dn">'+day+'</span>'
-      +'<div class="fin-cal-dots">'+dotsHtml+'</div>'
-      +'</div>';
+  if(mo)mo.textContent=new Date(hlCalYear,hlCalMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var fd=new Date(hlCalYear,hlCalMonth,1).getDay();
+  var dim=new Date(hlCalYear,hlCalMonth+1,0).getDate();
+  var dip=new Date(hlCalYear,hlCalMonth,0).getDate();
+  var total=Math.ceil((fd+dim)/7)*7;
+  var now=new Date();
+  var todayStr=hlIsoD(now.getFullYear(),now.getMonth(),now.getDate());
+  for(var i=0;i<total;i++){
+    var cell=document.createElement('div');cell.className='fin-cal-day';
+    var dn,ds,other=false;
+    if(i<fd){dn=dip-fd+i+1;var pm=hlCalMonth===0?11:hlCalMonth-1;var py=hlCalMonth===0?hlCalYear-1:hlCalYear;ds=hlIsoD(py,pm,dn);other=true;}
+    else if(i>=fd+dim){dn=i-fd-dim+1;var nm=hlCalMonth===11?0:hlCalMonth+1;var ny=hlCalMonth===11?hlCalYear+1:hlCalYear;ds=hlIsoD(ny,nm,dn);other=true;}
+    else{dn=i-fd+1;ds=hlIsoD(hlCalYear,hlCalMonth,dn);}
+    if(other)cell.classList.add('other-mo');
+    if(ds===todayStr)cell.classList.add('today');
+    if(ds===hlSelDate)cell.classList.add('selected-fin');
+    cell.setAttribute('data-date',ds);
+    var num=document.createElement('div');num.className='fin-cal-dn';num.textContent=dn;cell.appendChild(num);
+    // Health dots
+    var dots=!other&&_hlDotCache[ds];
+    if(dots&&dots.length){
+      var dotWrap=document.createElement('div');dotWrap.className='fin-cal-dots';
+      var seen={};
+      dots.forEach(function(type){
+        var col=HL_DOT_COLORS[type]||'var(--txt2)';
+        if(!seen[col]&&Object.keys(seen).length<4){
+          seen[col]=1;
+          var dot=document.createElement('div');dot.className='fin-cal-dot';
+          dot.style.background=col;dotWrap.appendChild(dot);
+        }
+      });
+      cell.appendChild(dotWrap);
+    }
+    (function(dstr){cell.addEventListener('click',function(){
+      hlSelDate=dstr;
+      document.querySelectorAll('.fin-cal-day.selected-fin').forEach(function(el){el.classList.remove('selected-fin');});
+      cell.classList.add('selected-fin');
+      renderHlDayDetail(dstr);
+    });})(ds);
+    g.appendChild(cell);
   }
-  grid.innerHTML=html;
 }
 
-function rcCalDayClick(yr,mo,day,el){
-  var MONTHS_SH=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var label=MONTHS_SH[mo]+' '+String(day).padStart(2,'0')+' '+yr;
+function renderHlDayDetail(ds){
+  var list=document.getElementById('fin-day-list');
   var dateEl=document.getElementById('fin-day-date');
-  if(dateEl)dateEl.textContent=label;
-  document.querySelectorAll('.fin-cal-day.selected-fin').forEach(function(e){e.classList.remove('selected-fin');});
-  if(el)el.classList.add('selected-fin');
-  var listEl=document.getElementById('fin-day-list');
-  if(!listEl)return;
-  listEl.innerHTML='<div class="fin-day-empty" style="color:var(--txt3);font-style:italic;">Loading…</div>';
-  var dateKey=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-  fetch('https://api.mie.today/api/me/health?date='+dateKey,{credentials:'include'})
+  if(!list)return;
+  if(dateEl){var d=new Date(ds+'T12:00:00');dateEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+  list.innerHTML='<div class="fin-day-empty" style="font-style:italic;color:var(--txt3);">Loading…</div>';
+  fetch('https://api.mie.today/api/me/health?date='+ds,{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
       var entries=data?(Array.isArray(data.entries)?data.entries:Array.isArray(data)?data:[]):[];
-      if(!entries.length){listEl.innerHTML='<div class="fin-day-empty">No entries for this date</div>';return;}
-      // Color map
-      var cmap={weight:'var(--teal)',body:'var(--teal)',food:'var(--blue)',activity:'var(--amber)',
-                bp:'var(--red)',hr:'var(--red)',glucose:'var(--purple)',sleep:'var(--cblue)',
-                mood:'var(--teal)',period:'#e91e63',water:'var(--blue)'};
-      var html='';
+      list.innerHTML='';
+      if(!entries.length){list.innerHTML='<div class="fin-day-empty">No entries for this date.</div>';return;}
       entries.forEach(function(e){
         var type=e.type||'body';
-        var col=cmap[type]||'var(--txt2)';
-        var label=type.charAt(0).toUpperCase()+type.slice(1);
+        var col=HL_DOT_COLORS[type]||'var(--txt2)';
+        var lbl=type.charAt(0).toUpperCase()+type.slice(1);
         var val='';
         if(e.value!=null)val=String(e.value)+(e.unit?' '+e.unit:'');
         else if(e.weight!=null)val=e.weight+' kg';
@@ -1661,127 +1618,149 @@ function rcCalDayClick(yr,mo,day,el){
         else if(e.glucose!=null)val=e.glucose+' mg/dL';
         else if(e.calories!=null)val=e.calories+' cal';
         else if(e.duration!=null)val=e.duration+' min';
-        else if(e.hours!=null)val=e.hours+'h';
-        else if(e.notes)val=e.notes.substring(0,24);
-        html+='<div class="fin-day-row">'
-          +'<div class="fin-day-bar" style="background:'+col+'"></div>'
-          +'<div class="fin-day-cat">'+label+'</div>'
-          +'<div class="fin-day-val" style="color:'+col+'">'+val+'</div>'
-          +'</div>';
+        else if(e.hours!=null)val=e.hours+'h sleep';
+        else if(e.notes)val=e.notes.substring(0,28);
+        var row=document.createElement('div');row.className='fin-day-row';
+        var bar=document.createElement('div');bar.className='fin-day-bar';bar.style.background=col;
+        var cat=document.createElement('span');cat.className='fin-day-cat';cat.textContent=lbl;
+        var amt=document.createElement('span');amt.className='fin-day-amt';amt.style.color=col;amt.textContent=val;
+        row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);list.appendChild(row);
       });
-      listEl.innerHTML=html;
-      // Also refresh dots for this date in case new data
-      if(_healthDotCache[dateKey]===undefined){
-        var types=entries.map(function(e){return e.type||'body';});
-        _healthDotCache[dateKey]=types.filter(function(t,i){return types.indexOf(t)===i;});
-        renderRcCal();
+      // Update dot cache for this date
+      if(!_hlDotCache[ds]){
+        _hlDotCache[ds]=entries.map(function(e){return e.type||'body';}).filter(function(t,i,a){return a.indexOf(t)===i;});
+        buildHlCal();
       }
     })
-    .catch(function(){listEl.innerHTML='<div class="fin-day-empty">No entries for this date</div>';});
+    .catch(function(){list.innerHTML='<div class="fin-day-empty">No entries for this date.</div>';});
 }
 
-function renderFmpy(){
-  var yrEl=document.getElementById('fmpy-yr');
-  var yr=parseInt(yrEl.dataset.yr||_rcCal.yr);
-  yrEl.textContent=yr;
-  yrEl.dataset.yr=yr;
-  var grid=document.getElementById('fmpy-grid');
-  var html='';
-  for(var i=0;i<12;i++){
-    var isCur=(i===_rcCal.mo&&yr===_rcCal.yr);
-    html+='<button class="fmpy-m'+(isCur?' cur':'')+'" onclick="fmpySelect('+yr+','+i+')">'
-      +MONTHS_SHORT_RC[i]+'</button>';
+function loadHlDots(){
+  // Fetch current month's health data for dots
+  var y=hlCalYear,m=hlCalMonth;
+  var start=hlIsoD(y,m,1);
+  var end=hlIsoD(y,m,new Date(y,m+1,0).getDate());
+  fetch('https://api.mie.today/api/me/health?start='+start+'&end='+end,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data)return;
+      var entries=Array.isArray(data.entries)?data.entries:Array.isArray(data)?data:[];
+      entries.forEach(function(e){
+        var d=e.date||(e.timestamp?e.timestamp.split('T')[0]:null);
+        if(!d)return;
+        var type=e.type||'body';
+        if(!_hlDotCache[d])_hlDotCache[d]=[];
+        if(_hlDotCache[d].indexOf(type)===-1)_hlDotCache[d].push(type);
+      });
+      buildHlCal();
+    }).catch(function(){});
+}
+
+var HL_MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function buildHlMPGrid(){
+  var grid=document.getElementById('fmpy-grid'),yrEl=document.getElementById('fmpy-yr');
+  if(!grid||!yrEl)return;
+  yrEl.textContent=hlMpYear;
+  grid.innerHTML='';
+  HL_MNAMES.forEach(function(m,i){
+    var btn=document.createElement('button');
+    btn.className='fmpy-m';
+    btn.textContent=m;
+    if(hlCalYear===hlMpYear&&hlCalMonth===i)btn.classList.add('cur');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      hlCalYear=hlMpYear;hlCalMonth=i;
+      buildHlCal();loadHlDots();
+      document.getElementById('fin-mo-picker').classList.remove('open');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function initHlCal(){
+  var prev=document.getElementById('fin-cal-prev');
+  var next=document.getElementById('fin-cal-next');
+  var todayBtn=document.getElementById('fin-cal-today');
+  var mo=document.getElementById('fin-cal-mo');
+  var picker=document.getElementById('fin-mo-picker');
+  var mpPrev=document.getElementById('fmpy-prev');
+  var mpNext=document.getElementById('fmpy-next');
+  if(prev)prev.addEventListener('click',function(){hlCalMonth--;if(hlCalMonth<0){hlCalMonth=11;hlCalYear--;}buildHlCal();loadHlDots();});
+  if(next)next.addEventListener('click',function(){hlCalMonth++;if(hlCalMonth>11){hlCalMonth=0;hlCalYear++;}buildHlCal();loadHlDots();});
+  if(todayBtn)todayBtn.addEventListener('click',function(){var n=new Date();hlCalYear=n.getFullYear();hlCalMonth=n.getMonth();buildHlCal();loadHlDots();});
+  if(mo&&picker){
+    mo.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!picker.classList.contains('open')){hlMpYear=hlCalYear;buildHlMPGrid();}
+      picker.classList.toggle('open');
+    });
   }
-  grid.innerHTML=html;
+  if(mpPrev)mpPrev.addEventListener('click',function(e){e.stopPropagation();hlMpYear--;buildHlMPGrid();});
+  if(mpNext)mpNext.addEventListener('click',function(e){e.stopPropagation();hlMpYear++;buildHlMPGrid();});
+  document.addEventListener('click',function(e){
+    if(picker&&!picker.contains(e.target)&&e.target!==mo)picker.classList.remove('open');
+  });
+  buildHlCal();
+  loadHlDots();
 }
-
-function fmpySelect(yr,mo){
-  _rcCal.yr=yr;_rcCal.mo=mo;
-  renderRcCal();
-  loadHealthDots();
-  document.getElementById('fin-mo-picker').classList.remove('open');
-}
+// Call after DOM ready — init() calls show(appEl) which makes elements visible
+// We hook into the existing init flow: init() → show(appEl) happens in original JS
+// initHlCal is called from the patched init flow below
+var _origShow=window.show;
+window.show=function(el){
+  if(_origShow)_origShow(el);
+  if(el===document.getElementById('app')){
+    setTimeout(initHlCal,50);
+  }
+};
 
 // ── Right col tab switching ──
 function switchTab(tab){
-  var tabSend=document.getElementById('tab-send'),tabAdd=document.getElementById('tab-add');
-  var panelSend=document.getElementById('panel-send'),panelAdd=document.getElementById('panel-add');
-  if(tab==='send'){
-    tabSend.classList.add('on');tabAdd.classList.remove('on');
-    panelSend.classList.add('on');panelAdd.classList.remove('on');
-  } else {
-    tabAdd.classList.add('on');tabSend.classList.remove('on');
-    panelAdd.classList.add('on');panelSend.classList.remove('on');
-  }
+  ['send','add'].forEach(function(t){
+    var tb=document.getElementById('tab-'+t),pn=document.getElementById('panel-'+t);
+    if(tb)tb.classList.toggle('on',t===tab);
+    if(pn)pn.classList.toggle('on',t===tab);
+  });
 }
 
 // ── Add panel type switching ──
-function selAT(t){
-  ['ev','tk','hl','fin'].forEach(function(id){
-    var btn=document.getElementById('abt-'+id);
-    var body=document.getElementById('afb-'+id);
-    if(btn)btn.classList.toggle('sel',id===t);
-    if(body)body.classList.toggle('vis',id===t);
+function selAT(type){
+  ['ev','tk','hl','fin'].forEach(function(t){
+    var btn=document.getElementById('abt-'+t),form=document.getElementById('afb-'+t);
+    if(btn)btn.classList.toggle('sel',t===type);
+    if(form)form.classList.toggle('vis',t===type);
   });
+  var nd=new Date().toISOString().slice(0,10);
+  var mp={ev:'ae-date',tk:'at-due',fin:'afin-date',hl:'ahl-date'};
+  if(mp[type]){var el=document.getElementById(mp[type]);if(el&&!el.value)el.value=nd;}
 }
 
-// ── Send message ──
+// ── Send message (right col) — mirrors finance exactly ──
 (function(){
-  var sendBtn=document.getElementById('send-btn');
-  if(sendBtn)sendBtn.addEventListener('click',function(){
-    var ta=document.getElementById('msg-input');
-    var val=ta?ta.value.trim():'';
-    if(!val)return;
-    var sst=document.getElementById('sst');
-    if(sst){sst.style.color='var(--txt3)';sst.textContent='Sending…';}
-    fetch('https://api.mie.today/api/me/message',{
-      method:'POST',credentials:'include',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:val,tag:'@health'})
-    }).then(function(r){
-      if(sst){sst.style.color=r.ok?'var(--teal)':'var(--red)';sst.textContent=r.ok?'✓ Sent':'Error sending';}
-      if(r.ok&&ta)ta.value='';
-    }).catch(function(){if(sst){sst.style.color='var(--red)';sst.textContent='Network error';}});
-  });
+  var mi=document.getElementById('msg-input'),sb=document.getElementById('send-btn');
+  var fi=document.getElementById('file-input'),fr=document.getElementById('fname-row'),fn=document.getElementById('fname'),rb=document.getElementById('rm-file'),ss=document.getElementById('sst');
+  var selFile=null;
+  if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
+  if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
+  if(sb&&!sb._hlBound){sb._hlBound=true;sb.addEventListener('click',function(){
+    var txt=mi?mi.value.trim():'';if(!txt&&!selFile)return;
+    var dc=document.getElementById('draft-check');
+    sb.disabled=true;if(ss){ss.style.color='var(--txt3)';ss.textContent='';}
+    fetch('https://api.mie.today/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':''),tag:'@health'})})
+      .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';}else if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';} })
+      .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
+      .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
+  });}
 })();
 
-// ── File attach display ──
-(function(){
-  var fi=document.getElementById('file-input');
-  if(fi)fi.addEventListener('change',function(){
-    var fr=document.getElementById('fname-row'),fn=document.getElementById('fname'),rm=document.getElementById('rm-file');
-    if(this.files&&this.files[0]){
-      if(fn)fn.textContent=this.files[0].name;
-      if(fr)fr.style.display='flex';
-    }
-    if(rm)rm.onclick=function(){fi.value='';if(fr)fr.style.display='none';};
-  });
-})();
-
-// ── submitAdd stubs for right-col ──
+// ── submitAdd (right col + Add panel) ──
+function showAST(type,msg,col){var el=document.getElementById('ast-'+type);if(!el)return;el.style.color=col;el.textContent=msg;setTimeout(function(){el.textContent='';},2500);}
 function submitAdd(type){
-  var astEl=document.getElementById('ast-'+type);
-  if(astEl){astEl.style.color='var(--txt3)';astEl.textContent='Saving…';}
-  var payload={};
-  if(type==='ev'){
-    var title=document.getElementById('ae-title');
-    if(!title||!title.value.trim()){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Title required';}return;}
-    payload={title:title.value.trim(),start:document.getElementById('ae-date').value,startTime:document.getElementById('ae-start').value,endTime:document.getElementById('ae-end').value};
-    fetch('https://api.mie.today/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(astEl){astEl.style.color=r.ok?'var(--teal)':'var(--red)';astEl.textContent=r.ok?'✓ Added':'Error';}}).catch(function(){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Network error';}});
-  } else if(type==='tk'){
-    var ttitle=document.getElementById('at-title');
-    if(!ttitle||!ttitle.value.trim()){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Title required';}return;}
-    payload={title:ttitle.value.trim(),due:document.getElementById('at-due').value,listId:'@default'};
-    fetch('https://api.mie.today/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(astEl){astEl.style.color=r.ok?'var(--teal)':'var(--red)';astEl.textContent=r.ok?'✓ Added':'Error';}}).catch(function(){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Network error';}});
-  } else if(type==='hl'){
-    payload={type:document.getElementById('ahl-type').value,date:document.getElementById('ahl-date').value,notes:document.getElementById('ahl-notes').value};
-    fetch('https://api.mie.today/api/me/health',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(astEl){astEl.style.color=r.ok?'var(--teal)':'var(--red)';astEl.textContent=r.ok?'✓ Saved':'Error';}}).catch(function(){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Network error';}});
-  } else if(type==='fin'){
-    var amt=parseFloat(document.getElementById('afin-amt').value);
-    if(!amt||amt<=0){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Enter amount';}return;}
-    payload={amount:amt,category:document.getElementById('afin-cat').value,notes:document.getElementById('afin-desc').value,date:document.getElementById('afin-date').value,type:'Expenses'};
-    fetch('https://api.mie.today/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(astEl){astEl.style.color=r.ok?'var(--teal)':'var(--red)';astEl.textContent=r.ok?'✓ Saved':'Error';}}).catch(function(){if(astEl){astEl.style.color='var(--red)';astEl.textContent='Network error';}});
-  }
+  var nd=new Date().toISOString().slice(0,10);
+  if(type==='ev'){var t=document.getElementById('ae-title');if(!t||!t.value.trim()){showAST('ev','Title required.','var(--red)');return;}var d=document.getElementById('ae-date'),s=document.getElementById('ae-start'),e=document.getElementById('ae-end');var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;fetch('https://api.mie.today/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end})}).then(function(r){if(r.ok){showAST('ev','✅ Event added!','var(--teal)');t.value='';}else showAST('ev','❌ Failed.','var(--red)');}).catch(function(){showAST('ev','❌ Error.','var(--red)');});}
+  else if(type==='tk'){var t=document.getElementById('at-title');if(!t||!t.value.trim()){showAST('tk','Title required.','var(--red)');return;}var due=document.getElementById('at-due');fetch('https://api.mie.today/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:'@default'})}).then(function(r){if(r.ok){showAST('tk','✅ Task added!','var(--teal)');t.value='';}else showAST('tk','❌ Failed.','var(--red)');}).catch(function(){showAST('tk','❌ Error.','var(--red)');});}
+  else if(type==='hl'){var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}var notes=document.getElementById('ahl-notes'),hdate=document.getElementById('ahl-date');fetch('https://api.mie.today/api/me/health/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:ht.value,date:hdate?hdate.value:nd,notes:notes?notes.value:''})}).then(function(r){if(r.ok){showAST('hl','✅ Saved!','var(--teal)');if(notes)notes.value='';loadHlDots();}else showAST('hl','❌ Failed.','var(--red)');}).catch(function(){showAST('hl','❌ Error.','var(--red)');});}
+  else if(type==='fin'){var a=document.getElementById('afin-amt'),cat=document.getElementById('afin-cat');if(!a||!a.value){showAST('fin','Amount required.','var(--red)');return;}var desc=document.getElementById('afin-desc'),date=document.getElementById('afin-date');fetch('https://api.mie.today/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat?cat.value:'',description:desc?desc.value:'',date:date?date.value:nd})}).then(function(r){if(r.ok){showAST('fin','✅ Recorded!','var(--teal)');a.value='';if(desc)desc.value='';}else showAST('fin','❌ Failed.','var(--red)');}).catch(function(){showAST('fin','❌ Error.','var(--red)');});}
 }
 
 // ── Settings toggle ──
