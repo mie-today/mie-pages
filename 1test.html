@@ -1630,35 +1630,44 @@ function renderHlDayDetail(ds){
 }
 
 function loadHlDots(){
-  // Fetch current month's data across all tabs using correct endpoints
+  // Step 1: Load womens data from localStorage IMMEDIATELY (synchronous, always works)
+  loadWomensFromLocalStorage(); // this calls buildHlCal() right away with period dots
+
+  // Step 2: Also try to load health/food/activity dots from API (asynchronous, may fail)
+  // These add EXTRA colored dots on top of the period dots already shown
   var y=hlCalYear,m=hlCalMonth;
   var B='https://api.mie.today';
   var firstDay=hlIsoD(y,m,1);
   var lastDay=hlIsoD(y,m,new Date(y,m+1,0).getDate());
-  // Use monthly period to get all data for the month
   var tabs=['food','activity','health','sleep','mood'];
   var pending=tabs.length;
-  function done(){pending--;if(pending===0){loadWomensFromLocalStorage();buildHlCal();}}
+  var gotAnyData=false;
+
+  function done(){
+    pending--;
+    if(pending===0&&gotAnyData){
+      // Re-run womens to merge with any new API dots, then redraw
+      loadWomensFromLocalStorage();
+    }
+  }
+
   tabs.forEach(function(tab){
-    // Monthly summary gives us dates with entries
     fetch(B+'/api/me/health?date='+firstDay+'&period=monthly&tab='+tab,{credentials:'include'})
       .then(function(r){return r.ok?r.json():null;})
       .then(function(data){
         if(!data){done();return;}
-        // Response has arrays of items each with stamp_date or date field
         var items=(data[tab]||data.entries||data.items||[]);
         items.forEach(function(e){
           var d=e.stamp_date||e.date||(e.timestamp?e.timestamp.split('T')[0]:null);
           if(!d)return;
           d=d.split('T')[0];
-          // Only include dates in our current month range
           if(d<firstDay||d>lastDay)return;
           if(!_hlDotCache[d])_hlDotCache[d]=[];
-          var dotType=tab==='health'?'weight':tab; // health tab → weight dot
-          if(_hlDotCache[d].indexOf(dotType)===-1)_hlDotCache[d].push(dotType);
+          var dotType=tab==='health'?'weight':tab;
+          if(_hlDotCache[d].indexOf(dotType)===-1){_hlDotCache[d].push(dotType);gotAnyData=true;}
         });
         done();
-      }).catch(done);
+      }).catch(function(){done();});
   });
 }
 
@@ -1906,115 +1915,76 @@ function renderOverviewCards(){
   }
 }
 
-// ── Women's calendar: reads localStorage (panel uses NO API) ──
-// Key pattern: 'mie_womens_YYYY-MM-DD' → {period_start:true, period_end:true, ...}
+// ── Women's calendar: reads localStorage — mirrors panel-logs-womens.html renderCalendar() exactly ──
+// Key: 'mie_womens_YYYY-MM-DD' → {period_start:true/false, period_end:true/false, ...}
 function loadWomensFromLocalStorage(){
-  var keys=[];
+  // Step 1: get all womens localStorage keys sorted (same as panel's getAllKeys())
+  var allKeys=[];
   try{
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
-      if(k&&k.startsWith('mie_womens_20'))keys.push(k.replace('mie_womens_',''));
+      if(k&&k.startsWith('mie_womens_20'))allKeys.push(k.replace('mie_womens_',''));
     }
   }catch(e){return;}
-  keys.sort();
+  allKeys.sort();
 
-  // ── CORRECT logic: mirror panel-logs-womens.html renderCalendar() exactly ──
-  // Build actualPeriodDays: scan all keys, track inPeriod state start→end
-  // BUT only carry inPeriod across consecutive days — reset if gap > 14 days (safety)
-  var actualPeriodDays=[];
+  // Step 2: build actualPeriodDays — EXACT same logic as panel's renderCalendar()
+  // Iterate ALL keys, track inPeriod across all time (not just current month)
+  // Only mark keys that are IN the allKeys list (no gap-filling)
+  var actualPeriodDays={};
   var inPeriod=false;
-  var lastKeyDate=null;
-
-  keys.forEach(function(dateStr){
+  allKeys.forEach(function(dateStr){
     var raw=null;
     try{raw=JSON.parse(localStorage.getItem('mie_womens_'+dateStr)||'null');}catch(e){}
     if(!raw)return;
-
-    // Safety: if gap between last key and this key is > 14 days and no open period end,
-    // reset inPeriod to avoid bleeding across months
-    if(inPeriod&&lastKeyDate){
-      var prev=new Date(lastKeyDate+'T12:00:00');
-      var cur=new Date(dateStr+'T12:00:00');
-      var gapDays=Math.round((cur-prev)/86400000);
-      if(gapDays>14){inPeriod=false;}
-    }
-
-    if(raw.period_start){inPeriod=true;}
-    if(inPeriod){actualPeriodDays.push(dateStr);}
-    if(raw.period_end){inPeriod=false;}
-
-    lastKeyDate=dateStr;
+    if(raw.period_start)inPeriod=true;
+    if(inPeriod)actualPeriodDays[dateStr]=true;
+    if(raw.period_end)inPeriod=false;
   });
 
-  // Fill in-between days for each period span
-  // Find all start→end pairs and fill the dates between them
-  var periodSpans=[];
-  var spanStart=null;
-  keys.forEach(function(dateStr){
-    var raw=null;
-    try{raw=JSON.parse(localStorage.getItem('mie_womens_'+dateStr)||'null');}catch(e){}
-    if(!raw)return;
-    if(raw.period_start){spanStart=dateStr;}
-    if(raw.period_end&&spanStart){
-      periodSpans.push({start:spanStart,end:dateStr});
-      spanStart=null;
-    }
-  });
-  // If period started but no end yet (currently active)
-  if(spanStart){periodSpans.push({start:spanStart,end:null});}
-
-  // Add dot for every day in each span
-  var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-  periodSpans.forEach(function(span){
-    var cur=new Date(span.start+'T12:00:00');
-    var endD=span.end?new Date(span.end+'T12:00:00'):new Date(); // active period goes to today
-    // Safety cap: max 14 days per period
-    var maxEnd=new Date(cur);maxEnd.setDate(maxEnd.getDate()+14);
-    if(endD>maxEnd)endD=maxEnd;
-    while(cur<=endD){
-      var k=fmtD(cur);
-      if(!_hlDotCache[k])_hlDotCache[k]=[];
-      if(_hlDotCache[k].indexOf('period')===-1)_hlDotCache[k].push('period');
-      cur.setDate(cur.getDate()+1);
-    }
+  // Step 3: add period dots for all actualPeriodDays
+  Object.keys(actualPeriodDays).forEach(function(dateStr){
+    if(!_hlDotCache[dateStr])_hlDotCache[dateStr]=[];
+    if(_hlDotCache[dateStr].indexOf('period')===-1)_hlDotCache[dateStr].push('period');
   });
 
-  // ── Predicted next period ──
-  var allStarts=keys.filter(function(k){
+  // Step 4: predicted next period (mirrors panel's getPredictedPeriodDates())
+  var starts=allKeys.filter(function(k){
     try{var d=JSON.parse(localStorage.getItem('mie_womens_'+k)||'null');return d&&d.period_start;}
     catch(e){return false;}
   });
-  if(allStarts.length){
-    var lastStart=allStarts[allStarts.length-1];
+  if(starts.length){
+    var lastStart=starts[starts.length-1];
     var cycleLen=28;
-    if(allStarts.length>=2){
+    if(starts.length>=2){
       var diffs=[];
-      for(var j=1;j<allStarts.length;j++){
-        var a=new Date(allStarts[j-1]+'T12:00:00'),b=new Date(allStarts[j]+'T12:00:00');
+      for(var j=1;j<starts.length;j++){
+        var a=new Date(starts[j-1]+'T12:00:00'),b=new Date(starts[j]+'T12:00:00');
         diffs.push(Math.round((b-a)/86400000));
       }
-      cycleLen=Math.round(diffs.reduce(function(s,v){return s+v;},0)/diffs.length);
-      if(cycleLen<21||cycleLen>45)cycleLen=28; // sanity check
+      var avg=Math.round(diffs.reduce(function(s,v){return s+v;},0)/diffs.length);
+      if(avg>=21&&avg<=45)cycleLen=avg;
     }
     var nextStart=new Date(lastStart+'T12:00:00');
     nextStart.setDate(nextStart.getDate()+cycleLen);
     var nextEnd=new Date(nextStart);nextEnd.setDate(nextEnd.getDate()+5);
-    // Only add predicted dots if next period is in the future
     var today=new Date();today.setHours(0,0,0,0);
+    var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+    // Only show predicted dots if next period is upcoming
     if(nextStart>today){
-      var cur2=new Date(nextStart);
-      while(cur2<=nextEnd){
-        var k2=fmtD(cur2);
+      var cur=new Date(nextStart);
+      while(cur<=nextEnd){
+        var k2=fmtD(cur);
         if(!_hlDotCache[k2])_hlDotCache[k2]=[];
         if(_hlDotCache[k2].indexOf('period')===-1)_hlDotCache[k2].push('period');
-        cur2.setDate(cur2.getDate()+1);
+        cur.setDate(cur.getDate()+1);
       }
     }
-    // Update tracker label
+    // Step 5: update tracker label
     var lbl=document.getElementById('period-next-lbl');
     if(lbl){
-      var now2=new Date();now2.setHours(0,0,0,0);
       var fmt2=function(d){return(d.getMonth()+1)+'/'+d.getDate();};
+      var now2=new Date();now2.setHours(0,0,0,0);
       if(nextStart<=now2&&now2<=nextEnd)lbl.innerHTML='🌸 <strong>Period active</strong>';
       else if(nextStart>now2)lbl.innerHTML='Next: <strong>'+fmt2(nextStart)+' – '+fmt2(nextEnd)+'</strong>';
       else lbl.innerHTML='Last started: <strong>'+fmt2(new Date(lastStart+'T12:00:00'))+'</strong>';
