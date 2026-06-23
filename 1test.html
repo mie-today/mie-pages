@@ -1831,7 +1831,13 @@ function renderOverviewCards(){
   var MOOD_EMOJI={'Happy':'😊','Calm':'😌','Neutral':'😐','Sad':'😔','Anxious':'😰','Frustrated':'😤','Tired':'😴'};
   if(moEl){if(lMo){var mv=lMo.mood||lMo.value||lMo.notes||'—';moEl.textContent=(MOOD_EMOJI[mv]?MOOD_EMOJI[mv]+' ':'')+mv;if(moSub)moSub.textContent='Logged today';}else{moEl.textContent='—';if(moSub)moSub.textContent='';}}
 
-  // Food log slots
+  // ── Sidebar stats ──
+  var sbCal=document.getElementById('sb-cal');
+  var sbSteps=document.getElementById('sb-steps');
+  var sbWater=document.getElementById('sb-water');
+  if(sbCal)sbCal.textContent=totalCal?totalCal.toLocaleString():'—';
+  if(sbSteps)sbSteps.textContent=steps?steps.toLocaleString():'—';
+  if(sbWater)sbWater.textContent=waterMl?(waterMl>=1000?(waterMl/1000).toFixed(1)+' L':waterMl+' ml'):'—';
   var slotsEl=document.getElementById('food-slots'),calTotal=document.getElementById('food-cal-total');
   if(slotsEl){
     if(!food.length){slotsEl.innerHTML='<div style="font-size:11px;color:var(--txt3);font-style:italic;padding:4px 0;">No food logged today</div>';if(calTotal)calTotal.textContent='';}
@@ -1853,41 +1859,129 @@ function renderOverviewCards(){
   }
 }
 
-// ── Period / Women's data ──
+// ── Fetch interceptor: captures what the womens panel actually calls ──
+// Wraps window.fetch ONCE, logs any health/womens/cycle/period URL response
+// into _hlDotCache automatically so the calendar shows those dates.
+(function installFetchSpy(){
+  if(window._fetchSpyInstalled)return;
+  window._fetchSpyInstalled=true;
+  var _realFetch=window.fetch;
+  window.fetch=function(url,opts){
+    var p=_realFetch.apply(this,arguments);
+    var u=typeof url==='string'?url:(url&&url.url)||'';
+    // Capture any GET response that looks like womens/period/cycle data
+    var isWomens=/womens|period|cycle|menstr/i.test(u);
+    var isGet=!opts||!opts.method||opts.method.toUpperCase()==='GET';
+    if(isWomens&&isGet&&u.indexOf('api.mie.today')>=0){
+      p.then(function(r){
+        if(!r||!r.ok)return;
+        // Clone to not consume body
+        r.clone().json().then(function(data){
+          _ingestWomensData(data);
+        }).catch(function(){});
+      }).catch(function(){});
+    }
+    return p;
+  };
+})();
+
+// Parse any womens/period/cycle API response shape and populate _hlDotCache
+function _ingestWomensData(data){
+  if(!data)return;
+  var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+  var addPeriodDate=function(dateStr){
+    if(!dateStr)return;
+    var d=dateStr.split('T')[0];
+    if(!_hlDotCache[d])_hlDotCache[d]=[];
+    if(_hlDotCache[d].indexOf('period')===-1)_hlDotCache[d].push('period');
+  };
+  var addRange=function(startStr,endStr){
+    if(!startStr)return;
+    var cur=new Date(startStr+'T12:00:00');
+    var endD=endStr?new Date(endStr+'T12:00:00'):new Date(startStr+'T12:00:00');
+    while(cur<=endD){addPeriodDate(fmtD(cur));cur.setDate(cur.getDate()+1);}
+  };
+
+  // Shape 1: {cycle:{period_start, period_end}, entries:[...]}
+  if(data.cycle){
+    var c=data.cycle;
+    if(c.period_start)addRange(c.period_start,c.period_end||c.period_start);
+    if(c.last_period_start)addRange(c.last_period_start,c.last_period_end||c.last_period_start);
+    if(c.next_period_start)addRange(c.next_period_start,c.next_period_end||c.next_period_start);
+  }
+  // Shape 2: {entries:[{date, type, phase, start_date, end_date}]}
+  var entries=data.entries||data.logs||data.events||data.periods||(Array.isArray(data)?data:[]);
+  entries.forEach(function(e){
+    var type=(e.type||e.phase||e.period_phase||'').toLowerCase();
+    var isPeriod=type==='period'||type==='menstruation'||type==='bleeding'||
+                 type==='spotting'||type==='womens'||type===''||
+                 e.is_period||e.period===true;
+    if(!isPeriod&&type&&type!=='period')return; // skip ovulation etc unless period
+    if(e.start_date||e.period_start){
+      addRange(e.start_date||e.period_start, e.end_date||e.period_end||null);
+    } else if(e.date){
+      addPeriodDate(e.date.split('T')[0]);
+    }
+  });
+  // Shape 3: {calendar:[{date, filled, phase}]} - like the screenshot grid
+  var cal=data.calendar||data.calendar_entries||[];
+  cal.forEach(function(entry){
+    var phase=(entry.phase||entry.type||'').toLowerCase();
+    if(phase==='menstruation'||phase==='period'||phase==='bleeding'||entry.filled||entry.is_period){
+      addPeriodDate((entry.date||'').split('T')[0]);
+    }
+  });
+  // Shape 4: {periods:[{start,end}]} 
+  var periods=data.periods||[];
+  periods.forEach(function(p){addRange(p.start||p.start_date,p.end||p.end_date);});
+
+  buildHlCal();
+  // Also update tracker label if we have cycle info
+  if(data.cycle||data.next_period_start||data.next_period||entries.length){
+    renderPeriodTracker(entries.length?entries:(data.cycle?[data.cycle]:[]));
+  }
+}
+
+// ── Period / Women's data — try every known endpoint ──
 var _periodData=[];
 function loadPeriodData(){
   var now=new Date();
   var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
   var start=new Date(now);start.setDate(start.getDate()-90);
   var end=new Date(now);end.setDate(end.getDate()+60);
-  // Try womens endpoint, fallback to general health
-  var tryFetch=function(url){return fetch(url,{credentials:'include'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});};
-  tryFetch('https://api.mie.today/api/me/health/womens?start='+fmtD(start)+'&end='+fmtD(end))
-    .catch(function(){return tryFetch('https://api.mie.today/api/me/health?start='+fmtD(start)+'&end='+fmtD(end)+'&type=period');})
-    .then(function(data){
-      if(!data)return;
-      var entries=Array.isArray(data.entries)?data.entries:Array.isArray(data)?data:(data.events||[]);
-      _periodData=entries;
-      renderPeriodOnCalendar(entries);
-      renderPeriodTracker(entries);
-    }).catch(function(){});
-}
+  var s=fmtD(start),e=fmtD(end);
+  var BACKEND_URL='https://api.mie.today';
 
-function renderPeriodOnCalendar(entries){
-  if(!entries||!entries.length)return;
-  var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-  entries.forEach(function(e){
-    var d=e.date||e.start_date||(e.timestamp?e.timestamp.split('T')[0]:null);
-    if(!d)return;
-    if(!_hlDotCache[d])_hlDotCache[d]=[];
-    if(_hlDotCache[d].indexOf('period')===-1)_hlDotCache[d].push('period');
-    // Fill span if end_date provided
-    if(e.end_date&&e.end_date!==d){
-      var cur=new Date(d+'T12:00:00'),endD=new Date(e.end_date+'T12:00:00');
-      while(cur<=endD){var k=fmtD(cur);if(!_hlDotCache[k])_hlDotCache[k]=[];if(_hlDotCache[k].indexOf('period')===-1)_hlDotCache[k].push('period');cur.setDate(cur.getDate()+1);}
-    }
-  });
-  buildHlCal();
+  // Try endpoints in priority order — stop at first success
+  var endpoints=[
+    BACKEND_URL+'/api/me/womens?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/womens/cycle?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/womens/entries?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/womens/log?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/health/womens?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/health/period?start='+s+'&end='+e,
+    BACKEND_URL+'/api/me/health?start='+s+'&end='+e+'&type=period',
+    BACKEND_URL+'/api/me/health?start='+s+'&end='+e+'&category=womens'
+  ];
+
+  function tryNext(idx){
+    if(idx>=endpoints.length)return;
+    fetch(endpoints[idx],{credentials:'include'})
+      .then(function(r){
+        if(!r.ok){tryNext(idx+1);return;}
+        return r.json().then(function(data){
+          var entries=data.entries||data.logs||data.events||data.periods||(Array.isArray(data)?data:[]);
+          if(!entries.length&&!data.cycle&&!data.calendar){
+            tryNext(idx+1);return; // empty — try next endpoint
+          }
+          _periodData=entries;
+          _ingestWomensData(data);
+          renderPeriodTracker(entries);
+        });
+      })
+      .catch(function(){tryNext(idx+1);});
+  }
+  tryNext(0);
 }
 
 function renderPeriodTracker(entries){
@@ -1930,6 +2024,19 @@ window.show=function(el){
     setTimeout(function(){initHlCal();loadTodayOverview();},50);
   }
 };
+
+// ── Patch setView to refresh calendar dots after womens/period panel loads ──
+var _origSetView=window.setView;
+if(typeof setView==='function'){
+  var _sv=setView;
+  window.setView=function(v,btn){
+    _sv(v,btn);
+    // After womens or period panel loads (~600ms for fetch+render), refresh dots
+    if(v==='womens'||v==='period'){
+      setTimeout(function(){loadPeriodData();},700);
+    }
+  };
+}
 
 // ── Right col tab switching ──
 function switchTab(tab){
