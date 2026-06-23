@@ -108,7 +108,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-row-name{font-size:11px;color:var(--txt);flex:1;}
 .cal-row-name.primary{font-weight:500;}
 
-/* ── Today card (B-plan) ── */
+/* ── Day View card (formerly Today card) ── */
 .today-card{flex:1;}
 .today-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 0;border-bottom:none;flex-shrink:0;}
 .today-title{font-size:13px;font-weight:500;}
@@ -117,28 +117,28 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .today-inner::-webkit-scrollbar{width:3px;}
 .today-inner::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
 .sec-row{display:flex;align-items:center;gap:8px;padding:10px 0 6px;}
-.sec-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);flex-shrink:0;}
+.sec-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);flex-shrink:0;}
 .sec-line{flex:1;height:.5px;background:var(--b1);}
 .sec-right{font-size:10px;color:var(--txt2);}
 .all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
 .ev-item{display:flex;align-items:flex-start;gap:8px;background:var(--bg2);border-radius:7px;padding:6px 8px;margin-bottom:4px;cursor:pointer;}
 .ev-item:hover{background:var(--bg3);}
 .ev-bar{width:2px;border-radius:1px;flex-shrink:0;align-self:stretch;min-height:18px;}
-.ev-time{font-size:9px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.3;}
+.ev-time{font-size:11px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.3;}
 .ev-body{flex:1;}
-.ev-name{font-size:11px;color:var(--txt);line-height:1.4;}
+.ev-name{font-size:13px;color:var(--txt);line-height:1.4;}
 .ev-name a{color:var(--blue);text-decoration:none;word-break:break-all;}
 .ev-name a:hover{text-decoration:underline;}
-.ev-sub{font-size:9px;color:var(--txt3);margin-top:2px;}
+.ev-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
 .task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;cursor:default;}
 .task-item:hover{background:var(--bg2);}
 .task-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .12s;}
 .task-cb:hover{border-color:var(--blue);}
 .task-cb.done{background:var(--blue);border-color:var(--blue);}
 .task-cb.done::after{content:'✓';color:#fff;font-size:8px;font-weight:700;}
-.task-nm{flex:1;font-size:11px;color:var(--txt);}
+.task-nm{flex:1;font-size:13px;color:var(--txt);}
 .task-nm.s{text-decoration:line-through;color:var(--txt3);}
-.task-tag{font-size:9px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
+.task-tag{font-size:11px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
 .task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
 .task-tag.done{background:var(--bg3);color:var(--txt3);}
 
@@ -564,13 +564,13 @@ function calCardHTML(){
 }
 
 function todayCardHTML(){
-  var d=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var d=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   return '<div class="card today-card">'
-    +'<div class="today-hd"><span class="today-title">Today</span><span class="today-date">'+d+'</span></div>'
+    +'<div class="today-hd"><span class="today-title">Day View</span><span class="today-date" id="dayview-date">'+d+'</span></div>'
     +'<div class="today-inner">'
       +'<div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>'
       +'<div id="today-ev-list"></div>'
-      +'<div class="sec-row"><span class="sec-lbl">Tasks</span><div class="sec-line"></div><span class="sec-right"><select class="all-list-sel"><option>All List ▾</option></select></span></div>'
+      +'<div class="sec-row"><span class="sec-lbl">Tasks</span><div class="sec-line"></div></div>'
       +'<div id="today-task-list"></div>'
     +'</div>'
   +'</div>';
@@ -1077,10 +1077,9 @@ function buildCalGridFromEvents(){
     if(dateColors[ds].indexOf(color)===-1)dateColors[ds].push(color);
   });
 
-  // 각 날짜 셀에 마커 추가
+  // 현재 달 셀에만 마커 추가 (other-mo 셀 제외)
   g.querySelectorAll('.cal-day').forEach(function(cell){
-    var ds=cell.querySelector('.cal-dn');if(!ds)return;
-    // data-date 속성 또는 텍스트에서 날짜 추출 — 셀의 dataset
+    if(cell.classList.contains('other-mo'))return;
     var dateStr=cell.getAttribute('data-date');
     if(!dateStr)return;
     var colors=dateColors[dateStr];
@@ -1142,10 +1141,14 @@ function buildCalGrid(){
     // data-date 속성 저장 (마커 재빌드에 사용)
     cell.setAttribute('data-date',ds);
     var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
-    (function(dstr){cell.addEventListener('click',function(){
+    (function(dstr,isOther){cell.addEventListener('click',function(){
       selectedDateStr=dstr;
+      // selected-day 하이라이트 이동
+      document.querySelectorAll('.cal-day.selected-day').forEach(function(c){c.classList.remove('selected-day');});
+      cell.classList.add('selected-day');
       renderCalEventList();
-    });;})(ds);
+      renderDayView(dstr);
+    });;})(ds,other);
     g.appendChild(cell);
   }
   // 이벤트 데이터로 마커 빌드
@@ -1257,15 +1260,39 @@ function renderCalEvRow(list, ev, color){
 // Other 달력 체크박스 변경 시 호출 (이전 이름 유지)
 function renderOtherCalEventList(){renderCalEventList();}
 
+/* ── Day View render ── */
+function renderDayView(ds){
+  // 날짜 헤더 업데이트
+  var dtEl=document.getElementById('dayview-date');
+  if(dtEl){
+    var d=new Date(ds+'T12:00:00');
+    dtEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  }
+  renderTodayEvents(ds);
+  renderDayViewTasks(ds);
+}
+
+function renderDayViewTasks(ds){
+  var c=document.getElementById('today-task-list');if(!c)return;c.innerHTML='';
+  var tasks=(allTasks.length?allTasks:DEMO_TASKS).filter(function(t){
+    if(t.status==='completed')return false;
+    if(!t.due)return false;
+    var due=t.due.slice(0,10); // YYYY-MM-DD
+    return due===ds;
+  });
+  if(!tasks.length){
+    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No tasks due.';c.appendChild(em);return;
+  }
+  tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});
+}
+
 /* ── Today events ── */
-function renderTodayEvents(){
+function renderTodayEvents(dateStr){
   var c=document.getElementById('today-ev-list');if(!c)return;c.innerHTML='';
   var today=new Date();
-  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var ds=dateStr||(today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0'));
   var evs=eventsByDate[ds]||[];
-  // Primary 달력 이벤트만 (Other 달력은 event list 섹션에서 처리)
-  var primaryId=primaryCals.length?primaryCals[0].id:null;
-  if(!evs.length){var em=document.createElement('div');em.style.cssText='font-size:11px;color:var(--txt3);padding:6px 2px;';em.textContent='No events today.';c.appendChild(em);return;}
+  if(!evs.length){var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;}
   evs.forEach(function(ev){
     var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
     var item=document.createElement('div');item.className='ev-item';
@@ -1337,10 +1364,9 @@ function renderTasks(s){
   // populate dropdowns first
   populateTaskFilter('task-list-filter');
   populateTaskFilter('s1-task-filter');
-  // today task list — completed 제외
-  var activeTasks=tasks.filter(function(t){return t.status!=='completed';});
-  var c1=document.getElementById('today-task-list');
-  if(c1){c1.innerHTML='';activeTasks.forEach(function(t){c1.appendChild(makeTaskEl(t));});}
+  // Day View task list — 오늘 날짜 due date 기준 (초기 로드)
+  var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
+  renderDayViewTasks(selectedDateStr||todayStr);
   // main task card (respect filter, completed already excluded inside getFilteredTasks)
   renderTasksByFilter();
   // s1 task card
@@ -1704,7 +1730,8 @@ function loadEvents(){
       });
       // 마커 재빌드 및 Today events 렌더링
       buildCalGridFromEvents();
-      renderTodayEvents();
+      var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
+      renderDayView(selectedDateStr||todayStr);
       renderCalEventList();
       // 오늘 이벤트 유무로 판단
       _dataFlags.events=(allEvents.length>0);
