@@ -873,6 +873,7 @@ function buildMPGrid(){
       e.stopPropagation();
       calYear=mpYear;calMonth=i;
       buildCalGrid();
+      loadEvents();
       document.getElementById('mo-picker').classList.remove('open');
     });
     grid.appendChild(btn);
@@ -900,9 +901,9 @@ function initMoPicker(){
 
 function bindAll(s){
   // Calendar
-  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();});
-  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();});
-  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();});
+  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();loadEvents();});
+  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();loadEvents();});
+  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();loadEvents();});
   // Month/Year picker
   initMoPicker();
   // Calendars popup
@@ -1663,8 +1664,19 @@ function loadCalendarList(){
     });
 }
 function loadEvents(){
-  var now=new Date(calYear,calMonth,1),end=new Date(calYear,calMonth+1,0);
-  fetch(BACKEND+'/api/me/events?'+new URLSearchParams({timeMin:now.toISOString(),timeMax:end.toISOString()}),{credentials:'include'})
+  // 달력 그리드에 보이는 전체 날짜 범위 계산 (이전달 overflow + 다음달 overflow 포함)
+  var fd=new Date(calYear,calMonth,1).getDay();        // 이번달 1일의 요일
+  var dim=new Date(calYear,calMonth+1,0).getDate();    // 이번달 마지막 날
+  var total=Math.ceil((fd+dim)/7)*7;
+  // 그리드 시작: 이번달 1일 - fd일 (이전달 overflow)
+  var rangeStart=new Date(calYear,calMonth,1-fd);
+  // 그리드 끝: 마지막 셀 다음날 자정 (+1 하여 마지막 날 이벤트 포함)
+  var rangeEnd=new Date(rangeStart.getTime()+(total+1)*24*60*60*1000);
+  // 달 이동 시 이전 데이터 초기화 (stale 마커 방지)
+  allEvents=[];
+  eventsByDate={};
+  buildCalGridFromEvents(); // 즉시 마커 초기화
+  fetch(BACKEND+'/api/me/events?'+new URLSearchParams({timeMin:rangeStart.toISOString(),timeMax:rangeEnd.toISOString()}),{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
       if(!data)return;
@@ -1695,7 +1707,6 @@ function loadEvents(){
       renderTodayEvents();
       renderCalEventList();
       // 오늘 이벤트 유무로 판단
-      var tod=new Date();var todStr=tod.getFullYear()+'-'+String(tod.getMonth()+1).padStart(2,'0')+'-'+String(tod.getDate()).padStart(2,'0');
       _dataFlags.events=(allEvents.length>0);
       _checkAllLoaded();
     })
