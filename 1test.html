@@ -466,6 +466,7 @@ var BACKEND='https://api.mie.today';
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
+var _finByDate={};  // 날짜별 Finance 거래 목록 {YYYY-MM-DD: [{type,category,amount,notes}]}
 /* ── Auto-state: 각 데이터 로드 결과 추적 ── */
 var _dataFlags={events:null,tasks:null,finance:null,health:null,projects:null};
 var _autoStateDone=false; // 이미 자동 전환했으면 다시 안 함
@@ -996,10 +997,10 @@ function buildCalLegend(){
     item.appendChild(dot);item.appendChild(txt);
     leg.appendChild(item);
   });
-  // Finance 거래 범례 (teal, 항상 표시)
+  // KLAIDE 범례 (Finance/Health/Docs teal 마커 통합, 항상 표시)
   var finLeg=document.createElement('div');finLeg.className='leg-item';
   var finDot=document.createElement('div');finDot.className='leg-dot';finDot.style.background='var(--teal)';
-  var finTxt=document.createElement('span');finTxt.className='leg-txt';finTxt.textContent='Finance';
+  var finTxt=document.createElement('span');finTxt.className='leg-txt';finTxt.textContent='KLAIDE';
   finLeg.appendChild(finDot);finLeg.appendChild(finTxt);
   leg.appendChild(finLeg);
 
@@ -1303,8 +1304,21 @@ function renderTodayEvents(dateStr){
   var c=document.getElementById('today-ev-list');if(!c)return;c.innerHTML='';
   var today=new Date();
   var ds=dateStr||(today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0'));
+
+  // Google Calendar 이벤트
   var evs=eventsByDate[ds]||[];
-  if(!evs.length){var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;}
+
+  // Finance 거래 → 이벤트 형식으로 변환
+  var TYPE_LABEL={income:'💰 Income',expense:'💸 Expense',saving:'🏦 Saving'};
+  var TYPE_COLOR={income:'var(--teal)',expense:'var(--red)',saving:'var(--blue)'};
+  function fmtAmt(v){return(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  var finRows=_finByDate[ds]||[];
+
+  if(!evs.length&&!finRows.length){
+    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;
+  }
+
+  // Calendar 이벤트 렌더링
   evs.forEach(function(ev){
     var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
     var item=document.createElement('div');item.className='ev-item';
@@ -1320,6 +1334,31 @@ function renderTodayEvents(dateStr){
     item.addEventListener('click',function(){openEvView(ev);});
     c.appendChild(item);
   });
+
+  // Finance 거래 렌더링 (teal 구분선)
+  if(finRows.length){
+    var divider=document.createElement('div');
+    divider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);padding:8px 2px 4px;';
+    divider.textContent='Finance';
+    c.appendChild(divider);
+
+    finRows.forEach(function(r){
+      var color=TYPE_COLOR[r.type]||'var(--teal)';
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
+      var td=document.createElement('div');td.className='ev-time';
+      td.textContent=TYPE_LABEL[r.type]||r.type;
+      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
+      var bd=document.createElement('div');bd.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-name';
+      nm.textContent=r.category+(r.sublabel?' · '+r.sublabel:'');
+      var sub=document.createElement('div');sub.className='ev-sub';
+      sub.textContent=fmtAmt(r.amount)+(r.notes?' · '+r.notes:'');
+      nm.appendChild(sub);
+      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      c.appendChild(item);
+    });
+  }
 }
 
 /* ── Tasks ── */
@@ -1770,11 +1809,18 @@ function loadFinance(){
         if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';
         _dataFlags.finance=false;_checkAllLoaded();return;
       }
-      // Finance 거래 날짜 추출 → _finDateSet 갱신
+      // Finance 거래 날짜 추출 → _finDateSet + _finByDate 갱신
       _finDateSet={};
-      (data.income||[]).forEach(function(r){if(r.date)_finDateSet[r.date]=true;});
-      (data.expenses||[]).forEach(function(r){if(r.date)_finDateSet[r.date]=true;});
-      (data.savings||[]).forEach(function(r){if(r.date)_finDateSet[r.date]=true;});
+      _finByDate={};
+      function _addFinRow(type,r){
+        if(!r.date)return;
+        _finDateSet[r.date]=true;
+        if(!_finByDate[r.date])_finByDate[r.date]=[];
+        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||''});
+      }
+      (data.income||[]).forEach(function(r){_addFinRow('income',r);});
+      (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
+      (data.savings||[]).forEach(function(r){_addFinRow('saving',r);});
       // 달력 마커 재빌드 (Finance teal 마커 반영)
       buildCalGridFromEvents();
       // Finance 카드 렌더링 후 _checkAllLoaded 호출
