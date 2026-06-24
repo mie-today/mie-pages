@@ -852,7 +852,7 @@ function setState(s){
   renderDraftList();
   // Finance/Health 카드는 setState 후 innerHTML이 재생성되므로 데이터 재주입
   // _autoStateDone=true 이후(초기 자동전환 완료)에만 재로드 (decideState 루프 방지)
-  setTimeout(function(){if(window._lastFinData)renderFinance(window._lastFinData);if(window._lastHealthData)renderHealthData(window._lastHealthData);setTimeout(function(){setUnit(currentUnit2);},30);},50);
+  setTimeout(function(){if(window._lastFinData)renderFinance(window._lastFinData);if(window._lastHealthData)renderHealthData(window._lastHealthData);setTimeout(function(){setUnit(currentUnit2);},0);},0);
 }
 
 /* ── Month/Year Picker ── */
@@ -1755,9 +1755,15 @@ function loadFinance(){
   fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data||!data.summary){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();return;}
-      _dataFlags.finance=true;_checkAllLoaded();
+      if(!data||!data.summary){
+        if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';
+        _dataFlags.finance=false;_checkAllLoaded();return;
+      }
+      // _lastFinData를 먼저 세팅한 뒤 _checkAllLoaded() 호출
+      // → setState() 내 setTimeout이 항상 데이터를 찾을 수 있도록 보장
       renderFinance(data);
+      _dataFlags.finance=true;
+      _checkAllLoaded();
     })
     .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();});
 }
