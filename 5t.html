@@ -1,887 +1,2103 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KLAIVE - Calendar</title>
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <style>
-    /* 0626dash-prod.html 기준 CSS 변수 및 초기화 */
-    :root {
-      --bg: #FFFFFF; --bg2: #FAFAF8; --bg3: #F2F1EE;
-      --txt: #111111; --txt2: #5F5E5A; --txt3: #999896;
-      --blue: #1C7ED6; --teal: #1D9E75;
-      --b1: rgba(0,0,0,0.07); --b2: rgba(0,0,0,0.12);
-      --red: #E24B4A; --purple: #534AB7; --amber: #EF9F27;
-      --r: 12px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* ── Women's Health Panel — CSS ── */
+:root {
+  --w-period: #e91e63;
+  --w-period-light: #fce4ec;
+  --w-period-mid: #f48fb1;
+  --w-ovulation: #ce93d8;
+  --w-ovulation-light: #f3e5f5;
+  --w-today: #1a73e8;
+  --w-pregnancy: #f3e5f5;
+  --primary: #1a73e8;
+  --text: #202124;
+  --subtext: #5f6368;
+  --bg: #f0f2f5;
+  --card-bg: #fff;
+  --border: #e8eaed;
+  --radius: 10px;
+}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--txt); font-size: 13px; }
-    
-    .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+/* ── Wrap & Layout ── */
+/*
+  KEY FIX: On desktop (injected into panel-body which has a defined height),
+  height:100% works. On mobile, the parent has no defined height so we let
+  the wrap be height:auto and flow naturally. We use min-height instead of
+  height so it never collapses, and overflow:visible so nothing gets clipped.
+*/
+.w-wrap {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--card-bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  /* Desktop: fill parent panel */
+  height: 100%;
+  overflow: hidden;
+}
+.w-wrap.pregnancy-mode {
+  --w-period: #9c27b0;
+}
 
-    /* Topbar Style (52px) */
-    .topbar { flex-shrink: 0; height: 52px; border-bottom: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--bg); }
-    .topbar-left { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
-    .logo { font-weight: 700; font-size: 16px; letter-spacing: -0.3px; color: var(--txt); }
-    .logo span { color: var(--blue); }
-    .divider { width: 1px; height: 16px; background: var(--b1); }
-    .welcome-msg { color: var(--txt2); font-size: 13px; }
-    .topbar-right { display: flex; align-items: center; gap: 16px; color: var(--txt2); font-size: 13px; }
-    .logout-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 13px; font-family: inherit; }
-    .logout-btn:hover { color: var(--red); }
-    .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; color: var(--txt2); border: 1px solid var(--b1); }
+/* ── Header ── */
+.w-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.w-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.w-nav-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--subtext);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.w-nav-btn:hover { background: var(--bg); }
+.w-month-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 130px;
+  text-align: center;
+}
+.w-pregnancy-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtext);
+}
+.w-toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+}
+.w-toggle-switch input { display: none; }
+.w-toggle-track {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.w-toggle-thumb {
+  position: absolute;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform .2s;
+  pointer-events: none;
+}
+.w-toggle-switch input:checked ~ .w-toggle-track { background: #9c27b0; }
+.w-toggle-switch input:checked ~ .w-toggle-track ~ .w-toggle-thumb { transform: translateX(16px); }
 
-    /* Main Content Layout (Split 55:45 지정으로 가로 스크롤 완전 방지) */
-    .main-container { flex: 1; display: flex; overflow: hidden; background: var(--bg2); }
-    
-    /* 달력 영역 (55%) */
-    #calendar-section { flex: 55; display: flex; flex-direction: column; padding: 16px; overflow: hidden; position: relative; border-right: 1px solid var(--b1); }
-    
-    /* 커스텀 캘린더 헤더 */
-    .custom-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; position: relative; }
-    .cal-nav-group { display: flex; align-items: center; gap: 8px; position: relative; }
-    .cal-nav-btn { background: var(--bg); border: 1px solid var(--b1); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: var(--txt2); }
-    .cal-nav-btn:hover { background: var(--bg3); }
-    .cal-title-text { font-size: 16px; font-weight: 600; cursor: pointer; padding: 2px 6px; border-radius: 4px; color: var(--txt); }
-    .cal-title-text:hover { background: var(--bg3); }
-    .today-btn { background: var(--bg); border: 1px solid var(--b1); padding: 0 12px; height: 28px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--txt2); }
-    .today-btn:hover { background: var(--bg3); }
-    
-    .cal-actions-group { display: flex; align-items: center; gap: 8px; position: relative; }
-    .dropdown-btn-wrap { position: relative; }
-    .view-select-btn { background: var(--bg); border: 1px solid var(--b1); padding: 0 12px; height: 28px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--txt2); }
-    .view-select-btn:hover { background: var(--bg3); }
-    
-    /* 드롭다운 메뉴 공통 */
-    .custom-dropdown-menu { display: none; position: absolute; top: 32px; right: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 1000; min-width: 110px; padding: 4px 0; }
-    .dropdown-item { padding: 8px 12px; font-size: 13px; color: var(--txt); cursor: pointer; }
-    .dropdown-item:hover { background: var(--bg2); color: var(--blue); }
+/* ── Summary Bar ── */
+.w-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.w-stat-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.w-stat-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--w-period);
+  line-height: 1;
+}
+.w-stat-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-top: 4px;
+}
+.pregnancy-mode .w-stat-num { color: #9c27b0; }
 
-    /* 달력 본체 컨테이너 (스크롤 없음) */
-    .calendar-body-wrapper { flex: 1; overflow: hidden; background: var(--bg); border: 1px solid var(--b1); border-radius: var(--r); padding: 12px; }
-    #calendar { height: 100%; }
-    
-    /* FullCalendar 내부 스타일 오버라이드 */
-    .fc { font-family: 'Inter', sans-serif; --fc-border-color: rgba(0,0,0,0.05); }
-    .fc .fc-col-header-cell-cushion { padding: 8px 0; font-weight: 600; color: var(--txt2); font-size: 12px; text-transform: uppercase; }
-    .fc .fc-daygrid-day-number { font-size: 12px; font-weight: 500; color: var(--txt2); padding: 6px; }
-    .fc-day-today { background: rgba(28, 126, 214, 0.04) !important; }
-    .fc-day-today .fc-daygrid-day-number { color: var(--blue); font-weight: 700; }
-    
-    /* 이벤트 렌더링 스타일 */
-    .fc-event-pill { font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-    .fc-event-dot-row { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .fc-event-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+/* ── Calendar section ── */
+/*
+  KEY FIX: On desktop, flex:1 + min-height:0 fills remaining panel space.
+  On mobile (handled via media query below) we switch to height:auto.
+*/
+.w-cal-section {
+  padding: 6px 16px 4px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.w-cal-inner {
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.w-cal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 4px 4px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.w-cal-dow-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 3px;
+  flex-shrink: 0;
+  padding: 0 1px;
+}
+.w-cal-dow {
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--subtext);
+  padding: 2px 0;
+  text-transform: uppercase;
+}
+.w-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  align-content: stretch;
+}
+.w-cal-day {
+  border-radius: 7px;
+  padding: 3px 2px;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  min-height: 0;
+}
+.w-cal-day:hover { opacity: .85; transform: scale(.97); }
+.w-cal-day.other-month { opacity: .3; pointer-events: none; }
+.w-cal-day.period { background: var(--w-period); }
+.w-cal-day.period-expected { background: var(--w-period-light); }
+.w-cal-day.ovulation-expected { background: var(--w-ovulation-light); }
+.w-cal-day.today { outline: 2px solid var(--w-today); outline-offset: -2px; }
+.w-cal-day.period .w-day-num { color: #fff; }
+.w-day-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1px;
+}
+.w-day-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1px;
+  font-size: 9px;
+  line-height: 1;
+}
 
-    /* Calendars 필터 버튼 및 팝업 */
-    .calendar-bottom-actions { margin-top: 10px; flex-shrink: 0; position: relative; }
-    .calendars-toggle-btn { background: var(--bg); border: 1px solid var(--b1); padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--txt2); width: fit-content; }
-    .calendars-toggle-btn:hover { background: var(--bg3); }
-    .calendars-popup { display: none; position: absolute; bottom: 38px; left: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: var(--r); padding: 14px; box-shadow: 0 -4px 16px rgba(0,0,0,0.08); z-index: 1010; width: 220px; }
-    .popup-section-title { font-size: 11px; font-weight: 600; color: var(--txt3); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-    .filter-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--txt2); cursor: pointer; }
-    .filter-item input { cursor: pointer; }
-    .color-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+/* ── View containers ── */
+.w-calendar-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.w-calendar-view.hidden { display: none; }
 
-    /* 우측 패널 레이아웃 (45%) */
-    #right-panel { flex: 45; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
-    
-    /* Today Card 영역 (상단 절반 배치) */
-    .today-card { flex: 50; border-bottom: 1px solid var(--b1); display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
-    .today-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-shrink: 0; }
-    .today-title { font-size: 16px; font-weight: 700; color: var(--txt); }
-    .today-date-label { font-size: 13px; color: var(--txt3); font-weight: 500; }
-    
-    /* 세부 스크롤 구획 */
-    .panel-scroll-container { flex: 1; overflow-y: auto; padding-right: 4px; }
-    .panel-scroll-container::-webkit-scrollbar { width: 4px; }
-    .panel-scroll-container::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
-    
-    .section-label { font-size: 11px; font-weight: 600; color: var(--txt3); margin: 12px 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: space-between; }
-    .task-filter-select { border: none; background: none; color: var(--blue); font-size: 11px; font-weight: 600; cursor: pointer; outline: none; }
+.w-daily-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.w-daily-view.active { display: flex; }
 
-    /* 이벤트 및 태스크 로우 디자인 */
-    .panel-item-row { display: flex; align-items: center; padding: 8px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 6px; font-size: 12.5px; gap: 8px; cursor: pointer; transition: background 0.15s; }
-    .panel-item-row:hover { background: var(--bg3); }
-    .event-bar { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
-    .item-time { font-size: 11px; color: var(--txt3); font-weight: 500; width: 65px; flex-shrink: 0; }
-    .item-text { font-weight: 500; color: var(--txt); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-    .item-loc { font-size: 11px; color: var(--txt3); margin-left: auto; }
-    .task-checkbox { width: 14px; height: 14px; cursor: pointer; }
-    .task-badge { font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 600; margin-left: auto; background: var(--bg3); color: var(--txt2); }
-    .task-badge.today { background: rgba(28,126,214,0.1); color: var(--blue); }
+/* ── Daily header ── */
+.w-daily-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px 6px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.w-back-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+.w-daily-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.w-daily-actions { display: flex; gap: 8px; }
+.w-icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background .15s;
+}
+.w-icon-btn:hover { background: var(--bg); }
 
-    /* Input Card 영역 (하단 절반 배치) */
-    .input-card { flex: 50; display: flex; flex-direction: column; background: var(--bg2); border-top: 1px solid var(--b1); overflow: hidden; }
-    .input-tabs { display: flex; border-bottom: 1px solid var(--b1); background: var(--bg); flex-shrink: 0; }
-    .input-tab-btn { flex: 1; padding: 10px 0; text-align: center; border: none; background: none; font-size: 13px; font-weight: 600; color: var(--txt3); cursor: pointer; position: relative; }
-    .input-tab-btn.active { color: var(--blue); }
-    .input-tab-btn.active::after { content:''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--blue); }
-    
-    .input-panel-content { flex: 1; display: flex; flex-direction: column; padding: 14px; overflow: hidden; }
-    .form-panel { display: none; height: 100%; flex-direction: column; }
-    .form-panel.active { display: flex; }
+/* ── Daily body ── */
+/*
+  KEY FIX: Remove max-height:calc(100% - 38px) which collapses to 0 on mobile.
+  Use flex:1 + overflow:auto on desktop; mobile overrides to height:auto below.
+*/
+.w-daily-body {
+  padding: 6px 12px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
 
-    /* 메시지 작성 전용 */
-    .msg-box { flex: 1; border: 1px solid var(--b1); border-radius: 8px; background: var(--bg); padding: 10px; display: flex; flex-direction: column; margin-bottom: 10px; }
-    .msg-textarea { width: 100%; flex: 1; border: none; resize: none; outline: none; font-family: inherit; font-size: 13px; color: var(--txt); }
-    .msg-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
-    .draft-label { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--txt2); cursor: pointer; }
+/* ── Note card ── */
+.w-note-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  flex-shrink: 0;
+}
+.w-note-textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  resize: none;
+  height: 36px;
+  background: transparent;
+  line-height: 1.4;
+  overflow: hidden;
+}
+.w-note-textarea::placeholder { color: #bdc1c6; }
 
-    /* 단일 행으로 정렬 구현된 5개 Add 서브 탭바 (가로 스크롤 없음) */
-    .sub-tabs-row { display: flex; background: var(--bg3); padding: 3px; border-radius: 8px; margin-bottom: 12px; flex-shrink: 0; width: 100%; justify-content: space-between; }
-    .sub-tab-btn { flex: 1; border: none; background: none; padding: 6px 0; font-size: 11.5px; font-weight: 600; color: var(--txt2); cursor: pointer; border-radius: 6px; text-align: center; white-space: nowrap; }
-    .sub-tab-btn.active { background: var(--bg); color: var(--txt); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+/* ── Item Grid ── */
+/*
+  KEY FIX: Remove max-height:360px hard limit; use min-height instead
+  so items are always visible. On mobile we allow natural height.
+*/
+.w-item-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 5px;
+  flex: 1;
+  min-height: 200px;   /* always render at least this tall */
+}
+.w-item-btn {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;    /* always visible even if grid compress */
+}
+.w-item-btn:hover { border-color: #aaa; }
+.w-item-btn.logged     { border-color: var(--primary); background: #e8f0fe; }
+.w-item-btn.logged-period { border-color: var(--w-period); background: #fce4ec; }
+.w-item-btn.logged-ov  { border-color: #9c27b0; background: var(--w-ovulation-light); }
+.w-item-icon  { font-size: 21px; display: block; margin-bottom: 3px; line-height: 1; }
+.w-item-label { font-size: 11px; font-weight: 600; color: var(--subtext); line-height: 1.2; }
+.w-item-sub   { font-size: 10px; color: #aaa; margin-top: 2px; }
 
-    /* 내부 입력 필드 공통 */
-    .sub-form-container { flex: 1; overflow-y: auto; padding-right: 2px; margin-bottom: 10px; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--txt2); margin-bottom: 4px; text-transform: uppercase; }
-    .form-control { width: 100%; border: 1px solid var(--b1); border-radius: 6px; padding: 7px 10px; font-size: 12.5px; font-family: inherit; background: var(--bg); color: var(--txt); outline: none; }
-    .form-control:focus { border-color: var(--blue); }
-    .row-fields { display: flex; gap: 8px; }
-    .row-fields .form-group { flex: 1; }
+/* ── Save Row ── */
+.w-save-row {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.w-cal-check-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--subtext);
+  cursor: pointer;
+}
+.w-cal-check-label input { accent-color: var(--primary); }
+.w-btn-save {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.w-btn-save:hover { background: #1557b0; }
+.w-btn-save.saved { background: #34a853; }
 
-    /* 푸터 액션 고정 영역 */
-    .form-submit-row { flex-shrink: 0; display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-    .btn { padding: 8px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
-    .btn-neutral { background: var(--bg3); color: var(--txt2); }
-    .btn-neutral:hover { background: var(--b1); }
-    .btn-primary { background: var(--blue); color: #FFFFFF; }
-    .btn-primary:hover { opacity: 0.9; }
+/* ── Toast ── */
+.w-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #202124;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  transition: all .25s;
+  z-index: 300;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.w-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* Bottom Nav Style (48px) */
-    .bottom-nav { flex-shrink: 0; height: 48px; border-top: 1px solid var(--b1); display: flex; align-items: center; justify-content: center; background: var(--bg); gap: 24px; }
-    .nav-item { font-size: 13px; font-weight: 600; color: var(--txt3); text-decoration: none; padding: 13px 4px; cursor: pointer; position: relative; border: none; background: none; font-family: inherit; }
-    .nav-item:hover { color: var(--txt2); }
-    .nav-item.active { color: var(--blue); }
-    .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--blue); }
+/* ── Popup ── */
+/*
+  KEY FIX: Keep position:fixed for the overlay — it's correct for a modal.
+  The real bug was the popup sheet having transform:translateY which
+  interacts badly with some mobile browsers. We keep it simple.
+*/
+.w-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 9999;   /* high enough to clear any parent stacking context */
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.w-popup-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.w-popup {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 env(safe-area-inset-bottom, 16px);
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  /* FIXED: was translateY(30px) with transition causing Chrome/Safari
+     to not show sheet at all when parent has overflow:hidden transforms */
+  transform: none;
+}
+.w-popup-handle {
+  width: 36px; height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+.w-popup-inner { padding: 14px 18px 24px; }
+.w-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+.w-popup-close {
+  float: right;
+  background: var(--bg);
+  border: none;
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 28px;
+  text-align: center;
+  margin-top: -4px;
+}
 
-    /* 모달 레이어 공통 스타일 */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 2000; align-items: center; justify-content: center; }
-    .modal-box { background: var(--bg); border-radius: var(--r); width: 420px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; padding: 16px; }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .modal-title { font-size: 15px; font-weight: 700; color: var(--txt); }
-    .modal-close { font-size: 18px; color: var(--txt3); cursor: pointer; border: none; background: none; }
-    .modal-body { overflow-y: auto; max-height: 350px; }
+/* ── Popup internals ── */
+.w-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+.w-field-label:first-child { margin-top: 0; }
+.w-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.w-chip {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--subtext);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.w-chip:hover { border-color: #aaa; }
+.w-chip.selected { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
+.w-chip.selected.pink { background: #fce4ec; border-color: var(--w-period); color: var(--w-period); }
+.w-chip.selected.purple { background: var(--w-ovulation-light); border-color: #9c27b0; color: #9c27b0; }
 
-    /* 미니 년월 선택기 팝업 전용 */
-    .month-year-picker-popup { display: none; position: absolute; top: 34px; left: 0; background: var(--bg); border: 1px solid var(--b2); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1050; padding: 10px; width: 240px; }
-    .picker-year-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--b1); padding-bottom: 6px; }
-    .picker-year-btn { border: none; background: none; font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
-    .picker-year-btn:hover { background: var(--bg3); }
-    .months-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; text-align: center; }
-    .picker-month-cell { padding: 6px 0; font-size: 11.5px; cursor: pointer; border-radius: 4px; color: var(--txt2); font-weight: 500; }
-    .picker-month-cell:hover { background: var(--blue); color: white; }
-  </style>
+.w-severity-row { display: flex; gap: 4px; margin: 4px 0 8px; }
+.w-sev-btn {
+  flex: 1;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.w-sev-btn.sel { background: var(--w-period); border-color: var(--w-period); color: #fff; }
+
+.w-symptom-item { background: var(--bg); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+.w-symptom-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+
+.w-number-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.w-number-row label { font-size: 13px; color: var(--text); flex: 1; }
+.w-num-input {
+  width: 64px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+.w-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.w-check-row input { accent-color: var(--primary); width: 16px; height: 16px; }
+
+.w-med-list { display: flex; flex-direction: column; gap: 6px; }
+.w-med-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.w-med-name { font-size: 13px; font-weight: 600; }
+.w-taken-btn {
+  background: var(--border);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--subtext);
+  transition: all .15s;
+}
+.w-taken-btn.taken { background: #34a853; color: #fff; }
+
+.w-text-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+.w-text-input:focus { outline: none; border-color: var(--primary); }
+.w-time-input {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+.w-date-input {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.w-kick-counter { text-align: center; padding: 8px 0; }
+.w-kick-num { font-size: 56px; font-weight: 800; color: var(--w-period); line-height: 1; }
+.w-kick-goal { font-size: 12px; color: var(--subtext); margin-bottom: 10px; }
+.w-kick-btn {
+  background: var(--w-period);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .1s;
+}
+.w-kick-btn:active { transform: scale(.94); }
+.w-kick-btn.done { background: #34a853; }
+.w-kick-sub { font-size: 11px; color: var(--subtext); margin-top: 8px; }
+
+.w-bp-row { display: flex; gap: 10px; align-items: flex-end; }
+.w-bp-field { flex: 1; }
+.w-bp-field label { display: block; font-size: 11px; font-weight: 700; color: var(--subtext); margin-bottom: 4px; }
+.w-bp-unit {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--subtext);
+  align-self: flex-end;
+}
+
+.w-popup-btn-row { display: flex; gap: 8px; margin-top: 16px; }
+.w-popup-save {
+  flex: 1;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.w-popup-cancel {
+  background: var(--bg);
+  color: var(--subtext);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.w-hidden { display: none !important; }
+.w-select-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: #fff;
+  box-sizing: border-box;
+}
+.w-select-input:focus { outline: none; border-color: var(--primary); }
+.w-other-input-wrap { margin-top: 6px; }
+
+.w-counter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  padding: 8px 0;
+}
+.w-counter-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .15s;
+  color: var(--text);
+  line-height: 1;
+}
+.w-counter-btn:hover { border-color: var(--primary); color: var(--primary); background: #e8f0fe; }
+.w-counter-val { font-size: 36px; font-weight: 800; color: var(--text); min-width: 48px; text-align: center; }
+
+.w-mood-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.w-mood-pick {
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.w-mood-pick:hover, .w-mood-pick.selected { border-color: var(--primary); background: #e8f0fe; }
+
+.w-energy-row { display: flex; gap: 6px; }
+.w-energy-pick {
+  flex: 1;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 10px;
+  color: var(--subtext);
+  font-weight: 600;
+}
+.w-energy-pick:hover, .w-energy-pick.selected { border-color: var(--primary); background: #e8f0fe; color: var(--primary); }
+
+/* ═══════════════════════════════════════════
+   MOBILE OVERRIDES
+   Mirror the same approach as finance.html:
+   unwind fixed heights, let content flow.
+═══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* The wrap no longer tries to fill a fixed-height parent —
+     it just grows to fit its content */
+  .w-wrap {
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  /* Calendar section: give it a fixed reasonable height instead of flex:1
+     so the grid is visible without needing a parent with explicit height */
+  .w-cal-section {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+
+  .w-cal-inner {
+    flex: none;
+    height: auto;
+  }
+
+  /* Calendar card: fixed height on mobile so grid cells render */
+  .w-cal-card {
+    height: auto;
+    min-height: 280px;
+    overflow: visible;
+    flex: none;
+  }
+
+  /* Grid: use auto rows so each cell has natural height */
+  .w-cal-grid {
+    flex: none;
+    height: auto;
+    min-height: 240px;
+    grid-template-rows: repeat(6, 1fr);
+    align-content: start;
+  }
+
+  /* Day cells: give a minimum touch-friendly height */
+  .w-cal-day {
+    min-height: 36px;
+    overflow: visible;
+  }
+
+  /* Calendar and daily views: height:auto on mobile */
+  .w-calendar-view,
+  .w-daily-view.active {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  /* Daily body: remove flex:1 and overflow:auto that depend on parent height */
+  .w-daily-body {
+    flex: none;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+    padding-bottom: 16px;
+  }
+
+  /* Item grid: natural height, no forced rows */
+  .w-item-grid {
+    flex: none;
+    height: auto;
+    min-height: 0;
+    grid-template-rows: auto;
+  }
+
+  /* Item buttons: slightly taller touch targets */
+  .w-item-btn {
+    min-height: 72px;
+  }
+
+  /* Note textarea: taller on mobile for easier typing */
+  .w-note-textarea {
+    height: 56px;
+  }
+
+  /* Popup: ensure it stays on top regardless of parent transform */
+  .w-popup-overlay {
+    z-index: 99999;
+  }
+
+  /* Popup sheet: allow full scroll on mobile */
+  .w-popup {
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Mood grid: 3 columns on mobile (5 is too narrow) */
+  .w-mood-pick-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Energy row: wrap on small screens */
+  .w-energy-row {
+    flex-wrap: wrap;
+  }
+  .w-energy-pick {
+    flex: 0 0 calc(33% - 4px);
+  }
+
+  /* BP row: stack on very small screens */
+  .w-bp-row {
+    flex-wrap: wrap;
+  }
+
+  /* Chip rows: ensure wrapping */
+  .w-chip-row {
+    gap: 4px;
+  }
+  .w-chip {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .w-header { padding: 8px 12px 6px; }
+  .w-month-label { font-size: 14px; min-width: 100px; }
+  .w-summary-bar { padding: 6px 12px; gap: 6px; }
+  .w-stat-num { font-size: 17px; }
+  .w-cal-section { padding: 4px 12px 4px; }
+
+  /* Item grid: 3 columns still works on small phones */
+  .w-item-grid { gap: 4px; }
+  .w-item-icon { font-size: 18px; }
+  .w-item-label { font-size: 10px; }
+  .w-item-btn { min-height: 60px; }
+
+  .w-daily-header { padding: 6px 10px; }
+  .w-daily-body { padding: 5px 10px 12px; }
+
+  .w-popup-inner { padding: 12px 14px 20px; }
+  .w-mood-pick-grid { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .w-kick-num { font-size: 44px; }
+}
+</style>
 </head>
 <body>
 
-<div class="app">
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="logo">KL<span>[AI]VE</span></div>
-      <div class="divider"></div>
-      <div class="welcome-msg">Welcome, <span id="user-display-name">User</span> (<span id="user-display-email">loading...</span>)</div>
+<!-- ══════════════════════════════════════════ -->
+<!-- VIEW 1: CALENDAR -->
+<!-- ══════════════════════════════════════════ -->
+<div class="w-wrap" id="wWrap">
+
+  <div class="w-calendar-view" id="wCalView">
+
+    <!-- Header -->
+    <div class="w-header">
+      <div class="w-month-nav">
+        <button class="w-nav-btn" id="wPrevMonth">‹</button>
+        <div class="w-month-label" id="wMonthLabel">May 2026</div>
+        <button class="w-nav-btn" id="wNextMonth">›</button>
+      </div>
+      <label class="w-pregnancy-toggle">
+        Pregnancy
+        <div class="w-toggle-switch">
+          <input type="checkbox" id="wPregnancyToggle">
+          <div class="w-toggle-track"></div>
+          <div class="w-toggle-thumb"></div>
+        </div>
+      </label>
     </div>
-    <div class="topbar-right">
-      <span id="current-clock">00:00:00 PM</span>
-      <span>·</span>
-      <span id="current-date">June 19, 2026</span>
-      <span>·</span>
-      <span id="weather-info">🌤 --°F / --°C</span>
-      <div class="avatar" id="user-avatar">U</div>
-      <button class="logout-btn" onclick="handleLogout()">Sign out</button>
+
+    <!-- Summary Bar -->
+    <div class="w-summary-bar" id="wSummaryBar">
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatA">—</div>
+        <div class="w-stat-label" id="wStatALabel">Day of Cycle</div>
+      </div>
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatB">—</div>
+        <div class="w-stat-label" id="wStatBLabel">Days to Period</div>
+      </div>
+      <div class="w-stat-card">
+        <div class="w-stat-num" id="wStatC">—</div>
+        <div class="w-stat-label" id="wStatCLabel">Days to Ovulation</div>
+      </div>
     </div>
-  </header>
 
-  <main class="main-container">
-    <section id="calendar-section">
-      <div class="custom-cal-header">
-        <div class="cal-nav-group">
-          <button class="cal-nav-btn" onclick="calendar.prev(); updateHeaderTitle();">‹</button>
-          <div class="cal-title-text" id="calendar-title-display" onclick="toggleMonthYearPicker(event)">June 2026</div>
-          <button class="cal-nav-btn" onclick="calendar.next(); updateHeaderTitle();">›</button>
-          <button class="today-btn" onclick="calendar.today(); updateHeaderTitle();">Today</button>
-          
-          <div class="month-year-picker-popup" id="month-year-picker">
-            <div class="picker-year-row">
-              <button class="picker-year-btn" onclick="adjustPickerYear(-1, event)">◄</button>
-              <span id="picker-year-label" style="font-weight:600;">2026</span>
-              <button class="picker-year-btn" onclick="adjustPickerYear(1, event)">►</button>
-            </div>
-            <div class="months-grid" id="months-grid-container"></div>
+    <!-- Calendar -->
+    <div class="w-cal-section">
+      <div class="w-cal-inner">
+        <div class="w-cal-card">
+          <div class="w-cal-dow-row">
+            <div class="w-cal-dow">Sun</div>
+            <div class="w-cal-dow">Mon</div>
+            <div class="w-cal-dow">Tue</div>
+            <div class="w-cal-dow">Wed</div>
+            <div class="w-cal-dow">Thu</div>
+            <div class="w-cal-dow">Fri</div>
+            <div class="w-cal-dow">Sat</div>
           </div>
-        </div>
-
-        <div class="cal-actions-group">
-          <div class="dropdown-btn-wrap">
-            <button class="view-select-btn" id="view-dropdown-btn" onclick="toggleViewDropdown(event)">Month ▾</button>
-            <div class="custom-dropdown-menu" id="view-dropdown-menu">
-              <div class="dropdown-item" onclick="changeCalendarView('dayGridMonth', 'Month ▾')">Month</div>
-              <div class="dropdown-item" onclick="changeCalendarView('timeGridWeek', 'Week ▾')">Week</div>
-            </div>
-          </div>
-          <button class="btn btn-primary" style="padding:0 12px; height:28px; font-size:12px;" onclick="focusAddTab()">+ Add</button>
+          <div class="w-cal-grid" id="wCalGrid"></div>
         </div>
       </div>
-
-      <div class="calendar-body-wrapper">
-        <div id="calendar"></div>
-      </div>
-
-      <div class="calendar-bottom-actions">
-        <button class="calendars-toggle-btn" onclick="toggleCalendarsPopup(event)">⊞ Calendars</button>
-        <div class="calendars-popup" id="calendars-popup-layer">
-          <div class="popup-section-title">My Calendars</div>
-          <label class="filter-item"><input type="checkbox" checked data-cal="default"> <span class="color-dot" style="background:var(--blue)"></span> Default</label>
-          <label class="filter-item"><input type="checkbox" checked data-cal="private"> <span class="color-dot" style="background:var(--purple)"></span> Private</label>
-          <label class="filter-item"><input type="checkbox" checked data-cal="klaive"> <span class="color-dot" style="background:var(--teal)"></span> KLAIVE</label>
-          <label class="filter-item"><input type="checkbox" checked data-cal="health"> <span class="color-dot" style="background:var(--red)"></span> Women's Health</label>
-          <div class="popup-section-title" style="margin-top:12px;">Other Calendars</div>
-          <label class="filter-item"><input type="checkbox" checked id="toggle-other-cal" onchange="toggleOtherCalendarsVisibility()"> Show Events</label>
-        </div>
-      </div>
-    </section>
-
-    <section id="right-panel">
-      <div class="today-card">
-        <div class="today-card-header">
-          <div class="today-title">Today</div>
-          <div class="today-date-label" id="today-panel-date">Jun 19, 2026</div>
-        </div>
-        
-        <div class="panel-scroll-container">
-          <div class="section-label">EVENTS</div>
-          <div id="today-events-list"></div>
-          
-          <div class="section-label">
-            <span>TASKS</span>
-            <select class="task-filter-select" id="task-list-filter" onchange="loadTasks()">
-              <option value="all">All List ▾</option>
-            </select>
-          </div>
-          <div id="today-tasks-list"></div>
-        </div>
-      </div>
-
-      <div class="input-card">
-        <div class="input-tabs">
-          <button class="input-tab-btn active" id="tab-msg-btn" onclick="switchMainTab('msg')">Send Message</button>
-          <button class="input-tab-btn" id="tab-add-btn" onclick="switchMainTab('add')">+ Add</button>
-        </div>
-        
-        <div class="input-panel-content">
-          <div class="form-panel active" id="panel-msg">
-            <div class="msg-box">
-              <textarea class="msg-textarea" id="msg-textarea" placeholder="Type your message"></textarea>
-              <div class="msg-actions">
-                <button class="btn btn-neutral" style="padding:4px 10px; font-size:11px;">Attach</button>
-                <label class="draft-label"><input type="checkbox" id="msg-draft-chk"> Save as draft</label>
-              </div>
-            </div>
-            <div class="form-submit-row">
-              <button class="btn btn-primary" onclick="submitMessageForm()">SEND</button>
-            </div>
-          </div>
-
-          <div class="form-panel" id="panel-add">
-            <div class="sub-tabs-row">
-              <button class="sub-tab-btn active" id="subtab-event" onclick="switchSubForm('event')">Event</button>
-              <button class="sub-tab-btn" id="subtab-task" onclick="switchSubForm('task')">Task</button>
-              <button class="sub-tab-btn" id="subtab-finance" onclick="switchSubForm('finance')">Finance</button>
-              <button class="sub-tab-btn" id="subtab-health" onclick="switchSubForm('health')">Health</button>
-              <button class="sub-tab-btn" id="subtab-project" onclick="switchSubForm('project')">Project</button>
-            </div>
-            
-            <div class="sub-form-container">
-              <div class="sub-form-section" id="form-event">
-                <div class="form-group"><label>Title</label><input type="text" class="form-control" id="ev-title" placeholder="Event Summary"></div>
-                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="ev-date"></div>
-                <div class="row-fields">
-                  <div class="form-group"><label>Start</label><input type="time" class="form-control" id="ev-start" value="09:00"></div>
-                  <div class="form-group"><label>End</label><input type="time" class="form-control" id="ev-end" value="10:00"></div>
-                </div>
-                <div class="form-group"><label>Location</label><input type="text" class="form-control" id="ev-loc" placeholder="Add Location"></div>
-                <div class="form-group"><label>Notes</label><input type="text" class="form-control" id="ev-notes" placeholder="Add Description"></div>
-              </div>
-
-              <div class="sub-form-section" id="form-task" style="display:none;">
-                <div class="form-group"><label>Task Title</label><input type="text" class="form-control" id="tk-title" placeholder="What needs to be done?"></div>
-                <div class="form-group"><label>List Selection</label><select class="form-control" id="tk-list-select"></select></div>
-                <div class="form-group"><label>Due Date</label><input type="date" class="form-control" id="tk-due"></div>
-                <div class="form-group"><label>Priority</label><select class="form-control" id="tk-priority"><option value="normal">Normal</option><option value="high">High</option></select></div>
-              </div>
-
-              <div class="sub-form-section" id="form-finance" style="display:none;">
-                <div class="form-group"><label>Amount ($)</label><input type="number" class="form-control" id="fin-amount" placeholder="0.00"></div>
-                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="fin-date"></div>
-                <div class="form-group"><label>Category</label><input type="text" class="form-control" id="fin-category" placeholder="Food, Rent, etc."></div>
-                <div class="form-group"><label>Description</label><input type="text" class="form-control" id="fin-desc" placeholder="Notes"></div>
-              </div>
-
-              <div class="sub-form-section" id="form-health" style="display:none;">
-                <div class="form-group"><label>Metric Type</label><select class="form-control" id="he-metric"><option value="weight">Weight (kg)</option><option value="blood_pressure">Blood Pressure</option><option value="heart_rate">Heart Rate</option></select></div>
-                <div class="form-group"><label>Value</label><input type="text" class="form-control" id="he-value" placeholder="Enter measurement"></div>
-                <div class="form-group"><label>Date</label><input type="date" class="form-control" id="he-date"></div>
-              </div>
-
-              <div class="sub-form-section" id="form-project" style="display:none;">
-                <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="pj-title" placeholder="Project name"></div>
-                <div class="form-group"><label>Deadline</label><input type="date" class="form-control" id="pj-due"></div>
-                <div class="form-group"><label>Status</label><select class="form-control" id="pj-status"><option value="active">Active</option><option value="planning">Planning</option></select></div>
-                <div class="form-group"><label>Members</label><input type="text" class="form-control" id="pj-members" placeholder="Emails separated by comma"></div>
-              </div>
-            </div>
-
-            <div class="form-submit-row">
-              <button class="btn btn-primary" onclick="submitAddForm()">Submit</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="bottom-nav">
-    <button class="nav-item" onclick="location.href='/'">Overview</button>
-    <button class="nav-item active" onclick="void(0)">Calendar</button>
-    <button class="nav-item" onclick="location.href='/finance'">Finance</button>
-    <button class="nav-item" onclick="location.href='/health'">Health</button>
-    <button class="nav-item" onclick="location.href='/task'">Tasks</button>
-    <button class="nav-item" onclick="location.href='/documents'">Documents</button>
-    <button class="nav-item" onclick="location.href='/settings'">Settings</button>
-  </footer>
-</div>
-
-<div class="modal-overlay" id="day-events-modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="day-modal-header-text">Events</div>
-      <button class="modal-close" onclick="closeModal('day-events-modal')">×</button>
     </div>
-    <div class="modal-body" id="day-modal-events-list"></div>
-  </div>
-</div>
 
-<div class="modal-overlay" id="event-view-modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title" id="evt-view-title" style="font-size:16px;">Event Details</div>
-      <button class="modal-close" onclick="closeModal('event-view-modal')">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="margin-bottom:10px; font-weight:500; id="evt-view-time">🕒 Time label</div>
-      <div style="margin-bottom:10px; display:none;" id="evt-view-loc-row">📍 <span id="evt-view-loc">Location</span></div>
-      <div style="margin-bottom:12px; color:var(--txt2); white-space:pre-wrap;" id="evt-view-desc">Description text</div>
-      <div style="display:flex; align-items:center; gap:6px; font-size:12px; padding-top:10px; border-top:1px solid var(--b1);">
-        <span class="color-dot" id="evt-view-dot"></span> <span id="evt-view-calname" style="color:var(--txt2);">Calendar Name</span>
+  </div><!-- /wCalView -->
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- VIEW 2: DAILY DIARY -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="w-daily-view" id="wDailyView">
+
+    <div class="w-daily-header">
+      <button class="w-back-btn" id="wBackBtn">‹ Back</button>
+      <div class="w-daily-title" id="wDailyTitle">27 May 2026</div>
+      <div class="w-daily-actions">
+        <button class="w-icon-btn" id="wAddCalBtn" title="Add to Calendar">📅</button>
+        <button class="w-icon-btn" id="wDeleteBtn" title="Delete">🗑</button>
       </div>
+    </div>
+
+    <div class="w-daily-body">
+
+      <!-- Note -->
+      <div class="w-note-card">
+        <div style="font-size:10px;font-weight:700;color:var(--subtext);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Note</div>
+        <textarea class="w-note-textarea" id="wNote" placeholder="How are you feeling today?" rows="3"></textarea>
+      </div>
+
+      <!-- Item Grid -->
+      <div class="w-item-grid" id="wItemGrid">
+        <!-- populated by JS -->
+      </div>
+
+      <!-- Save Row -->
+      <div class="w-save-row">
+        <label class="w-cal-check-label">
+          <input type="checkbox" id="wAddToCal"> Add to Calendar
+        </label>
+        <button class="w-btn-save" id="wSaveBtn">Save Day</button>
+      </div>
+
+    </div>
+  </div><!-- /wDailyView -->
+
+</div><!-- /wWrap -->
+
+<!-- ══════════════════════════════════════════ -->
+<!-- POPUP OVERLAY -->
+<!-- ══════════════════════════════════════════ -->
+<div class="w-popup-overlay" id="wPopupOverlay">
+  <div class="w-popup" id="wPopup">
+    <div class="w-popup-handle"></div>
+    <div class="w-popup-inner" id="wPopupInner">
+      <!-- dynamic content -->
     </div>
   </div>
 </div>
+
+<!-- Toast -->
+<div class="w-toast" id="wToast"></div>
 
 <script>
-  const BACKEND = 'https://api.mie.today';
-  let calendar;
-  let calendarMeta = {};
-  let currentActiveTab = 'msg';
-  let currentSubForm = 'event';
-  let pickerCurrentYear = 2026;
+(function() {
+'use strict';
 
-  // 초기 시작 함수 묶음
-  document.addEventListener('DOMContentLoaded', function() {
-    initApp();
+// ── Constants ────────────────────────────────────────────────
+const BACKEND = 'https://api.mie.today';
+
+// ── State ──────────────────────────────────────────────────────
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+let state = {
+  viewMonth: new Date(TODAY.getFullYear(), TODAY.getMonth(), 1),
+  currentDate: null,
+  pregnancyMode: localStorage.getItem('mie_womens_mode') === 'pregnancy',
+  dayData: {},
+  popup: null,
+  kickStartTime: null,
+};
+
+// ── Helpers ────────────────────────────────────────────────────
+function fmt(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function daysBetween(a, b) {
+  const da = typeof a === 'string' ? parseDate(a) : a;
+  const db = typeof b === 'string' ? parseDate(b) : b;
+  return Math.round((db - da) / 86400000);
+}
+function addDays(d, n) {
+  const r = typeof d === 'string' ? parseDate(d) : new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+function humanDate(dateStr) {
+  const d = parseDate(dateStr);
+  const month = d.toLocaleDateString('en-US', { month: 'long' });
+  const day = d.getDate();
+  const year = d.getFullYear();
+  return `${month} ${day} ${year}`;
+}
+
+// ── Storage ────────────────────────────────────────────────────
+function loadDay(dateStr) {
+  try {
+    const raw = localStorage.getItem('mie_womens_' + dateStr);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+function saveDay(dateStr, data) {
+  // 1) localStorage — 폴백용
+  localStorage.setItem('mie_womens_' + dateStr, JSON.stringify(data));
+  // 2) 백엔드 — 전체 일일 데이터를 tab=womens 로 전송
+  fetch(BACKEND + '/api/me/health/log', {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab: 'womens', data: Object.assign({}, data, { stamp_date: dateStr }) })
+  }).catch(() => {});
+}
+function deleteDay(dateStr) {
+  localStorage.removeItem('mie_womens_' + dateStr);
+}
+function getAllKeys() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('mie_womens_20')) keys.push(k.replace('mie_womens_',''));
+  }
+  return keys.sort();
+}
+
+// ── Cycle calculations ──────────────────────────────────────────
+function findLastPeriodStart(beforeDate) {
+  const todayStr = fmt(beforeDate || TODAY);
+  const keys = getAllKeys().filter(k => k <= todayStr);
+  for (let i = keys.length-1; i >= 0; i--) {
+    const d = loadDay(keys[i]);
+    if (d && d.period_start) return keys[i];
+  }
+  return null;
+}
+function getUserCycleLength() {
+  const keys = getAllKeys();
+  const starts = keys.map(k => loadDay(k)).filter(d => d && d.period_start).map(d => d.date).sort();
+  if (starts.length < 2) return 28;
+  const diffs = [];
+  for (let i = 1; i < starts.length; i++) diffs.push(daysBetween(starts[i-1], starts[i]));
+  return Math.round(diffs.reduce((a,b) => a+b, 0) / diffs.length);
+}
+function updateSummaryBar() {
+  const lps = findLastPeriodStart();
+  const isPreg = state.pregnancyMode;
+  const A = document.getElementById('wStatA');
+  const B = document.getElementById('wStatB');
+  const C = document.getElementById('wStatC');
+  const al = document.getElementById('wStatALabel');
+  const bl = document.getElementById('wStatBLabel');
+  const cl = document.getElementById('wStatCLabel');
+
+  if (isPreg) {
+    if (lps) {
+      const weeks = Math.floor(daysBetween(lps, TODAY) / 7);
+      const due = addDays(lps, 280);
+      const dLeft = daysBetween(TODAY, due);
+      A.textContent = `${weeks}w`;
+      B.textContent = fmt(due).slice(5).replace('-','/');
+      C.textContent = dLeft > 0 ? dLeft : '🎉';
+    } else {
+      A.textContent = '—'; B.textContent = '—'; C.textContent = '—';
+    }
+    al.textContent = 'Week Pregnant';
+    bl.textContent = 'Due Date';
+    cl.textContent = 'Days Left';
+  } else {
+    if (lps) {
+      const cl2 = getUserCycleLength();
+      const doc = daysBetween(lps, TODAY) + 1;
+      const nextPeriod = addDays(lps, cl2);
+      const dtp = daysBetween(TODAY, nextPeriod);
+      const ovDate = addDays(nextPeriod, -14);
+      const dto = daysBetween(TODAY, ovDate);
+      A.textContent = doc;
+      B.textContent = dtp >= 0 ? dtp : 0;
+      C.textContent = dto >= 0 ? dto : 0;
+    } else {
+      A.textContent = '—'; B.textContent = '—'; C.textContent = '—';
+    }
+    al.textContent = 'Day of Cycle';
+    bl.textContent = 'Days to Period';
+    cl.textContent = 'Days to Ovulation';
+  }
+}
+
+// ── Day icons for calendar ──────────────────────────────────────
+function getDayIcons(data) {
+  if (!data) return [];
+  const icons = [];
+  if (data.note && data.note.trim()) icons.push('📝');
+  if (data.period_start || data.period_end) icons.push('🔴');
+  if (data.sex && data.sex.had_sex) icons.push('💜');
+  if (data.symptoms && data.symptoms.length) icons.push('⚡');
+  if (data.medications && data.medications.some(m => m.taken)) icons.push('💊');
+  if (data.ovulation) icons.push('🌸');
+  if (data.pregnancy_test && data.pregnancy_test.result === 'Positive') icons.push('✅');
+  else if (data.pregnancy_test && data.pregnancy_test.result) icons.push('🤰');
+  if (data.ovulation_test && data.ovulation_test.result === 'Positive') icons.push('✅');
+  else if (data.ovulation_test && data.ovulation_test.result) icons.push('🔬');
+  if (data.cervical_mucus && data.cervical_mucus.feeling) icons.push('💧');
+  if (data.fetal_movement && data.fetal_movement.count) icons.push('👶');
+  if (data.clinic_visit && data.clinic_visit.type) icons.push('🏥');
+  if (data.baby_kick && data.baby_kick.count) icons.push('👣');
+  if (data.blood_pressure && data.blood_pressure.systolic) icons.push('❤️');
+  if (data.morning_sickness && data.morning_sickness.count) icons.push('🤢');
+  if (data.womens_mood && data.womens_mood.mood) icons.push('🌈');
+  return icons;
+}
+
+// ── Predicted period dates ──────────────────────────────────────
+function getPredictedPeriodDates() {
+  const lps = findLastPeriodStart();
+  if (!lps) return { periodDates: new Set(), ovulationDate: null };
+  const cl = getUserCycleLength();
+  const periodLen = 5;
+  const nextStart = addDays(lps, cl);
+  const periodDates = new Set();
+  for (let i = 0; i < periodLen; i++) periodDates.add(fmt(addDays(nextStart, i)));
+  const ovDate = addDays(nextStart, -14);
+  return { periodDates, ovulationDate: fmt(ovDate) };
+}
+
+// ── Render calendar ─────────────────────────────────────────────
+function renderCalendar() {
+  const grid = document.getElementById('wCalGrid');
+  const label = document.getElementById('wMonthLabel');
+  const vm = state.viewMonth;
+  label.textContent = vm.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+  const firstDay = new Date(vm.getFullYear(), vm.getMonth(), 1).getDay();
+  const daysInMonth = new Date(vm.getFullYear(), vm.getMonth()+1, 0).getDate();
+
+  const { periodDates, ovulationDate } = getPredictedPeriodDates();
+
+  const actualPeriodDays = new Set();
+  const allKeys = getAllKeys().sort();
+  let inPeriod = false;
+  allKeys.forEach(k => {
+    const d = loadDay(k);
+    if (d && d.period_start) { inPeriod = true; }
+    if (inPeriod) { actualPeriodDays.add(k); }
+    if (d && d.period_end) { inPeriod = false; }
   });
 
-  function initApp() {
-    // 1. 사용자 인증 체크 및 기본 정보 할당
-    fetch(`${BACKEND}/api/me/status`, { credentials: 'include' })
-      .then(res => {
-        if(!res.ok) throw new Error();
-        return res.json();
-      })
-      .then(data => {
-        if(!data.connected) {
-          window.location.replace('/');
-          return;
-        }
-        document.getElementById('user-display-name').textContent = data.user.given_name || 'User';
-        document.getElementById('user-display-email').textContent = data.user.email || '';
-        document.getElementById('user-avatar').textContent = (data.user.given_name || 'U')[0].toUpperCase();
-        
-        // 인증 통과 후 달력 및 부속 위젯 연동
-        startClock();
-        loadWeather();
-        initFullCalendar();
-        loadTasks();
-        setupGlobalClickHandlers();
-      })
-      .catch(() => {
-        window.location.replace('/');
+  grid.innerHTML = '';
+
+  const prevMonthDays = new Date(vm.getFullYear(), vm.getMonth(), 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const cell = document.createElement('div');
+    cell.className = 'w-cal-day other-month';
+    cell.innerHTML = `<span class="w-day-num">${prevMonthDays - i}</span>`;
+    grid.appendChild(cell);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = fmt(new Date(vm.getFullYear(), vm.getMonth(), d));
+    const dayData = loadDay(dateStr);
+    const dayDate = new Date(vm.getFullYear(), vm.getMonth(), d);
+    dayDate.setHours(0,0,0,0);
+
+    const cell = document.createElement('div');
+    let cls = 'w-cal-day';
+
+    if (actualPeriodDays.has(dateStr)) cls += ' period';
+    else if (periodDates.has(dateStr)) cls += ' period-expected';
+    else if (dateStr === ovulationDate) cls += ' ovulation-expected';
+
+    if (dayDate.getTime() === TODAY.getTime()) cls += ' today';
+    cell.className = cls;
+
+    const icons = getDayIcons(dayData);
+    cell.innerHTML = `<span class="w-day-num">${d}</span><div class="w-day-icons">${icons.join('')}</div>`;
+    cell.addEventListener('click', () => openDailyView(dateStr));
+    grid.appendChild(cell);
+  }
+
+  const total = firstDay + daysInMonth;
+  const remain = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remain; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'w-cal-day other-month';
+    cell.innerHTML = `<span class="w-day-num">${i}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+// ── Open Daily View ────────────────────────────────────────────
+function openDailyView(dateStr) {
+  state.currentDate = dateStr;
+  const saved = loadDay(dateStr) || {
+    date: dateStr,
+    mode: state.pregnancyMode ? 'pregnancy' : 'period',
+    note: '',
+    period_start: false,
+    period_end: false,
+    ovulation: false,
+    sex: { had_sex: false, condom: false, internal_ejaculation: false, masturbation: false, count: 0, orgasm_count: 0 },
+    symptoms: [],
+    medications: [],
+    cervical_mucus: { feeling: null, color: null, type: null },
+    ovulation_test: { result: null, time: null },
+    pregnancy_test: { result: null, time: null },
+    fetal_movement: { count: 0, time: null, intensity: null },
+    clinic_visit: { type: null, note: '', next_appointment: null },
+    baby_kick: { count: 0, start_time: null },
+    blood_pressure: { systolic: null, diastolic: null, note: '' },
+    add_to_calendar: false,
+    calendar_visibility: 'private'
+  };
+  state.dayData = saved;
+
+  document.getElementById('wDailyTitle').textContent = humanDate(dateStr);
+  document.getElementById('wNote').value = saved.note || '';
+  document.getElementById('wAddToCal').checked = !!saved.add_to_calendar;
+
+  document.getElementById('wCalView').classList.add('hidden');
+  document.getElementById('wDailyView').classList.add('active');
+
+  // On mobile: scroll to top of the panel when opening daily view
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  renderItemGrid();
+}
+
+// ── Close Daily View ───────────────────────────────────────────
+function closeDailyView() {
+  document.getElementById('wDailyView').classList.remove('active');
+  document.getElementById('wCalView').classList.remove('hidden');
+  renderCalendar();
+  updateSummaryBar();
+  state.currentDate = null;
+}
+
+// ── Render Item Grid ───────────────────────────────────────────
+function renderItemGrid() {
+  const grid = document.getElementById('wItemGrid');
+  const d = state.dayData;
+  const preg = state.pregnancyMode;
+
+  let items;
+  if (!preg) {
+    items = [
+      { key:'period_start', icon:'🔴', label:'Period Start', type:'toggle-period' },
+      { key:'period_end',   icon:'🔴', label:'Period End',   type:'toggle-period' },
+      { key:'ovulation',    icon:'🌸', label:'Ovulation',    type:'toggle-ov' },
+      { key:'sex',          icon:'💜', label:'Sex',          type:'popup-sex' },
+      { key:'symptoms',     icon:'⚡', label:'Symptoms',     type:'popup-symptoms' },
+      { key:'medications',  icon:'💊', label:'Medication',   type:'popup-medication' },
+      { key:'cervical_mucus', icon:'💧', label:'Cervical Mucus', type:'popup-cm' },
+      { key:'ovulation_test', icon:'🔬', label:'Ovulation Test', type:'popup-ov-test' },
+      { key:'pregnancy_test', icon:'🤰', label:'Pregnancy Test', type:'popup-preg-test' },
+    ];
+  } else {
+    items = [
+      { key:'fetal_movement',   icon:'👶', label:'Baby Movement',    type:'popup-fetal' },
+      { key:'baby_kick',        icon:'👣', label:'Baby Kicks',       type:'popup-kick' },
+      { key:'morning_sickness', icon:'🤢', label:'Morning Sickness', type:'popup-morning-sickness' },
+      { key:'cervical_mucus',   icon:'💧', label:'Cervical Mucus',   type:'popup-cm' },
+      { key:'sex',              icon:'💜', label:'Sex',              type:'popup-sex' },
+      { key:'symptoms',         icon:'⚡', label:'Symptoms',         type:'popup-symptoms' },
+      { key:'medications',      icon:'💊', label:'Medication',       type:'popup-medication' },
+      { key:'blood_pressure',   icon:'🩺', label:'Blood Pressure',   type:'popup-bp' },
+      { key:'mood',             icon:'🌈', label:'Mood',             type:'popup-mood' },
+    ];
+  }
+
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const btn = document.createElement('div');
+
+    if (item.type === 'spacer') {
+      btn.style.cssText = 'visibility:hidden';
+      grid.appendChild(btn);
+      return;
+    }
+
+    btn.className = 'w-item-btn';
+    const logged = isLogged(item.key, d);
+    if (logged) {
+      if (item.type === 'toggle-period') btn.classList.add('logged-period');
+      else if (item.type === 'toggle-ov') btn.classList.add('logged-ov');
+      else btn.classList.add('logged');
+    }
+
+    const subText = getSubText(item.key, d);
+    btn.innerHTML = `<span class="w-item-icon">${item.icon}</span><span class="w-item-label">${item.label}</span>${subText ? `<span class="w-item-sub">${subText}</span>` : ''}`;
+
+    btn.addEventListener('click', () => handleItemClick(item));
+    grid.appendChild(btn);
+  });
+}
+
+function isLogged(key, d) {
+  if (!d) return false;
+  if (key === 'period_start') return !!d.period_start;
+  if (key === 'period_end') return !!d.period_end;
+  if (key === 'ovulation') return !!d.ovulation;
+  if (key === 'sex') return d.sex && d.sex.had_sex;
+  if (key === 'symptoms') return d.symptoms && d.symptoms.length > 0;
+  if (key === 'medications') return d.medications && d.medications.some(m => m.taken);
+  if (key === 'cervical_mucus') return d.cervical_mucus && !!d.cervical_mucus.feeling;
+  if (key === 'ovulation_test') return d.ovulation_test && !!d.ovulation_test.result;
+  if (key === 'pregnancy_test') return d.pregnancy_test && !!d.pregnancy_test.result;
+  if (key === 'fetal_movement') return d.fetal_movement && d.fetal_movement.count > 0;
+  if (key === 'clinic_visit') return d.clinic_visit && !!d.clinic_visit.type;
+  if (key === 'baby_kick') return d.baby_kick && d.baby_kick.count > 0;
+  if (key === 'blood_pressure') return d.blood_pressure && !!d.blood_pressure.systolic;
+  if (key === 'morning_sickness') return d.morning_sickness && (d.morning_sickness.count > 0 || !!d.morning_sickness.severity);
+  if (key === 'mood') return d.womens_mood && !!d.womens_mood.mood;
+  return false;
+}
+
+function getSubText(key, d) {
+  if (!d) return '';
+  if (key === 'symptoms' && d.symptoms && d.symptoms.length) return `${d.symptoms.length} logged`;
+  if (key === 'medications' && d.medications) {
+    const t = d.medications.filter(m => m.taken).length;
+    if (t) return `${t} taken`;
+  }
+  if (key === 'ovulation_test' && d.ovulation_test && d.ovulation_test.result) return d.ovulation_test.result;
+  if (key === 'pregnancy_test' && d.pregnancy_test && d.pregnancy_test.result) return d.pregnancy_test.result;
+  if (key === 'baby_kick' && d.baby_kick && d.baby_kick.count) return `${d.baby_kick.count} kicks`;
+  if (key === 'blood_pressure' && d.blood_pressure && d.blood_pressure.systolic) return `${d.blood_pressure.systolic}/${d.blood_pressure.diastolic}`;
+  if (key === 'fetal_movement' && d.fetal_movement && d.fetal_movement.count) return `${d.fetal_movement.count} times`;
+  if (key === 'morning_sickness' && d.morning_sickness && d.morning_sickness.count) return `${d.morning_sickness.count}x`;
+  if (key === 'mood' && d.womens_mood && d.womens_mood.mood) return d.womens_mood.mood;
+  return '';
+}
+
+function handleItemClick(item) {
+  const d = state.dayData;
+  if (item.type === 'toggle-period') {
+    if (item.key === 'period_start') {
+      if (d.period_start) { if (!confirm('Remove Period Start mark?')) return; }
+      d.period_start = !d.period_start;
+    } else {
+      if (d.period_end) { if (!confirm('Remove Period End mark?')) return; }
+      d.period_end = !d.period_end;
+    }
+    autoSaveAndReturn();
+    return;
+  }
+  if (item.type === 'toggle-ov') {
+    if (d.ovulation) { if (!confirm('Remove Ovulation mark?')) return; }
+    d.ovulation = !d.ovulation;
+    autoSaveAndReturn();
+    return;
+  }
+  openPopup(item.type);
+}
+
+// ── Popups ─────────────────────────────────────────────────────
+function openPopup(type) {
+  state.popup = type;
+  const inner = document.getElementById('wPopupInner');
+  inner.innerHTML = buildPopupHTML(type);
+  attachPopupListeners(type);
+  document.getElementById('wPopupOverlay').classList.add('open');
+  // Prevent body scroll behind popup on mobile
+  document.body.style.overflow = 'hidden';
+}
+
+function closePopup() {
+  document.getElementById('wPopupOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  state.popup = null;
+}
+
+function buildPopupHTML(type) {
+  const d = state.dayData;
+  let html = '';
+
+  const header = (title) => `
+    <div class="w-popup-title">${title}<button class="w-popup-close" id="wPopupClose">✕</button></div>`;
+
+  if (type === 'popup-sex') {
+    const s = d.sex || {};
+    const condomVal = s.condom === true ? 'Yes' : s.condom === false && s.had_sex ? 'No' : 'No Record';
+    html = header('Sex 💜') + `
+      <div class="w-field-label">Sex</div>
+      <div class="w-counter-row" id="pSexCounterRow">
+        <button class="w-counter-btn" id="pSexMinus">−</button>
+        <span class="w-counter-val" id="pSexCount">${s.count || 0}</span>
+        <button class="w-counter-btn" id="pSexPlus">+</button>
+      </div>
+      <div id="pSexSub" style="${(s.count||0) > 0 || s.had_sex ? '' : 'display:none'}">
+        <div class="w-field-label" style="margin-top:12px">Time</div>
+        <input type="time" class="w-time-input" id="pSexTime" value="${s.time||''}">
+        <div class="w-field-label" style="margin-top:12px">Condom</div>
+        <div class="w-chip-row" id="pCondomChips">
+          <div class="w-chip${condomVal==='No Record'?' selected':''}" data-val="No Record">No Record</div>
+          <div class="w-chip${condomVal==='No'?' selected':''}" data-val="No">No</div>
+          <div class="w-chip${condomVal==='Yes'?' selected':''}" data-val="Yes">Yes</div>
+        </div>
+        <div class="w-field-label" style="margin-top:12px">Orgasm</div>
+        <div class="w-counter-row">
+          <button class="w-counter-btn" id="pOrgasmMinus">−</button>
+          <span class="w-counter-val" id="pOrgasmCount">${s.orgasm_count || 0}</span>
+          <button class="w-counter-btn" id="pOrgasmPlus">+</button>
+        </div>
+        <div class="w-field-label" style="margin-top:12px">Masturbation</div>
+        <div class="w-counter-row">
+          <button class="w-counter-btn" id="pMastMinus">−</button>
+          <span class="w-counter-val" id="pMastCount">${s.masturbation_count || 0}</span>
+          <button class="w-counter-btn" id="pMastPlus">+</button>
+        </div>
+      </div>
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-symptoms') {
+    const symptoms = ['Cramps','Headache','Bloating','Fatigue','Nausea','Back Pain',
+      'Breast Tenderness','Mood Swings','Acne','Spotting','Hot Flashes','Insomnia','Other'];
+    const selected = d.symptoms || [];
+    const selNames = selected.map(s => s.name);
+    html = header('Symptoms ⚡') + `<div class="w-chip-row" id="pSymChips">` +
+      symptoms.map(s => `<div class="w-chip${selNames.includes(s)?' selected pink':''}" data-sym="${s}">${s}</div>`).join('') +
+      `</div><div id="pSymSeverities">` +
+      selected.map(s => buildSeverityRow(s.name, s.severity)).join('') +
+      `</div><div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-medication') {
+    const meds = ['Iron','Folic Acid','Vitamin D','Calcium','Magnesium',
+      'Prenatal Vitamins','Birth Control Pill','Pain Reliever','Antibiotic'];
+    const saved = d.medications || [];
+    const savedMap = {};
+    saved.forEach(m => savedMap[m.name] = m.taken);
+    html = header('Medication 💊') + `<div class="w-med-list">` +
+      meds.map(m => `<div class="w-med-row">
+        <span class="w-med-name">${m}</span>
+        <button class="w-taken-btn${savedMap[m]?' taken':''}" data-med="${m}">${savedMap[m]?'Taken ✓':'Not Taken'}</button>
+      </div>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Other (custom)</div>
+      <input class="w-text-input" id="pMedOther" placeholder="e.g. Metformin" value="">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-cm') {
+    const cm = d.cervical_mucus || {};
+    const opt = (group, val, cur, cls) =>
+      `<div class="w-chip${cur===val?' selected '+(cls||''):''}" data-group="${group}" data-val="${val}">${val}</div>`;
+    html = header('Cervical Mucus 💧') +
+      `<div class="w-field-label">Feeling</div><div class="w-chip-row" id="pCmFeeling">` +
+      ['Dry','Wet','Damp','Damp-Slick','Oily'].map(v => opt('feeling',v,cm.feeling)).join('') + `</div>` +
+      `<div class="w-field-label">Color</div><div class="w-chip-row" id="pCmColor">` +
+      ['N/A','White','Turbid','Turbid-Pure','Transparent'].map(v => opt('color',v,cm.color)).join('') + `</div>` +
+      `<div class="w-field-label">Type</div><div class="w-chip-row" id="pCmType">` +
+      ['No Type','Thick','Sticky-Clotted','Stretchy','Slick-Glutinous','Like an Egg White'].map(v => opt('type',v,cm.type)).join('') + `</div>` +
+      `<div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-ov-test') {
+    const ot = d.ovulation_test || {};
+    html = header('Ovulation Test 🔬') +
+      `<div class="w-field-label">Result</div><div class="w-chip-row" id="pOvResult">` +
+      ['Positive','Negative','Maybe'].map(v => `<div class="w-chip${ot.result===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pOvTime" value="${ot.time||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-preg-test') {
+    const pt = d.pregnancy_test || {};
+    html = header('Pregnancy Test 🤰') +
+      `<div class="w-field-label">Result</div><div class="w-chip-row" id="pPtResult">` +
+      ['Positive','Negative'].map(v => `<div class="w-chip${pt.result===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pPtTime" value="${pt.time||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-fetal') {
+    const fm = d.fetal_movement || {};
+    html = header('Fetal Movement 👶') +
+      `<div class="w-number-row"><label>Count (times)</label><input class="w-num-input" type="number" id="pFmCount" min="0" value="${fm.count||0}"></div>
+      <div class="w-field-label">Time</div>
+      <input type="time" class="w-time-input" id="pFmTime" value="${fm.time||''}">
+      <div class="w-field-label">Intensity</div>
+      <div class="w-chip-row" id="pFmIntensity">` +
+      ['Weak','Normal','Strong'].map(v => `<div class="w-chip${fm.intensity===v?' selected':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div><div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-clinic') {
+    const cv = d.clinic_visit || {};
+    html = header('Clinic Visit 🏥') +
+      `<div class="w-field-label">Visit Type</div>
+      <select class="w-select-input" id="pCvType">
+        <option value="">Select…</option>` +
+      ['Regular Checkup','Ultrasound','Blood Test','Emergency','Other'].map(v =>
+        `<option value="${v}"${cv.type===v?' selected':''}>${v}</option>`).join('') +
+      `</select>
+      <div class="w-field-label">Notes</div>
+      <input class="w-text-input" id="pCvNote" placeholder="Notes…" value="${cv.note||''}">
+      <div class="w-field-label">Next Appointment</div>
+      <input type="date" class="w-date-input" id="pCvNext" value="${cv.next_appointment||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-kick') {
+    const bk = d.baby_kick || { count: 0, start_time: null };
+    const done = bk.count >= 10;
+    html = header('Baby Kick Counter 👣') +
+      `<div class="w-kick-counter">
+        <div class="w-kick-num" id="pKickNum">${bk.count || 0}</div>
+        <div class="w-kick-goal">${done ? '✅ Goal reached!' : 'Goal: 10 kicks'}</div>
+        <button class="w-kick-btn${done?' done':''}" id="pKickBtn">+ 1 Kick</button>
+        <div class="w-kick-sub" id="pKickSub">${bk.start_time ? 'Started: '+bk.start_time : 'Tap to start counting'}</div>
+      </div>
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-bp') {
+    const bp = d.blood_pressure || {};
+    html = header('Blood Pressure 🩺') +
+      `<div class="w-bp-row">
+        <div class="w-bp-field"><label>Systolic</label><input class="w-num-input" type="number" id="pBpSys" style="width:100%;box-sizing:border-box" value="${bp.systolic||''}" placeholder="120"></div>
+        <div class="w-bp-field"><label>Diastolic</label><input class="w-num-input" type="number" id="pBpDia" style="width:100%;box-sizing:border-box" value="${bp.diastolic||''}" placeholder="80"></div>
+        <div class="w-bp-unit">mmHg</div>
+      </div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pBpNote" placeholder="Optional note…" value="${bp.note||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-mood') {
+    const wm = d.womens_mood || {};
+    const moods = [
+      {m:'Amazing',e:'🤩'},{m:'Happy',e:'😊'},{m:'Calm',e:'😌'},{m:'Neutral',e:'😐'},
+      {m:'Tired',e:'😴'},{m:'Anxious',e:'😰'},{m:'Sad',e:'😢'},{m:'Angry',e:'😠'},
+      {m:'Stressed',e:'😫'},{m:'Grateful',e:'🙏'}
+    ];
+    html = header('Mood 🌈') +
+      `<div class="w-field-label">How are you feeling?</div>
+      <div class="w-mood-pick-grid" id="pMoodGrid">` +
+      moods.map(({m,e}) => `<button class="w-mood-pick${wm.mood===m?' selected':''}" data-mood="${m}"><span style="font-size:24px">${e}</span><div style="font-size:10px;margin-top:3px;color:var(--subtext)">${m}</div></button>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Energy Level</div>
+      <div class="w-energy-row" id="pEnergyRow">` +
+      [['Very Low','⚡'],['Low','🔋'],['Medium','⚡'],['High','🔥'],['Peak','💥']].map(([lbl,ico],i) =>
+        `<button class="w-energy-pick${wm.energy_level===(i+1)?' selected':''}" data-energy="${i+1}"><span style="font-size:18px">${ico}</span><div style="font-size:10px;margin-top:2px">${lbl}</div></button>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pMoodNotes" placeholder="What's on your mind?" value="${wm.notes||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+
+  } else if (type === 'popup-morning-sickness') {
+    const ms = d.morning_sickness || {};
+    html = header('Morning Sickness 🤢') +
+      `<div class="w-field-label">Times today</div>
+      <div class="w-counter-row">
+        <button class="w-counter-btn" id="pMsMinus">−</button>
+        <span class="w-counter-val" id="pMsCount">${ms.count || 0}</span>
+        <button class="w-counter-btn" id="pMsPlus">+</button>
+      </div>
+      <div class="w-field-label" style="margin-top:12px">Severity</div>
+      <div class="w-chip-row" id="pMsIntensity">` +
+      ['Mild','Moderate','Severe'].map(v => `<div class="w-chip${ms.severity===v?' selected pink':''}" data-val="${v}">${v}</div>`).join('') +
+      `</div>
+      <div class="w-field-label" style="margin-top:12px">Notes</div>
+      <input class="w-text-input" id="pMsNote" placeholder="e.g. after breakfast…" value="${ms.note||''}">
+      <div class="w-popup-btn-row">
+        <button class="w-popup-cancel" id="wPopupCancel">Cancel</button>
+        <button class="w-popup-save" id="wPopupSave">Save</button>
+      </div>`;
+  }
+
+  return html;
+}
+
+function buildSeverityRow(name, current) {
+  const btns = [1,2,3,4,5].map(n =>
+    `<button class="w-sev-btn${current===n?' sel':''}" data-name="${name}" data-sev="${n}">${n}</button>`).join('');
+  return `<div class="w-symptom-item"><div class="w-symptom-name">${name}</div><div class="w-severity-row">${btns}</div></div>`;
+}
+
+function attachPopupListeners(type) {
+  document.getElementById('wPopupClose')?.addEventListener('click', closePopup);
+  document.getElementById('wPopupCancel')?.addEventListener('click', closePopup);
+
+  const saveBtn = document.getElementById('wPopupSave');
+
+  if (type === 'popup-sex') {
+    function counterSetup(minusId, plusId, valId, min = 0) {
+      const minusBtn = document.getElementById(minusId);
+      const plusBtn  = document.getElementById(plusId);
+      const valEl    = document.getElementById(valId);
+      if (!minusBtn || !plusBtn || !valEl) return;
+      minusBtn.addEventListener('click', () => {
+        const cur = parseInt(valEl.textContent) || 0;
+        if (cur > min) valEl.textContent = cur - 1;
+        if (valId === 'pSexCount') toggleSexSub();
       });
-  }
-
-  // 상단 바 시계 구동 로직
-  function startClock() {
-    const clockEl = document.getElementById('current-clock');
-    const dateEl = document.getElementById('current-date');
-    function update() {
-      const now = new Date();
-      clockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-      dateEl.textContent = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      plusBtn.addEventListener('click', () => {
+        valEl.textContent = (parseInt(valEl.textContent) || 0) + 1;
+        if (valId === 'pSexCount') toggleSexSub();
+      });
     }
-    update();
-    setInterval(update, 1000);
-  }
-
-  // 상단 바 실시간 날씨 구동 로직
-  function loadWeather() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
-          .then(res => res.json())
-          .then(data => {
-            if(data && data.current_weather) {
-              const tempC = Math.round(data.current_weather.temperature);
-              const tempF = Math.round((tempC * 9/5) + 32);
-              document.getElementById('weather-info').textContent = `🌤 ${tempF}°F / ${tempC}°C`;
-            }
-          }).catch(()=>{});
-      }, () => {});
+    function toggleSexSub() {
+      const count = parseInt(document.getElementById('pSexCount')?.textContent) || 0;
+      const sub = document.getElementById('pSexSub');
+      if (sub) sub.style.display = count > 0 ? '' : 'none';
     }
-  }
+    document.getElementById('pCondomChips')?.addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pCondomChips .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    counterSetup('pSexMinus', 'pSexPlus', 'pSexCount');
+    counterSetup('pOrgasmMinus', 'pOrgasmPlus', 'pOrgasmCount');
+    counterSetup('pMastMinus', 'pMastPlus', 'pMastCount');
+    saveBtn.addEventListener('click', () => {
+      const count = parseInt(document.getElementById('pSexCount')?.textContent) || 0;
+      const orgasmCount = parseInt(document.getElementById('pOrgasmCount')?.textContent) || 0;
+      const mastCount = parseInt(document.getElementById('pMastCount')?.textContent) || 0;
+      const condomSel = document.querySelector('#pCondomChips .w-chip.selected')?.dataset.val || 'No Record';
+      state.dayData.sex = {
+        had_sex: count > 0 || mastCount > 0,
+        count,
+        orgasm_count: orgasmCount,
+        masturbation_count: mastCount,
+        condom: condomSel === 'Yes' ? true : condomSel === 'No' ? false : null,
+        time: document.getElementById('pSexTime')?.value || null,
+      };
+      closePopup(); autoSaveAndReturn();
+    });
 
-  // 로그아웃 핸들러
-  function handleLogout() {
-    fetch(`${BACKEND}/auth/logout`, { method: 'POST', credentials: 'include' })
-      .then(() => window.location.replace('/'));
-  }
+  } else if (type === 'popup-symptoms') {
+    document.getElementById('pSymChips').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      const sym = chip.dataset.sym;
+      chip.classList.toggle('selected');
+      chip.classList.toggle('pink', chip.classList.contains('selected'));
+      const sev = document.getElementById('pSymSeverities');
+      if (chip.classList.contains('selected')) {
+        const existing = state.dayData.symptoms?.find(s => s.name === sym);
+        sev.insertAdjacentHTML('beforeend', buildSeverityRow(sym, existing?.severity || 3));
+      } else {
+        [...sev.querySelectorAll('.w-symptom-item')].forEach(el => {
+          if (el.querySelector('.w-symptom-name')?.textContent === sym) el.remove();
+        });
+      }
+    });
+    document.getElementById('pSymSeverities').addEventListener('click', e => {
+      const btn = e.target.closest('.w-sev-btn');
+      if (!btn) return;
+      const row = btn.closest('.w-severity-row');
+      row.querySelectorAll('.w-sev-btn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+    });
+    saveBtn.addEventListener('click', () => {
+      const chips = [...document.querySelectorAll('#pSymChips .w-chip.selected')];
+      const symptoms = chips.map(c => {
+        const name = c.dataset.sym;
+        const row = [...document.querySelectorAll('#pSymSeverities .w-symptom-item')]
+          .find(el => el.querySelector('.w-symptom-name')?.textContent === name);
+        const selSev = row?.querySelector('.w-sev-btn.sel');
+        return { name, severity: selSev ? parseInt(selSev.dataset.sev) : 3 };
+      });
+      state.dayData.symptoms = symptoms;
+      closePopup(); autoSaveAndReturn();
+    });
 
-  // 운영 캘린더 색상 로직 적용 (index_14_.html 완벽 변환 함수)
-  function pastelForCalId(calId, summary, visibility) {
-    if (visibility === 'private') return { bg: '#F3E5F5', text: '#534AB7' }; 
-    if (summary && summary.toUpperCase().includes('KLAIVE')) return { bg: '#E8F5E9', text: '#1D9E75' }; 
-    if (summary && (summary.includes("Women's Health") || summary.toUpperCase().includes('HEALTH'))) return { bg: '#FFEBEE', text: '#E24B4A' }; 
-    return { bg: '#E3F2FD', text: '#1C7ED6' };
-  }
+  } else if (type === 'popup-medication') {
+    document.querySelectorAll('.w-taken-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('taken');
+        btn.textContent = btn.classList.contains('taken') ? 'Taken ✓' : 'Not Taken';
+      });
+    });
+    saveBtn.addEventListener('click', () => {
+      const meds = [...document.querySelectorAll('.w-taken-btn')].map(btn => ({
+        name: btn.dataset.med,
+        taken: btn.classList.contains('taken')
+      }));
+      const other = document.getElementById('pMedOther')?.value.trim();
+      if (other) meds.push({ name: other, taken: true });
+      state.dayData.medications = meds;
+      closePopup(); autoSaveAndReturn();
+    });
 
-  // FullCalendar 구조 빌드 및 설정
-  function initFullCalendar() {
-    const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      fixedWeekCount: false,
-      showNonCurrentDates: false,
-      height: 'parent',
-      headerToolbar: false, // 전용 커스텀 헤더 사용
-      firstDay: 0,
-      dayMaxEvents: 4, 
-      events: function(info, successCallback, failureCallback) {
-        const url = `${BACKEND}/api/me/events?timeMin=${info.startStr}&timeMax=${info.endStr}`;
-        fetch(url, { credentials: 'include' })
-          .then(res => res.json())
-          .then(data => {
-            const list = data.events || [];
-            renderTodayEventsPanel(list); // 오늘 패널 실시간 드로잉 연동
-            successCallback(list);
+  } else if (type === 'popup-cm') {
+    document.getElementById('wPopupInner').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip[data-group]');
+      if (!chip) return;
+      const grp = chip.dataset.group;
+      document.querySelectorAll(`[data-group="${grp}"]`).forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const get = (grp) => document.querySelector(`[data-group="${grp}"].selected`)?.dataset.val || null;
+      state.dayData.cervical_mucus = { feeling: get('feeling'), color: get('color'), type: get('type') };
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-ov-test') {
+    document.getElementById('pOvResult').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pOvResult .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.ovulation_test = {
+        result: document.querySelector('#pOvResult .w-chip.selected')?.dataset.val || null,
+        time: document.getElementById('pOvTime')?.value || null
+      };
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-preg-test') {
+    document.getElementById('pPtResult').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pPtResult .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      state.dayData.pregnancy_test = {
+        result: document.querySelector('#pPtResult .w-chip.selected')?.dataset.val || null,
+        time: document.getElementById('pPtTime')?.value || null
+      };
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-fetal') {
+    document.getElementById('pFmIntensity').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pFmIntensity .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const count     = parseInt(document.getElementById('pFmCount')?.value) || 0;
+      const time      = document.getElementById('pFmTime')?.value || null;
+      const intensity = document.querySelector('#pFmIntensity .w-chip.selected')?.dataset.val || null;
+      // 배열 방식으로 누적 (하루 여러 번 기록 가능)
+      if (!Array.isArray(state.dayData.fetal_movement_log)) {
+        state.dayData.fetal_movement_log = [];
+      }
+      const entry = { count, time, intensity };
+      state.dayData.fetal_movement_log.push(entry);
+      // 하위 호환: 단일 객체도 최신값으로 유지
+      state.dayData.fetal_movement = entry;
+      // 백엔드 전송
+      if (count > 0) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'fetal_movement',
+            data: { fetal_movement_count: count, fetal_movement_time: time,
+                    fetal_movement_intensity: intensity,
+                    stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
           })
-          .catch(() => successCallback([]));
-      },
-      eventContent: function(arg) {
-        const ext = arg.event.extendedProps;
-        const isAllDay = arg.event.allDay;
-        const colorMeta = pastelForCalId(ext.calendarId, arg.event.title || ext.summary, ext.visibility);
-        
-        if (isAllDay) {
-          return {
-            html: `<div class="fc-event-pill" style="background:${colorMeta.bg}; color:${colorMeta.text};">${arg.event.title}</div>`
-          };
-        } else {
-          const timeText = arg.timeText || '';
-          return {
-            html: `<div class="fc-event-dot-row">
-                     <span class="fc-event-dot" style="background:${colorMeta.text}"></span>
-                     <span style="font-weight:600; color:${colorMeta.text}; margin-right:2px;">${timeText}</span>
-                     <span>${arg.event.title}</span>
-                   </div>`
-          };
-        }
-      },
-      dateClick: function(arg) {
-        // [수정 요구 1] 날짜 클릭 시 Day 뷰로 자동 점프 연동 및 드롭다운 명칭 자동 보정 반영
-        calendar.changeView('timeGridDay', arg.dateStr);
-        updateHeaderTitle();
-        document.getElementById('view-dropdown-btn').innerHTML = `Day ▾`;
-      },
-      eventClick: function(arg) {
-        openEventView(arg.event);
-      },
-      moreLinkClick: function(arg) {
-        openDayModal(arg.date, arg.allSegs);
-        return 'none';
+        }).catch(() => {});
+      }
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-clinic') {
+    saveBtn.addEventListener('click', () => {
+      state.dayData.clinic_visit = {
+        type: document.getElementById('pCvType')?.value || null,
+        note: document.getElementById('pCvNote')?.value || '',
+        next_appointment: document.getElementById('pCvNext')?.value || null
+      };
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-kick') {
+    let kickCount = state.dayData.baby_kick?.count || 0;
+    let kickStart = state.dayData.baby_kick?.start_time || null;
+
+    document.getElementById('pKickBtn').addEventListener('click', () => {
+      if (!kickStart) {
+        const now = new Date();
+        kickStart = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        document.getElementById('pKickSub').textContent = 'Started: ' + kickStart;
+      }
+      kickCount++;
+      document.getElementById('pKickNum').textContent = kickCount;
+      const btn = document.getElementById('pKickBtn');
+      if (kickCount >= 10) {
+        btn.classList.add('done');
+        btn.textContent = '✅ Done!';
+        document.querySelector('.w-kick-goal').textContent = '✅ Goal reached!';
       }
     });
-    
-    calendar.render();
-    updateHeaderTitle();
-    buildMonthYearPickerGrid();
-  }
-
-  // 커스텀 타이틀 및 명칭 싱크
-  function updateHeaderTitle() {
-    const view = calendar.view;
-    document.getElementById('calendar-title-display').textContent = view.title;
-  }
-
-  // 드롭다운 및 모달 토글 차단 공통 레이어 제어
-  function setupGlobalClickHandlers() {
-    window.addEventListener('click', function() {
-      document.getElementById('view-dropdown-menu').style.display = 'none';
-      document.getElementById('calendars-popup-layer').style.display = 'none';
-      document.getElementById('month-year-picker').style.display = 'none';
-    });
-  }
-
-  function toggleViewDropdown(e) {
-    e.stopPropagation();
-    const m = document.getElementById('view-dropdown-menu');
-    m.style.display = (m.style.display === 'block') ? 'none' : 'block';
-  }
-
-  function changeCalendarView(viewName, label) {
-    calendar.changeView(viewName);
-    document.getElementById('view-dropdown-btn').innerHTML = label;
-    updateHeaderTitle();
-  }
-
-  function toggleCalendarsPopup(e) {
-    e.stopPropagation();
-    const p = document.getElementById('calendars-popup-layer');
-    p.style.display = (p.style.display === 'block') ? 'none' : 'block';
-  }
-
-  // 월/년도 피커 셀랙션 오픈 구조 [요구 2 반영]
-  function toggleMonthYearPicker(e) {
-    e.stopPropagation();
-    const p = document.getElementById('month-year-picker');
-    if(p.style.display === 'block') {
-      p.style.display = 'none';
-    } else {
-      p.style.display = 'block';
-      const currentFullDate = calendar.getDate();
-      pickerCurrentYear = currentFullDate.getFullYear();
-      document.getElementById('picker-year-label').textContent = pickerCurrentYear;
-    }
-  }
-
-  function adjustPickerYear(dir, e) {
-    e.stopPropagation();
-    pickerCurrentYear += dir;
-    document.getElementById('picker-year-label').textContent = pickerCurrentYear;
-  }
-
-  function buildMonthYearPickerGrid() {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const container = document.getElementById('months-grid-container');
-    container.innerHTML = '';
-    months.forEach((m, idx) => {
-      const cell = document.createElement('div');
-      cell.className = 'picker-month-cell';
-      cell.textContent = m;
-      cell.onclick = function(e) {
-        e.stopPropagation();
-        const targetDate = new Date(pickerCurrentYear, idx, 1);
-        calendar.gotoDate(targetDate);
-        updateHeaderTitle();
-        document.getElementById('month-year-picker').style.display = 'none';
-      };
-      container.appendChild(cell);
-    });
-  }
-
-  // 우측 상단 오늘 날짜 라벨 처리 및 오늘 이벤트 필터 바인딩
-  function renderTodayEventsPanel(events) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    document.getElementById('today-panel-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    
-    const container = document.getElementById('today-events-list');
-    container.innerHTML = '';
-    
-    // 오늘 날짜에 해당하는 이벤트 정렬 바인딩
-    const todays = events.filter(e => {
-      const sStr = typeof e.start === 'string' ? e.start : (e.start.toISOString ? e.start.toISOString() : '');
-      return sStr.startsWith(todayStr);
-    });
-
-    if(todays.length === 0) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--txt3); padding:4px;">No events today.</div>`;
-      return;
-    }
-
-    todays.forEach(ev => {
-      const row = document.createElement('div');
-      row.className = 'panel-item-row';
-      
-      const ext = ev.extendedProps || ev;
-      const colorMeta = pastelForCalId(ext.calendarId, ev.summary || ev.title, ext.visibility);
-      
-      let timeLbl = 'All day';
-      if(!ev.allDay && ev.start) {
-        const d = new Date(ev.start);
-        timeLbl = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    saveBtn.addEventListener('click', () => {
+      // 배열 방식으로 누적 (하루 여러 번 기록 가능)
+      if (!Array.isArray(state.dayData.baby_kick_log)) {
+        state.dayData.baby_kick_log = [];
       }
-
-      row.innerHTML = `
-        <div class="event-bar" style="background:${colorMeta.text}"></div>
-        <div class="item-time">${timeLbl}</div>
-        <div class="item-text">${ev.title || ev.summary}</div>
-        <div class="item-loc">${ext.location ? '📍' : ''}</div>
-      `;
-      
-      row.onclick = () => openEventView(calendar ? calendar.getEventById(ev.id) || ev : ev);
-      container.appendChild(row);
-    });
-  }
-
-  // 실시간 태스크 로드 및 갱신 필터링
-  function loadTasks() {
-    fetch(`${BACKEND}/api/me/tasks`, { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        const select = document.getElementById('task-list-filter');
-        const formSelect = document.getElementById('tk-list-select');
-        
-        // 기존 옵션 리셋
-        select.innerHTML = '<option value="all">All List ▾</option>';
-        formSelect.innerHTML = '';
-
-        const lists = data.lists || data.taskLists || [];
-        lists.forEach(l => {
-          select.innerHTML += `<option value="${l.id}">${l.title}</option>`;
-          formSelect.innerHTML += `<option value="${l.id}">${l.title}</option>`;
-        });
-
-        const filterVal = select.value;
-        const tasksContainer = document.getElementById('today-tasks-list');
-        tasksContainer.innerHTML = '';
-
-        const tasks = data.tasks || [];
-        const incomplete = tasks.filter(t => t.status !== 'completed');
-
-        if(incomplete.length === 0) {
-          tasksContainer.innerHTML = `<div style="font-size:12px; color:var(--txt3); padding:4px;">No tasks left.</div>`;
-          return;
-        }
-
-        incomplete.forEach(t => {
-          if(filterVal !== 'all' && t.listId !== filterVal) return;
-          
-          const row = document.createElement('div');
-          row.className = 'panel-item-row';
-          
-          let badgeHtml = '';
-          const todayStr = new Date().toISOString().split('T')[0];
-          if(t.due && t.due.startsWith(todayStr)) {
-            badgeHtml = `<span class="task-badge today">Today</span>`;
-          } else if(t.due) {
-            badgeHtml = `<span class="task-badge">${t.due}</span>`;
-          }
-
-          row.innerHTML = `
-            <input type="checkbox" class="task-checkbox" onclick="completeTask('${t.id}', event)">
-            <div class="item-text" style="font-weight:400;">${t.title}</div>
-            ${badgeHtml}
-          `;
-          tasksContainer.appendChild(row);
-        });
-      }).catch(()=>{});
-  }
-
-  function completeTask(id, event) {
-    event.stopPropagation();
-    fetch(`${BACKEND}/api/me/tasks/update`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, status: 'completed' }),
-      credentials: 'include'
-    }).then(() => loadTasks());
-  }
-
-  // 탭 대분류 전환 스크립트
-  function switchMainTab(type) {
-    currentActiveTab = type;
-    document.getElementById('tab-msg-btn').className = 'input-tab-btn' + (type === 'msg' ? ' active' : '');
-    document.getElementById('tab-add-btn').className = 'input-tab-btn' + (type === 'add' ? ' active' : '');
-    
-    document.getElementById('panel-msg').className = 'form-panel' + (type === 'msg' ? ' active' : '');
-    document.getElementById('panel-add').className = 'form-panel' + (type === 'add' ? ' active' : '');
-  }
-
-  // +Add 버튼 연동 서브 인풋 활성화 초점 이동 포커싱 처리
-  function focusAddTab() {
-    switchMainTab('add');
-    document.getElementById('ev-title').focus();
-  }
-
-  // 서브폼 단일행 구성 탭 전환 스크립트 (가로 스크롤 완전 해결)
-  function switchSubForm(subType) {
-    currentSubForm = subType;
-    const subs = ['event', 'task', 'finance', 'health', 'project'];
-    subs.forEach(s => {
-      document.getElementById(`subtab-${s}`).className = 'sub-tab-btn' + (s === subType ? ' active' : '');
-      document.getElementById(`form-${s}`).style.display = (s === subType) ? 'block' : 'none';
-    });
-  }
-
-  // 메시지 전송 서브밋
-  function submitMessageForm() {
-    const msg = document.getElementById('msg-textarea').value;
-    if(!msg) return alert("Please type a message.");
-    
-    fetch(`${BACKEND}/api/me/message`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, draft: document.getElementById('msg-draft-chk').checked }),
-      credentials: 'include'
-    }).then(() => {
-      alert("Message sent successfully!");
-      document.getElementById('msg-textarea').value = '';
-    });
-  }
-
-  // 복합 개체 추가 폼 일괄 처리 스크립트
-  function submitAddForm() {
-    let url = '';
-    let bodyData = {};
-
-    if(currentSubForm === 'event') {
-      url = '/api/me/events/create';
-      bodyData = {
-        title: document.getElementById('ev-title').value,
-        date: document.getElementById('ev-date').value,
-        start: document.getElementById('ev-start').value,
-        end: document.getElementById('ev-end').value,
-        location: document.getElementById('ev-loc').value,
-        notes: document.getElementById('ev-notes').value
-      };
-    } else if(currentSubForm === 'task') {
-      url = '/api/me/tasks/create';
-      bodyData = {
-        title: document.getElementById('tk-title').value,
-        listId: document.getElementById('tk-list-select').value,
-        due: document.getElementById('tk-due').value,
-        priority: document.getElementById('tk-priority').value
-      };
-    } else if(currentSubForm === 'finance') {
-      url = '/api/me/finance/add';
-      bodyData = {
-        amount: document.getElementById('fin-amount').value,
-        date: document.getElementById('fin-date').value,
-        category: document.getElementById('fin-category').value,
-        description: document.getElementById('fin-desc').value
-      };
-    } else if(currentSubForm === 'health') {
-      url = '/api/me/health/add';
-      bodyData = {
-        metric: document.getElementById('he-metric').value,
-        value: document.getElementById('he-value').value,
-        date: document.getElementById('he-date').value
-      };
-    } else if(currentSubForm === 'project') {
-      url = '/api/me/projects/create';
-      bodyData = {
-        title: document.getElementById('pj-title').value,
-        due: document.getElementById('pj-due').value,
-        status: document.getElementById('pj-status').value,
-        members: document.getElementById('pj-members').value
-      };
-    }
-
-    if(!bodyData.title && !bodyData.amount && !bodyData.value) {
-      alert("Please fill in the required fields.");
-      return;
-    }
-
-    fetch(`${BACKEND}${url}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bodyData),
-      credentials: 'include'
-    }).then(res => {
-      if(res.ok) {
-        alert("Successfully added!");
-        if(currentSubForm === 'event') calendar.refetchEvents();
-        else if(currentSubForm === 'task') loadTasks();
+      const entry = { count: kickCount, start_time: kickStart };
+      state.dayData.baby_kick_log.push(entry);
+      // 하위 호환: 단일 객체도 최신값으로 유지
+      state.dayData.baby_kick = entry;
+      // 백엔드 전송
+      if (kickCount > 0) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'baby_kick',
+            data: { baby_kick_count: kickCount, baby_kick_start_time: kickStart,
+                    stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
+          })
+        }).catch(() => {});
       }
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-bp') {
+    saveBtn.addEventListener('click', () => {
+      const sys = parseInt(document.getElementById('pBpSys')?.value) || null;
+      const dia = parseInt(document.getElementById('pBpDia')?.value) || null;
+      const note = document.getElementById('pBpNote')?.value || '';
+      state.dayData.blood_pressure = { systolic: sys, diastolic: dia, note };
+      if (sys && dia) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'womens_bp',
+            data: { bp_sys: sys, bp_dia: dia, notes: note,
+                    source: 'womens', stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
+          })
+        }).catch(() => {});
+      }
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-mood') {
+    document.getElementById('pMoodGrid').addEventListener('click', e => {
+      const btn = e.target.closest('.w-mood-pick');
+      if (!btn) return;
+      document.querySelectorAll('.w-mood-pick').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+    document.getElementById('pEnergyRow').addEventListener('click', e => {
+      const btn = e.target.closest('.w-energy-pick');
+      if (!btn) return;
+      document.querySelectorAll('.w-energy-pick').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const moodBtn = document.querySelector('.w-mood-pick.selected');
+      const energyBtn = document.querySelector('.w-energy-pick.selected');
+      const notes = document.getElementById('pMoodNotes')?.value || '';
+      const moodVal = moodBtn?.dataset.mood || null;
+      const energyVal = energyBtn ? parseInt(energyBtn.dataset.energy) : null;
+      state.dayData.womens_mood = { mood: moodVal, energy_level: energyVal, notes };
+      if (moodVal) {
+        fetch(BACKEND + '/api/me/health/log', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tab: 'womens_mood',
+            data: { mood: moodVal, energy_level: energyVal, notes,
+                    source: 'womens', stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
+          })
+        }).catch(() => {});
+      }
+      closePopup(); autoSaveAndReturn();
+    });
+
+  } else if (type === 'popup-morning-sickness') {
+    const msMinusBtn = document.getElementById('pMsMinus');
+    const msPlusBtn  = document.getElementById('pMsPlus');
+    const msValEl    = document.getElementById('pMsCount');
+    if (msMinusBtn && msPlusBtn && msValEl) {
+      msMinusBtn.addEventListener('click', () => {
+        const cur = parseInt(msValEl.textContent) || 0;
+        if (cur > 0) msValEl.textContent = cur - 1;
+      });
+      msPlusBtn.addEventListener('click', () => {
+        msValEl.textContent = (parseInt(msValEl.textContent) || 0) + 1;
+      });
+    }
+    document.getElementById('pMsIntensity').addEventListener('click', e => {
+      const chip = e.target.closest('.w-chip');
+      if (!chip) return;
+      document.querySelectorAll('#pMsIntensity .w-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+    saveBtn.addEventListener('click', () => {
+      const count = parseInt(document.getElementById('pMsCount')?.textContent) || 0;
+      const severity = document.querySelector('#pMsIntensity .w-chip.selected')?.dataset.val || null;
+      const note = document.getElementById('pMsNote')?.value || '';
+      state.dayData.morning_sickness = { count, severity, note };
+      closePopup(); autoSaveAndReturn();
     });
   }
+}
 
-  // 모달 보기 / 닫기 공통 처리 로직
-  function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('wToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Save Day ───────────────────────────────────────────────────
+function autoSaveAndReturn() {
+  if (!state.currentDate) return;
+  const d = state.dayData;
+  d.note = document.getElementById('wNote')?.value || d.note || '';
+  d.add_to_calendar = document.getElementById('wAddToCal')?.checked || false;
+  d.calendar_visibility = 'private';
+  d.mode = state.pregnancyMode ? 'pregnancy' : 'period';
+  d.date = state.currentDate;
+  saveDay(state.currentDate, d);
+  showToast('Saved');
+  setTimeout(() => { closeDailyView(); }, 500);
+}
+
+function saveDayHandler() {
+  if (!state.currentDate) return;
+  try {
+    const d = state.dayData;
+    const noteEl = document.getElementById('wNote');
+    const calEl  = document.getElementById('wAddToCal');
+    d.note               = noteEl ? noteEl.value : (d.note || '');
+    d.add_to_calendar    = calEl  ? calEl.checked : false;
+    d.calendar_visibility = 'private';
+    d.mode = state.pregnancyMode ? 'pregnancy' : 'period';
+    d.date = state.currentDate;
+    saveDay(state.currentDate, d);
+    showToast('Saved ✓');
+  } catch(e) {
+    console.error('saveDayHandler error:', e);
   }
+  closeDailyView();
+}
 
-  function openDayModal(date, segs) {
-    const modal = document.getElementById('day-events-modal');
-    document.getElementById('day-modal-header-text').textContent = `Events on ${date.toLocaleDateString()}`;
-    const container = document.getElementById('day-modal-events-list');
-    container.innerHTML = '';
-
-    segs.forEach(s => {
-      const ev = s.footprint ? s.footprint.eventInstance.def : (s.event || s);
-      const row = document.createElement('div');
-      row.className = 'panel-item-row';
-      row.innerHTML = `<div class="item-text">${ev.title}</div>`;
-      row.onclick = () => { closeModal('day-events-modal'); openEventView(ev); };
-      container.appendChild(row);
-    });
-    modal.style.display = 'flex';
-  }
-
-  function openEventView(eventObj) {
-    const modal = document.getElementById('event-view-modal');
-    const ext = eventObj.extendedProps || eventObj;
-    
-    document.getElementById('evt-view-title').textContent = eventObj.title || ext.summary;
-    
-    let timeString = 'All day';
-    if(eventObj.start) {
-      const s = new Date(eventObj.start);
-      timeString = s.toLocaleString();
+// ── Init & Events ──────────────────────────────────────────────
+function init() {
+  // KEY FIX: On desktop, ensure parent has position/overflow for absolute children.
+  // On mobile, the parent is already scrolling naturally so we skip forcing height.
+  const wrap = document.getElementById('wWrap');
+  if (wrap && wrap.parentElement) {
+    const p = wrap.parentElement;
+    const cs = getComputedStyle(p);
+    if (cs.position === 'static') p.style.position = 'relative';
+    // Only force height/overflow on desktop (parent has real height)
+    if (p.clientHeight > 100) {
+      if (cs.overflow === 'visible') p.style.overflow = 'hidden';
     }
-    document.getElementById('evt-view-time').textContent = `🕒 ${timeString}`;
-    
-    if(ext.location) {
-      document.getElementById('evt-view-loc-row').style.display = 'block';
-      document.getElementById('evt-view-loc').textContent = ext.location;
-    } else {
-      document.getElementById('evt-view-loc-row').style.display = 'none';
-    }
-
-    document.getElementById('evt-view-desc').textContent = ext.description || ext.notes || 'No description provided.';
-    
-    const colorMeta = pastelForCalId(ext.calendarId, eventObj.title || ext.summary, ext.visibility);
-    document.getElementById('evt-view-dot').style.background = colorMeta.text;
-    document.getElementById('evt-view-calname').textContent = ext.visibility === 'private' ? 'Private Calendar' : 'Primary Calendar';
-
-    modal.style.display = 'flex';
+    // On mobile: do NOT force height — let it flow naturally
   }
 
-  function toggleOtherCalendarsVisibility() {
-    const chk = document.getElementById('toggle-other-cal').checked;
-    if(!chk) {
-      calendar.getEventSources().forEach(src => src.remove());
-    } else {
-      calendar.refetchEvents();
-    }
-  }
+  const toggle = document.getElementById('wPregnancyToggle');
+  toggle.checked = state.pregnancyMode;
+  document.getElementById('wWrap').classList.toggle('pregnancy-mode', state.pregnancyMode);
+
+  toggle.addEventListener('change', () => {
+    state.pregnancyMode = toggle.checked;
+    localStorage.setItem('mie_womens_mode', state.pregnancyMode ? 'pregnancy' : 'period');
+    document.getElementById('wWrap').classList.toggle('pregnancy-mode', state.pregnancyMode);
+    updateSummaryBar();
+    renderCalendar();
+    if (state.currentDate) renderItemGrid();
+  });
+
+  document.getElementById('wPrevMonth').addEventListener('click', () => {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth()-1, 1);
+    renderCalendar();
+  });
+  document.getElementById('wNextMonth').addEventListener('click', () => {
+    state.viewMonth = new Date(state.viewMonth.getFullYear(), state.viewMonth.getMonth()+1, 1);
+    renderCalendar();
+  });
+
+  document.getElementById('wBackBtn').addEventListener('click', closeDailyView);
+  document.getElementById('wSaveBtn').addEventListener('click', saveDayHandler);
+
+  document.getElementById('wDeleteBtn').addEventListener('click', () => {
+    if (!state.currentDate) return;
+    if (!confirm('Delete all data for this day?')) return;
+    deleteDay(state.currentDate);
+    state.dayData = {};
+    showToast('Deleted');
+    renderItemGrid();
+  });
+
+  document.getElementById('wAddCalBtn').addEventListener('click', () => {
+    showToast('Calendar sync available after backend setup');
+  });
+
+  document.getElementById('wPopupOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('wPopupOverlay')) closePopup();
+  });
+
+  renderCalendar();
+  updateSummaryBar();
+}
+
+// ── Public API — guard against double-init ──────────────────────
+// Use window._wInitDone so index.html can reset it between panel switches
+window._wInitDone = window._wInitDone || false;
+function safeInit() {
+  if (window._wInitDone) return;
+  window._wInitDone = true;
+  init();
+}
+
+window.onPanelLoad = function(v) { safeInit(); };
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', safeInit);
+} else {
+  safeInit();
+}
+
+})();
 </script>
 </body>
 </html>
