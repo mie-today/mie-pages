@@ -1056,14 +1056,7 @@ function loadDay(dateStr) {
   } catch(e) { return null; }
 }
 function saveDay(dateStr, data) {
-  // 1) localStorage — 폴백용
   localStorage.setItem('mie_womens_' + dateStr, JSON.stringify(data));
-  // 2) 백엔드 — 전체 일일 데이터를 tab=womens 로 전송
-  fetch(BACKEND + '/api/me/health/log', {
-    method: 'POST', credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tab: 'womens', data: Object.assign({}, data, { stamp_date: dateStr }) })
-  }).catch(() => {});
 }
 function deleteDay(dateStr) {
   localStorage.removeItem('mie_womens_' + dateStr);
@@ -1814,30 +1807,11 @@ function attachPopupListeners(type) {
       chip.classList.add('selected');
     });
     saveBtn.addEventListener('click', () => {
-      const count     = parseInt(document.getElementById('pFmCount')?.value) || 0;
-      const time      = document.getElementById('pFmTime')?.value || null;
-      const intensity = document.querySelector('#pFmIntensity .w-chip.selected')?.dataset.val || null;
-      // 배열 방식으로 누적 (하루 여러 번 기록 가능)
-      if (!Array.isArray(state.dayData.fetal_movement_log)) {
-        state.dayData.fetal_movement_log = [];
-      }
-      const entry = { count, time, intensity };
-      state.dayData.fetal_movement_log.push(entry);
-      // 하위 호환: 단일 객체도 최신값으로 유지
-      state.dayData.fetal_movement = entry;
-      // 백엔드 전송
-      if (count > 0) {
-        fetch(BACKEND + '/api/me/health/log', {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tab: 'fetal_movement',
-            data: { fetal_movement_count: count, fetal_movement_time: time,
-                    fetal_movement_intensity: intensity,
-                    stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
-          })
-        }).catch(() => {});
-      }
+      state.dayData.fetal_movement = {
+        count: parseInt(document.getElementById('pFmCount')?.value) || 0,
+        time: document.getElementById('pFmTime')?.value || null,
+        intensity: document.querySelector('#pFmIntensity .w-chip.selected')?.dataset.val || null
+      };
       closePopup(); autoSaveAndReturn();
     });
 
@@ -1871,26 +1845,7 @@ function attachPopupListeners(type) {
       }
     });
     saveBtn.addEventListener('click', () => {
-      // 배열 방식으로 누적 (하루 여러 번 기록 가능)
-      if (!Array.isArray(state.dayData.baby_kick_log)) {
-        state.dayData.baby_kick_log = [];
-      }
-      const entry = { count: kickCount, start_time: kickStart };
-      state.dayData.baby_kick_log.push(entry);
-      // 하위 호환: 단일 객체도 최신값으로 유지
-      state.dayData.baby_kick = entry;
-      // 백엔드 전송
-      if (kickCount > 0) {
-        fetch(BACKEND + '/api/me/health/log', {
-          method: 'POST', credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tab: 'baby_kick',
-            data: { baby_kick_count: kickCount, baby_kick_start_time: kickStart,
-                    stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
-          })
-        }).catch(() => {});
-      }
+      state.dayData.baby_kick = { count: kickCount, start_time: kickStart };
       closePopup(); autoSaveAndReturn();
     });
 
@@ -1905,9 +1860,9 @@ function attachPopupListeners(type) {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tab: 'womens_bp',
-            data: { bp_sys: sys, bp_dia: dia, notes: note,
-                    source: 'womens', stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
+            tab: 'health',
+            data: { blood_pressure_sys: sys, blood_pressure_dia: dia, notes: note,
+                    source: 'womens', date: state.currentDate }
           })
         }).catch(() => {});
       }
@@ -1939,9 +1894,9 @@ function attachPopupListeners(type) {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tab: 'womens_mood',
+            tab: 'mood',
             data: { mood: moodVal, energy_level: energyVal, notes,
-                    source: 'womens', stamp_date: state.currentDate + ' ' + new Date().toTimeString().slice(0,5) }
+                    source: 'womens', date: state.currentDate }
           })
         }).catch(() => {});
       }
