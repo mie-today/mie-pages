@@ -383,6 +383,9 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .afi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
 .afi:focus{border-color:var(--blue);}
 .afsm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.ahl-unit-btn{flex:0 0 auto;min-width:36px;padding:5px 7px;background:var(--bg3);border:.5px solid var(--b1);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;color:var(--blue);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s;text-align:center;font-weight:600;}
+.ahl-unit-btn:hover{background:rgba(28,126,214,0.08);border-color:var(--blue);}
+.ahl-unit-static{flex:0 0 auto;min-width:36px;padding:5px 7px;background:var(--bg3);border:.5px solid var(--b1);border-radius:6px;font-size:11px;color:var(--txt3);white-space:nowrap;text-align:center;display:flex;align-items:center;justify-content:center;}
 .afsm:focus{border-color:var(--blue);}
 .afr{display:flex;gap:5px;flex-shrink:0;}
 .amt{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;flex-shrink:0;}
@@ -918,7 +921,87 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
                 <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
               </div>
               <div class="afb" id="afb-hl">
-                <div class="afs"><div class="afr" style="margin-top:4px;"><select class="afsm" id="ahl-type" onchange="updateHlFields()"><option value="">Metric &#x25be;</option><option value="weight">&#x2696; Weight</option><option value="bp">Blood Pressure</option><option value="hr">Heart Rate</option><option value="glucose">Glucose</option><option value="steps">Steps</option><option value="water">Water</option><option value="sleep">Sleep</option><option value="mood">Mood</option></select><input class="afsm" type="date" id="ahl-date"/></div><div id="ahl-val"><input class="afsm" type="number" placeholder="Value" step="0.1"/></div><input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes"/></div>
+                <div class="afs">
+                  <div class="afr" style="margin-top:4px;">
+                    <select class="afsm" id="ahl-type" onchange="['ahl-weight-unit','ahl-glucose-unit','ahl-temp-unit','ahl-chol-unit','ahl-water-unit'].forEach(function(id){var el=document.getElementById(id);if(el)delete el.dataset.locked;});updateHlFields()">
+                      <option value="">Select ▾</option>
+                      <option value="weight">⚖️ Weight</option>
+                      <option value="bp">🩸 Blood Pressure</option>
+                      <option value="hr">❤️ Heart Rate</option>
+                      <option value="glucose">🩸 Glucose</option>
+                      <option value="spo2">💨 SpO2</option>
+                      <option value="temperature">🌡️ Temperature</option>
+                      <option value="cholesterol">🧪 Cholesterol</option>
+                      <option value="steps">👟 Steps</option>
+                      <option value="water">💧 Water</option>
+                      <option value="sleep">🌙 Sleep</option>
+                      <option value="mood">😊 Mood</option>
+                    </select>
+                    <input class="afsm" type="date" id="ahl-date"/>
+                  </div>
+                  <!-- weight -->
+                  <div id="ahl-f-weight" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-weight" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-weight-unit" onclick="ahlToggleUnit('weight')" title="Tap to switch unit">kg</button></div>
+                  </div>
+                  <!-- bp -->
+                  <div id="ahl-f-bp" style="display:none;">
+                    <div class="afr">
+                      <input class="afsm" type="number" id="ahl-bp-sys" placeholder="Systolic" min="0" max="300"/>
+                      <input class="afsm" type="number" id="ahl-bp-dia" placeholder="Diastolic" min="0" max="200"/>
+                      <span class="ahl-unit-static">mmHg</span>
+                    </div>
+                  </div>
+                  <!-- hr -->
+                  <div id="ahl-f-hr" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-hr" placeholder="BPM" min="0" max="300"/><span class="ahl-unit-static">bpm</span></div>
+                  </div>
+                  <!-- glucose -->
+                  <div id="ahl-f-glucose" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-glucose" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-glucose-unit" onclick="ahlToggleUnit('glucose')" title="Tap to switch unit">mg/dL</button></div>
+                  </div>
+                  <!-- spo2 -->
+                  <div id="ahl-f-spo2" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-spo2" placeholder="%" step="0.1" min="0" max="100"/><span class="ahl-unit-static">%</span></div>
+                  </div>
+                  <!-- temperature -->
+                  <div id="ahl-f-temperature" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-temp" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-temp-unit" onclick="ahlToggleUnit('temperature')" title="Tap to switch unit">°C</button></div>
+                  </div>
+                  <!-- cholesterol -->
+                  <div id="ahl-f-cholesterol" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-chol" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-chol-unit" onclick="ahlToggleUnit('cholesterol')" title="Tap to switch unit">mg/dL</button></div>
+                  </div>
+                  <!-- steps -->
+                  <div id="ahl-f-steps" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-steps" placeholder="Steps" min="0" step="1"/><span class="ahl-unit-static">steps</span></div>
+                  </div>
+                  <!-- water -->
+                  <div id="ahl-f-water" style="display:none;">
+                    <div class="afr"><input class="afsm" type="number" id="ahl-water" placeholder="Amount" step="1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-water-unit" onclick="ahlToggleUnit('water')" title="Tap to switch unit">ml</button></div>
+                  </div>
+                  <!-- sleep -->
+                  <div id="ahl-f-sleep" style="display:none;">
+                    <div class="afr">
+                      <input class="afsm" type="time" id="ahl-bedtime" title="Bedtime"/>
+                      <input class="afsm" type="time" id="ahl-wake" title="Wake time"/>
+                    </div>
+                    <div style="font-size:9px;color:var(--txt3);padding:2px 2px 0;display:flex;justify-content:space-between;"><span>Bedtime</span><span>Wake time</span></div>
+                  </div>
+                  <!-- mood -->
+                  <div id="ahl-f-mood" style="display:none;">
+                    <select class="afsm" id="ahl-mood">
+                      <option value="">Mood ▾</option>
+                      <option>Amazing</option><option>Happy</option><option>Calm</option>
+                      <option>Neutral</option><option>Tired</option><option>Anxious</option>
+                      <option>Sad</option><option>Angry</option><option>Stressed</option><option>Grateful</option>
+                    </select>
+                    <div class="afr" style="margin-top:4px;align-items:center;gap:4px;">
+                      <span style="font-size:10px;color:var(--txt3);flex-shrink:0;">Energy</span>
+                      <input class="afsm" type="number" id="ahl-energy" placeholder="1–5" min="1" max="5" step="1"/>
+                    </div>
+                  </div>
+                  <input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes" style="margin-top:2px;"/>
+                </div>
                 <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
               </div>
               <div class="afb" id="afb-fin">
@@ -948,44 +1031,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 </div>
 
 <!-- MODALS -->
-<div class="modal-bg hidden" id="add-modal">
-  <div class="modal-box">
-    <div class="modal-hd"><div class="modal-title">Add Health Entry</div><button class="modal-x" onclick="closeAddModal()">&times;</button></div>
-    <div class="type-toggle">
-      <button class="type-btn active-food" id="type-food" onclick="setType('food')">🍽️ Food</button>
-      <button class="type-btn" id="type-body" onclick="setType('body')">⚖️ Body</button>
-      <button class="type-btn" id="type-activity" onclick="setType('activity')">🏃 Activity</button>
-      <button class="type-btn" id="type-period" onclick="setType('period')">🌸 Period</button>
-    </div>
-    <div id="fields-food">
-      <div class="f-field"><label class="f-lbl">Meal Time *</label><select class="f-input" id="food-meal"><option>AM</option><option>PM</option></select></div>
-      <div class="f-field"><label class="f-lbl">Food Item *</label><input class="f-input" type="text" id="food-name" placeholder="e.g. Chicken salad"/></div>
-      <div class="f-row3">
-        <div class="f-field"><label class="f-lbl">Calories</label><input class="f-input" type="number" id="food-cal" placeholder="0"/></div>
-        <div class="f-field"><label class="f-lbl">Protein (g)</label><input class="f-input" type="number" id="food-protein" placeholder="0"/></div>
-        <div class="f-field"><label class="f-lbl">Carbs (g)</label><input class="f-input" type="number" id="food-carbs" placeholder="0"/></div>
-      </div>
-    </div>
-    <div id="fields-body" style="display:none;">
-      <div class="f-row2"><div class="f-field"><label class="f-lbl">Weight (kg)</label><input class="f-input" type="number" id="body-weight" placeholder="0.0" step="0.1"/></div><div class="f-field"><label class="f-lbl">Body Fat (%)</label><input class="f-input" type="number" id="body-fat" placeholder="0.0" step="0.1"/></div></div>
-      <div class="f-row2"><div class="f-field"><label class="f-lbl">Muscle Mass (kg)</label><input class="f-input" type="number" id="body-muscle" placeholder="0.0" step="0.1"/></div><div class="f-field"><label class="f-lbl">Water (ml)</label><input class="f-input" type="number" id="body-water" placeholder="0"/></div></div>
-    </div>
-    <div id="fields-activity" style="display:none;">
-      <div class="f-field"><label class="f-lbl">Activity *</label><select class="f-input" id="act-type"><option>Running</option><option>Walking</option><option>Cycling</option><option>Strength Training</option><option>Yoga</option><option>Swimming</option><option>HIIT</option><option>Other</option></select></div>
-      <div class="f-row3"><div class="f-field"><label class="f-lbl">Duration (min)</label><input class="f-input" type="number" id="act-duration" placeholder="0"/></div><div class="f-field"><label class="f-lbl">Cals Burned</label><input class="f-input" type="number" id="act-cal" placeholder="0"/></div><div class="f-field"><label class="f-lbl">Steps</label><input class="f-input" type="number" id="act-steps" placeholder="0"/></div></div>
-    </div>
-    <div id="fields-period" style="display:none;">
-      <div class="f-row2"><div class="f-field"><label class="f-lbl">Event</label><select class="f-input" id="period-event"><option>Start</option><option>End</option><option>Symptom</option></select></div><div class="f-field"><label class="f-lbl">Date</label><input class="f-input" type="date" id="period-date"/></div></div>
-      <div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="period-notes" placeholder="Optional notes…"/></div>
-    </div>
-    <div class="f-row2" style="margin-top:2px;">
-      <div class="f-field"><label class="f-lbl">Date</label><input class="f-input" type="date" id="add-date"/></div>
-      <div class="f-field"><label class="f-lbl">Notes</label><input class="f-input" type="text" id="add-notes" placeholder="Optional…"/></div>
-    </div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeAddModal()">Cancel</button><button class="btn-save" id="add-save-btn" onclick="saveEntry()">Add Entry</button></div>
-    <div class="modal-status" id="add-status"></div>
-  </div>
-</div>
+
 <div class="modal-bg hidden" id="add-health-task-modal">
   <div class="modal-box">
     <div class="modal-hd"><div class="modal-title">Add Task — Health</div><button class="modal-x" onclick="closeAddHealthTaskModal()">&times;</button></div>
@@ -1155,6 +1201,7 @@ function toggleUnit(){
   toast('Switched to '+(unitMetric?'Metric':'US')+' units');
   // Re-sync label after toggle
   if(typeof window._applyUnitLabel==='function') window._applyUnitLabel();
+  if(typeof updateHlFields==='function') updateHlFields();
 }
 
 var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
@@ -1339,53 +1386,6 @@ document.getElementById('htask-due').addEventListener('change',function(){var ca
 document.getElementById('add-health-task-modal').addEventListener('click',function(e){if(e.target===this)closeAddHealthTaskModal();});
 function saveHealthTask(){var title=document.getElementById('htask-title').value.trim(),st=document.getElementById('add-htask-status');if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}var btn=document.getElementById('add-htask-btn');btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';var dueVal=document.getElementById('htask-due').value,addToCal=dueVal&&document.getElementById('htask-create-cal').checked;var healthList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});var payload={title:title,notes:document.getElementById('htask-notes').value.trim(),due:dueVal||null,listId:healthList?healthList.id:'@default',createCalendarEvent:addToCal,calendarVisibility:'private'};fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(data){st.style.color='#1e8e3e';st.textContent='✅ Task added!'+(data.calendar_event?' + Calendar event.':'');toast('Task added','success');setTimeout(function(){closeAddHealthTaskModal();loadHealthTasks();},700);}).catch(function(err){st.style.color='#d93025';st.textContent='❌ '+err.message;btn.disabled=false;});}
 
-function openAddModal(){var today=new Date();document.getElementById('add-date').value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');document.getElementById('add-status').textContent='';document.getElementById('add-notes').value='';setType('food');document.getElementById('add-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('food-name').focus();},60);}
-function closeAddModal(){document.getElementById('add-modal').classList.add('hidden');}
-document.getElementById('add-modal').addEventListener('click',function(e){if(e.target===this)closeAddModal();});
-function setType(type){selectedType=type;['food','body','activity','period'].forEach(function(t){document.getElementById('type-'+t).className='type-btn'+(t===type?' active-'+t:'');var fields=document.getElementById('fields-'+t);if(fields)fields.style.display=t===type?'':'none';});}
-function saveEntry(){
-  var st=document.getElementById('add-status'),btn=document.getElementById('add-save-btn');
-  var date=document.getElementById('add-date').value;
-  var notes=document.getElementById('add-notes').value.trim();
-  if(!date){st.style.color='var(--red)';st.textContent='Date is required.';return;}
-  btn.disabled=true;st.style.color='var(--txt2)';st.textContent='Saving…';
-  var payload={date:date,notes:notes};
-  var endpoint=BACKEND+'/api/me/health/add';
-  if(selectedType==='food'){
-    var name=document.getElementById('food-name').value.trim();
-    if(!name){st.style.color='var(--red)';st.textContent='Food item is required.';btn.disabled=false;return;}
-    payload.type='food';payload.name=name;
-    payload.meal_time=document.getElementById('food-meal').value;
-    payload.calories=parseInt(document.getElementById('food-cal').value)||0;
-    payload.protein=parseFloat(document.getElementById('food-protein').value)||0;
-    payload.carbs=parseFloat(document.getElementById('food-carbs').value)||0;
-  }else if(selectedType==='body'){
-    payload.type='body';
-    payload.weight=parseFloat(document.getElementById('body-weight').value)||null;
-    payload.body_fat_pct=parseFloat(document.getElementById('body-fat').value)||null;
-    payload.muscle_mass=parseFloat(document.getElementById('body-muscle').value)||null;
-    payload.amount_ml=parseFloat(document.getElementById('body-water').value)||null;
-  }else if(selectedType==='activity'){
-    payload.type='activity';
-    payload.activity=document.getElementById('act-type').value;
-    payload.duration=parseInt(document.getElementById('act-duration').value)||0;
-    payload.calories_burned=parseInt(document.getElementById('act-cal').value)||0;
-    payload.steps=parseInt(document.getElementById('act-steps').value)||0;
-  }else if(selectedType==='period'){
-    payload.type='period';
-    payload.event=document.getElementById('period-event').value.toLowerCase();
-    payload.date=document.getElementById('period-date').value||date;
-  }
-  fetch(endpoint,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(function(){
-      st.style.color='var(--teal)';st.textContent='✅ Entry saved!';
-      toast('Health entry logged!','success');
-      setTimeout(function(){closeAddModal();st.textContent='';loadTodayOverview();loadHlDots();},800);
-      btn.disabled=false;
-    })
-    .catch(function(err){st.style.color='var(--red)';st.textContent='❌ '+err.message;btn.disabled=false;});
-}
 
 document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag'),ta=document.getElementById('msg-input');if(!ta)return;chip.classList.toggle('selected');if(chip.classList.contains('selected')){if(ta.value.indexOf(tag)===-1)ta.value=(tag+' '+ta.value).trimEnd();}else{ta.value=ta.value.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.focus();});});
 var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status')||document.getElementById('sst'),filIn=document.getElementById('file-input'),selFile=null;
@@ -2182,8 +2182,145 @@ function submitAdd(type){
   var nd=new Date().toISOString().slice(0,10);
   if(type==='ev'){var t=document.getElementById('ae-title');if(!t||!t.value.trim()){showAST('ev','Title required.','var(--red)');return;}var d=document.getElementById('ae-date'),s=document.getElementById('ae-start'),e=document.getElementById('ae-end');var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;fetch('https://api.mie.today/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end})}).then(function(r){if(r.ok){showAST('ev','✅ Event added!','var(--teal)');t.value='';}else showAST('ev','❌ Failed.','var(--red)');}).catch(function(){showAST('ev','❌ Error.','var(--red)');});}
   else if(type==='tk'){var t=document.getElementById('at-title');if(!t||!t.value.trim()){showAST('tk','Title required.','var(--red)');return;}var due=document.getElementById('at-due');fetch('https://api.mie.today/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:'@default'})}).then(function(r){if(r.ok){showAST('tk','✅ Task added!','var(--teal)');t.value='';}else showAST('tk','❌ Failed.','var(--red)');}).catch(function(){showAST('tk','❌ Error.','var(--red)');});}
-  else if(type==='hl'){var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}var notes=document.getElementById('ahl-notes'),hdate=document.getElementById('ahl-date');fetch('https://api.mie.today/api/me/health/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:ht.value,date:hdate?hdate.value:nd,notes:notes?notes.value:''})}).then(function(r){if(r.ok){showAST('hl','✅ Saved!','var(--teal)');if(notes)notes.value='';loadHlDots();}else showAST('hl','❌ Failed.','var(--red)');}).catch(function(){showAST('hl','❌ Error.','var(--red)');});}
+  else if(type==='hl'){
+    var ht=document.getElementById('ahl-type');
+    if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}
+    var metric=ht.value;
+    var nd2=new Date().toISOString().slice(0,10);
+    var hdate=document.getElementById('ahl-date');
+    var dateVal=hdate&&hdate.value?hdate.value:nd2;
+    var notes=(document.getElementById('ahl-notes')||{}).value||'';
+    var tab='health', data={stamp_date:dateVal,notes:notes};
+    var weightUnit=(document.getElementById('ahl-weight-unit')||{}).textContent||'kg';
+    var glucoseUnit=(document.getElementById('ahl-glucose-unit')||{}).textContent||'mmol/L';
+    var tempUnit=(document.getElementById('ahl-temp-unit')||{}).textContent||'°C';
+    var cholUnit=(document.getElementById('ahl-chol-unit')||{}).textContent||'mmol/L';
+    var waterUnit=(document.getElementById('ahl-water-unit')||{}).textContent||'ml';
+    var unitPref=(weightUnit==='lb'||waterUnit==='fl oz')?'us':'metric';
+
+    if(metric==='weight'){
+      var w=parseFloat((document.getElementById('ahl-weight')||{}).value)||null;
+      if(!w){showAST('hl','Enter weight.','var(--red)');return;}
+      if(weightUnit==='lb'){data.weight_lb=w;data.weight_kg=+(w/2.20462).toFixed(1);}
+      else{data.weight_kg=w;data.weight_lb=+(w*2.20462).toFixed(1);}
+    } else if(metric==='bp'){
+      var sys=parseFloat((document.getElementById('ahl-bp-sys')||{}).value)||null;
+      var dia=parseFloat((document.getElementById('ahl-bp-dia')||{}).value)||null;
+      if(!sys||!dia){showAST('hl','Enter both values.','var(--red)');return;}
+      data.blood_pressure_sys=sys;data.blood_pressure_dia=dia;
+    } else if(metric==='hr'){
+      var hr=parseFloat((document.getElementById('ahl-hr')||{}).value)||null;
+      if(!hr){showAST('hl','Enter heart rate.','var(--red)');return;}
+      data.heart_rate_bpm=hr;
+    } else if(metric==='glucose'){
+      var glu=parseFloat((document.getElementById('ahl-glucose')||{}).value)||null;
+      if(!glu){showAST('hl','Enter glucose.','var(--red)');return;}
+      if(glucoseUnit==='mg/dL'){data.glucose_mgdl=glu;data.glucose_mmol=+(glu/18.0182).toFixed(1);}
+      else{data.glucose_mmol=glu;data.glucose_mgdl=+(glu*18.0182).toFixed(0);}
+    } else if(metric==='spo2'){
+      var sp=parseFloat((document.getElementById('ahl-spo2')||{}).value)||null;
+      if(!sp){showAST('hl','Enter SpO2.','var(--red)');return;}
+      data.spo2_pct=sp;
+    } else if(metric==='temperature'){
+      var tmp=parseFloat((document.getElementById('ahl-temp')||{}).value)||null;
+      if(!tmp){showAST('hl','Enter temperature.','var(--red)');return;}
+      if(tempUnit==='°F'){data.temperature_f=tmp;data.temperature_c=+((tmp-32)*5/9).toFixed(1);}
+      else{data.temperature_c=tmp;data.temperature_f=+(tmp*9/5+32).toFixed(1);}
+    } else if(metric==='cholesterol'){
+      var ch=parseFloat((document.getElementById('ahl-chol')||{}).value)||null;
+      if(!ch){showAST('hl','Enter cholesterol.','var(--red)');return;}
+      if(cholUnit==='mg/dL'){data.cholesterol_mgdl=ch;data.cholesterol_mmol=+(ch*0.0259).toFixed(2);}
+      else{data.cholesterol_mmol=ch;data.cholesterol_mgdl=+(ch/0.0259).toFixed(0);}
+    } else if(metric==='steps'){
+      var st2=parseInt((document.getElementById('ahl-steps')||{}).value)||null;
+      if(!st2){showAST('hl','Enter steps.','var(--red)');return;}
+      tab='activity';data={stamp_date:dateVal,steps:st2,category:'General',type:'Steps',notes:notes};
+    } else if(metric==='water'){
+      var wt=parseFloat((document.getElementById('ahl-water')||{}).value)||null;
+      if(!wt){showAST('hl','Enter amount.','var(--red)');return;}
+      tab='water';
+      if(waterUnit==='fl oz'){data={stamp_date:dateVal,amount_ml:+(wt*29.5735).toFixed(0),amount_floz:wt,notes:notes};}
+      else{data={stamp_date:dateVal,amount_ml:wt,amount_floz:+(wt/29.5735).toFixed(1),notes:notes};}
+    } else if(metric==='sleep'){
+      var bed=(document.getElementById('ahl-bedtime')||{}).value||'';
+      var wake=(document.getElementById('ahl-wake')||{}).value||'';
+      if(!bed||!wake){showAST('hl','Enter both times.','var(--red)');return;}
+      tab='sleep';data={stamp_date:dateVal,bedtime:bed,wake_time:wake,notes:notes};
+    } else if(metric==='mood'){
+      var md=(document.getElementById('ahl-mood')||{}).value||'';
+      var en=parseInt((document.getElementById('ahl-energy')||{}).value)||null;
+      if(!md){showAST('hl','Select mood.','var(--red)');return;}
+      tab='mood';data={stamp_date:dateVal,mood:md,energy_level:en,notes:notes};
+    }
+
+    fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tab:tab,data:data,unit_pref:unitPref})})
+    .then(function(r){
+      if(r.ok){
+        showAST('hl','✅ Saved!','var(--teal)');
+        document.getElementById('ahl-notes').value='';
+        document.getElementById('ahl-type').value='';
+        updateHlFields();
+        if(typeof loadHlDots==='function')loadHlDots();
+        if(typeof loadTodayOverview==='function')loadTodayOverview();
+      } else showAST('hl','❌ Failed.','var(--red)');
+    }).catch(function(){showAST('hl','❌ Error.','var(--red)');});
+  }
   else if(type==='fin'){var a=document.getElementById('afin-amt'),cat=document.getElementById('afin-cat');if(!a||!a.value){showAST('fin','Amount required.','var(--red)');return;}var desc=document.getElementById('afin-desc'),date=document.getElementById('afin-date');fetch('https://api.mie.today/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat?cat.value:'',description:desc?desc.value:'',date:date?date.value:nd})}).then(function(r){if(r.ok){showAST('fin','✅ Recorded!','var(--teal)');a.value='';if(desc)desc.value='';}else showAST('fin','❌ Failed.','var(--red)');}).catch(function(){showAST('fin','❌ Error.','var(--red)');});}
+}
+
+// ── updateHlFields — type별 동적 필드 표시 + unit 초기값 세팅 ──
+function updateHlFields(){
+  var metric=document.getElementById('ahl-type').value;
+  var fields=['weight','bp','hr','glucose','spo2','temperature','cholesterol','steps','water','sleep','mood'];
+  fields.forEach(function(f){
+    var el=document.getElementById('ahl-f-'+f);
+    if(el) el.style.display=(f===metric)?'':'none';
+  });
+  // 전역 unitMetric 기준으로 초기값 세팅 (locked 아닐 때만)
+  var isUS=typeof unitMetric!=='undefined'&&!unitMetric;
+  var wu=document.getElementById('ahl-weight-unit');
+  if(wu&&!wu.dataset.locked) wu.textContent=isUS?'lb':'kg';
+  var gu=document.getElementById('ahl-glucose-unit');
+  if(gu&&!gu.dataset.locked) gu.textContent=isUS?'mg/dL':'mmol/L';
+  var tu=document.getElementById('ahl-temp-unit');
+  if(tu&&!tu.dataset.locked) tu.textContent=isUS?'°F':'°C';
+  var cu=document.getElementById('ahl-chol-unit');
+  if(cu&&!cu.dataset.locked) cu.textContent=isUS?'mg/dL':'mmol/L';
+  var wu2=document.getElementById('ahl-water-unit');
+  if(wu2&&!wu2.dataset.locked) wu2.textContent=isUS?'fl oz':'ml';
+}
+
+// ── ahlToggleUnit — 개별 단위 버튼 탭으로 전환 + 값 자동 변환 ──
+var _ahlUnitPairs={
+  weight:['kg','lb'], glucose:['mmol/L','mg/dL'],
+  temperature:['°C','°F'], cholesterol:['mmol/L','mg/dL'], water:['ml','fl oz']
+};
+function ahlToggleUnit(metric){
+  var btnId='ahl-'+(metric==='temperature'?'temp':metric==='cholesterol'?'chol':metric)+'-unit';
+  var inpId='ahl-'+(metric==='temperature'?'temp':metric==='cholesterol'?'chol':metric);
+  var btn=document.getElementById(btnId);
+  var inp=document.getElementById(inpId);
+  if(!btn) return;
+  var pairs=_ahlUnitPairs[metric];
+  if(!pairs) return;
+  var cur=btn.textContent.trim();
+  var next=pairs[0]===cur?pairs[1]:pairs[0];
+  // 입력값 자동 변환
+  if(inp&&inp.value){
+    var v=parseFloat(inp.value);
+    if(!isNaN(v)){
+      var c;
+      if(metric==='weight')        c=cur==='kg'?+(v*2.20462).toFixed(1):+(v/2.20462).toFixed(1);
+      else if(metric==='glucose')  c=cur==='mmol/L'?+(v*18.0182).toFixed(0):+(v/18.0182).toFixed(1);
+      else if(metric==='temperature') c=cur==='°C'?+(v*9/5+32).toFixed(1):+((v-32)*5/9).toFixed(1);
+      else if(metric==='cholesterol') c=cur==='mmol/L'?+(v/0.0259).toFixed(0):+(v*0.0259).toFixed(2);
+      else if(metric==='water')    c=cur==='ml'?+(v/29.5735).toFixed(1):+(v*29.5735).toFixed(0);
+      if(c!==undefined) inp.value=c;
+    }
+  }
+  btn.textContent=next;
+  btn.dataset.locked='1'; // 전역 토글이 덮어쓰지 못하도록
 }
 
 // ── Settings toggle ──
