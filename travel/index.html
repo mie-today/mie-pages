@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic SF & LA Travel Plan Board</title>
+    <title>Customizable Travel Plan Board</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -38,11 +38,33 @@
             width: 100%;
         }
 
+        .title-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         h1 {
             color: white;
             margin: 0;
             font-size: 22px;
         }
+
+        .btn-map-master {
+            background-color: #ff9f1a;
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: background 0.15s ease;
+        }
+        .btn-map-master:hover { background-color: #e68a00; }
 
         .export-controls {
             display: flex;
@@ -100,7 +122,7 @@
         }
 
         .list-header {
-            padding: 8px 12px 4px 12px;
+            padding: 8px 12px 2px 12px;
             font-weight: 600;
             font-size: 14px;
             background-color: #e2e4e6;
@@ -108,13 +130,23 @@
             border-top-right-radius: 6px;
         }
 
-        .list-subtitle {
-            padding: 0 12px 8px 12px;
+        /* Customizable Subtitle Input Field Styling */
+        .list-subtitle-input {
+            border: none;
+            background: transparent;
+            padding: 0 12px 6px 12px;
             font-size: 11px;
             color: #5e6c84;
             border-bottom: 1px solid #ddd;
             background-color: #e2e4e6;
-            font-weight: normal;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .list-subtitle-input:focus {
+            background-color: #ffffff;
+            color: var(--text-color);
         }
 
         .card-container {
@@ -205,7 +237,13 @@
 <body>
 
     <header>
-        <h1>🗺️ "정보회_Travel_Plan" Dynamic Dashboard</h1>
+        <div class="title-area">
+            <h1>🗺️ Travel Workspace</h1>
+            <!-- Restored Master Map Link Connection Button -->
+            <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master" title="Open Connected Google Map">
+                📍 Open Connected Map
+            </a>
+        </div>
         <div class="export-controls">
             <button class="btn btn-pdf" onclick="exportToPDF()">PDF</button>
             <button class="btn btn-docx" onclick="exportToDOCX()">DOCX</button>
@@ -215,22 +253,15 @@
 
     <div class="board-grid">
         
+        <!-- Column 1: Stacked Rules & Backlog -->
         <div class="stacked-column">
             <div class="list" data-list-name="Rules & Notes">
                 <div class="list-header">📌 Rules & Notes</div>
-                <div class="list-subtitle">Core Trip parameters</div>
+                <input type="text" class="list-subtitle-input" value="Core Trip parameters">
                 <div class="card-container">
                     <div class="card allergy">
-                        <div class="card-header-row">
-                            <div class="card-title">⚠️ Dietary Safety</div>
-                        </div>
-                        <div class="card-notes">Safety Rule</div>
-                    </div>
-                    <div class="card preference">
-                        <div class="card-header-row">
-                            <div class="card-title">🎯 Local Vibe Focus</div>
-                        </div>
-                        <div class="card-notes">Trip Preference</div>
+                        <div class="card-header-row"><div class="card-title">⚠️ Dietary Safety</div></div>
+                        <div class="card-notes">Trip Parameter</div>
                     </div>
                 </div>
                 <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add rule..."><button class="add-card-btn">Add</button></div>
@@ -238,19 +269,12 @@
 
             <div class="list" data-list-name="Backlog">
                 <div class="list-header">🗂️ Backlog</div>
-                <div class="list-subtitle">Unassigned pool</div>
+                <input type="text" class="list-subtitle-input" value="Unassigned pool">
                 <div class="card-container">
                     <div class="card">
                         <div class="card-header-row">
                             <div class="card-title">Museum of African Diaspora</div>
-                            <a href="#" target="_blank" class="map-link" title="View on Map">📍</a>
-                        </div>
-                        <div class="card-notes">In Backlog</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header-row">
-                            <div class="card-title">The Walt Disney Family Museum</div>
-                            <a href="#" target="_blank" class="map-link" title="View on Map">📍</a>
+                            <a href="#" target="_blank" class="map-link">📍</a>
                         </div>
                         <div class="card-notes">In Backlog</div>
                     </div>
@@ -259,8 +283,10 @@
             </div>
         </div>
 
+        <!-- Days 1 to 5 with dynamic editable input subtitles -->
         <div class="list" data-list-name="Day 1">
-            <div class="list-header">📅 Day 1</div><div class="list-subtitle">Arrival & SF Art</div>
+            <div class="list-header">📅 Day 1</div>
+            <input type="text" class="list-subtitle-input" value="Arrival & SF Art">
             <div class="card-container">
                 <div class="card">
                     <div class="card-header-row"><div class="card-title">SF MOMA</div><a href="#" target="_blank" class="map-link">📍</a></div>
@@ -271,7 +297,8 @@
         </div>
 
         <div class="list" data-list-name="Day 2">
-            <div class="list-header">📅 Day 2</div><div class="list-subtitle">Parks & Science</div>
+            <div class="list-header">📅 Day 2</div>
+            <input type="text" class="list-subtitle-input" value="Parks & Science">
             <div class="card-container">
                 <div class="card">
                     <div class="card-header-row"><div class="card-title">de Young Museum</div><a href="#" target="_blank" class="map-link">📍</a></div>
@@ -281,18 +308,20 @@
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
         </div>
 
-        <div class="list" data-list-name="Day 3"><div class="list-header">📅 Day 3</div><div class="list-subtitle">Coastal SF Route</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 4"><div class="list-header">📅 Day 4</div><div class="list-subtitle">Culture & Distillery</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 5"><div class="list-header">📅 Day 5</div><div class="list-subtitle">Napa Valley</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 3"><div class="list-header">📅 Day 3</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 4"><div class="list-header">📅 Day 4</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 5"><div class="list-header">📅 Day 5</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
 
-        <div class="list" data-list-name="Day 6"><div class="list-header">📅 Day 6</div><div class="list-subtitle">Markets & Transit</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 7"><div class="list-header">📅 Day 7</div><div class="list-subtitle">Arrival in LA</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 8"><div class="list-header">📅 Day 8</div><div class="list-subtitle">Entertainment Day</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 9"><div class="list-header">📅 Day 9</div><div class="list-subtitle">LA Arts & Beach</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-name="Day 10"><div class="list-header">📅 Day 10</div><div class="list-subtitle">Final Coastal Drive</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <!-- Days 6 to 10 + Done -->
+        <div class="list" data-list-name="Day 6"><div class="list-header">📅 Day 6</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 7"><div class="list-header">📅 Day 7</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 8"><div class="list-header">📅 Day 8</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 9"><div class="list-header">📅 Day 9</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 10"><div class="list-header">📅 Day 10</div><input type="text" class="list-subtitle-input" value="Editable focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
 
         <div class="list" data-list-name="Done">
-            <div class="list-header">✅ Done</div><div class="list-subtitle">Completed Targets</div>
+            <div class="list-header">✅ Done</div>
+            <input type="text" class="list-subtitle-input" value="Completed Targets">
             <div class="card-container"></div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Archive..."><button class="add-card-btn">Add</button></div>
         </div>
@@ -300,13 +329,11 @@
     </div>
 
     <script>
-        // Update both the text label and map address based on its card state
         function updateCardState(card, targetListName) {
             const notesEl = card.querySelector('.card-notes');
             const mapLinkEl = card.querySelector('.map-link');
             const titleText = card.querySelector('.card-title').textContent;
 
-            // 1. Update text note based on position
             if (notesEl) {
                 if (targetListName === 'Rules & Notes') {
                     notesEl.textContent = 'Trip Parameter';
@@ -319,7 +346,6 @@
                 }
             }
 
-            // 2. Generate custom Google Maps lookup URL dynamically
             if (mapLinkEl && titleText) {
                 const cleanQuery = encodeURIComponent(titleText.replace(/[^a-zA-Z0-9 ]/g, ""));
                 mapLinkEl.href = `https://www.google.com/maps/search/?api=1&query=${cleanQuery}`;
@@ -333,16 +359,13 @@
                 card.classList.remove('dragging');
                 const finalParentList = card.closest('.list');
                 if (finalParentList) {
-                    const listName = finalParentList.getAttribute('data-list-name');
-                    updateCardState(card, listName);
+                    updateCardState(card, finalParentList.getAttribute('data-list-name'));
                 }
             });
-            // Initial map address link assignment
             const parentList = card.closest('.list');
             if (parentList) updateCardState(card, parentList.getAttribute('data-list-name'));
         }
 
-        // Initialize cards
         document.querySelectorAll('.card').forEach(makeCardDraggable);
 
         document.querySelectorAll('.card-container').forEach(container => {
@@ -371,7 +394,6 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // Card Creation
         document.querySelectorAll('.add-card-form').forEach(form => {
             const input = form.querySelector('.add-card-input');
             const button = form.querySelector('.add-card-btn');
@@ -398,7 +420,6 @@
                     mapLink.href = "#";
                     mapLink.target = "_blank";
                     mapLink.className = "map-link";
-                    mapLink.title = "View on Map";
                     mapLink.textContent = "📍";
                     headerRow.appendChild(mapLink);
                 }
@@ -412,21 +433,21 @@
                 
                 makeCardDraggable(newCard);
                 updateCardState(newCard, listName);
-                
                 input.value = '';
             }
             button.addEventListener('click', createCard);
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') createCard(); });
         });
 
-        // Data Parsers for Exports
         function getBoardData() {
             const data = [];
             document.querySelectorAll('.list').forEach(list => {
                 const listName = list.getAttribute('data-list-name');
+                const customSubtitle = list.querySelector('.list-subtitle-input').value;
                 list.querySelectorAll('.card').forEach(card => {
                     data.push({
                         Column: listName,
+                        ColumnSubtitle: customSubtitle,
                         Activity: card.querySelector('.card-title').textContent,
                         StatusText: card.querySelector('.card-notes').textContent
                     });
@@ -436,32 +457,29 @@
         }
 
         function exportToExcel() {
-            const data = getBoardData();
-            const worksheet = XLSX.utils.json_to_sheet(data);
+            const worksheet = XLSX.utils.json_to_sheet(getBoardData());
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Travel Itinerary");
-            XLSX.writeFile(workbook, "Travel_Plan_Export.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Itinerary");
+            XLSX.writeFile(workbook, "Travel_Workspace_Data.xlsx");
         }
 
         function exportToPDF() { window.print(); }
 
         function exportToDOCX() {
             const data = getBoardData();
-            let docContent = "DYNAMIC TRAVEL PLAN ITINERARY\r\n=============================\r\n";
+            let docContent = "TRAVEL WORKSPACE SUMMARY\r\n=============================\r\n";
             let currentColumn = "";
-            
             data.forEach(item => {
                 if(item.Column !== currentColumn) {
                     currentColumn = item.Column;
-                    docContent += `\r\n[${currentColumn.toUpperCase()}]\r\n`;
+                    docContent += `\r\n[${currentColumn.toUpperCase()} - ${item.ColumnSubtitle}]\r\n`;
                 }
-                docContent += `• ${item.Activity} — (${item.StatusText})\r\n`;
+                docContent += `• ${item.Activity} (${item.StatusText})\r\n`;
             });
-
             const blob = new Blob([docContent], { type: "application/msword" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "Travel_Plan_Export.doc";
+            link.download = "Travel_Workspace_Export.doc";
             link.click();
         }
     </script>
