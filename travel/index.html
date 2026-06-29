@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Custom Travel Workspace</title>
+    <title>Sharable Travel Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -79,9 +79,12 @@
             color: white;
         }
 
+        .btn-share { background-color: #5aac44; }
+        .btn-share:hover { background-color: #4b8a36; }
         .btn-pdf { background-color: #e04444; }
         .btn-docx { background-color: #2b579a; }
         .btn-excel { background-color: #217346; }
+        .btn-clear { background-color: #6b778c; }
 
         .board-grid {
             display: grid;
@@ -185,7 +188,6 @@
             margin-bottom: 3px;
         }
 
-        /* Modifiable Input elements inside cards */
         .card-title-input {
             border: none;
             background: transparent;
@@ -209,7 +211,6 @@
 
         .map-link { text-decoration: none; font-size: 13px; cursor: pointer; }
         
-        /* Interactive Delete Button */
         .btn-delete-card {
             border: none;
             background: transparent;
@@ -251,10 +252,12 @@
 
     <header>
         <div class="title-area">
-            <h1>🗺️ Fluid Travel Workspace</h1>
+            <h1>🗺️ Fluid Workspace (Sharable)</h1>
             <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master" title="Open Connected Google Map">📍 Open Connected Map</a>
         </div>
         <div class="export-controls">
+            <button class="btn btn-share" onclick="generateShareLink()" title="Generate share link containing your custom data">🔗 Share Board</button>
+            <button class="btn btn-clear" onclick="resetBoard()" title="Reset workspace back to original setup">Reset App</button>
             <button class="btn btn-pdf" onclick="exportToPDF()">PDF</button>
             <button class="btn btn-docx" onclick="exportToDOCX()">DOCX</button>
             <button class="btn btn-excel" onclick="exportToExcel()">Spreadsheet</button>
@@ -262,103 +265,235 @@
     </header>
 
     <div class="board-grid" id="boardGrid">
-        
-        <div class="stacked-column" draggable="false">
-            <div class="list" data-list-id="rules" draggable="false">
-                <input type="text" class="list-header-input" value="📌 Rules & Notes">
-                <input type="text" class="list-subtitle-input" value="Core Parameters">
-                <div class="card-container">
-                    <div class="card allergy">
-                        <div class="card-header-row">
-                            <input type="text" class="card-title-input" value="⚠️ Dietary Safety">
-                            <div class="card-actions">
-                                <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
-                            </div>
-                        </div>
-                        <input type="text" class="card-notes-input" value="Trip Parameter">
-                    </div>
-                </div>
-                <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add rule..."><button class="add-card-btn">Add</button></div>
-            </div>
-
-            <div class="list" data-list-id="backlog" draggable="false">
-                <input type="text" class="list-header-input" value="🗂️ Backlog">
-                <input type="text" class="list-subtitle-input" value="Unassigned pool">
-                <div class="card-container">
-                    <div class="card">
-                        <div class="card-header-row">
-                            <input type="text" class="card-title-input" value="Museum of African Diaspora">
-                            <div class="card-actions">
-                                <a href="#" target="_blank" class="map-link">📍</a>
-                                <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
-                            </div>
-                        </div>
-                        <input type="text" class="card-notes-input" value="Target Note">
-                    </div>
-                </div>
-                <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add place..."><button class="add-card-btn">Add</button></div>
-            </div>
         </div>
-
-        <div class="list" data-list-id="day1">
-            <input type="text" class="list-header-input" value="📅 Day 1">
-            <input type="text" class="list-subtitle-input" value="Arrival & SF Art">
-            <div class="card-container">
-                <div class="card">
-                    <div class="card-header-row">
-                        <input type="text" class="card-title-input" value="SF MOMA">
-                        <div class="card-actions">
-                            <a href="#" target="_blank" class="map-link">📍</a>
-                            <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
-                        </div>
-                    </div>
-                    <input type="text" class="card-notes-input" value="Target Note">
-                </div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-id="day2">
-            <input type="text" class="list-header-input" value="📅 Day 2">
-            <input type="text" class="list-subtitle-input" value="Parks & Science">
-            <div class="card-container">
-                <div class="card">
-                    <div class="card-header-row">
-                        <input type="text" class="card-title-input" value="de Young Museum">
-                        <div class="card-actions">
-                            <a href="#" target="_blank" class="map-link">📍</a>
-                            <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
-                        </div>
-                    </div>
-                    <input type="text" class="card-notes-input" value="Target Note">
-                </div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-id="day3"><input type="text" class="list-header-input" value="📅 Day 3"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day4"><input type="text" class="list-header-input" value="📅 Day 4"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day5"><input type="text" class="list-header-input" value="📅 Day 5"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day6"><input type="text" class="list-header-input" value="📅 Day 6"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day7"><input type="text" class="list-header-input" value="📅 Day 7"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day8"><input type="text" class="list-header-input" value="📅 Day 8"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day9"><input type="text" class="list-header-input" value="📅 Day 9"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-        <div class="list" data-list-id="day10"><input type="text" class="list-header-input" value="📅 Day 10"><input type="text" class="list-subtitle-input" value="Edit focus..."><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
-
-        <div class="list" data-list-id="done">
-            <input type="text" class="list-header-input" value="✅ Done">
-            <input type="text" class="list-subtitle-input" value="Completed Targets">
-            <div class="card-container"></div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Archive..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-    </div>
 
     <script>
         let draggedColumn = null;
 
-        // Syncs notes layout metrics and dynamically rewrites map link targets matching the query titles
+        const defaultLayout = [
+            { id: "stacked-track", isContainer: true, lists: [
+                { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
+                { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "Museum of African Diaspora", notes: "Target Note", type: "" }] }
+            ]},
+            { id: "day1", title: "📅 Day 1", subtitle: "Arrival & SF Art", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
+            { id: "day2", title: "📅 Day 2", subtitle: "Parks & Science", cards: [{ title: "de Young Museum", notes: "Target Note", type: "" }] },
+            { id: "day3", title: "📅 Day 3", subtitle: "Edit focus...", cards: [] },
+            { id: "day4", title: "📅 Day 4", subtitle: "Edit focus...", cards: [] },
+            { id: "day5", title: "📅 Day 5", subtitle: "Edit focus...", cards: [] },
+            { id: "day6", title: "📅 Day 6", subtitle: "Edit focus...", cards: [] },
+            { id: "day7", title: "📅 Day 7", subtitle: "Edit focus...", cards: [] },
+            { id: "day8", title: "📅 Day 8", subtitle: "Edit focus...", cards: [] },
+            { id: "day9", title: "📅 Day 9", subtitle: "Edit focus...", cards: [] },
+            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] },
+            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] }
+        ];
+
+        // Package all current board values into a clean structure
+        function serializeBoard() {
+            const layoutStructure = [];
+            const grid = document.getElementById('boardGrid');
+            
+            Array.from(grid.children).forEach(element => {
+                if(element.classList.contains('stacked-column')) {
+                    const stackedData = { id: "stacked-track", isContainer: true, lists: [] };
+                    element.querySelectorAll('.list').forEach(list => {
+                        stackedData.lists.push(serializeListElement(list));
+                    });
+                    layoutStructure.push(stackedData);
+                } else {
+                    layoutStructure.push(serializeListElement(element));
+                }
+            });
+            return layoutStructure;
+        }
+
+        function serializeListElement(list) {
+            const cardArray = [];
+            list.querySelectorAll('.card').forEach(card => {
+                cardArray.push({
+                    title: card.querySelector('.card-title-input').value,
+                    notes: card.querySelector('.card-notes-input').value,
+                    type: card.classList.contains('allergy') ? 'allergy' : ''
+                });
+            });
+            return {
+                id: list.getAttribute('data-list-id'),
+                title: list.querySelector('.list-header-input').value,
+                subtitle: list.querySelector('.list-subtitle-input').value,
+                cards: cardArray
+            };
+        }
+
+        function saveBoardToStorage() {
+            const structure = serializeBoard();
+            localStorage.setItem('sf_travel_board_state', JSON.stringify(structure));
+        }
+
+        // 🔗 NEW: Encodes data layout to give you a sharable custom link
+        function generateShareLink() {
+            const boardData = serializeBoard();
+            const encryptedString = btoa(encodeURIComponent(JSON.stringify(boardData)));
+            const shareUrl = window.location.origin + window.location.pathname + '#data=' + encryptedString;
+            
+            // Auto copy URL to users clipboard
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("✨ Custom Board Link Copied to Clipboard! Send it to your friends to show them your current board state.");
+            }).catch(() => {
+                alert("Link compiled! Copy it directly from your web address bar:\n\n" + shareUrl);
+            });
+        }
+
+        function loadBoard() {
+            let dataStructure = defaultLayout;
+            
+            // Check if user came from a shared URL link
+            if(window.location.hash && window.location.hash.startsWith('#data=')) {
+                try {
+                    const base64Data = window.location.hash.replace('#data=', '');
+                    dataStructure = JSON.parse(decodeURIComponent(atob(base64Data)));
+                    // Save shared URL straight into local storage base parameters
+                    localStorage.setItem('sf_travel_board_state', JSON.stringify(dataStructure));
+                    window.location.hash = ''; // Clean up bar path
+                } catch(err) {
+                    console.error("Failed parsing shared URL data, falling back to local files.", err);
+                }
+            } else {
+                // Otherwise read directly out of standard local browser backup
+                const rawData = localStorage.getItem('sf_travel_board_state');
+                if (rawData) dataStructure = JSON.parse(rawData);
+            }
+            
+            const grid = document.getElementById('boardGrid');
+            grid.innerHTML = '';
+
+            dataStructure.forEach(item => {
+                if(item.isContainer) {
+                    const stackedCol = document.createElement('div');
+                    stackedCol.className = 'stacked-column';
+                    stackedCol.setAttribute('draggable', 'false');
+                    item.lists.forEach(listData => { stackedCol.appendChild(buildListNode(listData)); });
+                    grid.appendChild(stackedCol);
+                } else {
+                    grid.appendChild(buildListNode(item));
+                }
+            });
+
+            document.querySelectorAll('.list').forEach(makeColumnMovable);
+            document.querySelectorAll('.card').forEach(makeCardDraggable);
+        }
+
+        function buildListNode(data) {
+            const list = document.createElement('div');
+            list.className = 'list';
+            list.setAttribute('data-list-id', data.id);
+            
+            const hIn = document.createElement('input');
+            hIn.className = 'list-header-input';
+            hIn.type = 'text';
+            hIn.value = data.title;
+            hIn.addEventListener('input', () => {
+                list.querySelectorAll('.card').forEach(card => updateCardState(card, list));
+                saveBoardToStorage();
+            });
+
+            const sIn = document.createElement('input');
+            sIn.className = 'list-subtitle-input';
+            sIn.type = 'text';
+            sIn.value = data.subtitle;
+            sIn.addEventListener('input', saveBoardToStorage);
+
+            const container = document.createElement('div');
+            container.className = 'card-container';
+            setupContainerDropZones(container);
+
+            data.cards.forEach(cData => { container.appendChild(buildCardNode(cData, data.id, list)); });
+
+            const form = document.createElement('div');
+            form.className = 'add-card-form';
+            const formInput = document.createElement('input');
+            formInput.className = 'add-card-input';
+            formInput.type = 'text';
+            formInput.placeholder = data.id === 'rules' ? 'Add rule...' : 'Add...';
+
+            const formBtn = document.createElement('button');
+            formBtn.className = 'add-card-btn';
+            formBtn.textContent = 'Add';
+
+            function triggerFormSubmit() {
+                const text = formInput.value.trim();
+                if(!text) return;
+                const newCard = buildCardNode({ title: text, notes: '', type: '' }, data.id, list);
+                container.appendChild(newCard);
+                makeCardDraggable(newCard);
+                updateCardState(newCard, list);
+                formInput.value = '';
+                saveBoardToStorage();
+            }
+
+            formBtn.addEventListener('click', triggerFormSubmit);
+            formInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') triggerFormSubmit(); });
+
+            form.appendChild(formInput);
+            form.appendChild(formBtn);
+            list.appendChild(hIn);
+            list.appendChild(sIn);
+            list.appendChild(container);
+            list.appendChild(form);
+
+            return list;
+        }
+
+        function buildCardNode(cData, listId, parentList) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            if(cData.type) card.classList.add(cData.type);
+
+            const row = document.createElement('div');
+            row.className = 'card-header-row';
+
+            const tIn = document.createElement('input');
+            tIn.className = 'card-title-input';
+            tIn.type = 'text';
+            tIn.value = cData.title;
+            tIn.addEventListener('input', () => {
+                updateCardState(card, card.closest('.list'));
+                saveBoardToStorage();
+            });
+
+            const actions = document.createElement('div');
+            actions.className = 'card-actions';
+
+            if(listId !== 'rules') {
+                const mapLink = document.createElement('a');
+                mapLink.className = 'map-link';
+                mapLink.target = '_blank';
+                mapLink.textContent = '📍';
+                actions.appendChild(mapLink);
+            }
+
+            const del = document.createElement('button');
+            del.className = 'btn-delete-card';
+            del.textContent = '✕';
+            del.onclick = () => { card.remove(); saveBoardToStorage(); };
+            actions.appendChild(del);
+
+            row.appendChild(tIn);
+            row.appendChild(actions);
+
+            const nIn = document.createElement('input');
+            nIn.className = 'card-notes-input';
+            nIn.type = 'text';
+            nIn.value = cData.notes;
+            nIn.addEventListener('input', saveBoardToStorage);
+
+            card.appendChild(row);
+            card.appendChild(nIn);
+
+            return card;
+        }
+
         function updateCardState(card, parentList) {
+            if(!parentList) return;
             const notesEl = card.querySelector('.card-notes-input');
             const mapLinkEl = card.querySelector('.map-link');
             const titleInput = card.querySelector('.card-title-input');
@@ -385,14 +520,10 @@
             }
         }
 
-        // Setup dragging models for individual elements
         function makeCardDraggable(card) {
             card.setAttribute('draggable', 'true');
             card.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT') {
-                    e.preventDefault();
-                    return;
-                }
+                if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
                 e.stopPropagation();
                 card.classList.add('dragging');
             });
@@ -401,31 +532,19 @@
                 card.classList.remove('dragging');
                 const finalParentList = card.closest('.list');
                 if (finalParentList) updateCardState(card, finalParentList);
+                saveBoardToStorage();
             });
-
-            // Re-sync maps if users manually type a different location name inside the card
-            const titleInput = card.querySelector('.card-title-input');
-            if (titleInput) {
-                titleInput.addEventListener('input', () => {
-                    const parentList = card.closest('.list');
-                    if (parentList) updateCardState(card, parentList);
-                });
-            }
 
             const parentList = card.closest('.list');
             if (parentList) updateCardState(card, parentList);
         }
 
-        // Column Movement Drag Rules
         function makeColumnMovable(list) {
-            if(list.getAttribute('draggable') === 'false') return; 
+            if(list.getAttribute('data-list-id') === 'rules' || list.getAttribute('data-list-id') === 'backlog') return;
             list.setAttribute('draggable', 'true');
 
             list.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.closest('.card')) {
-                    e.preventDefault();
-                    return;
-                }
+                if (e.target.tagName === 'INPUT' || e.target.closest('.card')) { e.preventDefault(); return; }
                 draggedColumn = list;
                 list.classList.add('list-dragging');
             });
@@ -433,6 +552,7 @@
             list.addEventListener('dragend', () => {
                 list.classList.remove('list-dragging');
                 draggedColumn = null;
+                saveBoardToStorage();
             });
 
             list.addEventListener('dragover', (e) => {
@@ -454,7 +574,7 @@
             });
         }
 
-        document.querySelectorAll('.card-container').forEach(container => {
+        function setupContainerDropZones(container) {
             container.addEventListener('dragover', (e) => {
                 if (draggedColumn) return; 
                 e.preventDefault();
@@ -468,7 +588,7 @@
                     container.insertBefore(draggingCard, afterElement);
                 }
             });
-        });
+        }
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
@@ -483,73 +603,15 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        document.querySelectorAll('.list-header-input').forEach(headerInput => {
-            headerInput.addEventListener('input', () => {
-                const parentList = headerInput.closest('.list');
-                parentList.querySelectorAll('.card').forEach(card => updateCardState(card, parentList));
-            });
-        });
-
-        // Form factory pipelines
-        document.querySelectorAll('.add-card-form').forEach(form => {
-            const input = form.querySelector('.add-card-input');
-            const button = form.querySelector('.add-card-btn');
-            const container = form.parentElement.querySelector('.card-container');
-            const parentList = form.parentElement;
-            const listId = parentList.getAttribute('data-list-id');
-
-            function createCard() {
-                const text = input.value.trim();
-                if (!text) return;
-
-                const newCard = document.createElement('div');
-                newCard.className = 'card';
-                
-                const headerRow = document.createElement('div');
-                headerRow.className = 'card-header-row';
-
-                const titleIn = document.createElement('input');
-                titleIn.className = 'card-title-input';
-                titleIn.type = 'text';
-                titleIn.value = text;
-                headerRow.appendChild(titleIn);
-
-                const actionsWrapper = document.createElement('div');
-                actionsWrapper.className = 'card-actions';
-
-                if (listId !== 'rules') {
-                    const mapLink = document.createElement('a');
-                    mapLink.href = "#"; mapLink.target = "_blank"; mapLink.className = "map-link"; mapLink.textContent = "📍";
-                    actionsWrapper.appendChild(mapLink);
-                }
-
-                const delBtn = document.createElement('button');
-                delBtn.className = 'btn-delete-card';
-                delBtn.textContent = '✕';
-                delBtn.title = "Delete Card";
-                delBtn.onclick = function() { newCard.remove(); };
-                actionsWrapper.appendChild(delBtn);
-
-                headerRow.appendChild(actionsWrapper);
-
-                const notesIn = document.createElement('input');
-                notesIn.className = 'card-notes-input';
-                notesIn.type = 'text';
-
-                newCard.appendChild(headerRow);
-                newCard.appendChild(notesIn);
-                container.appendChild(newCard);
-                
-                makeCardDraggable(newCard);
-                updateCardState(newCard, parentList);
-                input.value = '';
+        function resetBoard() {
+            if(confirm("Are you sure you want to completely clear and reset the workspace?")) {
+                localStorage.removeItem('sf_travel_board_state');
+                window.location.hash = '';
+                loadBoard();
             }
-            button.addEventListener('click', createCard);
-            input.addEventListener('keypress', (e) => { if (e.key === 'Enter') createCard(); });
-        });
+        }
 
-        document.querySelectorAll('.list').forEach(makeColumnMovable);
-        document.querySelectorAll('.card').forEach(makeCardDraggable);
+        window.onload = loadBoard;
 
         function getBoardData() {
             const data = [];
