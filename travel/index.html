@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fully Fluid Travel Workspace</title>
+    <title>Complete Custom Travel Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -83,7 +83,6 @@
         .btn-docx { background-color: #2b579a; }
         .btn-excel { background-color: #217346; }
 
-        /* Grid container handling column movements */
         .board-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -101,7 +100,7 @@
             flex-direction: column;
             min-height: 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            cursor: move; /* Drag handle indicator for the column */
+            cursor: move;
             transition: transform 0.1s ease, opacity 0.1s ease;
         }
 
@@ -110,7 +109,6 @@
             transform: scale(0.98);
         }
 
-        /* Fixed Left Column container layout */
         .stacked-column {
             grid-row: span 2;
             display: flex;
@@ -174,6 +172,7 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
             cursor: grab;
             user-select: none;
+            position: relative;
         }
         .card:active { cursor: grabbing; }
         .card.dragging { opacity: 0.2; }
@@ -182,13 +181,65 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 5px;
+            gap: 20px;
             margin-bottom: 3px;
         }
 
-        .card-title { font-weight: 600; font-size: 13px; }
-        .map-link { text-decoration: none; font-size: 13px; cursor: pointer; flex-shrink: 0; }
-        .card-notes { font-size: 11px; color: #5e6c84; font-style: italic; }
+        /* Modifiable Input elements inside cards */
+        .card-title-input {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-color);
+            width: 100%;
+            outline: none;
+            padding: 0;
+            cursor: text;
+        }
+        .card-title-input:focus { background-color: #f4f5f7; }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .map-link { text-decoration: none; font-size: 13px; cursor: pointer; }
+        
+        /* Interactive Delete Button */
+        .btn-delete-card {
+            border: none;
+            background: transparent;
+            color: #a0a0a0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        .btn-delete-card:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .card-notes-input {
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            color: #5e6c84;
+            font-style: italic;
+            font-family: inherit;
+            width: 100%;
+            outline: none;
+            padding: 0;
+            cursor: text;
+        }
+        .card-notes-input:focus { background-color: #f4f5f7; }
+
         .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
 
         .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
@@ -217,7 +268,15 @@
                 <input type="text" class="list-header-input" value="📌 Rules & Notes">
                 <input type="text" class="list-subtitle-input" value="Core Parameters">
                 <div class="card-container">
-                    <div class="card allergy"><div class="card-header-row"><div class="card-title">⚠️ Dietary Safety</div></div><div class="card-notes">Trip Parameter</div></div>
+                    <div class="card allergy">
+                        <div class="card-header-row">
+                            <input type="text" class="card-title-input" value="⚠️ Dietary Safety">
+                            <div class="card-actions">
+                                <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
+                            </div>
+                        </div>
+                        <input type="text" class="card-notes-input" value="Trip Parameter">
+                    </div>
                 </div>
                 <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add rule..."><button class="add-card-btn">Add</button></div>
             </div>
@@ -227,8 +286,14 @@
                 <input type="text" class="list-subtitle-input" value="Unassigned pool">
                 <div class="card-container">
                     <div class="card">
-                        <div class="card-header-row"><div class="card-title">Museum of African Diaspora</div><a href="#" target="_blank" class="map-link">📍</a></div>
-                        <div class="card-notes">Target Note</div>
+                        <div class="card-header-row">
+                            <input type="text" class="card-title-input" value="Museum of African Diaspora">
+                            <div class="card-actions">
+                                <a href="#" target="_blank" class="map-link">📍</a>
+                                <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
+                            </div>
+                        </div>
+                        <input type="text" class="card-notes-input" value="Target Note">
                     </div>
                 </div>
                 <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add place..."><button class="add-card-btn">Add</button></div>
@@ -240,8 +305,14 @@
             <input type="text" class="list-subtitle-input" value="Arrival & SF Art">
             <div class="card-container">
                 <div class="card">
-                    <div class="card-header-row"><div class="card-title">SF MOMA</div><a href="#" target="_blank" class="map-link">📍</a></div>
-                    <div class="card-notes">Target Note</div>
+                    <div class="card-header-row">
+                        <input type="text" class="card-title-input" value="SF MOMA">
+                        <div class="card-actions">
+                            <a href="#" target="_blank" class="map-link">📍</a>
+                            <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
+                        </div>
+                    </div>
+                    <input type="text" class="card-notes-input" value="Target Note">
                 </div>
             </div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
@@ -252,8 +323,14 @@
             <input type="text" class="list-subtitle-input" value="Parks & Science">
             <div class="card-container">
                 <div class="card">
-                    <div class="card-header-row"><div class="card-title">de Young Museum</div><a href="#" target="_blank" class="map-link">📍</a></div>
-                    <div class="card-notes">Target Note</div>
+                    <div class="card-header-row">
+                        <input type="text" class="card-title-input" value="de Young Museum">
+                        <div class="card-actions">
+                            <a href="#" target="_blank" class="map-link">📍</a>
+                            <button class="btn-delete-card" title="Delete Card" onclick="this.closest('.card').remove()">✕</button>
+                        </div>
+                    </div>
+                    <input type="text" class="card-notes-input" value="Target Note">
                 </div>
             </div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
@@ -280,23 +357,25 @@
     <script>
         let draggedColumn = null;
 
-        // 1. Synchronize Card Notes Text & Map Search URL
+        // Syncs notes layout metrics and dynamically rewrites map link targets matching the query titles
         function updateCardState(card, parentList) {
-            const notesEl = card.querySelector('.card-notes');
+            const notesEl = card.querySelector('.card-notes-input');
             const mapLinkEl = card.querySelector('.map-link');
-            const titleText = card.querySelector('.card-title').textContent;
+            const titleInput = card.querySelector('.card-title-input');
+            if(!titleInput) return;
             
+            const titleText = titleInput.value.trim();
             const currentHeaderTitle = parentList.querySelector('.list-header-input').value.trim();
             const cleanHeader = currentHeaderTitle.replace(/[^\w\s가-힣]/g, '').trim(); 
 
-            if (notesEl) {
+            if (notesEl && !notesEl.matches(':focus')) {
                 const listId = parentList.getAttribute('data-list-id');
                 if (listId === 'rules') {
-                    notesEl.textContent = 'Trip Parameter';
+                    notesEl.value = 'Trip Parameter';
                 } else if (listId === 'done') {
-                    notesEl.textContent = '✨ Completed';
+                    notesEl.value = '✨ Completed';
                 } else {
-                    notesEl.textContent = `Moved to ${cleanHeader}`;
+                    notesEl.value = `Moved to ${cleanHeader}`;
                 }
             }
 
@@ -306,11 +385,15 @@
             }
         }
 
-        // 2. Card Drag-and-Drop Handlers
+        // Setup dragging models for individual elements
         function makeCardDraggable(card) {
             card.setAttribute('draggable', 'true');
             card.addEventListener('dragstart', (e) => {
-                e.stopPropagation(); // Prevents column tracking triggers
+                if (e.target.tagName === 'INPUT') {
+                    e.preventDefault();
+                    return;
+                }
+                e.stopPropagation();
                 card.classList.add('dragging');
             });
             card.addEventListener('dragend', (e) => {
@@ -319,17 +402,27 @@
                 const finalParentList = card.closest('.list');
                 if (finalParentList) updateCardState(card, finalParentList);
             });
+
+            // Re-sync maps if users manually type a different location name inside the card
+            const titleInput = card.querySelector('.card-title-input');
+            if (titleInput) {
+                titleInput.addEventListener('input', () => {
+                    const parentList = card.closest('.list');
+                    if (parentList) updateCardState(card, parentList);
+                });
+            }
+
             const parentList = card.closest('.list');
             if (parentList) updateCardState(card, parentList);
         }
 
-        // 3. Column Move Drag-and-Drop Setup
+        // Column Movement Drag Rules
         function makeColumnMovable(list) {
             if(list.getAttribute('draggable') === 'false') return; 
             list.setAttribute('draggable', 'true');
 
             list.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.classList.contains('card') || e.target.closest('.card')) {
+                if (e.target.tagName === 'INPUT' || e.target.closest('.card')) {
                     e.preventDefault();
                     return;
                 }
@@ -351,7 +444,7 @@
                 const draggedIndex = children.indexOf(draggedColumn);
                 const targetIndex = children.indexOf(list);
 
-                if (draggedIndex > -1 && targetIndex > -1 && targetIndex !== 0) { // Keep Left Stack Pinned
+                if (draggedIndex > -1 && targetIndex > -1 && targetIndex !== 0) { 
                     if (draggedIndex < targetIndex) {
                         grid.insertBefore(draggedColumn, list.nextSibling);
                     } else {
@@ -361,10 +454,9 @@
             });
         }
 
-        // Initialize drop rules for containers
         document.querySelectorAll('.card-container').forEach(container => {
             container.addEventListener('dragover', (e) => {
-                if (draggedColumn) return; // Ignore card placements if moving columns
+                if (draggedColumn) return; 
                 e.preventDefault();
                 const draggingCard = document.querySelector('.dragging');
                 if (!draggingCard) return;
@@ -391,7 +483,6 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // Monitor Header title updates to re-sync subtitle texts instantly
         document.querySelectorAll('.list-header-input').forEach(headerInput => {
             headerInput.addEventListener('input', () => {
                 const parentList = headerInput.closest('.list');
@@ -399,7 +490,7 @@
             });
         });
 
-        // Add Card Form Controls
+        // Form factory pipelines
         document.querySelectorAll('.add-card-form').forEach(form => {
             const input = form.querySelector('.add-card-input');
             const button = form.querySelector('.add-card-btn');
@@ -413,23 +504,40 @@
 
                 const newCard = document.createElement('div');
                 newCard.className = 'card';
+                
                 const headerRow = document.createElement('div');
                 headerRow.className = 'card-header-row';
-                const title = document.createElement('div');
-                title.className = 'card-title';
-                title.textContent = text;
-                headerRow.appendChild(title);
+
+                const titleIn = document.createElement('input');
+                titleIn.className = 'card-title-input';
+                titleIn.type = 'text';
+                titleIn.value = text;
+                headerRow.appendChild(titleIn);
+
+                const actionsWrapper = document.createElement('div');
+                actionsWrapper.className = 'card-actions';
 
                 if (listId !== 'rules') {
                     const mapLink = document.createElement('a');
                     mapLink.href = "#"; mapLink.target = "_blank"; mapLink.className = "map-link"; mapLink.textContent = "📍";
-                    headerRow.appendChild(mapLink);
+                    actionsWrapper.appendChild(mapLink);
                 }
 
-                const notes = document.createElement('div');
-                notes.className = 'card-notes';
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-delete-card';
+                delBtn.textContent = '✕';
+                delBtn.title = "Delete Card";
+                delBtn.onclick = function() { newCard.remove(); };
+                actionsWrapper.appendChild(delBtn);
+
+                headerRow.appendChild(actionsWrapper);
+
+                const notesIn = document.createElement('input');
+                notesIn.className = 'card-notes-input';
+                notesIn.type = 'text';
+
                 newCard.appendChild(headerRow);
-                newCard.appendChild(notes);
+                newCard.appendChild(notesIn);
                 container.appendChild(newCard);
                 
                 makeCardDraggable(newCard);
@@ -440,11 +548,9 @@
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') createCard(); });
         });
 
-        // Run application setup rules
         document.querySelectorAll('.list').forEach(makeColumnMovable);
         document.querySelectorAll('.card').forEach(makeCardDraggable);
 
-        // Data processing for system document saving
         function getBoardData() {
             const data = [];
             document.querySelectorAll('.list').forEach(list => {
@@ -454,8 +560,8 @@
                     data.push({
                         ColumnTitle: currentHeaderTitle,
                         ColumnSubtitle: customSubtitle,
-                        Activity: card.querySelector('.card-title').textContent,
-                        StatusText: card.querySelector('.card-notes').textContent
+                        Activity: card.querySelector('.card-title-input').value,
+                        StatusText: card.querySelector('.card-notes-input').value
                     });
                 });
             });
@@ -471,7 +577,7 @@
         function exportToPDF() { window.print(); }
         function exportToDOCX() {
             const data = getBoardData();
-            let docContent = "FLUID TRAVEL WORKSPACE EXPORT\r\n=============================\r\n";
+            let docContent = "TRAVEL WORKSPACE SUMMARY\r\n=============================\r\n";
             let currentColumn = "";
             data.forEach(item => {
                 if(item.ColumnTitle !== currentColumn) {
