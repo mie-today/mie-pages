@@ -1,2335 +1,700 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>KLAIVE · Health</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<style>
-:root {
-  --bg: #FFFFFF; --bg2: #FAFAF8; --bg3: #F2F1EE;
-  --txt: #111111; --txt2: #5F5E5A; --txt3: #999896;
-  --blue: #1C7ED6; --teal: #1D9E75;
-  --b1: rgba(0,0,0,0.07); --b2: rgba(0,0,0,0.12);
-  --red: #E24B4A; --purple: #534AB7; --cblue: #378ADD; --amber: #EF9F27;
-  --r: 12px;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;}
-#app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharable Travel Workspace</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0079bf;
+            --list-bg: #ebecf0;
+            --card-bg: #ffffff;
+            --text-color: #172b4d;
+            --accent-color: #00c2e0;
+            --danger-color: #eb5a46;
+            --input-focus: #4c9aff;
+        }
 
-/* ── TOPBAR ── */
-.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;}
-.tb-left{display:flex;align-items:center;gap:14px;}
-.hamburger-btn{display:flex;flex-direction:column;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:6px;transition:background .12s;}
-.hamburger-btn:hover{background:var(--bg3);}
-.hamburger-btn span{display:block;width:16px;height:1.8px;background:var(--txt2);border-radius:2px;transition:all .2s;}
-.hamburger-btn:hover span{background:var(--txt);}
-.tb-div{width:.5px;height:28px;background:var(--b2);}
-.logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
-.logo .ai{color:var(--blue);}
-.tb-userline{font-size:12px;font-weight:500;color:var(--txt);}
-.tb-userline span{font-weight:400;color:var(--txt3);margin-left:2px;}
-.tb-right{display:flex;align-items:center;gap:10px;}
-.tb-meta{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:5px;}
-.tb-sep{color:var(--b2);}
-.tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
-.tb-signout:hover{text-decoration:underline;}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            width: 100%;
+        }
 
-/* ── HAMBURGER MENU ── */
-.ham-overlay{position:fixed;inset:0;z-index:200;display:none;}
-.ham-overlay.open{display:block;}
-.ham-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.3);}
-.ham-menu{position:absolute;top:0;left:0;width:260px;height:100%;background:var(--bg);box-shadow:4px 0 20px rgba(0,0,0,.12);display:flex;flex-direction:column;animation:slideIn .2s ease;}
-@keyframes slideIn{from{transform:translateX(-100%);}to{transform:translateX(0);}}
-.ham-header{padding:14px 16px 10px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:10px;}
-.ham-logo{font-size:16px;font-weight:700;letter-spacing:-0.5px;}
-.ham-logo span{color:var(--blue);}
-.ham-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:18px;color:var(--txt3);line-height:1;padding:2px 6px;border-radius:4px;}
-.ham-close:hover{background:var(--bg3);color:var(--txt);}
-.ham-back{display:flex;align-items:center;gap:6px;margin:8px 12px 4px;padding:6px 8px;border-radius:6px;background:var(--bg2);border:1px solid var(--b1);cursor:pointer;font-size:11.5px;color:var(--txt2);text-decoration:none;}
-.ham-back:hover{background:rgba(28,126,214,0.08);color:var(--blue);border-color:var(--blue);}
-.ham-back-arrow{font-size:13px;}
-.ham-back-label{font-weight:500;}
-.ham-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;padding:8px 16px 3px;}
-.ham-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt2);transition:background .12s;text-decoration:none;border:none;background:none;width:100%;font-family:'Inter',sans-serif;text-align:left;}
-.ham-item:hover{background:var(--bg3);color:var(--txt);}
-.ham-item.active{background:rgba(28,126,214,0.08);color:var(--blue);}
-.ham-item-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
-.ham-sep{height:1px;background:var(--b1);margin:4px 12px;}
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+            width: 100%;
+        }
 
-/* ── APP BODY ── */
-.app-body{flex:1;display:flex;overflow:hidden;min-height:0;align-items:stretch;padding-bottom:48px;}
+        .title-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
 
-/* ── LEFT SIDEBAR ── */
-.task-sidebar{flex:0 0 200px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--b1);padding:8px 8px;overflow-y:auto;gap:1px;transition:flex-basis .22s ease,min-width .22s ease,padding .22s ease;position:relative;min-width:200px;}
-.task-sidebar.collapsed{flex-basis:28px;min-width:28px;padding:0;overflow:hidden;}
-.task-sidebar.collapsed .sidebar-nav-inner{opacity:0;pointer-events:none;}
-.task-sidebar::-webkit-scrollbar{width:3px;}
-.task-sidebar::-webkit-scrollbar-thumb{background:var(--b1);}
-.sidebar-toggle{position:absolute;right:0;top:50%;transform:translateY(-50%);width:18px;height:36px;background:var(--bg);border:1px solid var(--b1);border-right:none;border-radius:6px 0 0 6px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:20;box-shadow:-2px 0 6px rgba(0,0,0,.06);transition:background .12s;}
-.sidebar-toggle:hover{background:rgba(28,126,214,0.08);}
-.sidebar-toggle svg{width:10px;height:10px;color:var(--txt2);transition:transform .22s;}
-.task-sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
-.sidebar-nav-inner{display:flex;flex-direction:column;gap:1px;overflow:visible;}
-.sidebar-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;padding:5px 10px 2px;white-space:nowrap;}
-.sidebar-sec-row{display:flex;align-items:center;justify-content:space-between;padding:5px 10px 2px;}
-.sidebar-sec-add{background:none;border:none;cursor:pointer;font-size:14px;color:var(--txt3);line-height:1;padding:0 2px;font-weight:600;transition:color .12s;font-family:'Inter',sans-serif;}
-.sidebar-sec-add:hover{color:var(--blue);}
-.tl-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--txt);transition:background .12s;border:none;background:none;width:100%;font-family:'Inter',sans-serif;text-align:left;white-space:nowrap;position:relative;}
-.tl-item:hover{background:var(--bg3);}
-.tl-item.active{background:rgba(28,126,214,0.08);color:var(--blue);}
-.tl-item svg{width:14px;height:14px;flex-shrink:0;opacity:.7;}
-.tl-item.active svg{opacity:1;}
-.tl-hide-btn{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:11px;color:var(--txt3);padding:2px 3px;border-radius:3px;line-height:1;}
-.tl-item:hover .tl-hide-btn{display:block;}
-.tl-hide-btn:hover{color:var(--red);background:rgba(226,75,74,0.08);}
-.tl-sep{height:1px;background:var(--bg3);margin:3px 6px;}
-.sidebar-stats{padding:5px 8px 6px;display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--bg3);margin-top:4px;}
-.stat-row{display:flex;justify-content:space-between;align-items:center;}
-.stat-label{font-size:10px;color:var(--txt3);}
-.stat-val{font-size:10px;font-weight:600;color:var(--txt);}
-.stat-val.green{color:var(--teal);}.stat-val.teal{color:var(--teal);}.stat-val.blue{color:var(--blue);}
-.settings-section{margin-top:auto;border-top:1px solid var(--bg3);}
-.settings-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:pointer;font-size:11px;font-weight:600;color:var(--txt2);user-select:none;transition:background .12s;border-radius:6px;margin:2px 0;}
-.settings-toggle:hover{background:var(--bg3);}
-.settings-toggle-left{display:flex;align-items:center;gap:6px;}
-.settings-toggle-left svg{width:11px;height:11px;}
-.settings-arrow{font-size:9px;color:var(--txt3);transition:transform .2s;line-height:1;}
-.settings-arrow.open{transform:rotate(180deg);}
-.settings-body{padding:0 8px 8px;display:none;flex-direction:column;gap:5px;max-height:340px;overflow-y:auto;}
-.settings-body::-webkit-scrollbar{width:3px;}
-.settings-body::-webkit-scrollbar-thumb{background:var(--b1);}
-.settings-body.open{display:flex;}
+        h1 {
+            color: white;
+            margin: 0;
+            font-size: 22px;
+        }
 
-/* ── MAIN CONTENT AREA ── */
-.body-wrap-health{flex:1;min-width:0;display:flex;overflow:hidden;min-height:0;position:relative;}
-.content-area{width:100%;max-width:1440px;margin:0 auto;display:flex;overflow:hidden;min-height:0;padding:8px 20px 8px;gap:16px;align-items:stretch;}
+        .btn-map-master {
+            background-color: #ff9f1a;
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
 
-/* ── HEALTH CENTRE (left main panel) ── */
-.health-centre{flex:0 0 60%;min-width:0;display:flex;flex-direction:column;overflow:visible;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);}
-.top-row{display:flex;align-items:center;gap:7px;padding:9px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;position:relative;overflow:visible;}
-.page-title{font-size:14px;font-weight:500;color:var(--txt);padding:0 8px;min-width:90px;text-align:center;}
-.date-nav{display:flex;align-items:center;gap:2px;position:relative;}
-.nav-arrow{width:26px;height:26px;border:.5px solid var(--b1);border-radius:4px;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--txt2);transition:background .12s;}
-.nav-arrow:hover{background:var(--bg2);}
-.date-pill{appearance:none;background:var(--bg2);color:var(--txt);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:background .12s;}
-.date-pill:hover{background:var(--bg3);}
-.top-row-spacer{flex:1;}
-.period-custom-wrap{position:relative;display:inline-block;}
-.period-custom-btn{border:.5px solid var(--b1);background:var(--bg2);color:var(--txt2);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;white-space:nowrap;width:88px;justify-content:space-between;}
-.period-custom-btn:hover{background:var(--bg3);}
-.period-custom-btn-label{flex:1;text-align:left;}
-.period-custom-arrow{font-size:9px;line-height:1;flex-shrink:0;}
-.period-custom-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.14);z-index:500;overflow:hidden;min-width:100%;display:none;}
-.period-custom-menu.open{display:block;}
-.period-custom-option{display:block;width:100%;padding:8px 14px;font-size:12px;font-weight:500;color:var(--txt2);font-family:'Inter',sans-serif;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;}
-.period-custom-option:hover{background:var(--bg2);}
-.period-custom-option.active{color:var(--blue);font-weight:600;background:rgba(28,126,214,0.06);}
-.ytd-btn{border:.5px solid var(--b1);background:var(--bg2);color:var(--txt2);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
-.ytd-btn:hover{background:var(--bg3);}
-.ytd-btn.active{background:rgba(28,126,214,0.08);color:var(--blue);border-color:rgba(28,126,214,0.3);}
-.unit-btn{border:.5px solid var(--b1);background:var(--bg2);color:var(--txt2);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;}
-.unit-btn.active{border-color:rgba(28,126,214,0.3);color:var(--blue);background:rgba(28,126,214,0.06);}
-.add-fab{display:flex;align-items:center;gap:5px;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s;}
-.add-fab:hover{opacity:.9;}
-.rows-wrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:4px;overflow-y:auto;overflow-x:hidden;padding:4px 12px 8px;}
-.rows-wrap::-webkit-scrollbar{width:3px;}
-.rows-wrap::-webkit-scrollbar-thumb{background:var(--b1);}
+        .export-controls {
+            display: flex;
+            gap: 10px;
+        }
 
-/* ── HEALTH CONTENT CARDS ── */
-.panel-view{flex:1;min-height:0;display:none;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;margin:0 0 4px;}
-.panel-view.active{display:flex;}
-.panel-header{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:.5px solid var(--b1);}
-.panel-back{display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;color:var(--blue);font-size:12px;font-weight:500;font-family:'Inter',sans-serif;padding:4px 8px;border-radius:6px;transition:background .12s;}
-.panel-back:hover{background:rgba(28,126,214,0.08);}
-.panel-title{font-size:13px;font-weight:600;color:var(--txt);}
-.panel-body{flex:1;overflow-y:auto;padding:12px 14px;}
-.panel-body::-webkit-scrollbar{width:4px;}
-.panel-body::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px;}
-.hrow-overview{flex:0 0 auto;display:flex;}
-.hrow-health-food{flex:0 0 auto;display:flex;gap:6px;min-height:160px;align-items:stretch;overflow:visible;width:100%;}
-.hrow{flex:0 0 auto;display:flex;min-height:160px;}
-.ov-card-combined{background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:7px 12px;display:flex;flex-direction:column;width:100%;gap:5px;}
-.ov-section-title{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);flex-shrink:0;}
-.ov-divider-h{height:.5px;background:var(--b1);flex-shrink:0;}
-.cal-macro-row{display:flex;align-items:stretch;flex:0 0 auto;}
-.ov-divider{width:.5px;background:var(--b1);align-self:stretch;margin:0 8px;flex-shrink:0;}
-.cal-third{flex:0 0 33.33%;min-width:0;display:flex;flex-direction:column;justify-content:center;padding-right:4px;}
-.cal-label{font-size:9.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;}
-.cal-block{display:flex;align-items:baseline;gap:4px;}
-.cal-num{font-size:24px;font-weight:700;color:var(--txt);line-height:1;}
-.cal-unit{font-size:11.5px;color:var(--txt3);}
-.cal-goal{font-size:10.5px;color:var(--txt3);margin-bottom:3px;}
-.cal-bigbar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;}
-.cal-bigfill{height:100%;border-radius:3px;background:var(--teal);}
-.cal-stats{display:flex;gap:10px;margin-top:3px;}
-.cal-stat-item{font-size:10.5px;color:var(--txt2);}
-.cal-stat-item span{font-weight:600;color:var(--txt);}
-.macros-two-thirds{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-around;gap:3px;}
-.macro-row-item{display:flex;align-items:center;gap:7px;}
-.macro-row-label{font-size:10.5px;font-weight:600;color:var(--txt2);width:46px;flex-shrink:0;}
-.macro-bar-track{flex:1;height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;}
-.macro-bar-fill{height:100%;border-radius:3px;}
-.macro-nums{font-size:10.5px;color:var(--txt3);white-space:nowrap;flex-shrink:0;min-width:62px;text-align:right;}
-.macro-nums strong{color:var(--txt);font-weight:600;}
-.activity-body-row{display:flex;align-items:center;flex:1;min-height:0;}
-.icons-sixty{flex:0 0 60%;display:flex;align-items:center;justify-content:space-around;height:100%;}
-.body-forty{flex:0 0 40%;display:flex;align-items:center;justify-content:space-around;height:100%;}
-.metric-item{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .12s;}
-.metric-item:hover{background:var(--bg2);}
-.metric-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;}
-.metric-val{font-size:14px;font-weight:600;color:var(--txt);text-align:center;line-height:1.2;}
-.metric-label{font-size:11px;color:var(--txt3);text-align:center;}
-.bc-item{text-align:center;flex:1;cursor:pointer;border-radius:8px;padding:4px 2px;transition:background .12s;}
-.bc-item:hover{background:var(--bg2);}
-.bc-label{font-size:11px;color:var(--txt3);margin-bottom:2px;line-height:1.3;}
-.bc-val{font-size:15px;font-weight:700;color:var(--txt);}
-.bc-sub{font-size:12px;color:var(--txt2);margin-top:1px;}
-.health-summary-card{flex:0 0 calc(50% - 3px);min-width:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;}
-.food-summary-card{flex:0 0 calc(50% - 3px);min-width:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;cursor:pointer;transition:border-color .12s;}
-.food-summary-card:hover{border-color:var(--blue);}
-.hs-section-lbl{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;}
-.vitals-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;cursor:pointer;border-radius:7px;padding:4px;transition:background .12s;}
-.vitals-grid:hover{background:var(--bg2);}
-.vital-item{display:flex;align-items:center;gap:4px;}
-.vital-icon{font-size:13px;flex-shrink:0;}
-.vital-val{font-size:12px;font-weight:600;color:var(--txt);}
-.vital-label{font-size:10px;color:var(--txt3);}
-.hs-divider{height:.5px;background:var(--b1);flex-shrink:0;}
-.sleep-mood-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.sm-tile{background:var(--bg2);border-radius:8px;padding:6px 8px;cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:2px;}
-.sm-tile:hover{background:rgba(28,126,214,0.06);}
-.sm-tile-label{font-size:9.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;}
-.sm-tile-val{font-size:13px;font-weight:600;color:var(--txt);}
-.sm-tile-sub{font-size:10.5px;color:var(--txt2);}
-.food-sum-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-shrink:0;}
-.food-sum-title{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;}
-.food-sum-cal{font-size:10.5px;font-weight:600;color:var(--teal);}
-.food-sum-slots{display:flex;flex-direction:column;gap:4px;flex:1;}
-.food-sum-slot-label{font-size:9.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
-.food-sum-entry{font-size:11.5px;color:var(--txt);line-height:1.35;}
-.food-sum-cal-sub{font-size:10.5px;color:var(--txt3);}
-.food-sum-add{font-size:10.5px;color:var(--blue);margin-top:auto;padding-top:6px;flex-shrink:0;}
-.three-col{display:flex;flex-direction:row;gap:5px;width:100%;align-items:stretch;}
-.sub-card{flex:1;min-width:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;}
-.sc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;}
-.sc-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);}
-.sc-add-btn{background:none;border:none;cursor:pointer;font-size:15px;color:var(--blue);line-height:1;padding:0 2px;font-family:'Inter',sans-serif;font-weight:600;flex-shrink:0;}
-.sc-add-btn:hover{opacity:.7;}
-.notes-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
-.notes-list::-webkit-scrollbar{width:2px;}
-.notes-list::-webkit-scrollbar-thumb{background:var(--b1);}
-.note-item{display:flex;align-items:flex-start;gap:5px;padding:3px 2px;border-radius:5px;}
-.note-item:hover{background:var(--bg2);}
-.note-bullet{font-size:13px;color:var(--blue);flex-shrink:0;line-height:1.5;user-select:none;}
-.note-text{flex:1;font-size:12px;color:var(--txt);line-height:1.5;outline:none;min-width:0;word-break:break-word;}
-.note-del{background:none;border:none;cursor:pointer;font-size:13px;color:var(--b2);padding:0;line-height:1;flex-shrink:0;opacity:0;transition:opacity .12s;}
-.note-item:hover .note-del{opacity:1;}
-.note-del:hover{color:var(--red);}
-.tracker-card{flex:1;min-width:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;}
-.tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0;}
-.tc-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);}
-.tracker-items{display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto;}
-.tracker-items::-webkit-scrollbar{width:3px;}
-.tracker-items::-webkit-scrollbar-thumb{background:var(--b1);}
-.tracker-item-label{font-size:11px;font-weight:600;color:var(--txt2);cursor:pointer;}
-.tracker-item-label:hover{color:var(--blue);}
-.period-btns-mini{display:flex;gap:4px;margin-top:3px;}
-.period-btn-mini{flex:1;border:none;border-radius:14px;padding:3px 6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.period-btn-mini.start{background:#e91e63;color:#fff;}
-.period-btn-mini.end{background:var(--txt3);color:#fff;}
-.period-dates{font-size:10px;color:var(--txt3);line-height:1.5;margin-top:2px;}
-.yn-item{display:flex;align-items:center;justify-content:space-between;padding:2px 0;}
-.yn-label{font-size:11px;font-weight:500;color:var(--txt2);cursor:pointer;}
-.yn-label:hover{color:var(--blue);}
-.yn-cups{display:flex;gap:2px;align-items:center;}
-.yn-cup{font-size:13px;cursor:pointer;opacity:.25;transition:opacity .15s,transform .15s;}
-.yn-cup.filled{opacity:1;}
-.yn-cup:hover{transform:scale(1.2);}
-.yn-total{font-size:10px;color:var(--txt3);margin-left:2px;}
-.yesno-item{display:flex;align-items:center;gap:7px;padding:2px 0;}
-.yesno-cb{width:15px;height:15px;min-width:15px;border:1.5px solid var(--b2);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
-.yesno-cb:hover{border-color:var(--blue);}
-.yesno-cb.checked{background:var(--blue);border-color:var(--blue);}
-.yesno-cb.checked::after{content:'✓';color:#fff;font-size:9px;font-weight:700;}
-.yesno-label{font-size:11px;font-weight:500;color:var(--txt2);}
-.tl-sep-tracker{height:.5px;background:var(--b1);margin:3px 0;}
+        .btn {
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            color: white;
+        }
 
-/* ── HEALTH TASKS PANEL ── */
-.health-tasks-panel{flex:1;min-width:0;background:var(--bg);border:.5px solid var(--b1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
-.health-tasks-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;flex-shrink:0;}
-.health-tasks-label{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);}
-.health-tasks-badge{font-size:9px;font-weight:600;border-radius:8px;padding:1px 6px;}
-.health-tasks-badge.warn{background:rgba(239,159,39,0.08);color:var(--amber);}
-.health-tasks-badge.ok{background:rgba(29,158,117,0.08);color:var(--teal);}
-.health-task-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px;min-height:0;}
-.health-task-list::-webkit-scrollbar{width:3px;}
-.health-task-list::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px;}
-.health-task-item{display:flex;align-items:center;gap:7px;padding:4px 2px;border-radius:5px;transition:background .1s;flex-shrink:0;}
-.health-task-item:hover{background:var(--bg2);}
-.health-task-cb{width:15px;height:15px;min-width:15px;border:1.5px solid var(--txt3);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;background:transparent;}
-.health-task-cb:hover{border-color:var(--blue);background:rgba(28,126,214,0.08);}
-.health-task-cb.checked{border-color:var(--blue);background:var(--blue);}
-.health-task-cb.checked::after{content:'✓';color:#fff;font-size:8px;font-weight:700;line-height:1;}
-.health-task-name{font-size:11px;color:var(--txt);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;}
-.health-task-name.done{text-decoration:line-through;color:var(--txt3);}
-.health-task-due{font-size:9.5px;font-weight:500;border-radius:8px;padding:1px 5px;flex-shrink:0;white-space:nowrap;}
-.health-task-due.overdue{background:rgba(226,75,74,0.08);color:var(--red);}
-.health-task-due.today{background:rgba(239,159,39,0.08);color:var(--amber);}
-.health-task-due.future{background:var(--bg3);color:var(--txt2);}
-.health-task-empty{font-size:11px;color:var(--txt3);font-style:italic;text-align:center;padding:8px 0;}
-.health-task-loading{font-size:11px;color:var(--txt3);font-style:italic;padding:4px 0;}
-.health-tasks-add{background:none;border:none;cursor:pointer;font-size:16px;color:var(--blue);line-height:1;padding:0 2px;font-family:'Inter',sans-serif;font-weight:600;flex-shrink:0;}
-.health-tasks-add:hover{opacity:.7;}
+        .btn-share { background-color: #5aac44; }
+        .btn-share:hover { background-color: #4b8a36; }
+        .btn-pdf { background-color: #e04444; }
+        .btn-docx { background-color: #2b579a; }
+        .btn-excel { background-color: #217346; }
+        .btn-clear { background-color: #6b778c; }
 
-/* ── RIGHT COLUMN ── */
-.right-col{flex:0 0 calc(40% - 16px);min-width:0;display:flex;flex-direction:column;overflow:hidden;}
-.fin-right-card{flex:1;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            flex-grow: 1;
+            min-height: 0;
+            width: 100%;
+        }
 
-/* Mini calendar in right col */
-.fin-cal-topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.fin-cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;position:relative;}
-.fin-cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
-.fin-cal-nbtn:hover{background:var(--bg2);}
-.fin-cal-mo{font-size:12px;font-weight:500;color:var(--txt);padding:0 6px;min-width:80px;text-align:center;cursor:pointer;border-radius:4px;transition:background .12s;}
-.fin-cal-mo:hover{background:var(--bg2);}
-.fin-cal-today{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
-.fin-cal-today:hover{background:var(--bg3);}
-.fin-mo-picker{position:absolute;top:calc(100% + 6px);left:0;z-index:200;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.13);padding:14px;min-width:210px;display:none;}
-.fin-mo-picker.open{display:block;}
-.fmpy-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.fmpy-yr{font-size:13px;font-weight:600;color:var(--txt);}
-.fmpy-nav{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--txt2);}
-.fmpy-nav:hover{background:var(--bg2);}
-.fmpy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
-.fmpy-m{padding:6px 4px;border:none;background:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--txt2);text-align:center;}
-.fmpy-m:hover{background:var(--bg2);}
-.fmpy-m.cur{background:var(--blue);color:#fff;font-weight:600;}
-.fin-cal-wrap{padding:4px 8px 0;flex-shrink:0;}
-.fin-cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
-.fin-cal-dow{font-size:8px;font-weight:600;color:var(--txt3);text-align:center;padding:2px 0;}
-.fin-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:.5px solid var(--b1);}
-.fin-cal-day{border-right:.5px solid var(--b1);border-bottom:.5px solid var(--b1);padding:3px 4px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;min-height:44px;transition:background .1s;}
-.fin-cal-day:hover{background:var(--bg2);}
-.fin-cal-day:nth-child(7n){border-right:none;}
-.fin-cal-day.other-mo .fin-cal-dn{color:var(--txt3);opacity:.35;}
-.fin-cal-dn{font-size:9.5px;color:var(--txt2);width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
-.fin-cal-day.today .fin-cal-dn{background:var(--teal);color:#fff;font-weight:600;}
-.fin-cal-day.selected-fin{background:rgba(28,126,214,0.05);}
-.fin-cal-day.selected-fin .fin-cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
-.fin-cal-dots{display:flex;gap:2px;justify-content:flex-start;flex-wrap:wrap;margin-top:1px;}
-.fin-cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-.fin-cal-dot.weight{background:#1D9E75;}
-.fin-cal-dot.bp,.fin-cal-dot.hr{background:#E24B4A;}
-.fin-cal-dot.glucose{background:#534AB7;}
-.fin-cal-dot.activity{background:#EF9F27;}
-.fin-cal-dot.food{background:#1C7ED6;}
-.fin-cal-dot.sleep{background:#378ADD;}
-.fin-cal-dot.mood{background:#1D9E75;}
-.fin-cal-dot.period{background:#e91e63;}
-.fin-cal-dot.water{background:#1C7ED6;}
+        .list {
+            background-color: var(--list-bg);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            cursor: move;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
 
-/* Health day detail section */
-.fin-day-sect{flex:0 0 80px;border-top:.5px solid var(--b1);display:flex;flex-direction:column;overflow:hidden;background:var(--bg2);}
-.fin-day-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 10px 3px;flex-shrink:0;}
-.fin-day-hdr-title{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;}
-.fin-day-hdr-date{font-size:10px;color:var(--txt2);}
-.fin-day-list{flex:1;overflow-y:auto;padding:2px 10px 5px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:transparent transparent;}
-.fin-day-list::-webkit-scrollbar{width:3px;}
-.fin-day-list::-webkit-scrollbar-thumb{background:transparent;}
-.fin-day-row{display:flex;align-items:center;gap:8px;padding:2px 4px;border-radius:5px;}
-.fin-day-row:hover{background:var(--bg3);}
-.fin-day-bar{width:2.5px;border-radius:2px;align-self:stretch;min-height:14px;flex-shrink:0;}
-.fin-day-cat{flex:1;font-size:11px;color:var(--txt);}
-.fin-day-val{font-size:11px;font-weight:600;flex-shrink:0;color:var(--txt2);}
-.fin-day-empty{font-size:10.5px;color:var(--txt3);text-align:center;padding:6px 0;font-style:italic;}
+        .list.list-dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
 
-/* Send / Add input section */
-.fin-inp-sect{flex:1;display:flex;flex-direction:column;border-top:.5px solid var(--b1);overflow:hidden;min-height:0;}
-.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
-.inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
-.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:8px 14px 8px;overflow:hidden;}
-.inp-panel.on{display:flex;}
-.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:9px 11px;min-height:40px;max-height:90px;overflow-y:auto;scrollbar-width:none;}
-.msg-ta::placeholder{color:var(--txt3);}
-.msg-ta::-webkit-scrollbar{display:none;}
-.inp-actions{display:flex;align-items:center;gap:8px;margin-top:7px;flex-shrink:0;}
-.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 9px;cursor:pointer;flex-shrink:0;}
-.attach-lbl:hover{background:var(--bg3);}
-.send-btn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.send-btn:hover{opacity:.9;}
-.draft-row{display:flex;align-items:center;gap:5px;margin-top:5px;flex-shrink:0;}
-.draft-lbl{font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:4px;cursor:pointer;}
-.sst{font-size:10px;min-height:12px;margin-top:3px;flex-shrink:0;}
-.fname-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10px;color:var(--txt2);flex-shrink:0;}
-.rm-btn{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:12px;padding:0;}
-/* Add sub-types */
-.add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
-.att{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);cursor:pointer;white-space:nowrap;margin-bottom:-1px;}
-.att:hover{color:var(--txt2);}
-.att.sel{color:var(--blue);border-bottom-color:var(--blue);}
-.att svg{width:10px;height:10px;flex-shrink:0;}
-.afb{display:none;flex-direction:column;flex:1;min-height:0;}
-.afb.vis{display:flex;}
-.afs{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:5px;padding-bottom:4px;scrollbar-width:thin;scrollbar-color:transparent transparent;}
-.afs::-webkit-scrollbar{width:3px;}.afs::-webkit-scrollbar-thumb{background:transparent;}.afs::-webkit-scrollbar-track{background:transparent;}
-.aff{flex-shrink:0;padding-top:5px;border-top:.5px solid var(--b1);}
-.asf{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.asf:hover{opacity:.9;}
-.ast{font-size:10px;min-height:12px;text-align:center;}
-.afi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
-.afi:focus{border-color:var(--blue);}
-.afsm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
-.ahl-unit-btn{flex:0 0 auto;min-width:36px;padding:5px 7px;background:var(--bg3);border:.5px solid var(--b1);border-radius:6px;font-size:11px;font-family:'Inter',sans-serif;color:var(--blue);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s;text-align:center;font-weight:600;}
-.ahl-unit-btn:hover{background:rgba(28,126,214,0.08);border-color:var(--blue);}
-.ahl-unit-static{flex:0 0 auto;min-width:36px;padding:5px 7px;background:var(--bg3);border:.5px solid var(--b1);border-radius:6px;font-size:11px;color:var(--txt3);white-space:nowrap;text-align:center;display:flex;align-items:center;justify-content:center;}
-.afsm:focus{border-color:var(--blue);}
-.afr{display:flex;gap:5px;flex-shrink:0;}
-.amt{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;flex-shrink:0;}
-.aex{display:none;flex-direction:column;gap:5px;flex-shrink:0;}
-.aex.vis{display:flex;}
+        .stacked-column {
+            grid-row: span 2;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 0;
+        }
 
-/* ── SIDEBAR SETTINGS ── */
-.sf-lbl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
-.sf-input{width:100%;border:1px solid var(--b2);border-radius:5px;padding:4px 7px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;transition:border-color .12s;}
-.sf-input:focus{border-color:var(--blue);}
-.sf-row2{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.sf-save-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:5px;padding:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;transition:opacity .12s;}
-.sf-save-btn:hover{opacity:.9;}
-.sf-saved{font-size:10px;color:var(--teal);text-align:center;min-height:13px;}
-.sf-section-lbl{font-size:8.5px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;padding:3px 0 1px;}
-.sf-results{display:flex;flex-direction:column;gap:2px;margin-top:2px;}
-.sf-result-divider{height:.5px;background:var(--b1);margin:4px 0 2px;}
-.sf-result-row{display:flex;align-items:center;justify-content:space-between;gap:3px;}
-.sf-result-lbl{font-size:9px;color:var(--txt3);flex-shrink:0;}
-.sf-result-val{font-size:10px;font-weight:700;color:var(--txt);text-align:right;}
-.sf-result-tag{font-size:8.5px;font-weight:600;border-radius:6px;padding:1px 5px;flex-shrink:0;}
-.sf-result-tag.normal{background:rgba(29,158,117,0.08);color:var(--teal);}
-.sf-result-tag.overweight{background:rgba(239,159,39,0.08);color:var(--amber);}
-.sf-result-tag.obese{background:rgba(226,75,74,0.08);color:var(--red);}
-.sf-result-tag.underweight{background:rgba(28,126,214,0.08);color:var(--blue);}
+        .stacked-column .list {
+            flex: 1;
+            min-height: 0;
+        }
 
-/* ── MODALS ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
-.modal-bg.hidden{display:none;}
-.modal-box{background:var(--bg);border-radius:14px;padding:20px;max-width:440px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.16);animation:mIn .18s ease;}
-@keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.modal-title{font-size:15px;font-weight:600;color:var(--txt);}
-.modal-x{background:none;border:none;font-size:20px;color:var(--txt3);cursor:pointer;line-height:1;}
-.modal-x:hover{color:var(--txt);}
-.type-toggle{display:flex;border:1px solid var(--b1);border-radius:8px;overflow:hidden;margin-bottom:12px;}
-.type-btn{flex:1;padding:7px;font-size:12px;font-weight:500;border:none;background:var(--bg2);cursor:pointer;font-family:'Inter',sans-serif;color:var(--txt2);transition:all .12s;}
-.type-btn.active-food{background:rgba(29,158,117,0.08);color:var(--teal);}
-.type-btn.active-body{background:rgba(28,126,214,0.08);color:var(--blue);}
-.type-btn.active-activity{background:rgba(239,159,39,0.08);color:var(--amber);}
-.type-btn.active-period{background:rgba(226,75,74,0.06);color:#c2185b;}
-.f-field{margin-bottom:10px;}
-.f-lbl{font-size:10px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
-.f-input{width:100%;border:1px solid var(--b2);border-radius:6px;padding:7px 10px;font-size:13px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;transition:border-color .12s;}
-.f-input:focus{border-color:var(--blue);background:var(--bg);}
-.f-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.f-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.modal-actions{display:flex;gap:8px;margin-top:14px;}
-.btn-cancel{flex:1;background:var(--bg3);color:var(--txt);border:1px solid var(--b2);border-radius:6px;padding:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;}
-.btn-cancel:hover{background:var(--b1);}
-.btn-save{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.btn-save:hover{opacity:.9;}
-.btn-save:disabled{background:rgba(28,126,214,0.35);cursor:not-allowed;}
-.modal-status{font-size:11px;text-align:center;margin-top:5px;min-height:13px;}
-.f-check-row{display:flex;align-items:center;gap:6px;padding:6px 0;}
-.f-check-row input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:var(--blue);}
-.f-check-row label{font-size:12px;color:var(--txt2);cursor:pointer;}
+        .list-header-input {
+            border: none;
+            background: transparent;
+            padding: 8px 12px 2px 12px;
+            font-weight: 600;
+            font-size: 14px;
+            background-color: #e2e4e6;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            color: var(--text-color);
+            cursor: text;
+        }
+        .list-header-input:focus { background-color: #f4f5f7; }
 
-/* ── Date PICKER popup ── */
-.picker-wrap{position:relative;display:inline-block;}
-.picker-popup{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg);border:.5px solid var(--b1);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.14);padding:12px 14px 14px;width:240px;z-index:200;animation:pickerIn .15s ease;}
-@keyframes pickerIn{from{opacity:0;transform:translateX(-50%) translateY(-6px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-.picker-popup.open{display:block;}
-.picker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.picker-year-ctrl{display:flex;align-items:center;gap:2px;}
-.picker-year-val{font-size:13px;font-weight:600;color:var(--txt);min-width:36px;text-align:center;}
-.picker-year-btn{width:18px;height:18px;border:none;background:var(--bg3);border-radius:3px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--txt2);line-height:1;padding:0;}
-.picker-year-btn:hover{background:var(--b1);}
-.picker-arr{width:28px;height:28px;border:none;background:none;cursor:pointer;border-radius:50%;font-size:16px;color:var(--txt2);transition:background .12s;line-height:1;display:flex;align-items:center;justify-content:center;}
-.picker-arr:hover{background:var(--bg3);}
-.cal-table{width:100%;border-collapse:collapse;table-layout:fixed;}
-.cal-table th{text-align:center;font-size:9px;font-weight:600;color:var(--txt3);padding:4px 0;text-transform:uppercase;}
-.cal-table td{text-align:center;padding:1px;}
-.cal-day-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:none;background:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);cursor:pointer;transition:background .1s;line-height:1;}
-.cal-day-btn:hover{background:var(--bg3);}
-.cal-day-btn.other-month{color:var(--txt3);}
-.cal-day-btn.other-month:hover{background:none;cursor:default;}
-.cal-day-btn.is-today{font-weight:700;border:1.5px solid var(--blue);color:var(--blue);}
-.cal-day-btn.is-selected{background:var(--blue);color:#fff;font-weight:600;border:none;}
-.cal-day-btn:disabled{color:var(--b2);cursor:default;background:none;}
+        .list-subtitle-input {
+            border: none;
+            background: transparent;
+            padding: 0 12px 6px 12px;
+            font-size: 11px;
+            color: #5e6c84;
+            border-bottom: 1px solid #ddd;
+            background-color: #e2e4e6;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            cursor: text;
+        }
+        .list-subtitle-input:focus { background-color: #ffffff; }
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--txt);color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .25s ease,opacity .25s;opacity:0;z-index:999;white-space:nowrap;pointer-events:none;}
-.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
-.toast.success{background:var(--teal);}
-.toast.error{background:var(--red);}
+        .card-container {
+            padding: 6px;
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 30px;
+            cursor: default;
+        }
 
-/* ── BOTTOM NAV ── */
-.bot-nav{position:fixed;bottom:0;left:0;right:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;z-index:50;}
-.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:.5px solid var(--b1);color:var(--txt3);cursor:pointer;background:none;border-top:2px solid transparent;border-bottom:none;border-left:none;font-family:'Inter',sans-serif;padding:0;transition:color .12s;}
-.nav-tab:last-child{border-right:none;}
-.nav-tab.on{color:var(--blue);border-top-color:var(--blue);}
-.nav-tab:hover:not(.on){color:var(--txt2);}
-.nav-tab svg{width:14px;height:14px;}
-.nav-lbl{font-size:11px;}
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            cursor: grab;
+            user-select: none;
+            position: relative;
+        }
+        .card:active { cursor: grabbing; }
+        .card.dragging { opacity: 0.2; }
 
-/* ── AUTH / SPINNER ── */
-.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg3);padding:24px;}
-.auth-card{background:var(--bg);border:1px solid var(--b1);border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
-.auth-logo{width:56px;height:56px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
-.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;color:var(--txt);}
-.auth-sub{font-size:13px;color:var(--txt2);margin-bottom:26px;line-height:1.6;}
-.connect-btn{background:var(--blue);color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.connect-btn:hover{opacity:.9;}
-.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
-.spinner{width:24px;height:24px;border:2.5px solid var(--b1);border-top-color:var(--blue);border-radius:50%;animation:spin2 .7s linear infinite;}
-@keyframes spin2{to{transform:rotate(360deg);}}
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 3px;
+        }
 
-/* ── MOBILE RESPONSIVE ── */
-@media(max-width:900px){
-  html,body{height:auto !important;overflow:auto !important;}
-  #app{height:auto !important;min-height:100vh;overflow:visible !important;display:flex;flex-direction:column;}
-  .tb-meta{display:none;}
-  .tb-userline{display:none;}
-  .task-sidebar{display:none !important;}
-  .app-body{flex-direction:column;overflow:visible;height:auto;}
-  .body-wrap-health{overflow:visible;height:auto;flex-direction:column;}
-  .content-area{flex-direction:column;overflow:visible;height:auto;padding:8px 10px 24px;gap:10px;align-items:stretch;}
-  .health-centre{flex:none;width:100%;overflow:visible;}
-  .right-col{flex:none;width:100%;overflow:visible;}
-  .three-col{flex-direction:column;}
-  .hrow-health-food{flex-direction:column;min-height:auto;}
-  .health-summary-card,.food-summary-card{flex:none;width:100%;}
-}
-@media(max-width:480px){
-  .topbar{padding:0 12px;}
-  .content-area{padding:6px 6px 20px;}
-  .three-col{flex-direction:column;}
-  .nav-lbl{font-size:8px;}
-}
-</style>
+        .card-title-input {
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-color);
+            width: 100%;
+            outline: none;
+            padding: 0;
+            cursor: text;
+        }
+        .card-title-input:focus { background-color: #f4f5f7; }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .map-link { text-decoration: none; font-size: 13px; cursor: pointer; }
+        
+        .btn-delete-card {
+            border: none;
+            background: transparent;
+            color: #a0a0a0;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        .btn-delete-card:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .card-notes-input {
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            color: #5e6c84;
+            font-style: italic;
+            font-family: inherit;
+            width: 100%;
+            outline: none;
+            padding: 0;
+            cursor: text;
+        }
+        .card-notes-input:focus { background-color: #f4f5f7; }
+
+        .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
+
+        .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
+        .add-card-input { flex-grow: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; }
+        .add-card-btn { background-color: #5aac44; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; cursor: pointer; }
+    </style>
 </head>
 <body>
-<div id="auth-wrap" class="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">M</div>
-    <div class="auth-title">KLAIVE Health</div>
-    <div class="auth-sub">Sign in to view and manage your health data.</div>
-    <button class="connect-btn" id="connect-btn">Connect Google</button>
-  </div>
-</div>
-<div id="loading-wrap" class="spinner-wrap" style="display:none;">
-  <div class="spinner"></div>
-  <div style="font-size:12px;color:var(--txt2);margin-top:4px;">Loading…</div>
-</div>
-<div id="app" style="display:none;">
 
-  <!-- HAMBURGER MENU -->
-  <div class="ham-overlay" id="ham-overlay">
-    <div class="ham-backdrop" onclick="closeHamburger()"></div>
-    <div class="ham-menu">
-      <div class="ham-header"><div class="ham-logo">KL<span>AI</span>VE</div><button class="ham-close" onclick="closeHamburger()">&times;</button></div>
-      <a class="ham-back" href="/dashboard"><span class="ham-back-arrow">&#8249;</span><span class="ham-back-label">Back to Dashboard</span></a>
-      <div class="ham-sec">Dashboards</div>
-      <a class="ham-item" href="/calendar"><span class="ham-item-icon">&#128197;</span>Calendar</a>
-      <a class="ham-item" href="/task"><span class="ham-item-icon">&#9989;</span>Tasks</a>
-      <a class="ham-item" href="/finance"><span class="ham-item-icon">&#128176;</span>Finance</a>
-      <div class="ham-item active"><span class="ham-item-icon">&#10084;&#65039;</span>Health</div>
-      <a class="ham-item" href="/trackers"><span class="ham-item-icon">&#128202;</span>Trackers</a>
-      <a class="ham-item" href="/playbook"><span class="ham-item-icon">&#128214;</span>Playbook</a>
-      <a class="ham-item" href="/summaries"><span class="ham-item-icon">&#128203;</span>Summaries</a>
-      <div class="ham-sep"></div>
-      <div class="ham-item" onclick="closeHamburger()" style="color:var(--red);"><span class="ham-item-icon">&#128682;</span>Sign out</div>
-    </div>
-  </div>
+    <header>
+        <div class="title-area">
+            <h1>🗺️ Fluid Workspace (Sharable)</h1>
+            <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master" title="Open Connected Google Map">📍 Open Connected Map</a>
+        </div>
+        <div class="export-controls">
+            <button class="btn btn-share" onclick="generateShareLink()" title="Generate share link containing your custom data">🔗 Share Board</button>
+            <button class="btn btn-clear" onclick="resetBoard()" title="Reset workspace back to original setup">Reset App</button>
+            <button class="btn btn-pdf" onclick="exportToPDF()">PDF</button>
+            <button class="btn btn-docx" onclick="exportToDOCX()">DOCX</button>
+            <button class="btn btn-excel" onclick="exportToExcel()">Spreadsheet</button>
+        </div>
+    </header>
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="tb-left">
-      <button class="hamburger-btn" onclick="openHamburger()" aria-label="Menu"><span></span><span></span><span></span></button>
-      <div class="tb-div"></div>
-      <span class="logo">KL<span class="ai">AI</span>VE</span>
-      <div class="tb-div"></div>
-      <div class="tb-userline" id="tb-userline">Welcome, — <span></span></div>
-    </div>
-    <div class="tb-right">
-      <div class="tb-meta">
-        <span id="wb-date"></span><span class="tb-sep">·</span>
-        <span id="wb-time"></span><span class="tb-sep">·</span>
-        <span id="wb-icon" style="font-size:14px;"></span><span id="wb-temp"></span>
-      </div>
-      <div class="tb-avatar" id="tb-av">—</div>
-      <button class="tb-signout" id="signout-btn">Sign out</button>
-    </div>
-  </div>
-
-  <!-- APP BODY -->
-  <div class="app-body">
-
-    <!-- LEFT SIDEBAR -->
-    <div class="task-sidebar collapsed" id="task-sidebar">
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Expand sidebar">
-        <svg viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7,2 2,8 7,14"/></svg>
-      </button>
-      <div class="sidebar-nav-inner">
-        <div class="sidebar-sec">Health</div>
-        <button class="tl-item active" id="nav-overview" onclick="setView('overview',this)">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>Overview
-        </button>
-        <div class="tl-sep"></div>
-        <div class="sidebar-sec-row"><span class="sidebar-sec">Logs</span></div>
-        <div id="logs-items">
-          <button class="tl-item" id="nav-activity" onclick="setView('activity',this)" data-key="activity"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,9 4,5 7,8 10,3 13,6 15,4" stroke-linecap="round" stroke-linejoin="round"/></svg>Activity<button class="tl-hide-btn" onclick="hideItem(event,'activity')">-</button></button>
-          <button class="tl-item" id="nav-healthlog" onclick="setView('healthlog',this)" data-key="healthlog"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a3 3 0 00-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 00-3-3z"/></svg>Body<button class="tl-hide-btn" onclick="hideItem(event,'healthlog')">-</button></button>
-          <button class="tl-item" id="nav-food" onclick="setView('food',this)" data-key="food"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v5c0 2 1.5 3 3 3s3-1 3-3V2" stroke-linecap="round"/><line x1="6" y1="10" x2="6" y2="14" stroke-linecap="round"/><path d="M11 2c0 0 2 1 2 4s-2 4-2 4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>Food<button class="tl-hide-btn" onclick="hideItem(event,'food')">-</button></button>
-          <button class="tl-item" id="nav-mood" onclick="setView('mood',this)" data-key="mood"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 9.5c.7 1 3.8 1 4.5 0" stroke-linecap="round"/><circle cx="6" cy="6.5" r=".8" fill="currentColor" stroke="none"/><circle cx="10" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg>Mood<button class="tl-hide-btn" onclick="hideItem(event,'mood')">-</button></button>
-          <button class="tl-item" id="nav-sleep" onclick="setView('sleep',this)" data-key="sleep"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10A6 6 0 016 3a6 6 0 100 10 6 6 0 007-3z" stroke-linecap="round"/></svg>Sleep<button class="tl-hide-btn" onclick="hideItem(event,'sleep')">-</button></button>
-          <button class="tl-item" id="nav-womens" onclick="setView('womens',this)" data-key="womens"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="4"/><line x1="8" y1="10" x2="8" y2="15" stroke-linecap="round"/><line x1="5.5" y1="13" x2="10.5" y2="13" stroke-linecap="round"/></svg>Women's<button class="tl-hide-btn" onclick="hideItem(event,'womens')">-</button></button>
-        </div>
-        <div class="tl-sep"></div>
-        <div class="sidebar-sec-row">
-          <span class="sidebar-sec">Trackers</span>
-          <button class="sidebar-sec-add" onclick="openSecAddModal('trackers')">+</button>
-        </div>
-        <div id="trackers-items">
-          <button class="tl-item" id="nav-water" onclick="setView('water',this)" data-key="water"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 8 3 11a5 5 0 0010 0C13 8 8 2 8 2z"/></svg>Water<button class="tl-hide-btn" onclick="hideItem(event,'water')">-</button></button>
-          <button class="tl-item" id="nav-medication" onclick="setView('medication',this)" data-key="medication"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="1" width="6" height="14" rx="3"/><line x1="5" y1="8" x2="11" y2="8"/></svg>Medication<button class="tl-hide-btn" onclick="hideItem(event,'medication')">-</button></button>
-        </div>
-        <div class="tl-sep"></div>
-        <div class="sidebar-sec-row">
-          <span class="sidebar-sec">Records</span>
-          <button class="sidebar-sec-add" onclick="openSecAddModal('records')">+</button>
-        </div>
-        <div id="records-items">
-          <button class="tl-item" id="nav-insurance" onclick="setView('insurance',this)" data-key="insurance"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1L2 4v4c0 4 6 7 6 7s6-3 6-7V4L8 1z"/></svg>Insurance Info<button class="tl-hide-btn" onclick="hideItem(event,'insurance')">-</button></button>
-          <button class="tl-item" id="nav-medrec" onclick="setView('medrec',this)" data-key="medrec"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke-linecap="round"/></svg>Medication<button class="tl-hide-btn" onclick="hideItem(event,'medrec')">-</button></button>
-          <button class="tl-item" id="nav-history" onclick="setView('history',this)" data-key="history"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>Medical History<button class="tl-hide-btn" onclick="hideItem(event,'history')">-</button></button>
-        </div>
-        <div class="tl-sep"></div>
-        <div class="sidebar-sec-row"><span class="sidebar-sec">My Info &amp; Goals</span></div>
-        <button class="tl-item" id="nav-myinfo" onclick="setView('myinfo',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2"/><path d="M3 14c0-3 2-5 5-5s5 2 5 5" stroke-linecap="round"/></svg>My Info</button>
-        <button class="tl-item" id="nav-goals" onclick="setView('goals',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><circle cx="8" cy="8" r="3"/><circle cx="8" cy="8" r=".8" fill="currentColor" stroke="none"/></svg>Goals</button>
-        <div class="sidebar-stats">
-          <div class="stat-row"><span class="stat-label">Calories</span><span class="stat-val teal" id="sb-cal">976</span></div>
-          <div class="stat-row"><span class="stat-label">Steps</span><span class="stat-val green" id="sb-steps">11,256</span></div>
-          <div class="stat-row"><span class="stat-label">Water</span><span class="stat-val blue" id="sb-water">1.2 L</span></div>
-        </div>
-        <div class="settings-section">
-          <div class="settings-toggle" onclick="toggleSettings()">
-            <div class="settings-toggle-left"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2"/><path d="M3 14c0-3 2-5 5-5s5 2 5 5" stroke-linecap="round"/></svg>My Info &amp; Goals</div>
-            <span class="settings-arrow" id="settings-arrow">&#9662;</span>
-          </div>
-          <div class="settings-body" id="settings-body">
-            <div class="sf-section-lbl">Personal</div>
-            <div class="sf-row2">
-              <div><div class="sf-lbl">Date of Birth</div><input class="sf-input" type="date" id="sf-dob" onchange="calcAll()"/></div>
-              <div><div class="sf-lbl">Sex</div><select class="sf-input" id="sf-sex" onchange="calcAll()"><option value="">&#x2014;</option><option>Female</option><option>Male</option><option>Other</option></select></div>
-            </div>
-            <div><div class="sf-lbl">Blood Type</div><select class="sf-input" id="sf-blood"><option value="">&#x2014;</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-            <div><div class="sf-lbl">Allergies</div><input class="sf-input" type="text" id="sf-allergies" placeholder="e.g. Penicillin, Peanuts" oninput="updateAllergyBanners()"/></div>
-            <div><div class="sf-lbl">Emergency Contact</div><input class="sf-input" type="text" id="sf-emcontact" placeholder="Name · Phone"/></div>
-            <div class="sf-section-lbl" style="margin-top:4px;">Body &amp; Goals</div>
-            <div class="sf-row2">
-              <div><div class="sf-lbl">Height (cm)</div><input class="sf-input" type="number" id="sf-height-cm" placeholder="165" onchange="calcAll()"/></div>
-              <div><div class="sf-lbl">Weight (kg)</div><input class="sf-input" type="number" id="sf-weight-kg" placeholder="70.4" step="0.1" onchange="calcAll()"/></div>
-            </div>
-            <div><div class="sf-lbl">Activity Level</div><select class="sf-input" id="sf-activity" onchange="calcAll()"><option value="1.2">Sedentary</option><option value="1.375">Light (1-3×/wk)</option><option value="1.55" selected>Moderate (3-5×)</option><option value="1.725">Active (6-7×)</option><option value="1.9">Very Active</option></select></div>
-            <div class="sf-row2">
-              <div><div class="sf-lbl">Goal</div><select class="sf-input" id="sf-goal" onchange="calcAll()"><option value="lose">Lose Weight</option><option value="maintain" selected>Maintain</option><option value="gain">Gain Weight</option></select></div>
-              <div><div class="sf-lbl">Months</div><input class="sf-input" type="number" id="sf-goal-months" placeholder="4" min="1" max="36" onchange="calcAll()"/></div>
-            </div>
-            <div><div class="sf-lbl">Target Weight (kg)</div><input class="sf-input" type="number" id="sf-target-kg" placeholder="63" step="0.1" onchange="calcAll()"/></div>
-            <div class="sf-results" id="sf-results" style="display:none;">
-              <div class="sf-result-divider"></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">Age</span><span class="sf-result-val" id="res-age">&#x2014;</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">BMI</span><span class="sf-result-val" id="res-bmi">&#x2014;</span><span class="sf-result-tag" id="res-bmi-tag"></span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">BMR</span><span class="sf-result-val" id="res-bmr">&#x2014; kcal</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">TDEE</span><span class="sf-result-val" id="res-tdee">&#x2014; kcal</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">Cal Intake/day</span><span class="sf-result-val" id="res-intake">&#x2014; kcal</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">Exercise Cal/day</span><span class="sf-result-val" id="res-exercise">&#x2014; kcal</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">Wt to Change</span><span class="sf-result-val" id="res-wt-delta">&#x2014;</span></div>
-              <div class="sf-result-row"><span class="sf-result-lbl">Weekly pace</span><span class="sf-result-val" id="res-pace">&#x2014;</span></div>
-            </div>
-            <button class="sf-save-btn" onclick="saveProfile()">Save &amp; Calculate</button>
-            <div class="sf-saved" id="sf-saved"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="body-wrap-health">
-    <div class="content-area">
-
-      <!-- HEALTH CENTRE -->
-      <div class="health-centre">
-        <div class="top-row">
-          <div class="page-title">&#128170; Health</div>
-          <div class="top-row-spacer"></div>
-          <div class="date-nav">
-            <button class="nav-arrow" onclick="changeDate(-1)">&#8249;</button>
-            <div class="picker-wrap" id="picker-wrap">
-              <button class="date-pill" id="date-display" onclick="togglePicker(event)">Jun 22 2026</button>
-              <div class="picker-popup" id="picker-popup">
-                <div class="picker-header">
-                  <button class="picker-arr" onclick="calStep(-1);event.stopPropagation()">&#8249;</button>
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <select id="cal-month-sel" onchange="calMonthChange(this);event.stopPropagation()" onclick="event.stopPropagation()" style="border:none;background:var(--bg3);border-radius:6px;padding:3px 6px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--txt);cursor:pointer;outline:none;"></select>
-                    <div class="picker-year-ctrl">
-                      <button class="picker-year-btn" onclick="calYearStep(-1);event.stopPropagation()">-</button>
-                      <span class="picker-year-val" id="cal-year-val">2026</span>
-                      <button class="picker-year-btn" onclick="calYearStep(1);event.stopPropagation()">+</button>
-                    </div>
-                  </div>
-                  <button class="picker-arr" onclick="calStep(1);event.stopPropagation()">&#8250;</button>
-                </div>
-                <table class="cal-table"><thead><tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr></thead><tbody id="cal-body"></tbody></table>
-              </div>
-            </div>
-            <button class="nav-arrow" onclick="changeDate(1)">&#8250;</button>
-            <select class="period-select" id="period-select" onchange="onPeriodChange(this.value)" style="display:none;">
-              <option value="daily" selected>Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-            <div class="period-custom-wrap" id="period-custom-wrap">
-              <button class="period-custom-btn" id="period-custom-btn" onclick="periodDropToggle(event)">
-                <span class="period-custom-btn-label" id="period-custom-label">Daily</span>
-                <span class="period-custom-arrow">&#9660;</span>
-              </button>
-              <div class="period-custom-menu" id="period-custom-menu">
-                <button class="period-custom-option active" data-val="daily" onclick="periodDropSelect('daily',this)">Daily</button>
-                <button class="period-custom-option" data-val="weekly" onclick="periodDropSelect('weekly',this)">Weekly</button>
-                <button class="period-custom-option" data-val="monthly" onclick="periodDropSelect('monthly',this)">Monthly</button>
-                <button class="period-custom-option" data-val="yearly" onclick="periodDropSelect('yearly',this)">Yearly</button>
-              </div>
-            </div>
-            <button class="ytd-btn" id="ytd-btn" onclick="toggleYTD()">YTD</button>
-          </div>
-          <button class="unit-btn active" id="unit-btn" onclick="toggleUnit()">US / Metrics</button>
+    <div class="board-grid" id="boardGrid">
         </div>
 
-        <div class="rows-wrap" id="rows-wrap">
-          <!-- ROW 1: Calories + Macros -->
-          <div class="hrow-overview">
-            <div class="ov-card-combined">
-              <div class="ov-section-title">Overview</div>
-              <div class="cal-macro-row">
-                <div class="cal-third">
-                  <div class="cal-label">Calories</div>
-                  <div class="cal-block"><span class="cal-num" id="cal-display">—</span><span class="cal-unit" id="cal-unit-lbl" style="display:none">cal</span></div>
-                  <div class="cal-goal" id="cal-goal-display"></div>
-                  <div class="cal-bigbar"><div class="cal-bigfill" id="cal-bigfill" style="width:0%;"></div></div>
-                  <div class="cal-stats"><div class="cal-stat-item">Burned <span id="cal-burned">—</span></div><div class="cal-stat-item">Net <span id="cal-net">—</span></div></div>
-                </div>
-                <div class="ov-divider"></div>
-                <div class="macros-two-thirds" id="macros-wrap">
-                  <div class="macro-row-item"><div class="macro-row-label">Carbs</div><div class="macro-bar-track"><div class="macro-bar-fill" id="macro-carbs-bar" style="width:0%;background:var(--blue);"></div></div><div class="macro-nums" id="macro-carbs-lbl"><span style="color:var(--txt3)">—</span></div></div>
-                  <div class="macro-row-item"><div class="macro-row-label">Fat</div><div class="macro-bar-track"><div class="macro-bar-fill" id="macro-fat-bar" style="width:0%;background:var(--amber);"></div></div><div class="macro-nums" id="macro-fat-lbl"><span style="color:var(--txt3)">—</span></div></div>
-                  <div class="macro-row-item"><div class="macro-row-label">Fiber</div><div class="macro-bar-track"><div class="macro-bar-fill" id="macro-fiber-bar" style="width:0%;background:var(--teal);"></div></div><div class="macro-nums" id="macro-fiber-lbl"><span style="color:var(--txt3)">—</span></div></div>
-                  <div class="macro-row-item"><div class="macro-row-label">Protein</div><div class="macro-bar-track"><div class="macro-bar-fill" id="macro-protein-bar" style="width:0%;background:var(--red);"></div></div><div class="macro-nums" id="macro-protein-lbl"><span style="color:var(--txt3)">—</span></div></div>
-                </div>
-              </div>
-              <div class="ov-divider-h"></div>
-              <div class="activity-body-row">
-                <div class="icons-sixty">
-                  <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:rgba(29,158,117,0.1);">&#128293;</div><div class="metric-val" id="act-cals">—</div><div class="metric-label">Cals</div></div>
-                  <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:rgba(28,126,214,0.1);">&#128095;</div><div class="metric-val" id="act-steps">—</div><div class="metric-label">Steps</div></div>
-                  <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:rgba(83,74,183,0.1);">&#128205;</div><div class="metric-val" id="dist-display">—</div><div class="metric-label" id="dist-label">km</div></div>
-                  <div class="metric-item" onclick="setView('activity',document.getElementById('nav-activity'))"><div class="metric-icon" style="background:rgba(239,159,39,0.1);">&#127947;</div><div class="metric-val" id="act-active-cal">—</div><div class="metric-label">Active Cal</div></div>
-                  <div class="metric-item" onclick="setView('water',document.getElementById('nav-water'))"><div class="metric-icon" style="background:rgba(28,126,214,0.08);">&#128167;</div><div class="metric-val" id="water-display">—</div><div class="metric-label" id="water-label">ml</div></div>
-                </div>
-                <div class="ov-divider"></div>
-                <div class="body-forty">
-                  <div class="bc-item" onclick="setView('healthlog',document.getElementById('nav-healthlog'))"><div class="bc-label">Weight</div><div class="bc-val" id="weight-display">—</div><div class="bc-sub" id="weight-sub"></div></div>
-                  <div class="bc-item" onclick="setView('healthlog',document.getElementById('nav-healthlog'))"><div class="bc-label">Skeleton<br>Muscle Mass</div><div class="bc-val" id="muscle-display">—</div><div class="bc-sub" id="muscle-sub"></div></div>
-                  <div class="bc-item" onclick="setView('healthlog',document.getElementById('nav-healthlog'))"><div class="bc-label">Body Fat</div><div class="bc-val" id="fat-display">—</div><div class="bc-sub" id="fat-sub"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ROW 2: Health Summary + Food Log -->
-          <div class="hrow-health-food">
-            <div class="health-summary-card">
-              <div class="hs-section-lbl">Health</div>
-              <div class="vitals-grid" onclick="setView('healthlog',document.getElementById('nav-healthlog'))">
-                <div class="vital-item"><span class="vital-icon">&#129306;</span><div><div class="vital-val" id="vital-bp">—</div><div class="vital-label">Blood Pressure</div></div></div>
-                <div class="vital-item"><span class="vital-icon">&#129488;</span><div><div class="vital-val" id="vital-hr">—</div><div class="vital-label">Heart Rate</div></div></div>
-                <div class="vital-item"><span class="vital-icon">&#128168;</span><div><div class="vital-val" id="vital-spo2">—</div><div class="vital-label">SpO2</div></div></div>
-                <div class="vital-item"><span class="vital-icon">&#129656;</span><div><div class="vital-val" id="vital-glucose">—</div><div class="vital-label">Glucose</div></div></div>
-              </div>
-              <div class="hs-divider"></div>
-              <div class="sleep-mood-row">
-                <div class="sm-tile" onclick="setView('sleep',document.getElementById('nav-sleep'))"><div class="sm-tile-label">Sleep</div><div class="sm-tile-val" id="sleep-val">—</div><div class="sm-tile-sub" id="sleep-sub"></div></div>
-                <div class="sm-tile" onclick="setView('mood',document.getElementById('nav-mood'))"><div class="sm-tile-label">Mood</div><div class="sm-tile-val" id="mood-val">—</div><div class="sm-tile-sub" id="mood-sub"></div></div>
-              </div>
-            </div>
-            <div class="food-summary-card" onclick="setView('food',document.getElementById('nav-food'))">
-              <div class="food-sum-hd"><span class="food-sum-title">Food Log</span><span class="food-sum-cal" id="food-cal-total"></span></div>
-              <div class="food-sum-slots" id="food-slots">
-                <div style="font-size:11px;color:var(--txt3);font-style:italic;padding:4px 0;">No food logged today</div>
-              </div>
-              <div class="food-sum-add">+ Add food</div>
-            </div>
-          </div>
-
-          <!-- ROW 3: Tasks | Notes | Tracker -->
-          <div class="hrow">
-            <div class="three-col">
-              <div class="health-tasks-panel">
-                <div class="health-tasks-hd">
-                  <span class="health-tasks-label">✅ Tasks — Health</span>
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="health-tasks-badge warn" id="health-tasks-badge">&#x2014;</span>
-                    <button class="health-tasks-add" onclick="openAddHealthTaskModal()">+</button>
-                  </div>
-                </div>
-                <div class="health-task-list" id="health-task-list"><div class="health-task-loading">Loading…</div></div>
-              </div>
-              <div class="sub-card">
-                <div class="sc-head"><span class="sc-label">Notes</span><button class="sc-add-btn" onclick="addNote()">+</button></div>
-                <div class="notes-list" id="notes-list">
-                  <div style="font-size:11px;color:var(--txt3);font-style:italic;padding:4px 2px;">No notes yet — tap + to add</div>
-                </div>
-              </div>
-              <div class="tracker-card">
-                <div class="tc-head"><span class="tc-label">Tracker</span></div>
-                <div class="tracker-items">
-                  <div>
-                    <span class="tracker-item-label" onclick="setView('womens',document.getElementById('nav-womens'))">&#127800; Period</span>
-                    <div class="period-btns-mini">
-                      <button class="period-btn-mini start" onclick="logPeriodEvent('start')">Start</button>
-                      <button class="period-btn-mini end" onclick="logPeriodEvent('end')">End</button>
-                    </div>
-                    <div class="period-dates" id="period-next-lbl"></div>
-                  </div>
-                  <div class="tl-sep-tracker"></div>
-                  <div class="yn-item">
-                    <span class="yn-label" onclick="setView('water',document.getElementById('nav-water'))">&#128167; Water</span>
-                    <div style="display:flex;align-items:center;gap:4px;">
-                      <div class="yn-cups" id="water-cups"></div>
-                      <span class="yn-total" id="water-cups-total">0 / 64 oz</span>
-                    </div>
-                  </div>
-                  <div class="tl-sep-tracker"></div>
-                  <div class="yesno-item">
-                    <div class="yesno-cb" id="yn-walking" onclick="toggleYesNo(this,'walking')"></div>
-                    <span class="yesno-label">&#128694; Walking</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PANEL VIEW (detail views) -->
-        <div class="panel-view" id="panel-view">
-          <div class="panel-header">
-            <button class="panel-back" onclick="setView('overview',document.getElementById('nav-overview'))">
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="10,3 5,8 10,13"/></svg>Overview
-            </button>
-            <div class="panel-title" id="panel-title">Panel</div>
-          </div>
-          <div class="panel-body" id="panel-body"></div>
-        </div>
-      </div>
-
-      <!-- RIGHT COLUMN -->
-      <div class="right-col">
-        <div class="fin-right-card">
-
-          <!-- Mini Calendar -->
-          <div class="fin-cal-topbar">
-            <div class="fin-cal-navg">
-              <button class="fin-cal-nbtn" id="fin-cal-prev">&#x2039;</button>
-              <span class="fin-cal-mo" id="fin-cal-mo">June 2026</span>
-              <button class="fin-cal-nbtn" id="fin-cal-next">&#x203a;</button>
-              <div class="fin-mo-picker" id="fin-mo-picker">
-                <div class="fmpy-hd">
-                  <button class="fmpy-nav" id="fmpy-prev">&#x2039;</button>
-                  <span class="fmpy-yr" id="fmpy-yr">2026</span>
-                  <button class="fmpy-nav" id="fmpy-next">&#x203a;</button>
-                </div>
-                <div class="fmpy-grid" id="fmpy-grid"></div>
-              </div>
-            </div>
-            <button class="fin-cal-today" id="fin-cal-today">Today</button>
-          </div>
-
-          <!-- Calendar Grid -->
-          <div class="fin-cal-wrap">
-            <div class="fin-cal-dow-row">
-              <div class="fin-cal-dow">S</div><div class="fin-cal-dow">M</div><div class="fin-cal-dow">T</div><div class="fin-cal-dow">W</div><div class="fin-cal-dow">T</div><div class="fin-cal-dow">F</div><div class="fin-cal-dow">S</div>
-            </div>
-            <div class="fin-cal-grid" id="fin-cal-grid"></div>
-          </div>
-
-          <!-- Health Day Details -->
-          <div class="fin-day-sect">
-            <div class="fin-day-hdr">
-              <span class="fin-day-hdr-title">Health</span>
-              <span class="fin-day-hdr-date" id="fin-day-date">&#x2014;</span>
-            </div>
-            <div class="fin-day-list" id="fin-day-list">
-              <div class="fin-day-empty">Select a date to view entries</div>
-            </div>
-          </div>
-
-          <!-- Send Message / + Add -->
-          <div class="fin-inp-sect">
-            <div class="inp-tabs">
-              <button class="inp-tab on" id="tab-send" onclick="switchTab('send')">Send Message</button>
-              <button class="inp-tab" id="tab-add" onclick="switchTab('add')">+ Add</button>
-            </div>
-            <div class="inp-panel on" id="panel-send">
-              <textarea class="msg-ta" id="msg-input" placeholder="Type your health message…"></textarea>
-              <div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">&#x2715;</button></div>
-              <div class="inp-actions">
-                <label class="attach-lbl" for="file-input">
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>Attach
-                </label>
-                <input type="file" id="file-input" style="display:none"/>
-                <button class="send-btn" id="send-btn">SEND</button>
-              </div>
-              <div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>
-              <div class="sst" id="sst"></div>
-            </div>
-            <div class="inp-panel" id="panel-add" style="padding:6px 12px 8px;">
-              <div class="add-type-sect">
-                <button class="att sel" id="abt-ev" onclick="selAT('ev')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event</button>
-                <button class="att" id="abt-tk" onclick="selAT('tk')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/></svg>Task</button>
-                <button class="att" id="abt-hl" onclick="selAT('hl')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health</button>
-                <button class="att" id="abt-fin" onclick="selAT('fin')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance</button>
-              </div>
-              <div class="afb vis" id="afb-ev">
-                <div class="afs"><input class="afi" type="text" placeholder="Event title" id="ae-title" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="ae-date"/><input class="afsm" type="time" id="ae-start"/><input class="afsm" type="time" id="ae-end"/></div></div>
-                <div class="aff"><button class="asf" onclick="submitAdd('ev')">Add Event</button><div class="ast" id="ast-ev"></div></div>
-              </div>
-              <div class="afb" id="afb-tk">
-                <div class="afs"><input class="afi" type="text" placeholder="Task title" id="at-title" style="margin-top:4px;"/><div class="afr"><input class="afsm" type="date" id="at-due"/></div></div>
-                <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
-              </div>
-              <div class="afb" id="afb-hl">
-                <div class="afs">
-                  <div class="afr" style="margin-top:4px;">
-                    <select class="afsm" id="ahl-type" onchange="['ahl-weight-unit','ahl-glucose-unit','ahl-temp-unit','ahl-chol-unit','ahl-water-unit'].forEach(function(id){var el=document.getElementById(id);if(el)delete el.dataset.locked;});updateHlFields()">
-                      <option value="">Select ▾</option>
-                      <option value="weight">⚖️ Weight</option>
-                      <option value="bp">🩸 Blood Pressure</option>
-                      <option value="hr">❤️ Heart Rate</option>
-                      <option value="glucose">🩸 Glucose</option>
-                      <option value="spo2">💨 SpO2</option>
-                      <option value="temperature">🌡️ Temperature</option>
-                      <option value="cholesterol">🧪 Cholesterol</option>
-                      <option value="steps">👟 Steps</option>
-                      <option value="water">💧 Water</option>
-                      <option value="sleep">🌙 Sleep</option>
-                      <option value="mood">😊 Mood</option>
-                    </select>
-                    <input class="afsm" type="date" id="ahl-date"/>
-                  </div>
-                  <!-- weight -->
-                  <div id="ahl-f-weight" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-weight" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-weight-unit" onclick="ahlToggleUnit('weight')" title="Tap to switch unit">kg</button></div>
-                  </div>
-                  <!-- bp -->
-                  <div id="ahl-f-bp" style="display:none;">
-                    <div class="afr">
-                      <input class="afsm" type="number" id="ahl-bp-sys" placeholder="Systolic" min="0" max="300"/>
-                      <input class="afsm" type="number" id="ahl-bp-dia" placeholder="Diastolic" min="0" max="200"/>
-                      <span class="ahl-unit-static">mmHg</span>
-                    </div>
-                  </div>
-                  <!-- hr -->
-                  <div id="ahl-f-hr" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-hr" placeholder="BPM" min="0" max="300"/><span class="ahl-unit-static">bpm</span></div>
-                  </div>
-                  <!-- glucose -->
-                  <div id="ahl-f-glucose" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-glucose" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-glucose-unit" onclick="ahlToggleUnit('glucose')" title="Tap to switch unit">mg/dL</button></div>
-                  </div>
-                  <!-- spo2 -->
-                  <div id="ahl-f-spo2" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-spo2" placeholder="%" step="0.1" min="0" max="100"/><span class="ahl-unit-static">%</span></div>
-                  </div>
-                  <!-- temperature -->
-                  <div id="ahl-f-temperature" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-temp" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-temp-unit" onclick="ahlToggleUnit('temperature')" title="Tap to switch unit">°C</button></div>
-                  </div>
-                  <!-- cholesterol -->
-                  <div id="ahl-f-cholesterol" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-chol" placeholder="Value" step="0.1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-chol-unit" onclick="ahlToggleUnit('cholesterol')" title="Tap to switch unit">mg/dL</button></div>
-                  </div>
-                  <!-- steps -->
-                  <div id="ahl-f-steps" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-steps" placeholder="Steps" min="0" step="1"/><span class="ahl-unit-static">steps</span></div>
-                  </div>
-                  <!-- water -->
-                  <div id="ahl-f-water" style="display:none;">
-                    <div class="afr"><input class="afsm" type="number" id="ahl-water" placeholder="Amount" step="1" min="0"/><button type="button" class="ahl-unit-btn" id="ahl-water-unit" onclick="ahlToggleUnit('water')" title="Tap to switch unit">ml</button></div>
-                  </div>
-                  <!-- sleep -->
-                  <div id="ahl-f-sleep" style="display:none;">
-                    <div class="afr">
-                      <input class="afsm" type="time" id="ahl-bedtime" title="Bedtime"/>
-                      <input class="afsm" type="time" id="ahl-wake" title="Wake time"/>
-                    </div>
-                    <div style="font-size:9px;color:var(--txt3);padding:2px 2px 0;display:flex;justify-content:space-between;"><span>Bedtime</span><span>Wake time</span></div>
-                  </div>
-                  <!-- mood -->
-                  <div id="ahl-f-mood" style="display:none;">
-                    <select class="afsm" id="ahl-mood">
-                      <option value="">Mood ▾</option>
-                      <option>Amazing</option><option>Happy</option><option>Calm</option>
-                      <option>Neutral</option><option>Tired</option><option>Anxious</option>
-                      <option>Sad</option><option>Angry</option><option>Stressed</option><option>Grateful</option>
-                    </select>
-                    <div class="afr" style="margin-top:4px;align-items:center;gap:4px;">
-                      <span style="font-size:10px;color:var(--txt3);flex-shrink:0;">Energy</span>
-                      <input class="afsm" type="number" id="ahl-energy" placeholder="1–5" min="1" max="5" step="1"/>
-                    </div>
-                  </div>
-                  <input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes" style="margin-top:2px;"/>
-                </div>
-                <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
-              </div>
-              <div class="afb" id="afb-fin">
-                <div class="afs"><div class="afr" style="margin-top:4px;"><input class="afsm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/><input class="afsm" type="date" id="afin-date"/></div><select class="afsm" id="afin-cat"><option value="">Category &#x25be;</option><optgroup label="Needs"><option>Housing</option><option>Groceries</option><option>Transportation</option><option>Healthcare</option></optgroup><optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Other</option></optgroup></select><input class="afsm" type="text" placeholder="Description (optional)" id="afin-desc"/></div>
-                <div class="aff"><button class="asf" onclick="submitAdd('fin')">Add Entry</button><div class="ast" id="ast-fin"></div></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAV -->
-  <nav class="bot-nav">
-    <button class="nav-tab" onclick="location.href='/dashboard'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span class="nav-lbl">Overview</span></button>
-    <button class="nav-tab" onclick="location.href='/calendar'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span class="nav-lbl">Calendar</span></button>
-    <button class="nav-tab" onclick="location.href='/finance'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span class="nav-lbl">Finance</span></button>
-    <button class="nav-tab on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span class="nav-lbl">Health</span></button>
-    <button class="nav-tab" onclick="location.href='/documents'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span class="nav-lbl">Documents</span></button>
-    <button class="nav-tab" onclick="location.href='/settings'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span class="nav-lbl">Settings</span></button>
-  </nav>
-
-</div>
-
-<!-- MODALS -->
-
-<div class="modal-bg hidden" id="add-health-task-modal">
-  <div class="modal-box">
-    <div class="modal-hd"><div class="modal-title">Add Task — Health</div><button class="modal-x" onclick="closeAddHealthTaskModal()">&times;</button></div>
-    <div class="f-field"><label class="f-lbl">Title *</label><input class="f-input" type="text" id="htask-title" placeholder="Task title…"/></div>
-    <div class="f-field"><label class="f-lbl">Notes</label><textarea class="f-input" id="htask-notes" placeholder="Optional notes…" style="min-height:56px;resize:vertical;"></textarea></div>
-    <div class="f-field"><label class="f-lbl">Due Date</label><input class="f-input" type="date" id="htask-due"/></div>
-    <div class="f-check-row" id="htask-cal-row" style="display:none;"><input type="checkbox" id="htask-create-cal"/><label for="htask-create-cal">Add to Calendar? <span style="color:#5f6368;font-weight:400;">(Visibility: Private)</span></label></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeAddHealthTaskModal()">Cancel</button><button class="btn-save" id="add-htask-btn" onclick="saveHealthTask()">Add Task</button></div>
-    <div class="modal-status" id="add-htask-status"></div>
-  </div>
-</div>
-<div class="modal-bg hidden" id="sec-add-modal">
-  <div class="modal-box" style="max-width:300px;">
-    <div class="modal-hd"><div class="modal-title" id="sec-add-title">Add Item</div><button class="modal-x" onclick="closeSecAddModal()">&times;</button></div>
-    <div class="f-field"><label class="f-lbl">Name *</label><input class="f-input" type="text" id="sec-add-name" placeholder="e.g. Stretching"/></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeSecAddModal()">Cancel</button><button class="btn-save" onclick="saveSecAdd()">Add</button></div>
-  </div>
-</div>
-<div class="toast" id="toast"></div>
-
-<script>
-'use strict';
-var BACKEND='https://api.mie.today';
-var authWrap=document.getElementById('auth-wrap');
-var loadWrap=document.getElementById('loading-wrap');
-var appEl=document.getElementById('app');
-
-function show(el){
-  [authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});
-  if(el===appEl){
-    appEl.style.display='flex';
-    appEl.style.flexDirection='column';
-    // On mobile, never force height:100vh — let CSS media query control layout
-    if(window.innerWidth>900){
-      appEl.style.height='100vh';
-      appEl.style.overflow='hidden';
-    } else {
-      appEl.style.height='auto';
-      appEl.style.overflow='visible';
-    }
-  } else if(el) {
-    el.style.display='';
-  }
-}
-document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
-var _soBtn=document.querySelector('.signout-btn')||document.getElementById('signout-btn');
-if(_soBtn)_soBtn.addEventListener('click',function(){fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});});
-
-function init(){
-  show(loadWrap);
-  fetch(BACKEND+'/api/me/status',{credentials:'include'})
-    .then(function(r){if(!r.ok){show(authWrap);return null;}return r.json();})
-    .then(function(d){if(!d)return;if(d.connected){show(appEl);startClock();loadWeather();renderDate();loadProfile();loadHealthTasks();initWaterCups();applyHiddenItems();}else show(authWrap);})
-    .catch(function(){show(authWrap);});
-}
-
-var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-var now=new Date(),currentMonth=now.getMonth(),currentYear=now.getFullYear(),currentDay=now.getDate();
-var ytdActive=false,selectedType='food',unitMetric=true;
-var currentPeriod='daily';
-
-function startClock(){function tick(){var n=new Date(),d=document.getElementById('wb-date'),t=document.getElementById('wb-time');if(d)d.textContent=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});if(t)t.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}tick();setInterval(tick,30000);}
-function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';if(c<=82)return'🌧️';return'⛈️';}
-function loadWeather(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){doWeather(p.coords.latitude,p.coords.longitude);},function(){doWeather(37.7749,-122.4194);},{timeout:5000});else doWeather(37.7749,-122.4194);}
-function doWeather(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),f=Math.round(c*9/5+32),icon=document.getElementById('wb-icon'),temp=document.getElementById('wb-temp');if(icon)icon.textContent=wIcon(w.current.weathercode);if(temp)temp.textContent=f+'°F / '+c+'°C';}).catch(function(){});}
-
-var toastTmr=null;
-function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(function(){t.classList.add('show');},10);if(toastTmr)clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2600);}
-
-function renderDate(){
-  var d=new Date(currentYear,currentMonth,currentDay);
-  var dp=document.getElementById('date-display');
-  if(!dp)return;
-  if(ytdActive){dp.textContent='Jan 01 '+currentYear+' – Today';return;}
-  if(currentPeriod==='daily'){
-    dp.textContent=MONTHS_SHORT[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0')+' '+d.getFullYear();
-  } else if(currentPeriod==='weekly'){
-    var dow=d.getDay();
-    var diffToMon=(dow===0)?-6:(1-dow);
-    var mon=new Date(d); mon.setDate(d.getDate()+diffToMon);
-    var sun=new Date(mon); sun.setDate(mon.getDate()+6);
-    var fmt=function(dd){return MONTHS_SHORT[dd.getMonth()]+' '+String(dd.getDate()).padStart(2,'0');};
-    dp.textContent=fmt(mon)+' – '+fmt(sun);
-  } else if(currentPeriod==='monthly'){
-    dp.textContent=MONTHS[d.getMonth()]+' '+d.getFullYear();
-  } else if(currentPeriod==='yearly'){
-    dp.textContent=String(d.getFullYear());
-  }
-}
-
-function changeDate(dir){
-  if(ytdActive)return;
-  var d=new Date(currentYear,currentMonth,currentDay);
-  if(currentPeriod==='daily'){d.setDate(d.getDate()+dir);}
-  else if(currentPeriod==='weekly'){d.setDate(d.getDate()+(dir*7));}
-  else if(currentPeriod==='monthly'){d.setMonth(d.getMonth()+dir);var maxDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();if(d.getDate()>maxDay)d.setDate(maxDay);}
-  else if(currentPeriod==='yearly'){d.setFullYear(d.getFullYear()+dir);}
-  var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
-  if(d<oneYearAgo)d=new Date(oneYearAgo);
-  if(d>today)d=new Date(today);
-  currentYear=d.getFullYear();currentMonth=d.getMonth();currentDay=d.getDate();
-  renderDate();
-}
-
-function onPeriodChange(period){
-  currentPeriod=period;ytdActive=false;
-  document.getElementById('ytd-btn').classList.remove('active');
-  renderDate();
-  toast(period.charAt(0).toUpperCase()+period.slice(1));
-  var sel=document.getElementById('period-select');
-  if(sel)sel.value=period;
-  // ── Notify active panel to update trend charts ──
-  if(typeof window.plSetPeriod==='function'){
-    var label=PERIOD_LABELS[period]||period.charAt(0).toUpperCase()+period.slice(1);
-    window.plSetPeriod(period, label);
-  }
-}
-function toggleYTD(){
-  ytdActive=!ytdActive;
-  var btn=document.getElementById('ytd-btn');
-  btn.classList.toggle('active',ytdActive);
-  if(ytdActive){
-    renderDate();
-    var sel=document.getElementById('period-select');
-    if(sel)sel.value='monthly';
-    currentPeriod='monthly';
-    periodDropSelect('monthly',null);
-    toast('Showing '+currentYear+' YTD');
-  } else {
-    renderDate();
-  }
-}
-
-var _distKm=8.89;
-
-function toggleUnit(){
-  unitMetric=!unitMetric;
-  var btn=document.getElementById('unit-btn');
-  // Mobile: show kg/lb toggle label. Desktop: full text.
-  if(window.innerWidth<=900){
-    btn.textContent=unitMetric?'lb':'kg';
-  } else {
-    btn.textContent=unitMetric?'US / Metrics':'Metrics / US';
-  }
-  if(unitMetric){
-    document.getElementById('weight-display').textContent='70.4 kg';
-    document.getElementById('weight-sub').textContent='155.10 lb';
-    document.getElementById('muscle-display').textContent='42.5 kg';
-    document.getElementById('fat-display').textContent='25.2 kg';
-    document.getElementById('water-display').textContent='1200';
-    document.getElementById('water-label').textContent='ml';
-    var distEl=document.getElementById('dist-display');var distLbl=document.getElementById('dist-label');
-    if(distEl)distEl.textContent=_distKm.toFixed(2);if(distLbl)distLbl.textContent='km';
-  } else {
-    document.getElementById('weight-display').textContent='155.1 lb';
-    document.getElementById('weight-sub').textContent='70.4 kg';
-    document.getElementById('muscle-display').textContent='93.7 lb';
-    document.getElementById('fat-display').textContent='55.6 lb';
-    document.getElementById('water-display').textContent='40.6';
-    document.getElementById('water-label').textContent='fl oz';
-    var distElUS=document.getElementById('dist-display');var distLblUS=document.getElementById('dist-label');
-    if(distElUS)distElUS.textContent=(_distKm/1.60934).toFixed(2);if(distLblUS)distLblUS.textContent='mi';
-  }
-  var pref=unitMetric?'metric':'us';
-  if(typeof window.plSetUnitPref==='function') window.plSetUnitPref(pref);
-  toast('Switched to '+(unitMetric?'Metric':'US')+' units');
-  // Re-sync label after toggle
-  if(typeof window._applyUnitLabel==='function') window._applyUnitLabel();
-  if(typeof updateHlFields==='function') updateHlFields();
-}
-
-var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
-function buildCalendar(){var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate()),sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay(),startOffset=(firstDay===0)?6:firstDay-1,daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate(),daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate(),day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td'),btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate()),isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');var btnDate=new Date(actualYear,actualMonth,actualDay);if(btnDate<oneYearAgo||btnDate>today){btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';}}(function(d,m,y){if(!btn.classList.contains('other-month')&&!btn.disabled){btn.onclick=function(e){e.stopPropagation();currentDay=d;currentMonth=m;currentYear=y;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();closePicker();};};})(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
-function calStep(dir){pickerNavMonth+=dir;if(pickerNavMonth<0){pickerNavMonth=11;pickerNavYear--;}if(pickerNavMonth>11){pickerNavMonth=0;pickerNavYear++;}buildCalendar();}
-function calYearStep(dir){pickerNavYear+=dir;buildCalendar();}
-function calMonthChange(sel){pickerNavMonth=parseInt(sel.value);buildCalendar();}
-function togglePicker(e){e.stopPropagation();if(ytdActive)return;var popup=document.getElementById('picker-popup');if(popup.classList.contains('open'))closePicker();else{pickerNavYear=currentYear;pickerNavMonth=currentMonth;buildCalendar();popup.classList.add('open');}}
-function closePicker(){document.getElementById('picker-popup').classList.remove('open');}
-document.addEventListener('click',function(e){var wrap=document.getElementById('picker-wrap');if(wrap&&!wrap.contains(e.target))closePicker();});
-
-var PANEL_LABELS={food:'Food Log',activity:'Activity',healthlog:'Body Log',sleep:'Sleep',mood:'Mood',womens:"Women's Log",period:'Period Tracker',water:'Water Tracker',medication:'Medication Tracker',insurance:'Insurance Info',medrec:'Medication Records',history:'Medical History',myinfo:'My Info',goals:'Goals'};
-var PANEL_VIEWS=['food','activity','healthlog','sleep','mood','womens','period','water','medication','insurance','medrec','history','myinfo','goals'];
-
-function setView(v,btn){
-  document.querySelectorAll('.tl-item').forEach(function(el){el.classList.remove('active');});
-  if(btn)btn.classList.add('active');
-  var rw=document.getElementById('rows-wrap');
-  var pv=document.getElementById('panel-view');
-  var unitBtn=document.getElementById('unit-btn');
-  var addFab=document.getElementById('add-fab');
-  if(v==='overview'){
-    rw.style.display='flex';pv.classList.remove('active');
-    if(unitBtn)unitBtn.style.display='';if(addFab)addFab.style.display='';
-  } else {
-    rw.style.display='none';pv.classList.add('active');
-    var title=document.getElementById('panel-title');
-    if(title)title.textContent=PANEL_LABELS[v]||v;
-    if(PANEL_VIEWS.indexOf(v)>=0){if(unitBtn)unitBtn.style.display='none';if(addFab)addFab.style.display='none';}
-    loadPanelContent(v);
-  }
-}
-
-var PANEL_FILE_MAP={food:'panel-logs-food.html',activity:'panel-logs-ams.html',healthlog:'panel-logs-body.html',sleep:'panel-logs-ams.html',mood:'panel-logs-ams.html',womens:'panel-logs-womens.html',period:'panel-trackers.html',water:'panel-trackers.html',medication:'panel-trackers.html',insurance:'panel-records.html',medrec:'panel-records.html',history:'panel-records.html',myinfo:'panel-infogoal.html',goals:'panel-infogoal.html'};
-
-// Track which panel file is currently loaded to avoid stale JS
-var _currentPanelFile = null;
-
-function loadPanelContent(v){
-  var body=document.getElementById('panel-body');
-  if(!body)return;
-  var file=PANEL_FILE_MAP[v];
-  if(!file){body.innerHTML='<div style="padding:20px;color:#9aa0a6;">Panel coming soon.</div>';return;}
-
-  // ── Clear stale global functions from previous panel ──
-  // Each panel file exports these globals; wipe them before loading new panel
-  // so a stale onPanelLoad from panel-logs.html can't fire when womens loads.
-  var PANEL_GLOBALS = [
-    'onPanelLoad',       // every panel
-    'plSetUnitPref',     // panel-logs
-    'plTab','plToggleFold','plFoodSearch','plFoodNameInput','plFoodFill',
-    'plFoodClear','plFoodSave','plFoodCancelEdit','plEditFood',
-    'plActClear','plActSave','plActCancelEdit','plEditActivity',
-    'plActMETHint','plActAutoCalc','plActStepsToDistance',
-    'plSetDistUnit','plSetWeightUnit','plSetUnitPref',
-    'plSetHealthWeightUnit','plSetHealthHeightUnit','plSetTempUnit',
-    'plVitalsCalc','plVitalsClear','plVitalsSave','plVitalsCancelEdit','plEditVitals',
-    'plCustomToggleForm','plCustomSave','plDelCustom',
-    'plSetQ','plSleepCalc','plSleepClear','plSleepSave','plSleepCancelEdit','plEditSleep',
-    'plSetMood','plSetE','plMoodClear','plMoodSave','plMoodCancelEdit','plEditMood',
-    'plDel','plTab','plToggleFold',
-    'plFoodNameInput','plFoodSearch','plFoodClear','plFoodSave','plFoodCancelEdit','plEditFood',
-    'plActClear','plActSave','plActCancelEdit','plEditActivity',
-    'plActMETHint','plActAutoCalc','plActStepsToDistance',
-    'plSetDistUnit','plSetWeightUnit',
-    'plSetHealthWeightUnit','plSetHealthHeightUnit','plSetTempUnit',
-    'plVitalsCalc','plVitalsClear','plVitalsSave','plVitalsCancelEdit','plEditVitals',
-    'plCustomToggleForm','plCustomSave','plDelCustom',
-    'plSetQ','plSleepCalc','plSleepClear','plSleepSave','plSleepCancelEdit','plEditSleep',
-    'plSetMood','plSetE','plMoodClear','plMoodSave','plMoodCancelEdit','plEditMood',
-    'plDel',
-    'refreshOverviewData',
-    // panel-logs-ams (Activity, Mood, Sleep)
-    'pamsToggleFold',
-    'pamsSetDistUnit','pamsSetWeightUnit',
-    'pamsActMETHint','pamsActStepsToDistance','pamsActAutoCalc',
-    'pamsActClear','pamsActCancelEdit','pamsActSave','pamsEditActivity','pamsDelActivity',
-    'pamsSetQ','pamsSleepCalc','pamsSleepClear','pamsSleepCancelEdit',
-    'pamsSleepSave','pamsEditSleep','pamsDelSleep',
-    'pamsSetMood','pamsSetE','pamsMoodClear','pamsMoodCancelEdit',
-    'pamsMoodSave','pamsEditMood','pamsDelMood',
-    // legacy panel-logs-sleep standalone (keep for safety)
-    'psToggleFold','psSetQ','psSleepCalc','psSleepClear','psSleepSave',
-    'psSleepCancelEdit','psEditSleep','psDelSleep',
-    // body panel
-    'pbToggleFold','pbSetWeightUnit','pbSetHeightUnit','pbSetTempUnit',
-    'pbVitalsCalc','pbVitalsClear','pbVitalsSave','pbVitalsCancelEdit',
-    'pbEditVitals','pbDelVitals','pbCustomSave','pbDelCustom',
-    // food panel
-    'pfToggleFold','pfSearch','pfNameInput','pfClear','pfCancelEdit',
-    'pfSave','pfEdit','pfDelete','pfLoadChart',
-    // womens panel
-    '_wInitDone',
-    // panel-infogoal (My Info & Goals)
-    'pigToggleCard', 'pigSetHeightUnit', 'pigSetWeightUnit',
-    'pigSetTargetWeightUnit', 'pigSetWaterUnit',
-    'pigCalcAge', 'pigCalcBMR', 'pigCalcPace', 'pigCalcGoalHints',
-    'pigSyncFtin', 'pigSaveInfo', 'pigSaveGoals',
-    'pigInit', 'pigApplyView', 'pigPopulate',
-    'pigFlashStatus', 'pigValidate', 'pigClearErrors',
-    'pigFetchProfile', 'pigPostProfile',
-    'pigCollectBaseline', 'pigCollectGoal', 'pigUpdateSummary',
-    'pigWeightInKg', 'pigTargetWeightInKg',
-    'pigEl', 'pigNum', 'pigShow', 'pigSetPill',
-    'pigKgToLb', 'pigLbToKg', 'pigCmToIn', 'pigInToCm',
-    'pigMlToFloz', 'pigFlozToMl',
-  ];
-  // Only clear globals when switching to a DIFFERENT file
-  if(_currentPanelFile && _currentPanelFile !== file){
-    PANEL_GLOBALS.forEach(function(fn){
-      try{ window[fn] = undefined; } catch(e){}
-    });
-    // Reset womens init flag so re-opening womens re-initialises properly
-    window._wInitDone = false;
-  }
-  _currentPanelFile = file;
-
-  body.innerHTML='<div style="padding:20px;color:#9aa0a6;font-style:italic;">Loading…</div>';
-  fetch('/health/'+file+'?v='+Date.now())
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
-    .then(function(html){
-      body.innerHTML=html;
-      // Execute scripts from injected HTML
-      var scripts=body.querySelectorAll('script');
-      scripts.forEach(function(oldScript){
-        var newScript=document.createElement('script');
-        if(oldScript.src){newScript.src=oldScript.src;}
-        else{newScript.textContent=oldScript.textContent;}
-        document.head.appendChild(newScript);
-        document.head.removeChild(newScript);
-      });
-      // Call the freshly-loaded panel's onPanelLoad
-      // Guard: only call if the function was just registered by THIS panel's script
-      if(typeof window.onPanelLoad==='function'){
-        window.onPanelLoad(v);
-      }
-      var pref=unitMetric?'metric':'us';
-      if(typeof window.plSetUnitPref==='function')window.plSetUnitPref(pref);
-    })
-    .catch(function(err){
-      body.innerHTML='<div style="padding:20px;color:#d93025;">Failed to load panel: '+err.message+'</div>';
-    });
-}
-
-// toggleSidebar handled in second script block
-
-var _hiddenItems={};
-function hideItem(e,key){e.stopPropagation();_hiddenItems[key]=true;try{localStorage.setItem('mie_hidden_items',JSON.stringify(_hiddenItems));}catch(ex){}var btn=document.getElementById('nav-'+key);if(btn)btn.style.display='none';toast('Hidden. Use [+] to restore.');}
-function applyHiddenItems(){try{var raw=localStorage.getItem('mie_hidden_items');if(raw)_hiddenItems=JSON.parse(raw);}catch(ex){}Object.keys(_hiddenItems).forEach(function(key){if(_hiddenItems[key]){var btn=document.getElementById('nav-'+key);if(btn)btn.style.display='none';}});}
-
-var _secAddTarget='';
-function openSecAddModal(section){_secAddTarget=section;var titles={logs:'Add to Logs',trackers:'Add to Trackers',records:'Add to Records'};document.getElementById('sec-add-title').textContent=titles[section]||'Add Item';document.getElementById('sec-add-name').value='';document.getElementById('sec-add-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('sec-add-name').focus();},60);}
-function closeSecAddModal(){document.getElementById('sec-add-modal').classList.add('hidden');}
-function saveSecAdd(){var name=document.getElementById('sec-add-name').value.trim();if(!name)return;var key=name.toLowerCase().replace(/\s+/g,'-'),container=document.getElementById(_secAddTarget+'-items');if(!container){closeSecAddModal();return;}var btn=document.createElement('button');btn.className='tl-item';btn.id='nav-'+key;var icons={logs:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/></svg>',trackers:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>',records:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="5" x2="12" y2="5"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="4" y1="11" x2="9" y2="11"/></svg>'};btn.innerHTML=(icons[_secAddTarget]||'')+name+'<button class="tl-hide-btn" onclick="hideItem(event,\''+key+'\')" title="Hide">–</button>';btn.onclick=function(){setView(key,btn);};container.appendChild(btn);closeSecAddModal();toast(name+' added');}
-document.getElementById('sec-add-modal').addEventListener('click',function(e){if(e.target===this)closeSecAddModal();});
-
-function addNote(){var list=document.getElementById('notes-list'),item=document.createElement('div');item.className='note-item';item.innerHTML='<span class="note-bullet">•</span><span class="note-text" contenteditable="true"></span><button class="note-del" onclick="delNote(this)">×</button>';list.appendChild(item);item.querySelector('.note-text').focus();}
-function delNote(btn){var item=btn.parentElement;item.style.transition='opacity .15s';item.style.opacity='0';setTimeout(function(){item.remove();},150);}
-
-var waterCups=0,WATER_GOAL_CUPS=8;
-function initWaterCups(){try{waterCups=parseInt(localStorage.getItem('mie_water_cups_today')||'0');}catch(e){}renderWaterCups();}
-function renderWaterCups(){var container=document.getElementById('water-cups');if(!container)return;container.innerHTML='';for(var i=0;i<WATER_GOAL_CUPS;i++){var cup=document.createElement('span');cup.className='yn-cup'+(i<waterCups?' filled':'');cup.textContent='🥤';cup.title='Cup '+(i+1)+' ('+(8*(i+1))+'oz)';(function(idx){cup.onclick=function(){waterCups=waterCups===idx+1?idx:idx+1;try{localStorage.setItem('mie_water_cups_today',waterCups);}catch(e){}renderWaterCups();};})(i);container.appendChild(cup);}var total=document.getElementById('water-cups-total');if(total)total.textContent=(waterCups*8)+' / '+(WATER_GOAL_CUPS*8)+' oz';}
-
-var _ynState={};
-function toggleYesNo(el,key){_ynState[key]=!_ynState[key];el.classList.toggle('checked',_ynState[key]);try{localStorage.setItem('mie_yn_'+key,_ynState[key]?'1':'0');}catch(e){}}
-
-// toggleSettings handled in second script block (has null guards)
-function calcAll(){var dob=document.getElementById('sf-dob').value,sex=document.getElementById('sf-sex').value,hcm=parseFloat(document.getElementById('sf-height-cm').value),wkg=parseFloat(document.getElementById('sf-weight-kg').value),act=parseFloat(document.getElementById('sf-activity').value)||1.55,goal=document.getElementById('sf-goal').value||'maintain',tkg=parseFloat(document.getElementById('sf-target-kg').value),months=parseFloat(document.getElementById('sf-goal-months').value)||4,resultsDiv=document.getElementById('sf-results');if(!dob||!sex||!hcm||!wkg){resultsDiv.style.display='none';return;}resultsDiv.style.display='flex';var today=new Date(),bd=new Date(dob),age=today.getFullYear()-bd.getFullYear()-((today.getMonth()<bd.getMonth()||(today.getMonth()===bd.getMonth()&&today.getDate()<bd.getDate()))?1:0);document.getElementById('res-age').textContent=age+' yrs';var hm=hcm/100,bmi=wkg/(hm*hm);document.getElementById('res-bmi').textContent=bmi.toFixed(1);var bmiTag=document.getElementById('res-bmi-tag');if(bmi<18.5){bmiTag.textContent='Underweight';bmiTag.className='sf-result-tag underweight';}else if(bmi<25){bmiTag.textContent='Normal';bmiTag.className='sf-result-tag normal';}else if(bmi<30){bmiTag.textContent='Overweight';bmiTag.className='sf-result-tag overweight';}else{bmiTag.textContent='Obese';bmiTag.className='sf-result-tag obese';}var bmr=(sex==='Male')?(10*wkg+6.25*hcm-5*age+5):(10*wkg+6.25*hcm-5*age-161);document.getElementById('res-bmr').textContent=Math.round(bmr)+' kcal';var tdee=bmr*act;document.getElementById('res-tdee').textContent=Math.round(tdee)+' kcal';var intakeCal=tdee,exerciseCal=0;if(!isNaN(tkg)&&goal!=='maintain'){var delta=tkg-wkg,totalKcal=delta*7700,days=months*30.44,dailyDelta=totalKcal/days;intakeCal=Math.round(tdee+dailyDelta*0.6);exerciseCal=Math.round(Math.abs(dailyDelta*0.4));document.getElementById('res-wt-delta').textContent=(delta>0?'+':'')+delta.toFixed(1)+' kg';document.getElementById('res-pace').textContent=Math.abs(delta/months).toFixed(2)+' kg/mo';}else{intakeCal=Math.round(tdee);exerciseCal=0;document.getElementById('res-wt-delta').textContent='—';document.getElementById('res-pace').textContent='Maintain';}document.getElementById('res-intake').textContent=intakeCal+' kcal';document.getElementById('res-exercise').textContent=exerciseCal>0?exerciseCal+' kcal':'0 kcal';document.getElementById('cal-goal-display').textContent='/ '+intakeCal.toLocaleString()+' goal';}
-function saveProfile(){var ids=['sf-dob','sf-sex','sf-blood','sf-allergies','sf-emcontact','sf-height-cm','sf-weight-kg','sf-activity','sf-goal','sf-goal-months','sf-target-kg'],data={};ids.forEach(function(id){var el=document.getElementById(id);if(el)data[id]=el.value;});try{localStorage.setItem('mie_health_profile',JSON.stringify(data));}catch(e){}calcAll();updateAllergyBanners();var s=document.getElementById('sf-saved');s.textContent='✅ Saved!';setTimeout(function(){s.textContent='';},2000);toast('Profile saved!','success');}
-function loadProfile(){try{var raw=localStorage.getItem('mie_health_profile');if(!raw)return;var data=JSON.parse(raw);Object.keys(data).forEach(function(id){var el=document.getElementById(id);if(el)el.value=data[id];});calcAll();}catch(e){}updateAllergyBanners();}
-function updateAllergyBanners(){var val=(document.getElementById('sf-allergies')||{}).value||'';document.querySelectorAll('.allergy-banner').forEach(function(b){b.classList.toggle('hidden',!val.trim());if(val.trim())b.innerHTML='⚠️ Allergies: '+val;});}
-
-var _healthTasks=[],_healthTaskLists=[];
-function loadHealthTasks(){fetch(BACKEND+'/api/me/tasks',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}).then(function(data){if(!data){_healthTasks=[];_healthTaskLists=[];}else{_healthTaskLists=Array.isArray(data.lists)?data.lists:[];var raw=Array.isArray(data.tasks)?data.tasks:[];var healthList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});var healthListId=healthList?healthList.id:null;_healthTasks=raw.filter(function(t){return healthListId&&(t.listId||t.taskListId)===healthListId;}).map(function(t){return Object.assign({},t,{listId:healthListId,_pending:false});});}renderHealthTasks();}).catch(function(){_healthTasks=[];renderHealthTasks();});}
-function fmtHealthDue(d){if(!d)return null;var dt=new Date(d+(d.includes('T')?'':'T12:00:00')),now2=new Date();now2.setHours(0,0,0,0);var diff=Math.round((dt-now2)/86400000);if(diff<0)return{label:'Overdue',cls:'overdue'};if(diff===0)return{label:'Today',cls:'today'};return{label:dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}),cls:'future'};}
-function renderHealthTasks(){var list=document.getElementById('health-task-list'),badge=document.getElementById('health-tasks-badge'),active=_healthTasks.filter(function(t){return t.status!=='completed';});if(badge){badge.textContent=active.length+' pending';badge.className='health-tasks-badge '+(active.length>0?'warn':'ok');}if(!list)return;list.innerHTML='';if(!active.length){var emp=document.createElement('div');emp.className='health-task-empty';emp.textContent='All caught up! No pending Health tasks.';list.appendChild(emp);return;}active.sort(function(a,b){function score(t){if(!t.due)return 3;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00')),n=new Date();n.setHours(0,0,0,0);var diff=Math.round((dt-n)/86400000);return diff<0?0:diff===0?1:2;}var sa=score(a),sb=score(b);if(sa!==sb)return sa-sb;if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;});active.forEach(function(t){var item=document.createElement('div');item.className='health-task-item';var cb=document.createElement('div');cb.className='health-task-cb';cb.addEventListener('click',function(e){e.stopPropagation();if(t._pending)return;t._pending=true;toggleHealthTask(t,cb,item,function(){t._pending=false;});});var nm=document.createElement('span');nm.className='health-task-name';nm.textContent=t.title||'Untitled';nm.title=t.title||'';item.appendChild(cb);item.appendChild(nm);if(t.due){var df=fmtHealthDue(t.due);if(df){var chip=document.createElement('span');chip.className='health-task-due '+df.cls;chip.textContent=df.label;item.appendChild(chip);}}list.appendChild(item);});}
-function toggleHealthTask(t,cb,row,onDone){var wasDone=t.status==='completed',newStatus=wasDone?'needsAction':'completed';cb.classList.toggle('checked',!wasDone);var nm=row.querySelector('.health-task-name');if(nm)nm.classList.toggle('done',!wasDone);t.status=newStatus;function attempt(listId){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:listId,status:newStatus,title:t.title||'',notes:t.notes||''})});}attempt(t.listId||'@default').then(function(r){if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;}).then(function(r){if(r&&r.ok){toast(newStatus==='completed'?'✅ Task done!':'↩ Task reopened.',newStatus==='completed'?'success':'');renderHealthTasks();}else{t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nm)nm.classList.toggle('done',wasDone);toast('Could not update task.','error');}if(onDone)onDone();}).catch(function(){t.status=wasDone?'completed':'needsAction';cb.classList.toggle('checked',wasDone);if(nm)nm.classList.toggle('done',wasDone);if(onDone)onDone();});}
-
-function openAddHealthTaskModal(){document.getElementById('htask-title').value='';document.getElementById('htask-notes').value='';document.getElementById('htask-due').value='';document.getElementById('htask-create-cal').checked=false;document.getElementById('htask-cal-row').style.display='none';document.getElementById('add-htask-status').textContent='';document.getElementById('add-htask-btn').disabled=false;document.getElementById('add-health-task-modal').classList.remove('hidden');setTimeout(function(){document.getElementById('htask-title').focus();},60);}
-function closeAddHealthTaskModal(){document.getElementById('add-health-task-modal').classList.add('hidden');}
-document.getElementById('htask-due').addEventListener('change',function(){var calRow=document.getElementById('htask-cal-row');calRow.style.display=this.value?'flex':'none';if(!this.value)document.getElementById('htask-create-cal').checked=false;});
-document.getElementById('add-health-task-modal').addEventListener('click',function(e){if(e.target===this)closeAddHealthTaskModal();});
-function saveHealthTask(){var title=document.getElementById('htask-title').value.trim(),st=document.getElementById('add-htask-status');if(!title){st.style.color='#d93025';st.textContent='Title is required.';return;}var btn=document.getElementById('add-htask-btn');btn.disabled=true;st.style.color='#5f6368';st.textContent='Saving…';var dueVal=document.getElementById('htask-due').value,addToCal=dueVal&&document.getElementById('htask-create-cal').checked;var healthList=_healthTaskLists.find(function(l){return l.title&&l.title.trim().toLowerCase()==='health';});var payload={title:title,notes:document.getElementById('htask-notes').value.trim(),due:dueVal||null,listId:healthList?healthList.id:'@default',createCalendarEvent:addToCal,calendarVisibility:'private'};fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(data){st.style.color='#1e8e3e';st.textContent='✅ Task added!'+(data.calendar_event?' + Calendar event.':'');toast('Task added','success');setTimeout(function(){closeAddHealthTaskModal();loadHealthTasks();},700);}).catch(function(err){st.style.color='#d93025';st.textContent='❌ '+err.message;btn.disabled=false;});}
-
-
-document.querySelectorAll('.tag-chip').forEach(function(chip){chip.addEventListener('click',function(){var tag=chip.getAttribute('data-tag'),ta=document.getElementById('msg-input');if(!ta)return;chip.classList.toggle('selected');if(chip.classList.contains('selected')){if(ta.value.indexOf(tag)===-1)ta.value=(tag+' '+ta.value).trimEnd();}else{ta.value=ta.value.replace(tag,'').replace(/^\s+/,'').trimEnd();}ta.focus();});});
-var msgIn=document.getElementById('msg-input'),sndBtn=document.getElementById('send-btn'),sndSt=document.getElementById('send-status')||document.getElementById('sst'),filIn=document.getElementById('file-input'),selFile=null;
-if(filIn)filIn.addEventListener('change',function(){selFile=filIn.files[0]||null;});
-// send-btn handled in second script block (with @health tag)
-
-
-/* ── Mobile nav bar JS ── */
-var _mobNavOpen = false;
-
-// SVG icons map for the trigger label
-var MOB_NAV_ICONS = {
-  overview: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>',
-  activity: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,9 4,5 7,8 10,3 13,6 15,4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  healthlog: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a3 3 0 00-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 00-3-3z"/></svg>',
-  food: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2v5c0 2 1.5 3 3 3s3-1 3-3V2" stroke-linecap="round"/><line x1="6" y1="10" x2="6" y2="14" stroke-linecap="round"/><path d="M11 2c0 0 2 1 2 4s-2 4-2 4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  mood: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 9.5c.7 1 3.8 1 4.5 0" stroke-linecap="round"/><circle cx="6" cy="6.5" r=".8" fill="currentColor" stroke="none"/><circle cx="10" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg>',
-  sleep: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10A6 6 0 016 3a6 6 0 100 10 6 6 0 007-3z" stroke-linecap="round"/></svg>',
-  womens: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="4"/><line x1="8" y1="10" x2="8" y2="15" stroke-linecap="round"/><line x1="5.5" y1="13" x2="10.5" y2="13" stroke-linecap="round"/></svg>',
-  water: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2C8 2 3 8 3 11a5 5 0 0010 0C13 8 8 2 8 2z"/></svg>',
-  medication: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="1" width="6" height="14" rx="3"/><line x1="5" y1="8" x2="11" y2="8"/></svg>',
-  myinfo: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="2"/><path d="M3 14c0-3 2-5 5-5s5 2 5 5" stroke-linecap="round"/></svg>',
-  goals: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><circle cx="8" cy="8" r="3"/><circle cx="8" cy="8" r=".8" fill="currentColor" stroke="none"/></svg>',
-  insurance: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1L2 4v4c0 4 6 7 6 7s6-3 6-7V4L8 1z"/></svg>',
-  medrec: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke-linecap="round"/></svg>',
-  history: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 4v4l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-};
-var MOB_NAV_LABELS = {
-  overview:'Overview', activity:'Activity', healthlog:'Body', food:'Food',
-  mood:'Mood', sleep:'Sleep', womens:"Women's", water:'Water', medication:'Medication',
-  myinfo:'My Info', goals:'Goals', insurance:'Insurance Info', medrec:'Med List', history:'Med History'
-};
-
-function mobNavToggle() {
-  _mobNavOpen = !_mobNavOpen;
-  var panel = document.getElementById('mob-nav-panel');
-  var arrow = document.getElementById('mob-nav-arrow');
-  if (panel) panel.classList.toggle('open', _mobNavOpen);
-  if (arrow) { arrow.textContent = _mobNavOpen ? '▲' : '▼'; arrow.classList.toggle('open', _mobNavOpen); }
-}
-
-function mobNavSelect(view, btn) {
-  // Update active state in mobile menu
-  document.querySelectorAll('.mob-nav-item').forEach(function(el){ el.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-
-  // Update trigger label + icon
-  var iconEl = document.getElementById('mob-nav-icon');
-  var labelEl = document.getElementById('mob-nav-label');
-  if (iconEl && MOB_NAV_ICONS[view]) iconEl.innerHTML = MOB_NAV_ICONS[view];
-  if (labelEl && MOB_NAV_LABELS[view]) labelEl.textContent = MOB_NAV_LABELS[view];
-
-  // Keep menu open (per spec)
-  // Call the existing setView, passing null for desktop btn (mobile menu handles active state)
-  var desktopBtn = document.getElementById('nav-' + view) || document.getElementById('nav-' + (view === 'healthlog' ? 'healthlog' : view));
-  setView(view, desktopBtn);
-}
-
-// Also sync mobile menu when desktop setView is called
-var _origSetView = null; // patched below after setView is defined
-
-/* ── Custom period dropdown JS ── */
-var _periodDropOpen = false;
-var PERIOD_LABELS = {daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly'};
-
-function periodDropToggle(e){
-  e.stopPropagation();
-  _periodDropOpen = !_periodDropOpen;
-  var menu = document.getElementById('period-custom-menu');
-  var arrow = document.querySelector('.period-custom-arrow');
-  if(menu) menu.classList.toggle('open', _periodDropOpen);
-  if(arrow) arrow.textContent = _periodDropOpen ? '▲' : '▼';
-}
-
-function periodDropSelect(val, btn){
-  // Update label
-  var label = document.getElementById('period-custom-label');
-  if(label) label.textContent = PERIOD_LABELS[val] || val;
-  // Update active state on options
-  document.querySelectorAll('.period-custom-option').forEach(function(el){
-    el.classList.toggle('active', el.getAttribute('data-val') === val);
-  });
-  // Close menu
-  _periodDropOpen = false;
-  var menu = document.getElementById('period-custom-menu');
-  var arrow = document.querySelector('.period-custom-arrow');
-  if(menu) menu.classList.remove('open');
-  if(arrow) arrow.textContent = '▼';
-  // Trigger actual period change
-  onPeriodChange(val);
-}
-
-// Close custom dropdown on outside click
-document.addEventListener('click', function(e){
-  var wrap = document.getElementById('period-custom-wrap');
-  if(wrap && !wrap.contains(e.target)){
-    _periodDropOpen = false;
-    var menu = document.getElementById('period-custom-menu');
-    var arrow = document.querySelector('.period-custom-arrow');
-    if(menu) menu.classList.remove('open');
-    if(arrow) arrow.textContent = '▼';
-  }
-});
-
-function navigate(mod){window.location.href='/dashboard?mod='+mod;}
-window.refreshOverviewData=function(){};
-
-init();
-
-/* period label swap removed — now using custom dropdown */
-
-/* ── Sync unit-btn label to kg/lb on mobile, full text on desktop ── */
-(function(){
-  function applyUnitLabel(){
-    var btn = document.getElementById('unit-btn');
-    if(!btn) return;
-    var isMobile = window.innerWidth <= 900;
-    if(isMobile){
-      // unitMetric is defined in outer scope
-      btn.textContent = (typeof unitMetric !== 'undefined' && unitMetric) ? 'lb' : 'kg';
-    } else {
-      btn.textContent = (typeof unitMetric !== 'undefined' && unitMetric) ? 'US / Metrics' : 'Metrics / US';
-    }
-  }
-  // Slight delay to let unitMetric initialize
-  setTimeout(applyUnitLabel, 50);
-  window.addEventListener('resize', applyUnitLabel);
-  // Expose so toggleUnit can call it too
-  window._applyUnitLabel = applyUnitLabel;
-})();
-</script>
-</body>
-</html>
-
-<script>
-// ── Hamburger Menu ──
-function openHamburger(){document.getElementById('ham-overlay').classList.add('open');}
-function closeHamburger(){document.getElementById('ham-overlay').classList.remove('open');}
-
-// ── Sidebar Toggle ──
-function toggleSidebar(){
-  var s=document.getElementById('task-sidebar');
-  var tog=document.getElementById('sidebar-toggle');
-  s.classList.toggle('collapsed');
-  tog.title=s.classList.contains('collapsed')?'Expand sidebar':'Collapse sidebar';
-}
-
-// ── Topbar user info ──
-(function loadUserInfo(){
-  fetch('https://api.mie.today/api/me/status',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(!d)return;
-      var u=d.user||d;
-      var name=u.given_name||u.givenName||u.first_name||u.firstName
-              ||u.displayName||u.display_name
-              ||(u.name?u.name.split(' ')[0]:'')
-              ||(u.email?u.email.split('@')[0]:'')
-              ||'—';
-      name=name.charAt(0).toUpperCase()+name.slice(1);
-      var email=u.email||'';
-      var ul=document.getElementById('tb-userline');
-      if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
-      var av=document.getElementById('tb-av');
-      if(av)av.textContent=name.charAt(0).toUpperCase();
-    }).catch(function(){});
-})();
-
-// ── Signout handled by original JS (line 1034) ──
-
-// ── Topbar clock + weather ──
-// startClock() and loadWeather() are defined in the original JS and called by init() on auth success.
-// We also call them here so the topbar is populated even before/around auth check.
-if(typeof startClock==='function')startClock();
-if(typeof loadWeather==='function')loadWeather();
-
-// ── Right Column Mini Calendar — exact finance.html pattern ──
-var hlCalYear=new Date().getFullYear(), hlCalMonth=new Date().getMonth();
-var hlSelDate=null;
-var hlMpYear=new Date().getFullYear();
-// Health dot cache: dateStr → array of type strings
-var _hlDotCache={};
-
-// Dot color map per entry type
-var HL_DOT_COLORS={
-  weight:'var(--teal)',body:'var(--teal)',food:'var(--blue)',activity:'var(--amber)',
-  bp:'var(--red)',hr:'var(--red)',glucose:'var(--purple)',sleep:'var(--cblue)',
-  mood:'var(--teal)',period:'#e91e63',water:'var(--blue)',womens:'#e91e63'
-};
-
-function hlIsoD(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
-
-function buildHlCal(){
-  var g=document.getElementById('fin-cal-grid');if(!g)return;
-  g.innerHTML='';
-  var mo=document.getElementById('fin-cal-mo');
-  if(mo)mo.textContent=new Date(hlCalYear,hlCalMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  var fd=new Date(hlCalYear,hlCalMonth,1).getDay();
-  var dim=new Date(hlCalYear,hlCalMonth+1,0).getDate();
-  var dip=new Date(hlCalYear,hlCalMonth,0).getDate();
-  var total=Math.ceil((fd+dim)/7)*7;
-  var now=new Date();
-  var todayStr=hlIsoD(now.getFullYear(),now.getMonth(),now.getDate());
-  for(var i=0;i<total;i++){
-    var cell=document.createElement('div');cell.className='fin-cal-day';
-    var dn,ds,other=false;
-    if(i<fd){dn=dip-fd+i+1;var pm=hlCalMonth===0?11:hlCalMonth-1;var py=hlCalMonth===0?hlCalYear-1:hlCalYear;ds=hlIsoD(py,pm,dn);other=true;}
-    else if(i>=fd+dim){dn=i-fd-dim+1;var nm=hlCalMonth===11?0:hlCalMonth+1;var ny=hlCalMonth===11?hlCalYear+1:hlCalYear;ds=hlIsoD(ny,nm,dn);other=true;}
-    else{dn=i-fd+1;ds=hlIsoD(hlCalYear,hlCalMonth,dn);}
-    if(other)cell.classList.add('other-mo');
-    if(ds===todayStr)cell.classList.add('today');
-    if(ds===hlSelDate)cell.classList.add('selected-fin');
-    cell.setAttribute('data-date',ds);
-    var num=document.createElement('div');num.className='fin-cal-dn';num.textContent=dn;cell.appendChild(num);
-    // Health dots
-    var dots=!other&&_hlDotCache[ds];
-    if(dots&&dots.length){
-      var dotWrap=document.createElement('div');dotWrap.className='fin-cal-dots';
-      var seen={};
-      dots.forEach(function(type){
-        var col=HL_DOT_COLORS[type]||'var(--txt2)';
-        if(!seen[col]&&Object.keys(seen).length<4){
-          seen[col]=1;
-          var dot=document.createElement('div');dot.className='fin-cal-dot';
-          dot.style.background=col;dotWrap.appendChild(dot);
+    <script>
+        let draggedColumn = null;
+
+        const defaultLayout = [
+            { id: "stacked-track", isContainer: true, lists: [
+                { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
+                { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "Museum of African Diaspora", notes: "Target Note", type: "" }] }
+            ]},
+            { id: "day1", title: "📅 Day 1", subtitle: "Arrival & SF Art", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
+            { id: "day2", title: "📅 Day 2", subtitle: "Parks & Science", cards: [{ title: "de Young Museum", notes: "Target Note", type: "" }] },
+            { id: "day3", title: "📅 Day 3", subtitle: "Edit focus...", cards: [] },
+            { id: "day4", title: "📅 Day 4", subtitle: "Edit focus...", cards: [] },
+            { id: "day5", title: "📅 Day 5", subtitle: "Edit focus...", cards: [] },
+            { id: "day6", title: "📅 Day 6", subtitle: "Edit focus...", cards: [] },
+            { id: "day7", title: "📅 Day 7", subtitle: "Edit focus...", cards: [] },
+            { id: "day8", title: "📅 Day 8", subtitle: "Edit focus...", cards: [] },
+            { id: "day9", title: "📅 Day 9", subtitle: "Edit focus...", cards: [] },
+            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] },
+            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] }
+        ];
+
+        function serializeBoard() {
+            const layoutStructure = [];
+            const grid = document.getElementById('boardGrid');
+            
+            Array.from(grid.children).forEach(element => {
+                if(element.classList.contains('stacked-column')) {
+                    const stackedData = { id: "stacked-track", isContainer: true, lists: [] };
+                    element.querySelectorAll('.list').forEach(list => {
+                        stackedData.lists.push(serializeListElement(list));
+                    });
+                    layoutStructure.push(stackedData);
+                } else {
+                    layoutStructure.push(serializeListElement(element));
+                }
+            });
+            return layoutStructure;
         }
-      });
-      cell.appendChild(dotWrap);
-    }
-    (function(dstr){cell.addEventListener('click',function(){
-      hlSelDate=dstr;
-      document.querySelectorAll('.fin-cal-day.selected-fin').forEach(function(el){el.classList.remove('selected-fin');});
-      cell.classList.add('selected-fin');
-      renderHlDayDetail(dstr);
-    });})(ds);
-    g.appendChild(cell);
-  }
-}
 
-function renderHlDayDetail(ds){
-  renderHlDayDetailCorrect(ds);
-}
-
-function loadHlDots(){
-  // Step 1: Load womens data from localStorage IMMEDIATELY (synchronous, always works)
-  loadWomensFromLocalStorage(); // this calls buildHlCal() right away with period dots
-
-  // Step 2: Also try to load health/food/activity dots from API (asynchronous, may fail)
-  // These add EXTRA colored dots on top of the period dots already shown
-  var y=hlCalYear,m=hlCalMonth;
-  var B='https://api.mie.today';
-  var firstDay=hlIsoD(y,m,1);
-  var lastDay=hlIsoD(y,m,new Date(y,m+1,0).getDate());
-  var tabs=['food','activity','health','sleep','mood'];
-  var pending=tabs.length;
-  var gotAnyData=false;
-
-  function done(){
-    pending--;
-    if(pending===0&&gotAnyData){
-      // Re-run womens to merge with any new API dots, then redraw
-      loadWomensFromLocalStorage();
-    }
-  }
-
-  tabs.forEach(function(tab){
-    fetch(B+'/api/me/health?date='+firstDay+'&period=monthly&tab='+tab,{credentials:'include'})
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(data){
-        if(!data){done();return;}
-        var items=(data[tab]||data.entries||data.items||[]);
-        items.forEach(function(e){
-          var d=e.stamp_date||e.date||(e.timestamp?e.timestamp.split('T')[0]:null);
-          if(!d)return;
-          d=d.split('T')[0];
-          if(d<firstDay||d>lastDay)return;
-          if(!_hlDotCache[d])_hlDotCache[d]=[];
-          var dotType=tab==='health'?'weight':tab;
-          if(_hlDotCache[d].indexOf(dotType)===-1){_hlDotCache[d].push(dotType);gotAnyData=true;}
-        });
-        done();
-      }).catch(function(){done();});
-  });
-}
-
-var HL_MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function buildHlMPGrid(){
-  var grid=document.getElementById('fmpy-grid'),yrEl=document.getElementById('fmpy-yr');
-  if(!grid||!yrEl)return;
-  yrEl.textContent=hlMpYear;
-  grid.innerHTML='';
-  HL_MNAMES.forEach(function(m,i){
-    var btn=document.createElement('button');
-    btn.className='fmpy-m';
-    btn.textContent=m;
-    if(hlCalYear===hlMpYear&&hlCalMonth===i)btn.classList.add('cur');
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      hlCalYear=hlMpYear;hlCalMonth=i;
-      buildHlCal();loadHlDots();
-      document.getElementById('fin-mo-picker').classList.remove('open');
-    });
-    grid.appendChild(btn);
-  });
-}
-
-function initHlCal(){
-  var prev=document.getElementById('fin-cal-prev');
-  var next=document.getElementById('fin-cal-next');
-  var todayBtn=document.getElementById('fin-cal-today');
-  var mo=document.getElementById('fin-cal-mo');
-  var picker=document.getElementById('fin-mo-picker');
-  var mpPrev=document.getElementById('fmpy-prev');
-  var mpNext=document.getElementById('fmpy-next');
-  if(prev)prev.addEventListener('click',function(){hlCalMonth--;if(hlCalMonth<0){hlCalMonth=11;hlCalYear--;}buildHlCal();loadHlDots();});
-  if(next)next.addEventListener('click',function(){hlCalMonth++;if(hlCalMonth>11){hlCalMonth=0;hlCalYear++;}buildHlCal();loadHlDots();});
-  if(todayBtn)todayBtn.addEventListener('click',function(){var n=new Date();hlCalYear=n.getFullYear();hlCalMonth=n.getMonth();buildHlCal();loadHlDots();});
-  if(mo&&picker){
-    mo.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(!picker.classList.contains('open')){hlMpYear=hlCalYear;buildHlMPGrid();}
-      picker.classList.toggle('open');
-    });
-  }
-  if(mpPrev)mpPrev.addEventListener('click',function(e){e.stopPropagation();hlMpYear--;buildHlMPGrid();});
-  if(mpNext)mpNext.addEventListener('click',function(e){e.stopPropagation();hlMpYear++;buildHlMPGrid();});
-  document.addEventListener('click',function(e){
-    if(picker&&!picker.contains(e.target)&&e.target!==mo)picker.classList.remove('open');
-  });
-  buildHlCal();
-  loadHlDots();
-}
-// ── Load today's real health data — correct endpoints from panel files ──
-// Each tab uses: GET /api/me/health?date=YYYY-MM-DD&period=daily&tab=TAB
-// Women's data is stored in localStorage('mie_womens_YYYY-MM-DD') — NO API
-var _todayData={};
-
-function todayIso(){
-  var n=new Date();
-  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
-}
-
-function loadTodayOverview(){
-  var d=todayIso();
-  var B='https://api.mie.today';
-  var tabs=['food','activity','health','sleep','mood','water'];
-  var pending=tabs.length;
-  _todayData={};
-  tabs.forEach(function(tab){
-    fetch(B+'/api/me/health?date='+d+'&period=daily&tab='+tab,{credentials:'include'})
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(data){
-        if(data){
-          // Store under tab key — use actual field names from panel files
-          if(tab==='food')    _todayData.food    = data.food    || [];
-          if(tab==='activity')_todayData.activity= data.activity|| [];
-          if(tab==='health')  _todayData.health  = data.health  || [];
-          if(tab==='sleep')   _todayData.sleep   = data.sleep   || [];
-          if(tab==='mood')    _todayData.mood    = data.mood    || [];
-          if(tab==='water')   _todayData.water   = data.water   || [];
+        function serializeListElement(list) {
+            const cardArray = [];
+            list.querySelectorAll('.card').forEach(card => {
+                cardArray.push({
+                    title: card.querySelector('.card-title-input').value,
+                    notes: card.querySelector('.card-notes-input').value,
+                    type: card.classList.contains('allergy') ? 'allergy' : ''
+                });
+            });
+            return {
+                id: list.getAttribute('data-list-id'),
+                title: list.querySelector('.list-header-input').value,
+                subtitle: list.querySelector('.list-subtitle-input').value,
+                cards: cardArray
+            };
         }
-        pending--;
-        if(pending===0) renderOverviewCards();
-      })
-      .catch(function(){pending--;if(pending===0)renderOverviewCards();});
-  });
-  // Women's panel uses localStorage — read directly
-  loadWomensFromLocalStorage();
-}
 
-function renderOverviewCards(){
-  var d=_todayData;
-
-  // ── Food: exact fields from panel-logs-food.html ──
-  // food[]: {food_name, calories_kcal, protein_g, carbs_g, fat_g, meal_time}
-  var food=d.food||[];
-  var totalCal=0,totalCarbs=0,totalFat=0,totalProtein=0;
-  food.forEach(function(f){
-    totalCal   += (f.calories_kcal||f.calories||0);
-    totalCarbs += (f.carbs_g||f.carbs||0);
-    totalFat   += (f.fat_g||f.fat||0);
-    totalProtein+=(f.protein_g||f.protein||0);
-  });
-  var calEl=document.getElementById('cal-display');
-  var calUnit=document.getElementById('cal-unit-lbl');
-  if(calEl){if(food.length){calEl.textContent=Math.round(totalCal).toLocaleString();if(calUnit)calUnit.style.display='';}else{calEl.textContent='—';if(calUnit)calUnit.style.display='none';}}
-  var goalEl=document.getElementById('cal-goal-display');if(goalEl)goalEl.textContent='';
-  var fillEl=document.getElementById('cal-bigfill');if(fillEl)fillEl.style.width='0%';
-
-  // Macros
-  function setMacro(lblId,val,unit){
-    var lbl=document.getElementById(lblId);
-    if(lbl)lbl.innerHTML=val?('<strong>'+Math.round(val)+' '+unit+'</strong>'):'<span style="color:var(--txt3)">—</span>';
-  }
-  setMacro('macro-carbs-lbl',totalCarbs,'g');
-  setMacro('macro-fat-lbl',totalFat,'g');
-  setMacro('macro-fiber-lbl',0,'g'); // fiber not in API response
-  setMacro('macro-protein-lbl',totalProtein,'g');
-
-  // ── Activity: exact fields from panel-logs-ams.html ──
-  // activity[]: {calories_burned_kcal, steps, distance_km, duration_min}
-  // summary: {total_calories_burned_kcal, total_steps, total_distance_km}
-  var acts=d.activity||[];
-  var burned=0,steps=0,distKm=0;
-  acts.forEach(function(a){
-    burned  += (a.calories_burned_kcal||a.calories_burned||0);
-    steps   += (a.steps||0);
-    distKm  += (a.distance_km||0);
-  });
-  function setEl(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-  setEl('act-cals',    burned?Math.round(burned).toLocaleString():'—');
-  setEl('act-steps',   steps ?steps.toLocaleString():'—');
-  setEl('act-active-cal',burned?Math.round(burned).toLocaleString():'—');
-  setEl('cal-burned',  burned?Math.round(burned).toLocaleString():'—');
-  setEl('cal-net',     (burned||totalCal)?((totalCal-burned)>0?'+':'')+(Math.round(totalCal-burned)).toLocaleString():'—');
-  var distEl=document.getElementById('dist-display');
-  if(distEl)distEl.textContent=distKm?distKm.toFixed(2):'—';
-
-  // ── Health/Vitals: exact fields from panel-logs-body.html ──
-  // health[]: {weight_kg, blood_pressure_sys, blood_pressure_dia,
-  //            heart_rate_bpm, spo2_pct, glucose_mgdl, stamp_date}
-  var healthArr=d.health||[];
-  var lH=healthArr.length?healthArr[healthArr.length-1]:null;
-  var wKg=lH&&lH.weight_kg||null;
-  var bpSys=lH&&lH.blood_pressure_sys||null;
-  var bpDia=lH&&lH.blood_pressure_dia||null;
-  var hrBpm=lH&&lH.heart_rate_bpm||null;
-  var spo2 =lH&&lH.spo2_pct||null;
-  var glu  =lH&&lH.glucose_mgdl||null;
-
-  var wEl=document.getElementById('weight-display'),wSub=document.getElementById('weight-sub');
-  var mEl=document.getElementById('muscle-display'),mSub=document.getElementById('muscle-sub');
-  var fEl=document.getElementById('fat-display'),fSub=document.getElementById('fat-sub');
-  if(wEl)wEl.textContent=wKg?(wKg+' kg'):'—';
-  if(wSub)wSub.textContent=wKg?((wKg*2.20462).toFixed(1)+' lb'):'';
-  if(mEl)mEl.textContent='—';if(mSub)mSub.textContent='';
-  if(fEl)fEl.textContent='—';if(fSub)fSub.textContent='';
-
-  var bpEl=document.getElementById('vital-bp');
-  if(bpEl)bpEl.textContent=(bpSys&&bpDia)?(bpSys+'/'+bpDia):'—';
-  var hrEl=document.getElementById('vital-hr');
-  if(hrEl)hrEl.textContent=hrBpm?(hrBpm+' bpm'):'—';
-  var spo2El=document.getElementById('vital-spo2');
-  if(spo2El)spo2El.textContent=spo2?(spo2+'%'):'—';
-  var glEl=document.getElementById('vital-glucose');
-  if(glEl)glEl.textContent=glu?(glu+' mg/dL'):'—';
-
-  // ── Sleep: exact fields from panel-logs-ams.html ──
-  // sleep[]: {bedtime, wake_time, duration_hr, quality_1to5, notes}
-  var slArr=d.sleep||[];var lSl=slArr.length?slArr[slArr.length-1]:null;
-  var slEl=document.getElementById('sleep-val'),slSub=document.getElementById('sleep-sub');
-  if(slEl){
-    if(lSl){
-      var hr=parseFloat(lSl.duration_hr)||null;
-      var q=lSl.quality_1to5||null;
-      var qlabel=['','😴 Very poor','😴 Poor','😴 Fair','😊 Good','🌟 Excellent'];
-      if(hr){
-        var hh=Math.floor(hr),mm=Math.round((hr-hh)*60);
-        slEl.textContent=hh+'h'+(mm?' '+mm+'m':'');
-      }else slEl.textContent='—';
-      if(slSub)slSub.textContent=q?(qlabel[q]||('Quality: '+q+'/5')):'';
-    }else{slEl.textContent='—';if(slSub)slSub.textContent='';}
-  }
-
-  // ── Mood: exact fields from panel-logs-ams.html ──
-  // mood[]: {mood, energy_level, notes}
-  var moArr=d.mood||[];var lMo=moArr.length?moArr[moArr.length-1]:null;
-  var moEl=document.getElementById('mood-val'),moSub=document.getElementById('mood-sub');
-  var EMOJI={Amazing:'🤩',Happy:'😊',Calm:'😌',Neutral:'😐',Tired:'😴',
-             Anxious:'😰',Sad:'😢',Angry:'😠',Stressed:'😫',Grateful:'🙏'};
-  if(moEl){
-    if(lMo){
-      var mv=lMo.mood||'';
-      moEl.textContent=(EMOJI[mv]?EMOJI[mv]+' ':'')+mv;
-      if(moSub)moSub.textContent=lMo.energy_level?('⚡ Energy: '+lMo.energy_level+'/5'):'Logged today';
-    }else{moEl.textContent='—';if(moSub)moSub.textContent='';}
-  }
-
-  // ── Water: from trackers panel ──
-  // water[]: logged entries for today
-  var waterArr=d.water||[];var waterMl=0;
-  waterArr.forEach(function(w){waterMl+=(w.amount_ml||w.value||0);});
-  var waterEl=document.getElementById('water-display');
-  if(waterEl)waterEl.textContent=waterMl?waterMl:'—';
-
-  // ── Sidebar stats ──
-  var sbCal=document.getElementById('sb-cal');
-  var sbSteps=document.getElementById('sb-steps');
-  var sbWater=document.getElementById('sb-water');
-  if(sbCal)sbCal.textContent=totalCal?Math.round(totalCal).toLocaleString():'—';
-  if(sbSteps)sbSteps.textContent=steps?steps.toLocaleString():'—';
-  if(sbWater)sbWater.textContent=waterMl?(waterMl>=1000?(waterMl/1000).toFixed(1)+' L':waterMl+' ml'):'—';
-
-  // ── Food log slots ──
-  var slotsEl=document.getElementById('food-slots');
-  var calTotalEl=document.getElementById('food-cal-total');
-  if(slotsEl){
-    if(!food.length){
-      slotsEl.innerHTML='<div style="font-size:11px;color:var(--txt3);font-style:italic;padding:4px 0;">No food logged today</div>';
-      if(calTotalEl)calTotalEl.textContent='';
-    }else{
-      if(calTotalEl)calTotalEl.textContent=Math.round(totalCal).toLocaleString()+' cal logged';
-      var byMeal={AM:[],PM:[],Evening:[]};
-      food.forEach(function(f){
-        var m=f.meal_time||'PM';
-        if(m==='AM')byMeal.AM.push(f);
-        else if(m==='Evening'||m==='Dinner')byMeal.Evening.push(f);
-        else byMeal.PM.push(f);
-      });
-      var html='';
-      ['AM','PM','Evening'].forEach(function(slot,i){
-        var items=byMeal[slot];
-        if(i>0)html+='<div style="height:.5px;background:var(--b1);margin:4px 0;"></div>';
-        html+='<div><div class="food-sum-slot-label">'+slot+'</div>';
-        if(items.length){
-          var names=items.map(function(f){return f.food_name||f.name||'—';}).join(', ');
-          var cals=items.reduce(function(s,f){return s+(f.calories_kcal||f.calories||0);},0);
-          html+='<div class="food-sum-entry">'+names+'</div>'
-              +'<div class="food-sum-cal-sub">'+(cals?Math.round(cals)+' cal':'')+'</div>';
-        }else{
-          html+='<div class="food-sum-entry" style="color:var(--txt3);font-style:italic;">— not logged yet</div>';
+        function saveBoardToStorage() {
+            const structure = serializeBoard();
+            localStorage.setItem('sf_travel_board_state', JSON.stringify(structure));
         }
-        html+='</div>';
-      });
-      slotsEl.innerHTML=html;
-    }
-  }
-}
 
-// ── Women's calendar: reads localStorage — mirrors panel-logs-womens.html renderCalendar() exactly ──
-// Key: 'mie_womens_YYYY-MM-DD' → {period_start:true/false, period_end:true/false, ...}
-function loadWomensFromLocalStorage(){
-  // Step 1: get all womens localStorage keys sorted (same as panel's getAllKeys())
-  var allKeys=[];
-  try{
-    for(var i=0;i<localStorage.length;i++){
-      var k=localStorage.key(i);
-      if(k&&k.startsWith('mie_womens_20'))allKeys.push(k.replace('mie_womens_',''));
-    }
-  }catch(e){return;}
-  allKeys.sort();
+        // 🗜️ NEW: High Efficiency Compactor to shorten the URL string natively
+        function compressData(layout) {
+            return layout.map(item => {
+                if (item.isContainer) {
+                    return { w: 1, l: item.lists.map(compressList) };
+                }
+                return compressList(item);
+            });
+        }
 
-  // Step 2: build actualPeriodDays — EXACT same logic as panel's renderCalendar()
-  // Iterate ALL keys, track inPeriod across all time (not just current month)
-  // Only mark keys that are IN the allKeys list (no gap-filling)
-  var actualPeriodDays={};
-  var inPeriod=false;
-  allKeys.forEach(function(dateStr){
-    var raw=null;
-    try{raw=JSON.parse(localStorage.getItem('mie_womens_'+dateStr)||'null');}catch(e){}
-    if(!raw)return;
-    if(raw.period_start)inPeriod=true;
-    if(inPeriod)actualPeriodDays[dateStr]=true;
-    if(raw.period_end)inPeriod=false;
-  });
+        function compressList(list) {
+            return {
+                i: list.id,
+                t: list.title,
+                s: list.subtitle === "Edit focus..." ? "" : list.subtitle, // Drop placeholder strings
+                c: list.cards.map(card => ({
+                    t: card.title,
+                    n: card.notes.startsWith("Moved to") ? "" : card.notes, // Drop redundant auto-generated tags
+                    y: card.type || undefined
+                })).filter(c => c.t)
+            };
+        }
 
-  // Step 3: add period dots for all actualPeriodDays
-  Object.keys(actualPeriodDays).forEach(function(dateStr){
-    if(!_hlDotCache[dateStr])_hlDotCache[dateStr]=[];
-    if(_hlDotCache[dateStr].indexOf('period')===-1)_hlDotCache[dateStr].push('period');
-  });
+        function decompressData(compacted) {
+            return compacted.map(item => {
+                if (item.w) {
+                    return { id: "stacked-track", isContainer: true, lists: item.l.map(decompressList) };
+                }
+                return decompressList(item);
+            });
+        }
 
-  // Step 4: predicted next period (mirrors panel's getPredictedPeriodDates())
-  var starts=allKeys.filter(function(k){
-    try{var d=JSON.parse(localStorage.getItem('mie_womens_'+k)||'null');return d&&d.period_start;}
-    catch(e){return false;}
-  });
-  if(starts.length){
-    var lastStart=starts[starts.length-1];
-    var cycleLen=28;
-    if(starts.length>=2){
-      var diffs=[];
-      for(var j=1;j<starts.length;j++){
-        var a=new Date(starts[j-1]+'T12:00:00'),b=new Date(starts[j]+'T12:00:00');
-        diffs.push(Math.round((b-a)/86400000));
-      }
-      var avg=Math.round(diffs.reduce(function(s,v){return s+v;},0)/diffs.length);
-      if(avg>=21&&avg<=45)cycleLen=avg;
-    }
-    var nextStart=new Date(lastStart+'T12:00:00');
-    nextStart.setDate(nextStart.getDate()+cycleLen);
-    var nextEnd=new Date(nextStart);nextEnd.setDate(nextEnd.getDate()+5);
-    var today=new Date();today.setHours(0,0,0,0);
-    var fmtD=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-    // Only show predicted dots if next period is upcoming
-    if(nextStart>today){
-      var cur=new Date(nextStart);
-      while(cur<=nextEnd){
-        var k2=fmtD(cur);
-        if(!_hlDotCache[k2])_hlDotCache[k2]=[];
-        if(_hlDotCache[k2].indexOf('period')===-1)_hlDotCache[k2].push('period');
-        cur.setDate(cur.getDate()+1);
-      }
-    }
-    // Step 5: update tracker label
-    var lbl=document.getElementById('period-next-lbl');
-    if(lbl){
-      var fmt2=function(d){return(d.getMonth()+1)+'/'+d.getDate();};
-      var now2=new Date();now2.setHours(0,0,0,0);
-      if(nextStart<=now2&&now2<=nextEnd)lbl.innerHTML='🌸 <strong>Period active</strong>';
-      else if(nextStart>now2)lbl.innerHTML='Next: <strong>'+fmt2(nextStart)+' – '+fmt2(nextEnd)+'</strong>';
-      else lbl.innerHTML='Last started: <strong>'+fmt2(new Date(lastStart+'T12:00:00'))+'</strong>';
-    }
-  }
+        function decompressList(list) {
+            return {
+                id: list.i,
+                title: list.t,
+                subtitle: list.s || "Edit focus...",
+                cards: (list.c || []).map(card => ({
+                    title: card.t,
+                    notes: card.n || "",
+                    type: card.y || ""
+                }))
+            };
+        }
 
-  buildHlCal();
-}
+        function generateShareLink() {
+            const boardData = serializeBoard();
+            const compacted = compressData(boardData); // Compress keys
+            const encryptedString = btoa(encodeURIComponent(JSON.stringify(compacted)));
+            const shareUrl = window.location.origin + window.location.pathname + '#data=' + encryptedString;
+            
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                alert("✨ Compact Board Link Copied to Clipboard! It is now significantly shorter and ready to share.");
+            }).catch(() => {
+                alert("Link compiled! Copy it from your web address bar:\n\n" + shareUrl);
+            });
+        }
 
-// ── Right-col day detail: use correct tab per date ──
-// Replaces the generic /api/me/health?date= with proper tab calls
-function renderHlDayDetailCorrect(ds){
-  var list=document.getElementById('fin-day-list');
-  var dateEl=document.getElementById('fin-day-date');
-  if(!list)return;
-  if(dateEl){
-    var d=new Date(ds+'T12:00:00');
-    dateEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-  }
-  list.innerHTML='<div class="fin-day-empty" style="font-style:italic;color:var(--txt3);">Loading…</div>';
+        function loadBoard() {
+            let dataStructure = defaultLayout;
+            
+            if(window.location.hash && window.location.hash.startsWith('#data=')) {
+                try {
+                    const base64Data = window.location.hash.replace('#data=', '');
+                    const compacted = JSON.parse(decodeURIComponent(atob(base64Data)));
+                    dataStructure = decompressData(compacted); // Decompress keys
+                    localStorage.setItem('sf_travel_board_state', JSON.stringify(dataStructure));
+                    window.location.hash = ''; 
+                } catch(err) {
+                    console.error("Failed parsing compressed URL data.", err);
+                }
+            } else {
+                const rawData = localStorage.getItem('sf_travel_board_state');
+                if (rawData) dataStructure = JSON.parse(rawData);
+            }
+            
+            const grid = document.getElementById('boardGrid');
+            grid.innerHTML = '';
 
-  var B='https://api.mie.today';
-  var rows=[];
+            dataStructure.forEach(item => {
+                if(item.isContainer) {
+                    const stackedCol = document.createElement('div');
+                    stackedCol.className = 'stacked-column';
+                    stackedCol.setAttribute('draggable', 'false');
+                    item.lists.forEach(listData => { stackedCol.appendChild(buildListNode(listData)); });
+                    grid.appendChild(stackedCol);
+                } else {
+                    grid.appendChild(buildListNode(item));
+                }
+            });
 
-  // ── Always read Women's data from localStorage first (synchronous, reliable) ──
-  var wRaw=null;
-  try{wRaw=JSON.parse(localStorage.getItem('mie_womens_'+ds)||'null');}catch(e){}
-  if(wRaw){
-    if(wRaw.period_start)rows.push({col:'#e91e63',label:'Period Start',val:'🌸'});
-    if(wRaw.period_end)  rows.push({col:'#e91e63',label:'Period End',  val:'🌸'});
-    // Also check if this date is within a period span (not just start/end day)
-    if(!wRaw.period_start&&!wRaw.period_end&&_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
-      rows.push({col:'#e91e63',label:'Period day',val:'🌸'});
-    }
-    if(wRaw.note)rows.push({col:'#e91e63',label:'Note',val:wRaw.note});
-  } else if(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
-    // Date is within a period span but has no specific localStorage entry
-    rows.push({col:'#e91e63',label:'Period day',val:'🌸'});
-  }
+            document.querySelectorAll('.list').forEach(makeColumnMovable);
+            document.querySelectorAll('.card').forEach(makeCardDraggable);
+        }
 
-  // ── API calls — 4 tabs in parallel ──
-  // API returns 500 for dates with no data — treat same as empty
-  var pending=4;
-  function done(){
-    pending--;
-    if(pending>0)return;
-    // Render all collected rows
-    if(!rows.length){
-      list.innerHTML='<div class="fin-day-empty">No entries for this date.</div>';
-      return;
-    }
-    list.innerHTML='';
-    rows.forEach(function(r){
-      var row=document.createElement('div');row.className='fin-day-row';
-      var bar=document.createElement('div');bar.className='fin-day-bar';bar.style.background=r.col;
-      var cat=document.createElement('span');cat.className='fin-day-cat';cat.textContent=r.label;
-      var amt=document.createElement('span');amt.className='fin-day-val';amt.style.color=r.col;amt.textContent=r.val;
-      row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);
-      list.appendChild(row);
-    });
-  }
+        function buildListNode(data) {
+            const list = document.createElement('div');
+            list.className = 'list';
+            list.setAttribute('data-list-id', data.id);
+            
+            const hIn = document.createElement('input');
+            hIn.className = 'list-header-input';
+            hIn.type = 'text';
+            hIn.value = data.title;
+            hIn.addEventListener('input', () => {
+                list.querySelectorAll('.card').forEach(card => updateCardState(card, list));
+                saveBoardToStorage();
+            });
 
-  // Food
-  fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=food',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      var food=(data&&data.food)||[];
-      var total=food.reduce(function(s,f){return s+(f.calories_kcal||0);},0);
-      if(food.length)rows.push({col:'var(--blue)',label:'Food ('+food.length+')',val:Math.round(total)+' cal'});
-      done();
-    }).catch(function(){done();});
+            const sIn = document.createElement('input');
+            sIn.className = 'list-subtitle-input';
+            sIn.type = 'text';
+            sIn.value = data.subtitle;
+            sIn.addEventListener('input', saveBoardToStorage);
 
-  // Health/vitals
-  fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=health',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      var h=(data&&data.health)||[];
-      h.forEach(function(e){
-        if(e.weight_kg)          rows.push({col:'var(--teal)',  label:'Weight',         val:e.weight_kg+' kg'});
-        if(e.blood_pressure_sys) rows.push({col:'var(--red)',   label:'Blood Pressure', val:e.blood_pressure_sys+'/'+e.blood_pressure_dia});
-        if(e.heart_rate_bpm)     rows.push({col:'var(--red)',   label:'Heart Rate',     val:e.heart_rate_bpm+' bpm'});
-        if(e.spo2_pct)           rows.push({col:'var(--cblue)',  label:'SpO2',          val:e.spo2_pct+'%'});
-        if(e.glucose_mgdl)       rows.push({col:'var(--purple)','label':'Glucose',      val:e.glucose_mgdl+' mg/dL'});
-      });
-      done();
-    }).catch(function(){done();});
+            const container = document.createElement('div');
+            container.className = 'card-container';
+            setupContainerDropZones(container);
 
-  // Activity
-  fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=activity',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      var acts=(data&&data.activity)||[];
-      var totalCal=acts.reduce(function(s,a){return s+(a.calories_burned_kcal||0);},0);
-      var totalSteps=acts.reduce(function(s,a){return s+(a.steps||0);},0);
-      if(acts.length)rows.push({col:'var(--amber)',label:'Activity',
-        val:totalSteps?totalSteps.toLocaleString()+' steps':Math.round(totalCal)+' kcal'});
-      done();
-    }).catch(function(){done();});
+            data.cards.forEach(cData => { container.appendChild(buildCardNode(cData, data.id, list)); });
 
-  // Sleep
-  fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=sleep',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      var sleep=(data&&data.sleep)||[];
-      sleep.forEach(function(s){
-        if(s.duration_hr)rows.push({col:'var(--cblue)',label:'Sleep',
-          val:Math.floor(s.duration_hr)+'h'+(s.quality_1to5?' · Q'+s.quality_1to5+'/5':'')});
-      });
-      done();
-    }).catch(function(){done();});
-}
+            const form = document.createElement('div');
+            form.className = 'add-card-form';
+            const formInput = document.createElement('input');
+            formInput.className = 'add-card-input';
+            formInput.type = 'text';
+            formInput.placeholder = data.id === 'rules' ? 'Add rule...' : 'Add...';
 
-// Remove old fetch interceptor - womens uses localStorage, not API
-// Keep a stripped-down version only for safety
+            const formBtn = document.createElement('button');
+            formBtn.className = 'add-card-btn';
+            formBtn.textContent = 'Add';
 
-// renderOverviewCards defined above in loadTodayOverview section
+            function triggerFormSubmit() {
+                const text = formInput.value.trim();
+                if(!text) return;
+                const newCard = buildCardNode({ title: text, notes: '', type: '' }, data.id, list);
+                container.appendChild(newCard);
+                makeCardDraggable(newCard);
+                updateCardState(newCard, list);
+                formInput.value = '';
+                saveBoardToStorage();
+            }
 
-// logPeriodEvent: Women's panel uses localStorage — write directly + rebuild calendar
-function logPeriodEvent(eventType){
-  var d=todayIso();
-  var key='mie_womens_'+d;
-  var existing={};
-  try{existing=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
-  if(eventType==='start'){existing.period_start=true;existing.date=d;}
-  if(eventType==='end'){existing.period_end=true;existing.date=d;}
-  try{localStorage.setItem(key,JSON.stringify(existing));}catch(e){}
-  toast('Period '+eventType+' logged!','success');
-  loadWomensFromLocalStorage(); // rebuilds calendar dots immediately
-}
+            formBtn.addEventListener('click', triggerFormSubmit);
+            formInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') triggerFormSubmit(); });
 
-// ── Hook into init flow — called when show(appEl) fires after auth ──
-var _origShow=window.show;
-window.show=function(el){
-  if(_origShow)_origShow(el);
-  if(el===document.getElementById('app')){
-    setTimeout(function(){initHlCal();loadTodayOverview();},50);
-  }
-};
+            form.appendChild(formInput);
+            form.appendChild(formBtn);
+            list.appendChild(hIn);
+            list.appendChild(sIn);
+            list.appendChild(container);
+            list.appendChild(form);
 
-// ── Patch setView to refresh calendar dots after womens/period panel loads ──
-var _origSetView=window.setView;
-if(typeof setView==='function'){
-  var _sv=setView;
-  window.setView=function(v,btn){
-    _sv(v,btn);
-    // After womens or period panel loads (~600ms for fetch+render), refresh dots
-    if(v==='womens'||v==='period'){
-      setTimeout(function(){loadPeriodData();},700);
-    }
-  };
-}
+            return list;
+        }
 
-// ── Right col tab switching ──
-function switchTab(tab){
-  ['send','add'].forEach(function(t){
-    var tb=document.getElementById('tab-'+t),pn=document.getElementById('panel-'+t);
-    if(tb)tb.classList.toggle('on',t===tab);
-    if(pn)pn.classList.toggle('on',t===tab);
-  });
-}
+        function buildCardNode(cData, listId, parentList) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            if(cData.type) card.classList.add(cData.type);
 
-// ── Add panel type switching ──
-function selAT(type){
-  ['ev','tk','hl','fin'].forEach(function(t){
-    var btn=document.getElementById('abt-'+t),form=document.getElementById('afb-'+t);
-    if(btn)btn.classList.toggle('sel',t===type);
-    if(form)form.classList.toggle('vis',t===type);
-  });
-  var nd=new Date().toISOString().slice(0,10);
-  var mp={ev:'ae-date',tk:'at-due',fin:'afin-date',hl:'ahl-date'};
-  if(mp[type]){var el=document.getElementById(mp[type]);if(el&&!el.value)el.value=nd;}
-}
+            const row = document.createElement('div');
+            row.className = 'card-header-row';
 
-// ── Send message (right col) — mirrors finance exactly ──
-(function(){
-  var mi=document.getElementById('msg-input'),sb=document.getElementById('send-btn');
-  var fi=document.getElementById('file-input'),fr=document.getElementById('fname-row'),fn=document.getElementById('fname'),rb=document.getElementById('rm-file'),ss=document.getElementById('sst');
-  var selFile=null;
-  if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
-  if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
-  if(sb&&!sb._hlBound){sb._hlBound=true;sb.addEventListener('click',function(){
-    var txt=mi?mi.value.trim():'';if(!txt&&!selFile)return;
-    var dc=document.getElementById('draft-check');
-    sb.disabled=true;if(ss){ss.style.color='var(--txt3)';ss.textContent='';}
-    fetch('https://api.mie.today/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':''),tag:'@health'})})
-      .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';}else if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';} })
-      .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
-      .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
-  });}
-})();
+            const tIn = document.createElement('input');
+            tIn.className = 'card-title-input';
+            tIn.type = 'text';
+            tIn.value = cData.title;
+            tIn.addEventListener('input', () => {
+                updateCardState(card, card.closest('.list'));
+                saveBoardToStorage();
+            });
 
-// ── submitAdd (right col + Add panel) ──
-function showAST(type,msg,col){var el=document.getElementById('ast-'+type);if(!el)return;el.style.color=col;el.textContent=msg;setTimeout(function(){el.textContent='';},2500);}
-function submitAdd(type){
-  var nd=new Date().toISOString().slice(0,10);
-  if(type==='ev'){var t=document.getElementById('ae-title');if(!t||!t.value.trim()){showAST('ev','Title required.','var(--red)');return;}var d=document.getElementById('ae-date'),s=document.getElementById('ae-start'),e=document.getElementById('ae-end');var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;fetch('https://api.mie.today/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end})}).then(function(r){if(r.ok){showAST('ev','✅ Event added!','var(--teal)');t.value='';}else showAST('ev','❌ Failed.','var(--red)');}).catch(function(){showAST('ev','❌ Error.','var(--red)');});}
-  else if(type==='tk'){var t=document.getElementById('at-title');if(!t||!t.value.trim()){showAST('tk','Title required.','var(--red)');return;}var due=document.getElementById('at-due');fetch('https://api.mie.today/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:'@default'})}).then(function(r){if(r.ok){showAST('tk','✅ Task added!','var(--teal)');t.value='';}else showAST('tk','❌ Failed.','var(--red)');}).catch(function(){showAST('tk','❌ Error.','var(--red)');});}
-  else if(type==='hl'){
-    var ht=document.getElementById('ahl-type');
-    if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}
-    var metric=ht.value;
-    var nd2=new Date().toISOString().slice(0,10);
-    var hdate=document.getElementById('ahl-date');
-    var dateVal=hdate&&hdate.value?hdate.value:nd2;
-    var notes=(document.getElementById('ahl-notes')||{}).value||'';
-    var tab='health', data={stamp_date:dateVal,notes:notes};
-    var weightUnit=(document.getElementById('ahl-weight-unit')||{}).textContent||'kg';
-    var glucoseUnit=(document.getElementById('ahl-glucose-unit')||{}).textContent||'mmol/L';
-    var tempUnit=(document.getElementById('ahl-temp-unit')||{}).textContent||'°C';
-    var cholUnit=(document.getElementById('ahl-chol-unit')||{}).textContent||'mmol/L';
-    var waterUnit=(document.getElementById('ahl-water-unit')||{}).textContent||'ml';
-    var unitPref=(weightUnit==='lb'||waterUnit==='fl oz')?'us':'metric';
+            const actions = document.createElement('div');
+            actions.className = 'card-actions';
 
-    if(metric==='weight'){
-      var w=parseFloat((document.getElementById('ahl-weight')||{}).value)||null;
-      if(!w){showAST('hl','Enter weight.','var(--red)');return;}
-      if(weightUnit==='lb'){data.weight_lb=w;data.weight_kg=+(w/2.20462).toFixed(1);}
-      else{data.weight_kg=w;data.weight_lb=+(w*2.20462).toFixed(1);}
-    } else if(metric==='bp'){
-      var sys=parseFloat((document.getElementById('ahl-bp-sys')||{}).value)||null;
-      var dia=parseFloat((document.getElementById('ahl-bp-dia')||{}).value)||null;
-      if(!sys||!dia){showAST('hl','Enter both values.','var(--red)');return;}
-      data.blood_pressure_sys=sys;data.blood_pressure_dia=dia;
-    } else if(metric==='hr'){
-      var hr=parseFloat((document.getElementById('ahl-hr')||{}).value)||null;
-      if(!hr){showAST('hl','Enter heart rate.','var(--red)');return;}
-      data.heart_rate_bpm=hr;
-    } else if(metric==='glucose'){
-      var glu=parseFloat((document.getElementById('ahl-glucose')||{}).value)||null;
-      if(!glu){showAST('hl','Enter glucose.','var(--red)');return;}
-      if(glucoseUnit==='mg/dL'){data.glucose_mgdl=glu;data.glucose_mmol=+(glu/18.0182).toFixed(1);}
-      else{data.glucose_mmol=glu;data.glucose_mgdl=+(glu*18.0182).toFixed(0);}
-    } else if(metric==='spo2'){
-      var sp=parseFloat((document.getElementById('ahl-spo2')||{}).value)||null;
-      if(!sp){showAST('hl','Enter SpO2.','var(--red)');return;}
-      data.spo2_pct=sp;
-    } else if(metric==='temperature'){
-      var tmp=parseFloat((document.getElementById('ahl-temp')||{}).value)||null;
-      if(!tmp){showAST('hl','Enter temperature.','var(--red)');return;}
-      if(tempUnit==='°F'){data.temperature_f=tmp;data.temperature_c=+((tmp-32)*5/9).toFixed(1);}
-      else{data.temperature_c=tmp;data.temperature_f=+(tmp*9/5+32).toFixed(1);}
-    } else if(metric==='cholesterol'){
-      var ch=parseFloat((document.getElementById('ahl-chol')||{}).value)||null;
-      if(!ch){showAST('hl','Enter cholesterol.','var(--red)');return;}
-      if(cholUnit==='mg/dL'){data.cholesterol_mgdl=ch;data.cholesterol_mmol=+(ch*0.0259).toFixed(2);}
-      else{data.cholesterol_mmol=ch;data.cholesterol_mgdl=+(ch/0.0259).toFixed(0);}
-    } else if(metric==='steps'){
-      var st2=parseInt((document.getElementById('ahl-steps')||{}).value)||null;
-      if(!st2){showAST('hl','Enter steps.','var(--red)');return;}
-      tab='activity';data={stamp_date:dateVal,steps:st2,category:'General',type:'Steps',notes:notes};
-    } else if(metric==='water'){
-      var wt=parseFloat((document.getElementById('ahl-water')||{}).value)||null;
-      if(!wt){showAST('hl','Enter amount.','var(--red)');return;}
-      tab='water';
-      if(waterUnit==='fl oz'){data={stamp_date:dateVal,amount_ml:+(wt*29.5735).toFixed(0),amount_floz:wt,notes:notes};}
-      else{data={stamp_date:dateVal,amount_ml:wt,amount_floz:+(wt/29.5735).toFixed(1),notes:notes};}
-    } else if(metric==='sleep'){
-      var bed=(document.getElementById('ahl-bedtime')||{}).value||'';
-      var wake=(document.getElementById('ahl-wake')||{}).value||'';
-      if(!bed||!wake){showAST('hl','Enter both times.','var(--red)');return;}
-      tab='sleep';data={stamp_date:dateVal,bedtime:bed,wake_time:wake,notes:notes};
-    } else if(metric==='mood'){
-      var md=(document.getElementById('ahl-mood')||{}).value||'';
-      var en=parseInt((document.getElementById('ahl-energy')||{}).value)||null;
-      if(!md){showAST('hl','Select mood.','var(--red)');return;}
-      tab='mood';data={stamp_date:dateVal,mood:md,energy_level:en,notes:notes};
-    }
+            if(listId !== 'rules') {
+                const mapLink = document.createElement('a');
+                mapLink.className = 'map-link';
+                mapLink.target = '_blank';
+                mapLink.textContent = '📍';
+                actions.appendChild(mapLink);
+            }
 
-    fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({tab:tab,data:data,unit_pref:unitPref})})
-    .then(function(r){
-      if(r.ok){
-        showAST('hl','✅ Saved!','var(--teal)');
-        document.getElementById('ahl-notes').value='';
-        document.getElementById('ahl-type').value='';
-        updateHlFields();
-        if(typeof loadHlDots==='function')loadHlDots();
-        if(typeof loadTodayOverview==='function')loadTodayOverview();
-      } else showAST('hl','❌ Failed.','var(--red)');
-    }).catch(function(){showAST('hl','❌ Error.','var(--red)');});
-  }
-  else if(type==='fin'){var a=document.getElementById('afin-amt'),cat=document.getElementById('afin-cat');if(!a||!a.value){showAST('fin','Amount required.','var(--red)');return;}var desc=document.getElementById('afin-desc'),date=document.getElementById('afin-date');fetch('https://api.mie.today/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat?cat.value:'',description:desc?desc.value:'',date:date?date.value:nd})}).then(function(r){if(r.ok){showAST('fin','✅ Recorded!','var(--teal)');a.value='';if(desc)desc.value='';}else showAST('fin','❌ Failed.','var(--red)');}).catch(function(){showAST('fin','❌ Error.','var(--red)');});}
-}
+            const del = document.createElement('button');
+            del.className = 'btn-delete-card';
+            del.textContent = '✕';
+            del.onclick = () => { card.remove(); saveBoardToStorage(); };
+            actions.appendChild(del);
 
-// ── updateHlFields — type별 동적 필드 표시 + unit 초기값 세팅 ──
-function updateHlFields(){
-  var metric=document.getElementById('ahl-type').value;
-  var fields=['weight','bp','hr','glucose','spo2','temperature','cholesterol','steps','water','sleep','mood'];
-  fields.forEach(function(f){
-    var el=document.getElementById('ahl-f-'+f);
-    if(el) el.style.display=(f===metric)?'':'none';
-  });
-  // 전역 unitMetric 기준으로 초기값 세팅 (locked 아닐 때만)
-  var isUS=typeof unitMetric!=='undefined'&&!unitMetric;
-  var wu=document.getElementById('ahl-weight-unit');
-  if(wu&&!wu.dataset.locked) wu.textContent=isUS?'lb':'kg';
-  var gu=document.getElementById('ahl-glucose-unit');
-  if(gu&&!gu.dataset.locked) gu.textContent=isUS?'mg/dL':'mmol/L';
-  var tu=document.getElementById('ahl-temp-unit');
-  if(tu&&!tu.dataset.locked) tu.textContent=isUS?'°F':'°C';
-  var cu=document.getElementById('ahl-chol-unit');
-  if(cu&&!cu.dataset.locked) cu.textContent=isUS?'mg/dL':'mmol/L';
-  var wu2=document.getElementById('ahl-water-unit');
-  if(wu2&&!wu2.dataset.locked) wu2.textContent=isUS?'fl oz':'ml';
-}
+            row.appendChild(tIn);
+            row.appendChild(actions);
 
-// ── ahlToggleUnit — 개별 단위 버튼 탭으로 전환 + 값 자동 변환 ──
-var _ahlUnitPairs={
-  weight:['kg','lb'], glucose:['mmol/L','mg/dL'],
-  temperature:['°C','°F'], cholesterol:['mmol/L','mg/dL'], water:['ml','fl oz']
-};
-function ahlToggleUnit(metric){
-  var btnId='ahl-'+(metric==='temperature'?'temp':metric==='cholesterol'?'chol':metric)+'-unit';
-  var inpId='ahl-'+(metric==='temperature'?'temp':metric==='cholesterol'?'chol':metric);
-  var btn=document.getElementById(btnId);
-  var inp=document.getElementById(inpId);
-  if(!btn) return;
-  var pairs=_ahlUnitPairs[metric];
-  if(!pairs) return;
-  var cur=btn.textContent.trim();
-  var next=pairs[0]===cur?pairs[1]:pairs[0];
-  // 입력값 자동 변환
-  if(inp&&inp.value){
-    var v=parseFloat(inp.value);
-    if(!isNaN(v)){
-      var c;
-      if(metric==='weight')        c=cur==='kg'?+(v*2.20462).toFixed(1):+(v/2.20462).toFixed(1);
-      else if(metric==='glucose')  c=cur==='mmol/L'?+(v*18.0182).toFixed(0):+(v/18.0182).toFixed(1);
-      else if(metric==='temperature') c=cur==='°C'?+(v*9/5+32).toFixed(1):+((v-32)*5/9).toFixed(1);
-      else if(metric==='cholesterol') c=cur==='mmol/L'?+(v/0.0259).toFixed(0):+(v*0.0259).toFixed(2);
-      else if(metric==='water')    c=cur==='ml'?+(v/29.5735).toFixed(1):+(v*29.5735).toFixed(0);
-      if(c!==undefined) inp.value=c;
-    }
-  }
-  btn.textContent=next;
-  btn.dataset.locked='1'; // 전역 토글이 덮어쓰지 못하도록
-}
+            const nIn = document.createElement('input');
+            nIn.className = 'card-notes-input';
+            nIn.type = 'text';
+            nIn.value = cData.notes;
+            nIn.addEventListener('input', saveBoardToStorage);
 
-// ── Settings toggle ──
-function toggleSettings(){
-  var body=document.getElementById('settings-body');
-  var arrow=document.getElementById('settings-arrow');
-  if(body){body.classList.toggle('open');body.style.display=body.classList.contains('open')?'flex':'none';}
-  if(arrow)arrow.classList.toggle('open');
-}
-</script>
+            card.appendChild(row);
+            card.appendChild(nIn);
+
+            return card;
+        }
+
+        function updateCardState(card, parentList) {
+            if(!parentList) return;
+            const notesEl = card.querySelector('.card-notes-input');
+            const mapLinkEl = card.querySelector('.map-link');
+            const titleInput = card.querySelector('.card-title-input');
+            if(!titleInput) return;
+            
+            const titleText = titleInput.value.trim();
+            const currentHeaderTitle = parentList.querySelector('.list-header-input').value.trim();
+            const cleanHeader = currentHeaderTitle.replace(/[^\w\s가-힣]/g, '').trim(); 
+
+            if (notesEl && !notesEl.matches(':focus')) {
+                const listId = parentList.getAttribute('data-list-id');
+                if (listId === 'rules') {
+                    notesEl.value = 'Trip Parameter';
+                } else if (listId === 'done') {
+                    notesEl.value = '✨ Completed';
+                } else {
+                    notesEl.value = `Moved to ${cleanHeader}`;
+                }
+            }
+
+            if (mapLinkEl && titleText) {
+                const cleanQuery = encodeURIComponent(titleText.replace(/[^a-zA-Z0-9 ]/g, ""));
+                mapLinkEl.href = `https://www.google.com/maps/search/?api=1&query=${cleanQuery}`;
+            }
+        }
+
+        function makeCardDraggable(card) {
+            card.setAttribute('draggable', 'true');
+            card.addEventListener('dragstart', (e) => {
+                if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
+                e.stopPropagation();
+                card.classList.add('dragging');
+            });
+            card.addEventListener('dragend', (e) => {
+                e.stopPropagation();
+                card.classList.remove('dragging');
+                const finalParentList = card.closest('.list');
+                if (finalParentList) updateCardState(card, finalParentList);
+                saveBoardToStorage();
+            });
+
+            const parentList = card.closest('.list');
+            if (parentList) updateCardState(card, parentList);
+        }
+
+        function makeColumnMovable(list) {
+            if(list.getAttribute('data-list-id') === 'rules' || list.getAttribute('data-list-id') === 'backlog') return;
+            list.setAttribute('draggable', 'true');
+
+            list.addEventListener('dragstart', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.closest('.card')) { e.preventDefault(); return; }
+                draggedColumn = list;
+                list.classList.add('list-dragging');
+            });
+
+            list.addEventListener('dragend', () => {
+                list.classList.remove('list-dragging');
+                draggedColumn = null;
+                saveBoardToStorage();
+            });
+
+            list.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!draggedColumn || draggedColumn === list) return;
+                
+                const grid = document.getElementById('boardGrid');
+                const children = Array.from(grid.children);
+                const draggedIndex = children.indexOf(draggedColumn);
+                const targetIndex = children.indexOf(list);
+
+                if (draggedIndex > -1 && targetIndex > -1 && targetIndex !== 0) { 
+                    if (draggedIndex < targetIndex) {
+                        grid.insertBefore(draggedColumn, list.nextSibling);
+                    } else {
+                        grid.insertBefore(draggedColumn, list);
+                    }
+                }
+            });
+        }
+
+        function setupContainerDropZones(container) {
+            container.addEventListener('dragover', (e) => {
+                if (draggedColumn) return; 
+                e.preventDefault();
+                const draggingCard = document.querySelector('.dragging');
+                if (!draggingCard) return;
+                
+                const afterElement = getDragAfterElement(container, e.clientY);
+                if (afterElement == null) {
+                    container.appendChild(draggingCard);
+                } else {
+                    container.insertBefore(draggingCard, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function resetBoard() {
+            if(confirm("Are you sure you want to completely clear and reset the workspace?")) {
+                localStorage.removeItem('sf_travel_board_state');
+                window.location.hash = '';
+                loadBoard();
+            }
+        }
+
+        window.onload = loadBoard;
+
+        function getBoardData() {
+            const data = [];
+            document.querySelectorAll('.list').forEach(list => {
+                const currentHeaderTitle = list.querySelector('.list-header-input').value;
+                const customSubtitle = list.querySelector('.list-subtitle-input').value;
+                list.querySelectorAll('.card').forEach(card => {
+                    data.push({
+                        ColumnTitle: currentHeaderTitle,
+                        ColumnSubtitle: customSubtitle,
+                        Activity: card.querySelector('.card-title-input').value,
+                        StatusText: card.querySelector('.card-notes-input').value
+                    });
+                });
+            });
+            return data;
+        }
+
+        function exportToExcel() {
+            const worksheet = XLSX.utils.json_to_sheet(getBoardData());
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Workspace");
+            XLSX.writeFile(workbook, "Travel_Workspace.xlsx");
+        }
+        function exportToPDF() { window.print(); }
+        function exportToDOCX() {
+            const data = getBoardData();
+            let docContent = "TRAVEL WORKSPACE SUMMARY\r\n=============================\r\n";
+            let currentColumn = "";
+            data.forEach(item => {
+                if(item.ColumnTitle !== currentColumn) {
+                    currentColumn = item.ColumnTitle;
+                    docContent += `\r\n[${currentColumn.toUpperCase()} - ${item.ColumnSubtitle}]\r\n`;
+                }
+                docContent += `• ${item.Activity} (${item.StatusText})\r\n`;
+            });
+            const blob = new Blob([docContent], { type: "application/msword" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Travel_Workspace_Summary.doc";
+            link.click();
+        }
+    </script>
 </body>
 </html>
