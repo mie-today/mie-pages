@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SF & LA Travel Plan Board</title>
-    <!-- Include SheetJS library for Spreadsheet export -->
+    <title>Dynamic SF & LA Travel Plan Board</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -27,6 +26,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            width: 100%;
         }
 
         header {
@@ -35,6 +35,7 @@
             align-items: center;
             margin-bottom: 15px;
             flex-shrink: 0;
+            width: 100%;
         }
 
         h1 {
@@ -66,14 +67,14 @@
         .btn-excel { background-color: #217346; }
         .btn-excel:hover { background-color: #164f30; }
 
-        /* 2x6 Grid Layout for Single-Screen view */
         .board-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(2, 1fr);
             gap: 12px;
             flex-grow: 1;
-            min-height: 0; /* Allows boxes to scroll internally rather than breaking screen height */
+            min-height: 0;
+            width: 100%;
         }
 
         .list {
@@ -85,7 +86,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         }
 
-        /* Rules & Notes and Backlog stacked together in Column 1 */
         .stacked-column {
             grid-row: span 2;
             display: flex;
@@ -100,13 +100,21 @@
         }
 
         .list-header {
-            padding: 10px 12px;
+            padding: 8px 12px 4px 12px;
             font-weight: 600;
             font-size: 14px;
-            border-bottom: 1px solid #ddd;
             background-color: #e2e4e6;
             border-top-left-radius: 6px;
             border-top-right-radius: 6px;
+        }
+
+        .list-subtitle {
+            padding: 0 12px 8px 12px;
+            font-size: 11px;
+            color: #5e6c84;
+            border-bottom: 1px solid #ddd;
+            background-color: #e2e4e6;
+            font-weight: normal;
         }
 
         .card-container {
@@ -129,15 +137,30 @@
         .card:active { cursor: grabbing; }
         .card.dragging { opacity: 0.4; }
 
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 5px;
+            margin-bottom: 3px;
+        }
+
         .card-title {
             font-weight: 600;
             font-size: 13px;
-            margin-bottom: 3px;
+        }
+
+        .map-link {
+            text-decoration: none;
+            font-size: 13px;
+            cursor: pointer;
+            flex-shrink: 0;
         }
 
         .card-notes {
             font-size: 11px;
             color: #5e6c84;
+            font-style: italic;
         }
 
         .card.allergy {
@@ -182,7 +205,7 @@
 <body>
 
     <header>
-        <h1>🗺️ "정보회_Travel_Plan_to_SF_California" Board</h1>
+        <h1>🗺️ "정보회_Travel_Plan" Dynamic Dashboard</h1>
         <div class="export-controls">
             <button class="btn btn-pdf" onclick="exportToPDF()">PDF</button>
             <button class="btn btn-docx" onclick="exportToDOCX()">DOCX</button>
@@ -192,134 +215,84 @@
 
     <div class="board-grid">
         
-        <!-- Column 1: Stacked Rules & Backlog -->
         <div class="stacked-column">
-            <!-- Rules & Notes -->
             <div class="list" data-list-name="Rules & Notes">
                 <div class="list-header">📌 Rules & Notes</div>
+                <div class="list-subtitle">Core Trip parameters</div>
                 <div class="card-container">
                     <div class="card allergy">
-                        <div class="card-title">⚠️ Dietary Safety</div>
-                        <div class="card-notes">생새우 알러지 (Raw Shrimp Allergy)</div>
+                        <div class="card-header-row">
+                            <div class="card-title">⚠️ Dietary Safety</div>
+                        </div>
+                        <div class="card-notes">Safety Rule</div>
                     </div>
                     <div class="card preference">
-                        <div class="card-title">🎯 Local Vibe Focus</div>
-                        <div class="card-notes">로컬 체험, 마트, 공원, 카페 중심</div>
+                        <div class="card-header-row">
+                            <div class="card-title">🎯 Local Vibe Focus</div>
+                        </div>
+                        <div class="card-notes">Trip Preference</div>
                     </div>
                 </div>
-                <div class="add-card-form">
-                    <input type="text" class="add-card-input" placeholder="Add rule...">
-                    <button class="add-card-btn">Add</button>
-                </div>
+                <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add rule..."><button class="add-card-btn">Add</button></div>
             </div>
 
-            <!-- Backlog Below Rules -->
             <div class="list" data-list-name="Backlog">
                 <div class="list-header">🗂️ Backlog</div>
+                <div class="list-subtitle">Unassigned pool</div>
                 <div class="card-container">
-                    <div class="card"><div class="card-title">Museum of African Diaspora</div><div class="card-notes">SF Art Museum</div></div>
-                    <div class="card"><div class="card-title">The Walt Disney Family Museum</div><div class="card-notes">Presidio Science</div></div>
-                    <div class="card"><div class="card-title">Contemporary Jewish Museum</div><div class="card-notes">SF Art Culture</div></div>
+                    <div class="card">
+                        <div class="card-header-row">
+                            <div class="card-title">Museum of African Diaspora</div>
+                            <a href="#" target="_blank" class="map-link" title="View on Map">📍</a>
+                        </div>
+                        <div class="card-notes">In Backlog</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header-row">
+                            <div class="card-title">The Walt Disney Family Museum</div>
+                            <a href="#" target="_blank" class="map-link" title="View on Map">📍</a>
+                        </div>
+                        <div class="card-notes">In Backlog</div>
+                    </div>
                 </div>
-                <div class="add-card-form">
-                    <input type="text" class="add-card-input" placeholder="Add place...">
-                    <button class="add-card-btn">Add</button>
-                </div>
+                <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add place..."><button class="add-card-btn">Add</button></div>
             </div>
         </div>
 
-        <!-- Row 1 / Columns 2-6: Days 1 to 5 -->
         <div class="list" data-list-name="Day 1">
-            <div class="list-header">📅 Day 1</div>
+            <div class="list-header">📅 Day 1</div><div class="list-subtitle">Arrival & SF Art</div>
             <div class="card-container">
-                <div class="card"><div class="card-title">SF MOMA</div><div class="card-notes">Modern Art Exploration</div></div>
-                <div class="card"><div class="card-title">San Francisco Cable Car Museum</div><div class="card-notes">Historic Transit</div></div>
+                <div class="card">
+                    <div class="card-header-row"><div class="card-title">SF MOMA</div><a href="#" target="_blank" class="map-link">📍</a></div>
+                    <div class="card-notes">Scheduled for Day 1</div>
+                </div>
             </div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
         </div>
 
         <div class="list" data-list-name="Day 2">
-            <div class="list-header">📅 Day 2</div>
+            <div class="list-header">📅 Day 2</div><div class="list-subtitle">Parks & Science</div>
             <div class="card-container">
-                <div class="card"><div class="card-title">de Young Museum</div><div class="card-notes">Fine Arts Park</div></div>
-                <div class="card"><div class="card-title">California Academy of Sciences</div><div class="card-notes">목요일 밤 성인용 관람</div></div>
+                <div class="card">
+                    <div class="card-header-row"><div class="card-title">de Young Museum</div><a href="#" target="_blank" class="map-link">📍</a></div>
+                    <div class="card-notes">Scheduled for Day 2</div>
+                </div>
             </div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
         </div>
 
-        <div class="list" data-list-name="Day 3">
-            <div class="list-header">📅 Day 3</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Legion of Honor</div><div class="card-notes">French Art & Views</div></div>
-                <div class="card"><div class="card-title">Pier 39 & Aquarium</div><div class="card-notes">Waterfront Walk</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
+        <div class="list" data-list-name="Day 3"><div class="list-header">📅 Day 3</div><div class="list-subtitle">Coastal SF Route</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 4"><div class="list-header">📅 Day 4</div><div class="list-subtitle">Culture & Distillery</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 5"><div class="list-header">📅 Day 5</div><div class="list-subtitle">Napa Valley</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
 
-        <div class="list" data-list-name="Day 4">
-            <div class="list-header">📅 Day 4</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Asian Art Museum</div><div class="card-notes">Civic Center Culture</div></div>
-                <div class="card"><div class="card-title">Exploratorium</div><div class="card-notes">Interactive Science</div></div>
-                <div class="card"><div class="card-title">Gold Bar Distillery</div><div class="card-notes">위스키 버번 제조사</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-name="Day 5">
-            <div class="list-header">📅 Day 5</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Domaine Carneros</div><div class="card-notes">샴페인이 맛있음</div></div>
-                <div class="card"><div class="card-title">Hess & The Donum Estate</div><div class="card-notes">아트갤러리 & 조각품</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <!-- Row 2 / Columns 2-6: Days 6 to 10 + Done -->
-        <div class="list" data-list-name="Day 6">
-            <div class="list-header">📅 Day 6</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Ferry Building Farmer's Market</div><div class="card-notes">토요일 주말 마켓</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-name="Day 7">
-            <div class="list-header">📅 Day 7</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Griffith Observatory</div><div class="card-notes">LA Night Views</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-name="Day 8">
-            <div class="list-header">📅 Day 8</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Universal Studios Hollywood</div><div class="card-notes">Full-day sightseeing</div></div>
-                <div class="card"><div class="card-title">Board & Brew</div><div class="card-notes">Casual dining</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-name="Day 9">
-            <div class="list-header">📅 Day 9</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Getty Museum & LACMA</div><div class="card-notes">LA Art Spots</div></div>
-                <div class="card"><div class="card-title">Santa Monica Pier</div><div class="card-notes">Coastal Walk</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
-
-        <div class="list" data-list-name="Day 10">
-            <div class="list-header">📅 Day 10</div>
-            <div class="card-container">
-                <div class="card"><div class="card-title">Huntington Beach</div><div class="card-notes">La La Land scenery</div></div>
-            </div>
-            <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div>
-        </div>
+        <div class="list" data-list-name="Day 6"><div class="list-header">📅 Day 6</div><div class="list-subtitle">Markets & Transit</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 7"><div class="list-header">📅 Day 7</div><div class="list-subtitle">Arrival in LA</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 8"><div class="list-header">📅 Day 8</div><div class="list-subtitle">Entertainment Day</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 9"><div class="list-header">📅 Day 9</div><div class="list-subtitle">LA Arts & Beach</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
+        <div class="list" data-list-name="Day 10"><div class="list-header">📅 Day 10</div><div class="list-subtitle">Final Coastal Drive</div><div class="card-container"></div><div class="add-card-form"><input type="text" class="add-card-input" placeholder="Add..."><button class="add-card-btn">Add</button></div></div>
 
         <div class="list" data-list-name="Done">
-            <div class="list-header">✅ Done</div>
+            <div class="list-header">✅ Done</div><div class="list-subtitle">Completed Targets</div>
             <div class="card-container"></div>
             <div class="add-card-form"><input type="text" class="add-card-input" placeholder="Archive..."><button class="add-card-btn">Add</button></div>
         </div>
@@ -327,13 +300,49 @@
     </div>
 
     <script>
-        // Drag and Drop implementation
+        // Update both the text label and map address based on its card state
+        function updateCardState(card, targetListName) {
+            const notesEl = card.querySelector('.card-notes');
+            const mapLinkEl = card.querySelector('.map-link');
+            const titleText = card.querySelector('.card-title').textContent;
+
+            // 1. Update text note based on position
+            if (notesEl) {
+                if (targetListName === 'Rules & Notes') {
+                    notesEl.textContent = 'Trip Parameter';
+                } else if (targetListName === 'Backlog') {
+                    notesEl.textContent = 'In Backlog';
+                } else if (targetListName === 'Done') {
+                    notesEl.textContent = '✨ Completed';
+                } else {
+                    notesEl.textContent = `Scheduled for ${targetListName}`;
+                }
+            }
+
+            // 2. Generate custom Google Maps lookup URL dynamically
+            if (mapLinkEl && titleText) {
+                const cleanQuery = encodeURIComponent(titleText.replace(/[^a-zA-Z0-9 ]/g, ""));
+                mapLinkEl.href = `https://www.google.com/maps/search/?api=1&query=${cleanQuery}`;
+            }
+        }
+
         function makeCardDraggable(card) {
             card.setAttribute('draggable', 'true');
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
-            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                const finalParentList = card.closest('.list');
+                if (finalParentList) {
+                    const listName = finalParentList.getAttribute('data-list-name');
+                    updateCardState(card, listName);
+                }
+            });
+            // Initial map address link assignment
+            const parentList = card.closest('.list');
+            if (parentList) updateCardState(card, parentList.getAttribute('data-list-name'));
         }
 
+        // Initialize cards
         document.querySelectorAll('.card').forEach(makeCardDraggable);
 
         document.querySelectorAll('.card-container').forEach(container => {
@@ -362,11 +371,12 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
-        // Card Creation Handler
+        // Card Creation
         document.querySelectorAll('.add-card-form').forEach(form => {
             const input = form.querySelector('.add-card-input');
             const button = form.querySelector('.add-card-btn');
             const container = form.parentElement.querySelector('.card-container');
+            const listName = form.parentElement.getAttribute('data-list-name');
 
             function createCard() {
                 const text = input.value.trim();
@@ -374,24 +384,42 @@
 
                 const newCard = document.createElement('div');
                 newCard.className = 'card';
+                
+                const headerRow = document.createElement('div');
+                headerRow.className = 'card-header-row';
+
                 const title = document.createElement('div');
                 title.className = 'card-title';
                 title.textContent = text;
+                headerRow.appendChild(title);
+
+                if (listName !== 'Rules & Notes') {
+                    const mapLink = document.createElement('a');
+                    mapLink.href = "#";
+                    mapLink.target = "_blank";
+                    mapLink.className = "map-link";
+                    mapLink.title = "View on Map";
+                    mapLink.textContent = "📍";
+                    headerRow.appendChild(mapLink);
+                }
+
                 const notes = document.createElement('div');
                 notes.className = 'card-notes';
-                notes.textContent = 'Custom target';
 
-                newCard.appendChild(title);
+                newCard.appendChild(headerRow);
                 newCard.appendChild(notes);
-                makeCardDraggable(newCard);
                 container.appendChild(newCard);
+                
+                makeCardDraggable(newCard);
+                updateCardState(newCard, listName);
+                
                 input.value = '';
             }
             button.addEventListener('click', createCard);
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') createCard(); });
         });
 
-        // Parse structure for data exports
+        // Data Parsers for Exports
         function getBoardData() {
             const data = [];
             document.querySelectorAll('.list').forEach(list => {
@@ -400,14 +428,13 @@
                     data.push({
                         Column: listName,
                         Activity: card.querySelector('.card-title').textContent,
-                        Notes: card.querySelector('.card-notes').textContent
+                        StatusText: card.querySelector('.card-notes').textContent
                     });
                 });
             });
             return data;
         }
 
-        // Export Functionality
         function exportToExcel() {
             const data = getBoardData();
             const worksheet = XLSX.utils.json_to_sheet(data);
@@ -416,21 +443,19 @@
             XLSX.writeFile(workbook, "Travel_Plan_Export.xlsx");
         }
 
-        function exportToPDF() {
-            window.print(); // Simple, high-quality layout printing natively handled by modern web browsers
-        }
+        function exportToPDF() { window.print(); }
 
         function exportToDOCX() {
             const data = getBoardData();
-            let docContent = "TRAVEL PLAN ITINERARY SUMMARY\r\n=============================\r\n\r\n";
+            let docContent = "DYNAMIC TRAVEL PLAN ITINERARY\r\n=============================\r\n";
             let currentColumn = "";
             
             data.forEach(item => {
                 if(item.Column !== currentColumn) {
                     currentColumn = item.Column;
-                    docContent += `\r\n[${currentColumn.toUpperCase()}]\r\n-----------------------------\r\n`;
+                    docContent += `\r\n[${currentColumn.toUpperCase()}]\r\n`;
                 }
-                docContent += `• ${item.Activity} (${item.Notes})\r\n`;
+                docContent += `• ${item.Activity} — (${item.StatusText})\r\n`;
             });
 
             const blob = new Blob([docContent], { type: "application/msword" });
