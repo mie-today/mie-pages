@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sharable Travel Workspace (Data Hub)</title>
+    <title>Multi-Row Travel Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -21,26 +21,22 @@
             margin: 0;
             padding: 20px;
             color: var(--text-color);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            overflow-y: auto; /* Allows workspace to scale down naturally on rows 3 & 4 */
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             flex-shrink: 0;
         }
 
-        .title-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        .title-area { display: flex; align-items: center; gap: 15px; }
         h1 { color: white; margin: 0; font-size: 22px; }
 
         .btn-map-master {
@@ -71,12 +67,11 @@
         .btn-pdf { background-color: #e04444; }
         .btn-excel { background-color: #217346; }
 
-        /* Sync Hub panel layout styling */
         .sync-hub {
             background: rgba(255, 255, 255, 0.95);
             padding: 15px;
             border-radius: 6px;
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             display: none;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
@@ -84,13 +79,23 @@
         .sync-hub textarea { width: 100%; height: 60px; box-sizing: border-box; font-family: monospace; font-size: 11px; margin-bottom: 10px; padding: 5px; }
         .sync-hub-buttons { display: flex; gap: 10px; }
 
-        .board-grid {
+        /* --- New Grid Framework --- */
+        
+        /* Row 1: Fits exactly 4 structural elements side-by-side */
+        .top-row-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 12px;
-            flex-grow: 1;
-            min-height: 0;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-shrink: 0;
+        }
+
+        /* Rows 2, 3, 4+: Fits exactly 5 Days per horizontal track */
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            align-content: start;
         }
 
         .list {
@@ -98,35 +103,50 @@
             border-radius: 6px;
             display: flex;
             flex-direction: column;
-            min-height: 0;
+            max-height: 450px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: transform 0.1s ease;
         }
 
-        .stacked-column {
-            grid-row: span 2;
+        /* Interactive Dynamic Day Slot styled to fit layout seamlessly */
+        .add-day-placeholder {
+            border: 3px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            min-height: 0;
+            justify-content: center;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            min-height: 120px;
+            transition: all 0.2s ease;
         }
-
-        .stacked-column .list { flex: 1; min-height: 0; }
+        .add-day-placeholder:hover {
+            border-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        .add-day-placeholder span { font-size: 28px; margin-bottom: 5px; }
 
         .list-header-input {
             border: none;
             background: #e2e4e6;
-            padding: 8px 12px 2px 12px;
+            padding: 10px 12px 2px 12px;
             font-weight: 600;
             font-size: 14px;
             width: 100%;
             box-sizing: border-box;
             outline: none;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
         }
 
         .list-subtitle-input {
             border: none;
             background: #e2e4e6;
-            padding: 0 12px 6px 12px;
+            padding: 0 12px 8px 12px;
             font-size: 11px;
             color: #5e6c84;
             border-bottom: 1px solid #ddd;
@@ -135,7 +155,7 @@
             outline: none;
         }
 
-        .card-container { padding: 6px; overflow-y: auto; flex-grow: 1; min-height: 30px; }
+        .card-container { padding: 6px; overflow-y: auto; flex-grow: 1; min-height: 40px; }
 
         .card {
             background-color: var(--card-bg);
@@ -150,13 +170,14 @@
         
         .card-actions { display: flex; gap: 5px; }
         .map-link { text-decoration: none; font-size: 13px; }
-        .btn-delete-card { border: none; background: transparent; color: #a0a0a0; cursor: pointer; }
+        .btn-delete-card { border: none; background: transparent; color: #a0a0a0; cursor: pointer; font-weight: bold;}
+        .btn-delete-card:hover { color: var(--danger-color); }
 
-        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; }
+        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; }
         .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
 
         .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
-        .add-card-input { flex-grow: 1; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+        .add-card-input { flex-grow: 1; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; }
         .add-card-btn { background-color: #5aac44; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
@@ -164,7 +185,7 @@
 
     <header>
         <div class="title-area">
-            <h1>🗺️ Travel Data Workspace</h1>
+            <h1>🗺️ Multi-Row Travel Workspace</h1>
             <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master">📍 Open Connected Map</a>
         </div>
         <div class="export-controls">
@@ -185,15 +206,18 @@
         </div>
     </div>
 
-    <div class="board-grid" id="boardGrid"></div>
+    <div class="top-row-grid" id="topGrid"></div>
+
+    <div class="days-grid" id="daysGrid"></div>
 
     <script>
         let currentMode = '';
+        
+        // Comprehensive baseline setup structured around your exact configuration
         const defaultLayout = [
-            { id: "stacked-track", isContainer: true, lists: [
-                { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
-                { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "SF MOMA", notes: "", type: "" }] }
-            ]},
+            { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
+            { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
+            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] },
             { id: "day1", title: "📅 Day 1", subtitle: "Arrival & SF Art", cards: [] },
             { id: "day2", title: "📅 Day 2", subtitle: "Parks & Science", cards: [] },
             { id: "day3", title: "📅 Day 3", subtitle: "Edit focus...", cards: [] },
@@ -203,21 +227,18 @@
             { id: "day7", title: "📅 Day 7", subtitle: "Edit focus...", cards: [] },
             { id: "day8", title: "📅 Day 8", subtitle: "Edit focus...", cards: [] },
             { id: "day9", title: "📅 Day 9", subtitle: "Edit focus...", cards: [] },
-            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] },
-            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] }
+            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] }
         ];
 
         function serializeBoard() {
             const layoutStructure = [];
-            const grid = document.getElementById('boardGrid');
-            Array.from(grid.children).forEach(element => {
-                if(element.classList.contains('stacked-column')) {
-                    const stackedData = { id: "stacked-track", isContainer: true, lists: [] };
-                    element.querySelectorAll('.list').forEach(list => stackedData.lists.push(serializeListElement(list)));
-                    layoutStructure.push(stackedData);
-                } else {
-                    layoutStructure.push(serializeListElement(element));
-                }
+            // Parse top row tracks
+            document.getElementById('topGrid').querySelectorAll('.list').forEach(list => {
+                layoutStructure.push(serializeListElement(list));
+            });
+            // Parse day rows tracks
+            document.getElementById('daysGrid').querySelectorAll('.list').forEach(list => {
+                layoutStructure.push(serializeListElement(list));
             });
             return layoutStructure;
         }
@@ -243,72 +264,56 @@
             localStorage.setItem('sf_travel_board_state', JSON.stringify(serializeBoard()));
         }
 
-        // Toggle visibility of the Data Hub Panel
-        function toggleSyncHub(mode) {
-            const hub = document.getElementById('syncHub');
-            const area = document.getElementById('syncDataArea');
-            const title = document.getElementById('syncHubTitle');
-            const btn = document.getElementById('syncActionBtn');
+        // Calculates parameters and appends next logical sequence day item safely
+        function addNewDayColumn() {
+            const currentData = serializeBoard();
+            const onlyDays = currentData.filter(item => item.id.startsWith('day'));
             
-            if(!mode) { hub.style.display = 'none'; return; }
+            let maxDayNum = 0;
+            onlyDays.forEach(day => {
+                const num = parseInt(day.id.replace('day', ''));
+                if(!isNaN(num) && num > maxDayNum) maxDayNum = num;
+            });
             
-            hub.style.display = 'block';
-            currentMode = mode;
+            const targetNextDay = maxDayNum + 1;
+            const newDayObj = {
+                id: `day${targetNextDay}`,
+                title: `📅 Day ${targetNextDay}`,
+                subtitle: "Edit focus...",
+                cards: []
+            };
 
-            if(mode === 'export') {
-                title.textContent = "📤 Send this sync code block to your friends:";
-                const compressed = btoa(encodeURIComponent(JSON.stringify(serializeBoard())));
-                area.value = compressed;
-                area.select();
-                btn.textContent = "Copy to Clipboard";
-                btn.style.backgroundColor = "#5aac44";
-            } else {
-                title.textContent = "📥 Paste your friend's data block code below:";
-                area.value = "";
-                area.placeholder = "Paste the long text string here...";
-                btn.textContent = "Load & Overwrite Board";
-                btn.style.backgroundColor = "#026aa7";
-            }
-        }
-
-        function executeSyncAction() {
-            const area = document.getElementById('syncDataArea');
-            if(currentMode === 'export') {
-                navigator.clipboard.writeText(area.value);
-                alert("📋 Code block successfully copied! Text it directly to your group.");
-                toggleSyncHub(false);
-            } else {
-                try {
-                    const cleanInput = area.value.trim();
-                    const parsedLayout = JSON.parse(decodeURIComponent(atob(cleanInput)));
-                    if(Array.isArray(parsedLayout)) {
-                        localStorage.setItem('sf_travel_board_state', JSON.stringify(parsedLayout));
-                        loadBoardFromStorage();
-                        alert("✨ Success! Your board has been updated with your friend's data.");
-                        toggleSyncHub(false);
-                    }
-                } catch(e) {
-                    alert("❌ Invalid data block. Make sure you copied the complete text bundle from your friend!");
-                }
-            }
+            currentData.push(newDayObj);
+            localStorage.setItem('sf_travel_board_state', JSON.stringify(currentData));
+            loadBoardFromStorage();
         }
 
         function loadBoardFromStorage() {
             const rawData = localStorage.getItem('sf_travel_board_state');
             const dataStructure = rawData ? JSON.parse(rawData) : defaultLayout;
-            const grid = document.getElementById('boardGrid');
-            grid.innerHTML = '';
+            
+            const topGrid = document.getElementById('topGrid');
+            const daysGrid = document.getElementById('daysGrid');
+            
+            topGrid.innerHTML = '';
+            daysGrid.innerHTML = '';
 
             dataStructure.forEach(item => {
-                if(item.isContainer) {
-                    const stackedCol = document.createElement('div');
-                    stackedCol.className = 'stacked-column';
-                    item.lists.forEach(listData => stackedCol.appendChild(buildListNode(listData)));
-                    grid.appendChild(stackedCol);
+                const node = buildListNode(item);
+                // Dynamically route tracking cards to specific geometric tiers
+                if(['rules', 'backlog', 'done'].includes(item.id)) {
+                    topGrid.appendChild(node);
                 } else {
-                    grid.appendChild(buildListNode(item));
+                    daysGrid.appendChild(node);
                 }
             });
+
+            // Insert interactive dynamic builder slot inside row 1 space 4 position
+            const plusSlot = document.createElement('div');
+            plusSlot.className = 'add-day-placeholder';
+            plusSlot.innerHTML = `<span>+</span>Add New Day Column`;
+            plusSlot.onclick = addNewDayColumn;
+            topGrid.appendChild(plusSlot);
         }
 
         function buildListNode(data) {
@@ -346,6 +351,13 @@
                 formInput.value = '';
                 saveBoardToStorage();
             };
+            formInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter' && formInput.value.trim()) {
+                    container.appendChild(buildCardNode({ title: formInput.value.trim(), notes: '', type: '' }, data.id));
+                    formInput.value = '';
+                    saveBoardToStorage();
+                }
+            });
 
             form.appendChild(formInput);
             form.appendChild(formBtn);
@@ -377,7 +389,7 @@
                 mapLink.className = 'map-link';
                 mapLink.target = '_blank';
                 mapLink.textContent = '📍';
-                mapLink.href = `https://www.google.com/maps/search/?api=1&query=$?q=${encodeURIComponent(cData.title)}`;
+                mapLink.href = `https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing?q=${encodeURIComponent(cData.title)}`;
                 actions.appendChild(mapLink);
             }
 
@@ -400,8 +412,55 @@
             return card;
         }
 
+        function toggleSyncHub(mode) {
+            const hub = document.getElementById('syncHub');
+            const area = document.getElementById('syncDataArea');
+            const title = document.getElementById('syncHubTitle');
+            const btn = document.getElementById('syncActionBtn');
+            
+            if(!mode) { hub.style.display = 'none'; return; }
+            hub.style.display = 'block';
+            currentMode = mode;
+
+            if(mode === 'export') {
+                title.textContent = "📤 Send this sync code block package directly to your travel buddies:";
+                area.value = btoa(encodeURIComponent(JSON.stringify(serializeBoard())));
+                area.select();
+                btn.textContent = "Copy to Clipboard";
+                btn.style.backgroundColor = "#5aac44";
+            } else {
+                title.textContent = "📥 Paste the sync data block received from your buddy below:";
+                area.value = "";
+                area.placeholder = "Paste long code data sequence track string bundle here...";
+                btn.textContent = "Load & Overwrite Workspace";
+                btn.style.backgroundColor = "#026aa7";
+            }
+        }
+
+        function executeSyncAction() {
+            const area = document.getElementById('syncDataArea');
+            if(currentMode === 'export') {
+                navigator.clipboard.writeText(area.value);
+                alert("📋 Sync code string copied safely! Send it via message app.");
+                toggleSyncHub(false);
+            } else {
+                try {
+                    const cleanInput = area.value.trim();
+                    const parsedLayout = JSON.parse(decodeURIComponent(atob(cleanInput)));
+                    if(Array.isArray(parsedLayout)) {
+                        localStorage.setItem('sf_travel_board_state', JSON.stringify(parsedLayout));
+                        loadBoardFromStorage();
+                        alert("✨ Layout imported completely! Data synced.");
+                        toggleSyncHub(false);
+                    }
+                } catch(e) {
+                    alert("❌ Invalid text bundle block code. Make sure to copy the complete string group.");
+                }
+            }
+        }
+
         function resetBoard() {
-            if(confirm("Reset back to default workspace template?")) {
+            if(confirm("Are you sure you want to completely restore the baseline day setup template?")) {
                 localStorage.removeItem('sf_travel_board_state');
                 loadBoardFromStorage();
             }
@@ -415,16 +474,16 @@
                 const title = list.querySelector('.list-header-input').value;
                 list.querySelectorAll('.card').forEach(card => {
                     data.push({
-                        Column: title,
-                        Activity: card.querySelector('.card-title-input').value,
-                        Notes: card.querySelector('.card-notes-input').value
+                        TimelineTier: title,
+                        TargetActivity: card.querySelector('.card-title-input').value,
+                        InternalNotes: card.querySelector('.card-notes-input').value
                     });
                 });
             });
             const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Workspace");
-            XLSX.writeFile(workbook, "Travel_Workspace.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Itinerary");
+            XLSX.writeFile(workbook, "Dynamic_Travel_Grid.xlsx");
         }
     </script>
 </body>
