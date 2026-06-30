@@ -110,7 +110,6 @@
             transition: opacity 0.15s ease;
         }
 
-        /* Top Row Scroll Constraints */
         [data-list-id="rules"] .card-container,
         [data-list-id="backlog"] .card-container,
         [data-list-id="done"] .card-container {
@@ -155,7 +154,7 @@
             cursor: grab;
             font-size: 15px;
             font-weight: bold;
-            padding-left: 10px;
+            padding: 10px 4px 0px 10px;
             user-select: none;
             flex-shrink: 0;
         }
@@ -410,6 +409,42 @@
             }
         }
 
+        // Setup the workspace grid row drops safely
+        function setupGridTrackDragging(grid) {
+            grid.addEventListener('dragover', (e) => {
+                if (!draggedList) return;
+                e.preventDefault();
+                
+                const draggableElements = [...grid.querySelectorAll('.list')].filter(el => el !== draggedList);
+                let closestElement = null;
+                let shortestDistance = Infinity;
+                
+                draggableElements.forEach(child => {
+                    const box = child.getBoundingClientRect();
+                    const centerX = box.left + box.width / 2;
+                    const centerY = box.top + box.height / 2;
+                    const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+                    
+                    if (distance < shortestDistance) {
+                        shortestDistance = distance;
+                        const isBefore = (e.clientY < centerY) || (Math.abs(e.clientY - centerY) < box.height/2 && e.clientX < centerX);
+                        closestElement = isBefore ? child : child.nextSibling;
+                    }
+                });
+                
+                if (closestElement) {
+                    grid.insertBefore(draggedList, closestElement);
+                } else {
+                    const placeholder = grid.querySelector('.add-day-placeholder');
+                    if (placeholder) {
+                        grid.insertBefore(draggedList, placeholder);
+                    } else {
+                        grid.appendChild(draggedList);
+                    }
+                }
+            });
+        }
+
         function loadBoardFromStorage() {
             let boardState = null;
 
@@ -423,7 +458,7 @@
                         window.location.hash = ''; 
                     }
                 } catch(e) {
-                    console.error("URL package error", e);
+                    console.error("URL package loading error", e);
                 }
             }
 
@@ -437,7 +472,7 @@
                         }
                     }
                 } catch(e) {
-                    console.error("Local storage load crash protected", e);
+                    console.error("Local storage restoration normalization handled", e);
                 }
             }
 
@@ -467,51 +502,52 @@
             plusSlot.innerHTML = `<span>+</span>Add New Day Column`;
             plusSlot.onclick = addNewDayColumn;
             topGrid.appendChild(plusSlot);
+
+            // Bind grid listeners
+            setupGridTrackDragging(topGrid);
+            setupGridTrackDragging(daysGrid);
         }
 
         function buildListNode(data) {
             const list = document.createElement('div');
             list.className = 'list';
             list.setAttribute('data-list-id', data.id);
-            list.setAttribute('draggable', 'true');
             
-            // Exterior Column Box Drag & Drop Listeners
+            // Dynamic Handle Grab Execution
             list.addEventListener('dragstart', (e) => {
-                if (draggedCard) return; // Prevent card drag from bubbling into column drag
-                if (!e.target.closest('.list-grip')) {
-                    e.preventDefault();
-                    return;
-                }
+                if (draggedCard) return; 
                 draggedList = list;
                 list.style.opacity = '0.5';
                 e.dataTransfer.effectAllowed = 'move';
             });
 
             list.addEventListener('dragend', () => {
+                list.removeAttribute('draggable');
                 draggedList = null;
                 list.style.opacity = '1';
                 saveBoardToStorage();
             });
 
+            // Prevent card layers from blocking parent box dragging validation
             list.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                if (draggedList && draggedList !== list) {
-                    // Restrict reordering to columns within the same structural grid track
-                    if (draggedList.parentNode === list.parentNode) {
-                        const rect = list.getBoundingClientRect();
-                        const next = (e.clientX - rect.left) / (rect.right - rect.left) > 0.5;
-                        list.parentNode.insertBefore(draggedList, next ? list.nextSibling : list);
-                    }
-                }
+                if (draggedList) e.preventDefault();
             });
 
             const headerContainer = document.createElement('div');
             headerContainer.className = 'list-header-container';
 
-            // Column Box Grip Handle
             const listGrip = document.createElement('div');
             listGrip.className = 'list-grip';
             listGrip.innerHTML = '⋮⋮';
+            
+            // Activate dragging ONLY when interacting with handle
+            listGrip.addEventListener('mousedown', () => {
+                list.setAttribute('draggable', 'true');
+            });
+            listGrip.addEventListener('mouseup', () => {
+                if(!draggedList) list.removeAttribute('draggable');
+            });
+
             headerContainer.appendChild(listGrip);
 
             const hIn = document.createElement('input');
@@ -538,11 +574,10 @@
             container.className = 'card-container';
             (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
-            // Card Layer Drop Handlers
             container.addEventListener('dragover', (e) => {
-                if (draggedCard) {
+                if (draggedCard || draggedList) {
                     e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
+                    if (draggedCard) e.dataTransfer.dropEffect = 'move';
                 }
             });
 
@@ -617,7 +652,7 @@
                 draggedCard = card;
                 card.style.opacity = '0.4';
                 e.dataTransfer.effectAllowed = 'move';
-                e.stopPropagation(); // Stop parent list dragging from intercepting
+                e.stopPropagation(); 
             });
 
             card.addEventListener('dragend', (e) => {
