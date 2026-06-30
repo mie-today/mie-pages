@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sharable Travel Workspace</title>
+    <title>Multi-Row Travel Workspace</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -13,41 +13,49 @@
             --text-color: #172b4d;
             --accent-color: #00c2e0;
             --danger-color: #eb5a46;
-            --input-focus: #4c9aff;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
             color: var(--text-color);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            width: 100%;
+            overflow-y: auto;
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             flex-shrink: 0;
-            width: 100%;
-        }
-
-        .title-area {
-            display: flex;
-            align-items: center;
             gap: 15px;
         }
 
-        h1 {
+        .title-area { display: flex; align-items: center; gap: 15px; flex-grow: 1; }
+        
+        /* --- New Modifiable Board Title Style --- */
+        .board-title-input {
+            background: transparent;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
             color: white;
-            margin: 0;
             font-size: 22px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            outline: none;
+            width: 100%;
+            max-width: 450px;
+            transition: all 0.2s ease;
+        }
+        .board-title-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #ffffff;
         }
 
         .btn-map-master {
@@ -58,16 +66,10 @@
             border-radius: 4px;
             font-weight: 600;
             font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
-        .export-controls {
-            display: flex;
-            gap: 10px;
-        }
+        .export-controls { display: flex; gap: 8px; flex-shrink: 0; }
 
         .btn {
             border: none;
@@ -80,20 +82,23 @@
         }
 
         .btn-share { background-color: #5aac44; }
-        .btn-share:hover { background-color: #4b8a36; }
-        .btn-pdf { background-color: #e04444; }
-        .btn-docx { background-color: #2b579a; }
-        .btn-excel { background-color: #217346; }
         .btn-clear { background-color: #6b778c; }
+        .btn-pdf { background-color: #e04444; }
+        .btn-excel { background-color: #217346; }
 
-        .board-grid {
+        .top-row-grid {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 12px;
-            flex-grow: 1;
-            min-height: 0;
-            width: 100%;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-shrink: 0;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            align-content: start;
         }
 
         .list {
@@ -101,182 +106,173 @@
             border-radius: 6px;
             display: flex;
             flex-direction: column;
-            min-height: 0;
+            max-height: 450px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            cursor: move;
-            transition: transform 0.1s ease, opacity 0.1s ease;
         }
 
-        .list.list-dragging {
-            opacity: 0.5;
-            transform: scale(0.98);
+        /* Top Row Scroll Limits */
+        [data-list-id="rules"] .card-container,
+        [data-list-id="backlog"] .card-container,
+        [data-list-id="done"] .card-container {
+            max-height: 145px; 
+            overflow-y: auto;
         }
 
-        .stacked-column {
-            grid-row: span 2;
+        .add-day-placeholder {
+            border: 3px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            min-height: 0;
+            justify-content: center;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            min-height: 120px;
+            transition: all 0.2s ease;
         }
+        .add-day-placeholder:hover {
+            border-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        .add-day-placeholder span { font-size: 28px; margin-bottom: 5px; }
 
-        .stacked-column .list {
-            flex: 1;
-            min-height: 0;
+        /* --- List Header with Delete Capabilities --- */
+        .list-header-container {
+            display: flex;
+            align-items: center;
+            background: #e2e4e6;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            padding-right: 8px;
         }
 
         .list-header-input {
             border: none;
             background: transparent;
-            padding: 8px 12px 2px 12px;
+            padding: 10px 12px 2px 12px;
             font-weight: 600;
             font-size: 14px;
-            background-color: #e2e4e6;
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
-            font-family: inherit;
             width: 100%;
             box-sizing: border-box;
             outline: none;
-            color: var(--text-color);
-            cursor: text;
         }
-        .list-header-input:focus { background-color: #f4f5f7; }
+
+        .btn-delete-list {
+            background: transparent;
+            border: none;
+            color: #a0a0a0;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 4px;
+        }
+        .btn-delete-list:hover { color: var(--danger-color); }
 
         .list-subtitle-input {
             border: none;
-            background: transparent;
-            padding: 0 12px 6px 12px;
+            background: #e2e4e6;
+            padding: 0 12px 8px 12px;
             font-size: 11px;
             color: #5e6c84;
             border-bottom: 1px solid #ddd;
-            background-color: #e2e4e6;
-            font-family: inherit;
             width: 100%;
             box-sizing: border-box;
             outline: none;
-            cursor: text;
-        }
-        .list-subtitle-input:focus { background-color: #ffffff; }
-
-        .card-container {
-            padding: 6px;
-            overflow-y: auto;
-            flex-grow: 1;
-            min-height: 30px;
-            cursor: default;
         }
 
+        .card-container { padding: 6px; overflow-y: auto; flex-grow: 1; min-height: 40px; }
+
+        /* --- Clean Control Dock Layout inside Cards --- */
         .card {
             background-color: var(--card-bg);
             border-radius: 4px;
-            padding: 10px;
+            padding: 8px;
             margin-bottom: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            cursor: grab;
-            user-select: none;
-            position: relative;
-        }
-        .card:active { cursor: grabbing; }
-        .card.dragging { opacity: 0.2; }
-
-        .card-header-row {
             display: flex;
-            justify-content: space-between;
             align-items: flex-start;
-            gap: 20px;
-            margin-bottom: 3px;
+            gap: 8px;
         }
 
-        .card-title-input {
-            border: none;
-            background: transparent;
-            font-weight: 600;
-            font-size: 13px;
-            font-family: inherit;
-            color: var(--text-color);
-            width: 100%;
-            outline: none;
-            padding: 0;
-            cursor: text;
-        }
-        .card-title-input:focus { background-color: #f4f5f7; }
-
-        .card-actions {
+        .card-left-dock {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             flex-shrink: 0;
+            padding-top: 2px;
         }
 
-        .map-link { text-decoration: none; font-size: 13px; cursor: pointer; }
-        
+        .card-grip {
+            color: #7a869a;
+            cursor: grab;
+            font-size: 14px;
+            font-weight: bold;
+            user-select: none;
+        }
+        .card-grip:active { cursor: grabbing; }
+
         .btn-delete-card {
             border: none;
             background: transparent;
             color: #a0a0a0;
             cursor: pointer;
-            font-size: 11px;
             font-weight: bold;
-            padding: 2px 4px;
-            border-radius: 3px;
-            line-height: 1;
+            font-size: 12px;
+            padding: 0 2px;
         }
-        .btn-delete-card:hover {
-            background-color: var(--danger-color);
-            color: white;
+        .btn-delete-card:hover { color: var(--danger-color); }
+
+        .card-main-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* Prevents text overflow blowouts */
         }
 
-        .card-notes-input {
-            border: none;
-            background: transparent;
-            font-size: 11px;
-            color: #5e6c84;
-            font-style: italic;
-            font-family: inherit;
-            width: 100%;
-            outline: none;
-            padding: 0;
-            cursor: text;
-        }
-        .card-notes-input:focus { background-color: #f4f5f7; }
+        .card-header-row { display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+        .card-title-input { border: none; font-weight: 600; font-size: 13px; width: 100%; outline: none; background: transparent; }
+        
+        .card-actions { display: flex; align-items: center; flex-shrink: 0; }
+        .map-link { text-decoration: none; font-size: 13px; cursor: pointer; }
 
+        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; background: transparent; }
         .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
 
         .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
-        .add-card-input { flex-grow: 1; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; }
-        .add-card-btn { background-color: #5aac44; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; cursor: pointer; }
+        .add-card-input { flex-grow: 1; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; outline: none; }
+        .add-card-btn { background-color: #5aac44; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="title-area">
-            <h1>🗺️ Fluid Workspace (Sharable)</h1>
-            <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master" title="Open Connected Google Map">📍 Open Connected Map</a>
+            <input type="text" id="boardTitleInput" class="board-title-input" value="🗺️ Multi-Row Travel Workspace" oninput="saveBoardToStorage()">
+            <a href="https://maps.google.com" target="_blank" class="btn-map-master">📍 Open Connected Map</a>
         </div>
         <div class="export-controls">
-            <button class="btn btn-share" onclick="generateShareLink()" title="Generate share link containing your custom data">🔗 Share Board</button>
-            <button class="btn btn-clear" onclick="resetBoard()" title="Reset workspace back to original setup">Reset App</button>
-            <button class="btn btn-pdf" onclick="exportToPDF()">PDF</button>
-            <button class="btn btn-docx" onclick="exportToDOCX()">DOCX</button>
+            <button class="btn btn-share" onclick="shareBoardURL()">🔗 Share Board URL</button>
+            <button class="btn btn-clear" onclick="resetBoard()">Reset App</button>
+            <button class="btn btn-pdf" onclick="window.print()">PDF</button>
             <button class="btn btn-excel" onclick="exportToExcel()">Spreadsheet</button>
         </div>
     </header>
 
-    <div class="board-grid" id="boardGrid">
-        </div>
+    <div class="top-row-grid" id="topGrid"></div>
+    <div class="days-grid" id="daysGrid"></div>
 
     <script>
-        let draggedColumn = null;
+        let draggedCard = null;
 
         const defaultLayout = [
-            { id: "stacked-track", isContainer: true, lists: [
-                { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
-                { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "Museum of African Diaspora", notes: "Target Note", type: "" }] }
-            ]},
-            { id: "day1", title: "📅 Day 1", subtitle: "Arrival & SF Art", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
-            { id: "day2", title: "📅 Day 2", subtitle: "Parks & Science", cards: [{ title: "de Young Museum", notes: "Target Note", type: "" }] },
+            { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
+            { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
+            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] },
+            { id: "day1", title: "📅 Day 1", subtitle: "Arrival & SF Art", cards: [] },
+            { id: "day2", title: "📅 Day 2", subtitle: "Parks & Science", cards: [] },
             { id: "day3", title: "📅 Day 3", subtitle: "Edit focus...", cards: [] },
             { id: "day4", title: "📅 Day 4", subtitle: "Edit focus...", cards: [] },
             { id: "day5", title: "📅 Day 5", subtitle: "Edit focus...", cards: [] },
@@ -284,27 +280,56 @@
             { id: "day7", title: "📅 Day 7", subtitle: "Edit focus...", cards: [] },
             { id: "day8", title: "📅 Day 8", subtitle: "Edit focus...", cards: [] },
             { id: "day9", title: "📅 Day 9", subtitle: "Edit focus...", cards: [] },
-            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] },
-            { id: "done", title: "✅ Done", subtitle: "Completed Targets", cards: [] }
+            { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] }
         ];
 
-        // Package all current board values into a clean structure
+        function compressLayout(boardState) {
+            return {
+                t: boardState.boardTitle,
+                l: boardState.layout.map(list => ({
+                    i: list.id,
+                    t: list.title,
+                    s: list.subtitle,
+                    c: list.cards.map(card => ({
+                        t: card.title,
+                        n: card.notes,
+                        y: card.type
+                    }))
+                }))
+            };
+        }
+
+        function decompressLayout(data) {
+            if (!data) return null;
+            // Handle backwards compatibility if reading an older uncompressed data string
+            if (Array.isArray(data)) {
+                return { boardTitle: "🗺️ Multi-Row Travel Workspace", layout: data };
+            }
+            if (!data.l) return null;
+            
+            return {
+                boardTitle: data.t || "🗺️ Multi-Row Travel Workspace",
+                layout: data.l.map(list => ({
+                    id: list.i,
+                    title: list.t,
+                    subtitle: list.s,
+                    cards: (list.c || []).map(card => ({
+                        title: card.t,
+                        notes: card.n,
+                        type: card.y
+                    }))
+                }))
+            };
+        }
+
         function serializeBoard() {
             const layoutStructure = [];
-            const grid = document.getElementById('boardGrid');
-            
-            Array.from(grid.children).forEach(element => {
-                if(element.classList.contains('stacked-column')) {
-                    const stackedData = { id: "stacked-track", isContainer: true, lists: [] };
-                    element.querySelectorAll('.list').forEach(list => {
-                        stackedData.lists.push(serializeListElement(list));
-                    });
-                    layoutStructure.push(stackedData);
-                } else {
-                    layoutStructure.push(serializeListElement(element));
-                }
-            });
-            return layoutStructure;
+            document.getElementById('topGrid').querySelectorAll('.list').forEach(list => layoutStructure.push(serializeListElement(list)));
+            document.getElementById('daysGrid').querySelectorAll('.list').forEach(list => layoutStructure.push(serializeListElement(list)));
+            return {
+                boardTitle: document.getElementById('boardTitleInput').value,
+                layout: layoutStructure
+            };
         }
 
         function serializeListElement(list) {
@@ -325,61 +350,111 @@
         }
 
         function saveBoardToStorage() {
-            const structure = serializeBoard();
-            localStorage.setItem('sf_travel_board_state', JSON.stringify(structure));
+            localStorage.setItem('sf_travel_board_state_v2', JSON.stringify(serializeBoard()));
         }
 
-        // 🔗 NEW: Encodes data layout to give you a sharable custom link
-        function generateShareLink() {
-            const boardData = serializeBoard();
-            const encryptedString = btoa(encodeURIComponent(JSON.stringify(boardData)));
-            const shareUrl = window.location.origin + window.location.pathname + '#data=' + encryptedString;
+        function shareBoardURL() {
+            const currentData = serializeBoard();
+            const compressed = compressLayout(currentData);
+            const base64Str = btoa(encodeURIComponent(JSON.stringify(compressed)));
+            const shareURL = window.location.origin + window.location.pathname + '#data=' + base64Str;
             
-            // Auto copy URL to users clipboard
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert("✨ Custom Board Link Copied to Clipboard! Send it to your friends to show them your current board state.");
+            navigator.clipboard.writeText(shareURL).then(() => {
+                alert("📋 Shareable URL successfully copied to clipboard! Paste it anywhere to share.");
             }).catch(() => {
-                alert("Link compiled! Copy it directly from your web address bar:\n\n" + shareUrl);
+                prompt("Copy your board URL from here:", shareURL);
             });
         }
 
-        function loadBoard() {
-            let dataStructure = defaultLayout;
+        function addNewDayColumn() {
+            const currentData = serializeBoard();
+            const onlyDays = currentData.layout.filter(item => item.id.startsWith('day'));
             
-            // Check if user came from a shared URL link
-            if(window.location.hash && window.location.hash.startsWith('#data=')) {
+            let maxDayNum = 0;
+            onlyDays.forEach(day => {
+                const num = parseInt(day.id.replace('day', ''));
+                if(!isNaN(num) && num > maxDayNum) maxDayNum = num;
+            });
+            
+            const targetNextDay = maxDayNum + 1;
+            currentData.layout.push({
+                id: `day${targetNextDay}`,
+                title: `📅 Day ${targetNextDay}`,
+                subtitle: "Edit focus...",
+                cards: []
+            });
+
+            localStorage.setItem('sf_travel_board_state_v2', JSON.stringify(currentData));
+            loadBoardFromStorage();
+        }
+
+        function deleteColumnBox(listId) {
+            if (confirm("Are you sure you want to completely delete this day box/column?")) {
+                const currentData = serializeBoard();
+                currentData.layout = currentData.layout.filter(item => item.id !== listId);
+                localStorage.setItem('sf_travel_board_state_v2', JSON.stringify(currentData));
+                loadBoardFromStorage();
+            }
+        }
+
+        function loadBoardFromStorage() {
+            let boardState = null;
+
+            if (window.location.hash && window.location.hash.startsWith('#data=')) {
                 try {
-                    const base64Data = window.location.hash.replace('#data=', '');
-                    dataStructure = JSON.parse(decodeURIComponent(atob(base64Data)));
-                    // Save shared URL straight into local storage base parameters
-                    localStorage.setItem('sf_travel_board_state', JSON.stringify(dataStructure));
-                    window.location.hash = ''; // Clean up bar path
-                } catch(err) {
-                    console.error("Failed parsing shared URL data, falling back to local files.", err);
+                    const base64 = window.location.hash.replace('#data=', '');
+                    const decrypted = JSON.parse(decodeURIComponent(atob(base64)));
+                    boardState = decompressLayout(decrypted);
+                    if (boardState) {
+                        localStorage.setItem('sf_travel_board_state_v2', JSON.stringify(boardState));
+                        window.location.hash = ''; 
+                    }
+                } catch(e) {
+                    console.error("URL tracking block payload error", e);
                 }
-            } else {
-                // Otherwise read directly out of standard local browser backup
-                const rawData = localStorage.getItem('sf_travel_board_state');
-                if (rawData) dataStructure = JSON.parse(rawData);
+            }
+
+            if (!boardState) {
+                try {
+                    const rawData = localStorage.getItem('sf_travel_board_state_v2') || localStorage.getItem('sf_travel_board_state');
+                    if (rawData) {
+                        const parsed = JSON.parse(rawData);
+                        if (parsed.boardTitle || Array.isArray(parsed)) {
+                            boardState = decompressLayout(parsed) || parsed;
+                        }
+                    }
+                } catch(e) {
+                    console.error("Local storage restoration normalization handled", e);
+                }
+            }
+
+            if (!boardState || !boardState.layout) {
+                boardState = { boardTitle: "🗺️ Multi-Row Travel Workspace", layout: defaultLayout };
             }
             
-            const grid = document.getElementById('boardGrid');
-            grid.innerHTML = '';
+            // Set custom title
+            document.getElementById('boardTitleInput').value = boardState.boardTitle;
 
-            dataStructure.forEach(item => {
-                if(item.isContainer) {
-                    const stackedCol = document.createElement('div');
-                    stackedCol.className = 'stacked-column';
-                    stackedCol.setAttribute('draggable', 'false');
-                    item.lists.forEach(listData => { stackedCol.appendChild(buildListNode(listData)); });
-                    grid.appendChild(stackedCol);
+            const topGrid = document.getElementById('topGrid');
+            const daysGrid = document.getElementById('daysGrid');
+            
+            topGrid.innerHTML = '';
+            daysGrid.innerHTML = '';
+
+            boardState.layout.forEach(item => {
+                const node = buildListNode(item);
+                if(['rules', 'backlog', 'done'].includes(item.id)) {
+                    topGrid.appendChild(node);
                 } else {
-                    grid.appendChild(buildListNode(item));
+                    daysGrid.appendChild(node);
                 }
             });
 
-            document.querySelectorAll('.list').forEach(makeColumnMovable);
-            document.querySelectorAll('.card').forEach(makeCardDraggable);
+            const plusSlot = document.createElement('div');
+            plusSlot.className = 'add-day-placeholder';
+            plusSlot.innerHTML = `<span>+</span>Add New Day Column`;
+            plusSlot.onclick = addNewDayColumn;
+            topGrid.appendChild(plusSlot);
         }
 
         function buildListNode(data) {
@@ -387,78 +462,145 @@
             list.className = 'list';
             list.setAttribute('data-list-id', data.id);
             
+            const headerContainer = document.createElement('div');
+            headerContainer.className = 'list-header-container';
+
             const hIn = document.createElement('input');
             hIn.className = 'list-header-input';
-            hIn.type = 'text';
             hIn.value = data.title;
-            hIn.addEventListener('input', () => {
-                list.querySelectorAll('.card').forEach(card => updateCardState(card, list));
-                saveBoardToStorage();
-            });
+            hIn.addEventListener('input', saveBoardToStorage);
+            headerContainer.appendChild(hIn);
+
+            // Add an X Delete Button to Day Columns/Boxes so they can be removed
+            if (!['rules', 'backlog', 'done'].includes(data.id)) {
+                const delListBtn = document.createElement('button');
+                delListBtn.className = 'btn-delete-list';
+                delListBtn.innerHTML = '✕';
+                delListBtn.title = "Delete entire column box";
+                delListBtn.onclick = () => deleteColumnBox(data.id);
+                headerContainer.appendChild(delListBtn);
+            }
 
             const sIn = document.createElement('input');
             sIn.className = 'list-subtitle-input';
-            sIn.type = 'text';
             sIn.value = data.subtitle;
             sIn.addEventListener('input', saveBoardToStorage);
 
             const container = document.createElement('div');
             container.className = 'card-container';
-            setupContainerDropZones(container);
+            (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
-            data.cards.forEach(cData => { container.appendChild(buildCardNode(cData, data.id, list)); });
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (!draggedCard) return;
+
+                const targetCard = e.target.closest('.card');
+                if (targetCard && targetCard !== draggedCard) {
+                    const rect = targetCard.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    container.insertBefore(draggedCard, next ? targetCard.nextSibling : targetCard);
+                } else {
+                    container.appendChild(draggedCard);
+                }
+
+                const targetListId = list.getAttribute('data-list-id');
+                let mapLink = draggedCard.querySelector('.map-link');
+
+                if (targetListId === 'rules') {
+                    if (mapLink) mapLink.remove();
+                } else {
+                    if (!mapLink) {
+                        mapLink = document.createElement('a');
+                        mapLink.className = 'map-link';
+                        mapLink.target = '_blank';
+                        mapLink.textContent = '📍';
+                        const tVal = draggedCard.querySelector('.card-title-input').value;
+                        mapLink.href = `https://maps.google.com/?q=${encodeURIComponent(tVal)}`;
+                        draggedCard.querySelector('.card-actions').insertBefore(mapLink, draggedCard.querySelector('.btn-delete-card'));
+                    }
+                }
+                saveBoardToStorage();
+            });
 
             const form = document.createElement('div');
             form.className = 'add-card-form';
             const formInput = document.createElement('input');
             formInput.className = 'add-card-input';
-            formInput.type = 'text';
-            formInput.placeholder = data.id === 'rules' ? 'Add rule...' : 'Add...';
-
+            formInput.placeholder = "Add activity...";
+            
             const formBtn = document.createElement('button');
             formBtn.className = 'add-card-btn';
-            formBtn.textContent = 'Add';
+            formBtn.textContent = "Add";
 
-            function triggerFormSubmit() {
-                const text = formInput.value.trim();
-                if(!text) return;
-                const newCard = buildCardNode({ title: text, notes: '', type: '' }, data.id, list);
-                container.appendChild(newCard);
-                makeCardDraggable(newCard);
-                updateCardState(newCard, list);
+            const addCardAction = () => {
+                if(!formInput.value.trim()) return;
+                container.appendChild(buildCardNode({ title: formInput.value.trim(), notes: '', type: '' }, data.id));
                 formInput.value = '';
                 saveBoardToStorage();
-            }
+            };
 
-            formBtn.addEventListener('click', triggerFormSubmit);
-            formInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') triggerFormSubmit(); });
+            formBtn.onclick = addCardAction;
+            formInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addCardAction(); });
 
             form.appendChild(formInput);
             form.appendChild(formBtn);
-            list.appendChild(hIn);
+            list.appendChild(headerContainer);
             list.appendChild(sIn);
             list.appendChild(container);
             list.appendChild(form);
-
             return list;
         }
 
-        function buildCardNode(cData, listId, parentList) {
+        function buildCardNode(cData, listId) {
             const card = document.createElement('div');
             card.className = 'card';
+            card.setAttribute('draggable', 'true');
             if(cData.type) card.classList.add(cData.type);
+
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.style.opacity = '0.4';
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragend', () => {
+                draggedCard = null;
+                card.style.opacity = '1';
+            });
+
+            // Left dock housing Grip & Delete X side-by-side
+            const leftDock = document.createElement('div');
+            leftDock.className = 'card-left-dock';
+
+            const grip = document.createElement('div');
+            grip.className = 'card-grip';
+            grip.innerHTML = '⋮⋮';
+
+            const del = document.createElement('button');
+            del.className = 'btn-delete-card';
+            del.textContent = '✕';
+            del.title = "Delete Activity";
+            del.onclick = () => { card.remove(); saveBoardToStorage(); };
+
+            leftDock.appendChild(grip);
+            leftDock.appendChild(del);
+
+            // Card Body Panel
+            const mainBody = document.createElement('div');
+            mainBody.className = 'card-main-body';
 
             const row = document.createElement('div');
             row.className = 'card-header-row';
 
             const tIn = document.createElement('input');
             tIn.className = 'card-title-input';
-            tIn.type = 'text';
             tIn.value = cData.title;
-            tIn.addEventListener('input', () => {
-                updateCardState(card, card.closest('.list'));
-                saveBoardToStorage();
-            });
+            tIn.addEventListener('input', saveBoardToStorage);
 
             const actions = document.createElement('div');
             actions.className = 'card-actions';
@@ -468,191 +610,52 @@
                 mapLink.className = 'map-link';
                 mapLink.target = '_blank';
                 mapLink.textContent = '📍';
+                mapLink.href = `https://maps.google.com/?q=${encodeURIComponent(cData.title)}`;
                 actions.appendChild(mapLink);
             }
-
-            const del = document.createElement('button');
-            del.className = 'btn-delete-card';
-            del.textContent = '✕';
-            del.onclick = () => { card.remove(); saveBoardToStorage(); };
-            actions.appendChild(del);
 
             row.appendChild(tIn);
             row.appendChild(actions);
 
             const nIn = document.createElement('input');
             nIn.className = 'card-notes-input';
-            nIn.type = 'text';
             nIn.value = cData.notes;
             nIn.addEventListener('input', saveBoardToStorage);
 
-            card.appendChild(row);
-            card.appendChild(nIn);
-
+            mainBody.appendChild(row);
+            mainBody.appendChild(nIn);
+            
+            card.appendChild(leftDock);
+            card.appendChild(mainBody);
             return card;
         }
 
-        function updateCardState(card, parentList) {
-            if(!parentList) return;
-            const notesEl = card.querySelector('.card-notes-input');
-            const mapLinkEl = card.querySelector('.map-link');
-            const titleInput = card.querySelector('.card-title-input');
-            if(!titleInput) return;
-            
-            const titleText = titleInput.value.trim();
-            const currentHeaderTitle = parentList.querySelector('.list-header-input').value.trim();
-            const cleanHeader = currentHeaderTitle.replace(/[^\w\s가-힣]/g, '').trim(); 
-
-            if (notesEl && !notesEl.matches(':focus')) {
-                const listId = parentList.getAttribute('data-list-id');
-                if (listId === 'rules') {
-                    notesEl.value = 'Trip Parameter';
-                } else if (listId === 'done') {
-                    notesEl.value = '✨ Completed';
-                } else {
-                    notesEl.value = `Moved to ${cleanHeader}`;
-                }
-            }
-
-            if (mapLinkEl && titleText) {
-                const cleanQuery = encodeURIComponent(titleText.replace(/[^a-zA-Z0-9 ]/g, ""));
-                mapLinkEl.href = `https://www.google.com/maps/search/?api=1&query=${cleanQuery}`;
-            }
-        }
-
-        function makeCardDraggable(card) {
-            card.setAttribute('draggable', 'true');
-            card.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
-                e.stopPropagation();
-                card.classList.add('dragging');
-            });
-            card.addEventListener('dragend', (e) => {
-                e.stopPropagation();
-                card.classList.remove('dragging');
-                const finalParentList = card.closest('.list');
-                if (finalParentList) updateCardState(card, finalParentList);
-                saveBoardToStorage();
-            });
-
-            const parentList = card.closest('.list');
-            if (parentList) updateCardState(card, parentList);
-        }
-
-        function makeColumnMovable(list) {
-            if(list.getAttribute('data-list-id') === 'rules' || list.getAttribute('data-list-id') === 'backlog') return;
-            list.setAttribute('draggable', 'true');
-
-            list.addEventListener('dragstart', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.closest('.card')) { e.preventDefault(); return; }
-                draggedColumn = list;
-                list.classList.add('list-dragging');
-            });
-
-            list.addEventListener('dragend', () => {
-                list.classList.remove('list-dragging');
-                draggedColumn = null;
-                saveBoardToStorage();
-            });
-
-            list.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                if (!draggedColumn || draggedColumn === list) return;
-                
-                const grid = document.getElementById('boardGrid');
-                const children = Array.from(grid.children);
-                const draggedIndex = children.indexOf(draggedColumn);
-                const targetIndex = children.indexOf(list);
-
-                if (draggedIndex > -1 && targetIndex > -1 && targetIndex !== 0) { 
-                    if (draggedIndex < targetIndex) {
-                        grid.insertBefore(draggedColumn, list.nextSibling);
-                    } else {
-                        grid.insertBefore(draggedColumn, list);
-                    }
-                }
-            });
-        }
-
-        function setupContainerDropZones(container) {
-            container.addEventListener('dragover', (e) => {
-                if (draggedColumn) return; 
-                e.preventDefault();
-                const draggingCard = document.querySelector('.dragging');
-                if (!draggingCard) return;
-                
-                const afterElement = getDragAfterElement(container, e.clientY);
-                if (afterElement == null) {
-                    container.appendChild(draggingCard);
-                } else {
-                    container.insertBefore(draggingCard, afterElement);
-                }
-            });
-        }
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
-        }
-
         function resetBoard() {
-            if(confirm("Are you sure you want to completely clear and reset the workspace?")) {
+            if(confirm("Completely reset workspace layout back to standard itinerary template?")) {
+                localStorage.removeItem('sf_travel_board_state_v2');
                 localStorage.removeItem('sf_travel_board_state');
-                window.location.hash = '';
-                loadBoard();
+                loadBoardFromStorage();
             }
         }
 
-        window.onload = loadBoard;
+        window.onload = loadBoardFromStorage;
 
-        function getBoardData() {
+        function exportToExcel() {
             const data = [];
             document.querySelectorAll('.list').forEach(list => {
-                const currentHeaderTitle = list.querySelector('.list-header-input').value;
-                const customSubtitle = list.querySelector('.list-subtitle-input').value;
+                const title = list.querySelector('.list-header-input').value;
                 list.querySelectorAll('.card').forEach(card => {
                     data.push({
-                        ColumnTitle: currentHeaderTitle,
-                        ColumnSubtitle: customSubtitle,
-                        Activity: card.querySelector('.card-title-input').value,
-                        StatusText: card.querySelector('.card-notes-input').value
+                        TimelineSection: title,
+                        ActivityName: card.querySelector('.card-title-input').value,
+                        Notes: card.querySelector('.card-notes-input').value
                     });
                 });
             });
-            return data;
-        }
-
-        function exportToExcel() {
-            const worksheet = XLSX.utils.json_to_sheet(getBoardData());
+            const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Workspace");
-            XLSX.writeFile(workbook, "Travel_Workspace.xlsx");
-        }
-        function exportToPDF() { window.print(); }
-        function exportToDOCX() {
-            const data = getBoardData();
-            let docContent = "TRAVEL WORKSPACE SUMMARY\r\n=============================\r\n";
-            let currentColumn = "";
-            data.forEach(item => {
-                if(item.ColumnTitle !== currentColumn) {
-                    currentColumn = item.ColumnTitle;
-                    docContent += `\r\n[${currentColumn.toUpperCase()} - ${item.ColumnSubtitle}]\r\n`;
-                }
-                docContent += `• ${item.Activity} (${item.StatusText})\r\n`;
-            });
-            const blob = new Blob([docContent], { type: "application/msword" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "Travel_Workspace_Summary.doc";
-            link.click();
+            XLSX.writeFile(workbook, "Travel_Grid_Data.xlsx");
         }
     </script>
 </body>
