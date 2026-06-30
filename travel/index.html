@@ -39,7 +39,6 @@
 
         .title-area { display: flex; align-items: center; gap: 15px; flex-grow: 1; }
         
-        /* --- New Modifiable Board Title Style --- */
         .board-title-input {
             background: transparent;
             border: 2px dashed rgba(255, 255, 255, 0.3);
@@ -108,9 +107,10 @@
             flex-direction: column;
             max-height: 450px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: opacity 0.15s ease;
         }
 
-        /* Top Row Scroll Limits */
+        /* Top Row Scroll Constraints */
         [data-list-id="rules"] .card-container,
         [data-list-id="backlog"] .card-container,
         [data-list-id="done"] .card-container {
@@ -139,7 +139,7 @@
         }
         .add-day-placeholder span { font-size: 28px; margin-bottom: 5px; }
 
-        /* --- List Header with Delete Capabilities --- */
+        /* --- Updated List Header with Column Grips --- */
         .list-header-container {
             display: flex;
             align-items: center;
@@ -147,12 +147,24 @@
             border-top-left-radius: 6px;
             border-top-right-radius: 6px;
             padding-right: 8px;
+            gap: 2px;
         }
+
+        .list-grip {
+            color: #7a869a;
+            cursor: grab;
+            font-size: 15px;
+            font-weight: bold;
+            padding-left: 10px;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .list-grip:active { cursor: grabbing; }
 
         .list-header-input {
             border: none;
             background: transparent;
-            padding: 10px 12px 2px 12px;
+            padding: 10px 8px 2px 4px;
             font-weight: 600;
             font-size: 14px;
             width: 100%;
@@ -168,6 +180,7 @@
             font-weight: bold;
             font-size: 14px;
             padding: 4px;
+            flex-shrink: 0;
         }
         .btn-delete-list:hover { color: var(--danger-color); }
 
@@ -185,7 +198,7 @@
 
         .card-container { padding: 6px; overflow-y: auto; flex-grow: 1; min-height: 40px; }
 
-        /* --- Clean Control Dock Layout inside Cards --- */
+        /* --- Internal Card Control Dock --- */
         .card {
             background-color: var(--card-bg);
             border-radius: 4px;
@@ -229,7 +242,7 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            min-width: 0; /* Prevents text overflow blowouts */
+            min-width: 0;
         }
 
         .card-header-row { display: flex; justify-content: space-between; gap: 6px; align-items: center; }
@@ -266,6 +279,7 @@
 
     <script>
         let draggedCard = null;
+        let draggedList = null;
 
         const defaultLayout = [
             { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
@@ -301,7 +315,6 @@
 
         function decompressLayout(data) {
             if (!data) return null;
-            // Handle backwards compatibility if reading an older uncompressed data string
             if (Array.isArray(data)) {
                 return { boardTitle: "🗺️ Multi-Row Travel Workspace", layout: data };
             }
@@ -410,7 +423,7 @@
                         window.location.hash = ''; 
                     }
                 } catch(e) {
-                    console.error("URL tracking block payload error", e);
+                    console.error("URL package error", e);
                 }
             }
 
@@ -424,7 +437,7 @@
                         }
                     }
                 } catch(e) {
-                    console.error("Local storage restoration normalization handled", e);
+                    console.error("Local storage load crash protected", e);
                 }
             }
 
@@ -432,7 +445,6 @@
                 boardState = { boardTitle: "🗺️ Multi-Row Travel Workspace", layout: defaultLayout };
             }
             
-            // Set custom title
             document.getElementById('boardTitleInput').value = boardState.boardTitle;
 
             const topGrid = document.getElementById('topGrid');
@@ -461,9 +473,46 @@
             const list = document.createElement('div');
             list.className = 'list';
             list.setAttribute('data-list-id', data.id);
+            list.setAttribute('draggable', 'true');
             
+            // Exterior Column Box Drag & Drop Listeners
+            list.addEventListener('dragstart', (e) => {
+                if (draggedCard) return; // Prevent card drag from bubbling into column drag
+                if (!e.target.closest('.list-grip')) {
+                    e.preventDefault();
+                    return;
+                }
+                draggedList = list;
+                list.style.opacity = '0.5';
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            list.addEventListener('dragend', () => {
+                draggedList = null;
+                list.style.opacity = '1';
+                saveBoardToStorage();
+            });
+
+            list.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (draggedList && draggedList !== list) {
+                    // Restrict reordering to columns within the same structural grid track
+                    if (draggedList.parentNode === list.parentNode) {
+                        const rect = list.getBoundingClientRect();
+                        const next = (e.clientX - rect.left) / (rect.right - rect.left) > 0.5;
+                        list.parentNode.insertBefore(draggedList, next ? list.nextSibling : list);
+                    }
+                }
+            });
+
             const headerContainer = document.createElement('div');
             headerContainer.className = 'list-header-container';
+
+            // Column Box Grip Handle
+            const listGrip = document.createElement('div');
+            listGrip.className = 'list-grip';
+            listGrip.innerHTML = '⋮⋮';
+            headerContainer.appendChild(listGrip);
 
             const hIn = document.createElement('input');
             hIn.className = 'list-header-input';
@@ -471,12 +520,11 @@
             hIn.addEventListener('input', saveBoardToStorage);
             headerContainer.appendChild(hIn);
 
-            // Add an X Delete Button to Day Columns/Boxes so they can be removed
             if (!['rules', 'backlog', 'done'].includes(data.id)) {
                 const delListBtn = document.createElement('button');
                 delListBtn.className = 'btn-delete-list';
                 delListBtn.innerHTML = '✕';
-                delListBtn.title = "Delete entire column box";
+                delListBtn.title = "Delete entire box";
                 delListBtn.onclick = () => deleteColumnBox(data.id);
                 headerContainer.appendChild(delListBtn);
             }
@@ -490,14 +538,17 @@
             container.className = 'card-container';
             (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
+            // Card Layer Drop Handlers
             container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
+                if (draggedCard) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                }
             });
 
             container.addEventListener('drop', (e) => {
-                e.preventDefault();
                 if (!draggedCard) return;
+                e.preventDefault();
 
                 const targetCard = e.target.closest('.card');
                 if (targetCard && targetCard !== draggedCard) {
@@ -566,14 +617,15 @@
                 draggedCard = card;
                 card.style.opacity = '0.4';
                 e.dataTransfer.effectAllowed = 'move';
+                e.stopPropagation(); // Stop parent list dragging from intercepting
             });
 
-            card.addEventListener('dragend', () => {
+            card.addEventListener('dragend', (e) => {
                 draggedCard = null;
                 card.style.opacity = '1';
+                e.stopPropagation();
             });
 
-            // Left dock housing Grip & Delete X side-by-side
             const leftDock = document.createElement('div');
             leftDock.className = 'card-left-dock';
 
@@ -590,7 +642,6 @@
             leftDock.appendChild(grip);
             leftDock.appendChild(del);
 
-            // Card Body Panel
             const mainBody = document.createElement('div');
             mainBody.className = 'card-main-body';
 
@@ -600,7 +651,13 @@
             const tIn = document.createElement('input');
             tIn.className = 'card-title-input';
             tIn.value = cData.title;
-            tIn.addEventListener('input', saveBoardToStorage);
+            tIn.addEventListener('input', (e) => {
+                saveBoardToStorage();
+                const mapLink = card.querySelector('.map-link');
+                if (mapLink) {
+                    mapLink.href = `https://maps.google.com/?q=${encodeURIComponent(e.target.value)}`;
+                }
+            });
 
             const actions = document.createElement('div');
             actions.className = 'card-actions';
