@@ -25,7 +25,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            overflow-y: auto; /* Allows workspace to scale down naturally on rows 3 & 4 */
+            overflow-y: auto;
         }
 
         header {
@@ -62,26 +62,11 @@
         }
 
         .btn-share { background-color: #5aac44; }
-        .btn-import { background-color: #026aa7; }
         .btn-clear { background-color: #6b778c; }
         .btn-pdf { background-color: #e04444; }
         .btn-excel { background-color: #217346; }
 
-        .sync-hub {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 25px;
-            display: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .sync-hub h3 { margin: 0 0 10px 0; font-size: 14px; }
-        .sync-hub textarea { width: 100%; height: 60px; box-sizing: border-box; font-family: monospace; font-size: 11px; margin-bottom: 10px; padding: 5px; }
-        .sync-hub-buttons { display: flex; gap: 10px; }
-
-        /* --- New Grid Framework --- */
-        
-        /* Row 1: Fits exactly 4 structural elements side-by-side */
+        /* Row 1 Layout Layout (Structural Panels) */
         .top-row-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -90,7 +75,7 @@
             flex-shrink: 0;
         }
 
-        /* Rows 2, 3, 4+: Fits exactly 5 Days per horizontal track */
+        /* Rows 2, 3, 4+ Layout (5 Days Per Row) */
         .days-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -105,10 +90,8 @@
             flex-direction: column;
             max-height: 450px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            transition: transform 0.1s ease;
         }
 
-        /* Interactive Dynamic Day Slot styled to fit layout seamlessly */
         .add-day-placeholder {
             border: 3px dashed rgba(255, 255, 255, 0.4);
             border-radius: 6px;
@@ -189,31 +172,18 @@
             <a href="https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing" target="_blank" class="btn-map-master">📍 Open Connected Map</a>
         </div>
         <div class="export-controls">
-            <button class="btn btn-share" onclick="toggleSyncHub('export')">📤 Export Sync Code</button>
-            <button class="btn btn-import" onclick="toggleSyncHub('import')">📥 Import Friend's Code</button>
+            <button class="btn btn-share" onclick="shareBoardURL()">🔗 Share Board URL</button>
             <button class="btn btn-clear" onclick="resetBoard()">Reset App</button>
             <button class="btn btn-pdf" onclick="window.print()">PDF</button>
             <button class="btn btn-excel" onclick="exportToExcel()">Spreadsheet</button>
         </div>
     </header>
 
-    <div class="sync-hub" id="syncHub">
-        <h3 id="syncHubTitle">Workspace Synchronization Data</h3>
-        <textarea id="syncDataArea" placeholder="Paste data text string code package here..."></textarea>
-        <div class="sync-hub-buttons">
-            <button class="btn btn-share" id="syncActionBtn" onclick="executeSyncAction()">Copy Data</button>
-            <button class="btn btn-clear" onclick="toggleSyncHub(false)">Close Panel</button>
-        </div>
-    </div>
-
+    <!-- Structural Grid Elements -->
     <div class="top-row-grid" id="topGrid"></div>
-
     <div class="days-grid" id="daysGrid"></div>
 
     <script>
-        let currentMode = '';
-        
-        // Comprehensive baseline setup structured around your exact configuration
         const defaultLayout = [
             { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
             { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
@@ -230,16 +200,40 @@
             { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] }
         ];
 
+        // Shrinks keys drastically to keep URL footprint optimized
+        function compressLayout(data) {
+            return data.map(list => ({
+                i: list.id,
+                t: list.title,
+                s: list.subtitle,
+                c: list.cards.map(card => ({
+                    t: card.title,
+                    n: card.notes,
+                    y: card.type
+                }))
+            }));
+        }
+
+        // Restores shortened keys back to application parameters safely
+        function decompressLayout(data) {
+            if (!data || !Array.isArray(data)) return null;
+            if (data[0] && data[0].id) return data; // Already uncompressed
+            return data.map(list => ({
+                id: list.i,
+                title: list.t,
+                subtitle: list.s,
+                cards: (list.c || []).map(card => ({
+                    title: card.t,
+                    notes: card.n,
+                    type: card.y
+                }))
+            }));
+        }
+
         function serializeBoard() {
             const layoutStructure = [];
-            // Parse top row tracks
-            document.getElementById('topGrid').querySelectorAll('.list').forEach(list => {
-                layoutStructure.push(serializeListElement(list));
-            });
-            // Parse day rows tracks
-            document.getElementById('daysGrid').querySelectorAll('.list').forEach(list => {
-                layoutStructure.push(serializeListElement(list));
-            });
+            document.getElementById('topGrid').querySelectorAll('.list').forEach(list => layoutStructure.push(serializeListElement(list)));
+            document.getElementById('daysGrid').querySelectorAll('.list').forEach(list => layoutStructure.push(serializeListElement(list)));
             return layoutStructure;
         }
 
@@ -264,7 +258,19 @@
             localStorage.setItem('sf_travel_board_state', JSON.stringify(serializeBoard()));
         }
 
-        // Calculates parameters and appends next logical sequence day item safely
+        function shareBoardURL() {
+            const currentData = serializeBoard();
+            const compressed = compressLayout(currentData);
+            const base64Str = btoa(encodeURIComponent(JSON.stringify(compressed)));
+            const shareURL = window.location.origin + window.location.pathname + '#data=' + base64Str;
+            
+            navigator.clipboard.writeText(shareURL).then(() => {
+                alert("📋 Shareable URL successfully copied to clipboard! Paste it anywhere to share.");
+            }).catch(() => {
+                prompt("Copy your board URL from here:", shareURL);
+            });
+        }
+
         function addNewDayColumn() {
             const currentData = serializeBoard();
             const onlyDays = currentData.filter(item => item.id.startsWith('day'));
@@ -276,21 +282,53 @@
             });
             
             const targetNextDay = maxDayNum + 1;
-            const newDayObj = {
+            currentData.push({
                 id: `day${targetNextDay}`,
                 title: `📅 Day ${targetNextDay}`,
                 subtitle: "Edit focus...",
                 cards: []
-            };
+            });
 
-            currentData.push(newDayObj);
             localStorage.setItem('sf_travel_board_state', JSON.stringify(currentData));
             loadBoardFromStorage();
         }
 
         function loadBoardFromStorage() {
-            const rawData = localStorage.getItem('sf_travel_board_state');
-            const dataStructure = rawData ? JSON.parse(rawData) : defaultLayout;
+            let dataStructure = null;
+
+            // 1. Check URL Hash first for incoming dataset packages
+            if (window.location.hash && window.location.hash.startsWith('#data=')) {
+                try {
+                    const base64 = window.location.hash.replace('#data=', '');
+                    const decrypted = JSON.parse(decodeURIComponent(atob(base64)));
+                    dataStructure = decompressLayout(decrypted);
+                    if (dataStructure) {
+                        localStorage.setItem('sf_travel_board_state', JSON.stringify(dataStructure));
+                        window.location.hash = ''; // Clear clean URL footprint
+                    }
+                } catch(e) {
+                    console.error("URL package structural read failure", e);
+                }
+            }
+
+            // 2. LocalStorage Parsing with structural protection filters
+            if (!dataStructure) {
+                try {
+                    const rawData = localStorage.getItem('sf_travel_board_state');
+                    if (rawData) {
+                        const parsed = JSON.parse(rawData);
+                        // Filter out old container arrays if existing to prevent screen blanks
+                        if (Array.isArray(parsed) && !parsed.some(item => item.isContainer)) {
+                            dataStructure = parsed;
+                        }
+                    }
+                } catch(e) {
+                    console.error("Local storage load crash protection handled", e);
+                }
+            }
+
+            // 3. Fallback to default structural layout
+            if (!dataStructure) dataStructure = defaultLayout;
             
             const topGrid = document.getElementById('topGrid');
             const daysGrid = document.getElementById('daysGrid');
@@ -300,7 +338,6 @@
 
             dataStructure.forEach(item => {
                 const node = buildListNode(item);
-                // Dynamically route tracking cards to specific geometric tiers
                 if(['rules', 'backlog', 'done'].includes(item.id)) {
                     topGrid.appendChild(node);
                 } else {
@@ -308,7 +345,7 @@
                 }
             });
 
-            // Insert interactive dynamic builder slot inside row 1 space 4 position
+            // Re-render structural adding node inside Row 1 Space 4 slot position
             const plusSlot = document.createElement('div');
             plusSlot.className = 'add-day-placeholder';
             plusSlot.innerHTML = `<span>+</span>Add New Day Column`;
@@ -333,7 +370,7 @@
 
             const container = document.createElement('div');
             container.className = 'card-container';
-            data.cards.forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
+            (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
             const form = document.createElement('div');
             form.className = 'add-card-form';
@@ -389,7 +426,7 @@
                 mapLink.className = 'map-link';
                 mapLink.target = '_blank';
                 mapLink.textContent = '📍';
-                mapLink.href = `https://www.google.com/maps/d/u/0/edit?mid=1HXaPjOUQA7flHmrtlh2MFEV1rOpq7wo&usp=sharing?q=${encodeURIComponent(cData.title)}`;
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cData.title)}`;
                 actions.appendChild(mapLink);
             }
 
@@ -412,55 +449,8 @@
             return card;
         }
 
-        function toggleSyncHub(mode) {
-            const hub = document.getElementById('syncHub');
-            const area = document.getElementById('syncDataArea');
-            const title = document.getElementById('syncHubTitle');
-            const btn = document.getElementById('syncActionBtn');
-            
-            if(!mode) { hub.style.display = 'none'; return; }
-            hub.style.display = 'block';
-            currentMode = mode;
-
-            if(mode === 'export') {
-                title.textContent = "📤 Send this sync code block package directly to your travel buddies:";
-                area.value = btoa(encodeURIComponent(JSON.stringify(serializeBoard())));
-                area.select();
-                btn.textContent = "Copy to Clipboard";
-                btn.style.backgroundColor = "#5aac44";
-            } else {
-                title.textContent = "📥 Paste the sync data block received from your buddy below:";
-                area.value = "";
-                area.placeholder = "Paste long code data sequence track string bundle here...";
-                btn.textContent = "Load & Overwrite Workspace";
-                btn.style.backgroundColor = "#026aa7";
-            }
-        }
-
-        function executeSyncAction() {
-            const area = document.getElementById('syncDataArea');
-            if(currentMode === 'export') {
-                navigator.clipboard.writeText(area.value);
-                alert("📋 Sync code string copied safely! Send it via message app.");
-                toggleSyncHub(false);
-            } else {
-                try {
-                    const cleanInput = area.value.trim();
-                    const parsedLayout = JSON.parse(decodeURIComponent(atob(cleanInput)));
-                    if(Array.isArray(parsedLayout)) {
-                        localStorage.setItem('sf_travel_board_state', JSON.stringify(parsedLayout));
-                        loadBoardFromStorage();
-                        alert("✨ Layout imported completely! Data synced.");
-                        toggleSyncHub(false);
-                    }
-                } catch(e) {
-                    alert("❌ Invalid text bundle block code. Make sure to copy the complete string group.");
-                }
-            }
-        }
-
         function resetBoard() {
-            if(confirm("Are you sure you want to completely restore the baseline day setup template?")) {
+            if(confirm("Completely reset workspace layout back to standard itinerary template?")) {
                 localStorage.removeItem('sf_travel_board_state');
                 loadBoardFromStorage();
             }
@@ -474,16 +464,16 @@
                 const title = list.querySelector('.list-header-input').value;
                 list.querySelectorAll('.card').forEach(card => {
                     data.push({
-                        TimelineTier: title,
-                        TargetActivity: card.querySelector('.card-title-input').value,
-                        InternalNotes: card.querySelector('.card-notes-input').value
+                        TimelineSection: title,
+                        ActivityName: card.querySelector('.card-title-input').value,
+                        Notes: card.querySelector('.card-notes-input').value
                     });
                 });
             });
             const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Itinerary");
-            XLSX.writeFile(workbook, "Dynamic_Travel_Grid.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Workspace");
+            XLSX.writeFile(workbook, "Travel_Grid_Data.xlsx");
         }
     </script>
 </body>
