@@ -66,7 +66,7 @@
         .btn-pdf { background-color: #e04444; }
         .btn-excel { background-color: #217346; }
 
-        /* Row 1 Layout Grid (Structural Hub) */
+        /* Row 1 Grid Frame Layout */
         .top-row-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -75,7 +75,7 @@
             flex-shrink: 0;
         }
 
-        /* Rows 2, 3, 4+ Grid Layout (5 Days Per Row Track) */
+        /* Rows 2, 3, 4+ Grid Layout Frame */
         .days-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -92,12 +92,11 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         }
 
-        /* --- Scroll Logic Constraints --- */
-        /* Fits exactly 2 cards. The 3rd card triggers vertical scrolling safely */
+        /* Top row constraints: Activates scrollbars when 3+ items are added */
         [data-list-id="rules"] .card-container,
         [data-list-id="backlog"] .card-container,
         [data-list-id="done"] .card-container {
-            max-height: 135px; 
+            max-height: 145px; 
             overflow-y: auto;
         }
 
@@ -149,25 +148,43 @@
 
         .card-container { padding: 6px; overflow-y: auto; flex-grow: 1; min-height: 40px; }
 
+        /* --- New Structural Layout with Drag Handles --- */
         .card {
             background-color: var(--card-bg);
             border-radius: 4px;
-            padding: 10px;
+            padding: 8px;
             margin-bottom: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            cursor: grab;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
         }
-        .card:active { cursor: grabbing; }
+
+        .card-grip {
+            color: #b6b9c2;
+            cursor: grab;
+            font-size: 13px;
+            letter-spacing: -1px;
+            padding-top: 2px;
+            user-select: none;
+        }
+        .card-grip:active { cursor: grabbing; }
+
+        .card-main-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
         .card-header-row { display: flex; justify-content: space-between; gap: 10px; }
-        .card-title-input { border: none; font-weight: 600; font-size: 13px; width: 100%; outline: none; cursor: text; }
+        .card-title-input { border: none; font-weight: 600; font-size: 13px; width: 100%; outline: none; }
         
         .card-actions { display: flex; gap: 5px; }
         .map-link { text-decoration: none; font-size: 13px; }
         .btn-delete-card { border: none; background: transparent; color: #a0a0a0; cursor: pointer; font-weight: bold;}
         .btn-delete-card:hover { color: var(--danger-color); }
 
-        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; cursor: text; }
+        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; }
         .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
 
         .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
@@ -316,7 +333,7 @@
                         window.location.hash = ''; 
                     }
                 } catch(e) {
-                    console.error("URL package structural read failure", e);
+                    console.error("URL tracking block read failure", e);
                 }
             }
 
@@ -330,7 +347,7 @@
                         }
                     }
                 } catch(e) {
-                    console.error("Local storage load crash protection handled", e);
+                    console.error("Local storage initialization normalization caught", e);
                 }
             }
 
@@ -377,13 +394,11 @@
             container.className = 'card-container';
             (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
-            // Drag Over Layout Handling
             container.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
             });
 
-            // Card Drop Tracking Logic
             container.addEventListener('drop', (e) => {
                 e.preventDefault();
                 if (!draggedCard) return;
@@ -397,7 +412,6 @@
                     container.appendChild(draggedCard);
                 }
 
-                // Adjust map context rule variables if entering/leaving Rules block
                 const targetListId = list.getAttribute('data-list-id');
                 const actions = draggedCard.querySelector('.card-actions');
                 let mapLink = draggedCard.querySelector('.map-link');
@@ -411,7 +425,7 @@
                         mapLink.target = '_blank';
                         mapLink.textContent = '📍';
                         const tVal = draggedCard.querySelector('.card-title-input').value;
-                        mapLink.href = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(tVal)}`;
+                        mapLink.href = `http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(tVal)}`;
                         actions.insertBefore(mapLink, actions.firstChild);
                     }
                 }
@@ -453,7 +467,7 @@
             card.setAttribute('draggable', 'true');
             if(cData.type) card.classList.add(cData.type);
 
-            // Drag Start tracking state handlers
+            // Drag State Listeners
             card.addEventListener('dragstart', (e) => {
                 draggedCard = card;
                 card.style.opacity = '0.4';
@@ -464,6 +478,14 @@
                 draggedCard = null;
                 card.style.opacity = '1';
             });
+
+            // Grip handle UI element assembly
+            const grip = document.createElement('div');
+            grip.className = 'card-grip';
+            grip.innerHTML = '⋮⋮';
+
+            const mainBody = document.createElement('div');
+            mainBody.className = 'card-main-body';
 
             const row = document.createElement('div');
             row.className = 'card-header-row';
@@ -481,7 +503,7 @@
                 mapLink.className = 'map-link';
                 mapLink.target = '_blank';
                 mapLink.textContent = '📍';
-                mapLink.href = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(cData.title)}`;
+                mapLink.href = `http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(cData.title)}`;
                 actions.appendChild(mapLink);
             }
 
@@ -499,8 +521,11 @@
             nIn.value = cData.notes;
             nIn.addEventListener('input', saveBoardToStorage);
 
-            card.appendChild(row);
-            card.appendChild(nIn);
+            mainBody.appendChild(row);
+            mainBody.appendChild(nIn);
+            
+            card.appendChild(grip);
+            card.appendChild(mainBody);
             return card;
         }
 
@@ -513,6 +538,7 @@
 
         window.onload = loadBoardFromStorage;
 
+        // Spreadsheets conversion rule loops
         function exportToExcel() {
             const data = [];
             document.querySelectorAll('.list').forEach(list => {
