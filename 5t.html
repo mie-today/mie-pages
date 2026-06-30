@@ -66,7 +66,7 @@
         .btn-pdf { background-color: #e04444; }
         .btn-excel { background-color: #217346; }
 
-        /* Row 1 Layout Layout (Structural Panels) */
+        /* Row 1 Layout Grid (Structural Hub) */
         .top-row-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -75,7 +75,7 @@
             flex-shrink: 0;
         }
 
-        /* Rows 2, 3, 4+ Layout (5 Days Per Row) */
+        /* Rows 2, 3, 4+ Grid Layout (5 Days Per Row Track) */
         .days-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -90,6 +90,15 @@
             flex-direction: column;
             max-height: 450px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        /* --- Scroll Logic Constraints --- */
+        /* Fits exactly 2 cards. The 3rd card triggers vertical scrolling safely */
+        [data-list-id="rules"] .card-container,
+        [data-list-id="backlog"] .card-container,
+        [data-list-id="done"] .card-container {
+            max-height: 135px; 
+            overflow-y: auto;
         }
 
         .add-day-placeholder {
@@ -146,17 +155,19 @@
             padding: 10px;
             margin-bottom: 6px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            cursor: grab;
         }
+        .card:active { cursor: grabbing; }
 
         .card-header-row { display: flex; justify-content: space-between; gap: 10px; }
-        .card-title-input { border: none; font-weight: 600; font-size: 13px; width: 100%; outline: none; }
+        .card-title-input { border: none; font-weight: 600; font-size: 13px; width: 100%; outline: none; cursor: text; }
         
         .card-actions { display: flex; gap: 5px; }
         .map-link { text-decoration: none; font-size: 13px; }
         .btn-delete-card { border: none; background: transparent; color: #a0a0a0; cursor: pointer; font-weight: bold;}
         .btn-delete-card:hover { color: var(--danger-color); }
 
-        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; }
+        .card-notes-input { border: none; font-size: 11px; color: #5e6c84; font-style: italic; width: 100%; outline: none; margin-top: 4px; cursor: text; }
         .card.allergy { border-left: 4px solid var(--danger-color); background-color: #fff9f8; }
 
         .add-card-form { padding: 6px; border-top: 1px solid #ddd; display: flex; gap: 4px; }
@@ -179,11 +190,12 @@
         </div>
     </header>
 
-    <!-- Structural Grid Elements -->
     <div class="top-row-grid" id="topGrid"></div>
     <div class="days-grid" id="daysGrid"></div>
 
     <script>
+        let draggedCard = null;
+
         const defaultLayout = [
             { id: "rules", title: "📌 Rules & Notes", subtitle: "Core Parameters", cards: [{ title: "⚠️ Dietary Safety", notes: "Trip Parameter", type: "allergy" }] },
             { id: "backlog", title: "🗂️ Backlog", subtitle: "Unassigned pool", cards: [{ title: "SF MOMA", notes: "Target Note", type: "" }] },
@@ -200,7 +212,6 @@
             { id: "day10", title: "📅 Day 10", subtitle: "Edit focus...", cards: [] }
         ];
 
-        // Shrinks keys drastically to keep URL footprint optimized
         function compressLayout(data) {
             return data.map(list => ({
                 i: list.id,
@@ -214,10 +225,9 @@
             }));
         }
 
-        // Restores shortened keys back to application parameters safely
         function decompressLayout(data) {
             if (!data || !Array.isArray(data)) return null;
-            if (data[0] && data[0].id) return data; // Already uncompressed
+            if (data[0] && data[0].id) return data; 
             return data.map(list => ({
                 id: list.i,
                 title: list.t,
@@ -296,7 +306,6 @@
         function loadBoardFromStorage() {
             let dataStructure = null;
 
-            // 1. Check URL Hash first for incoming dataset packages
             if (window.location.hash && window.location.hash.startsWith('#data=')) {
                 try {
                     const base64 = window.location.hash.replace('#data=', '');
@@ -304,20 +313,18 @@
                     dataStructure = decompressLayout(decrypted);
                     if (dataStructure) {
                         localStorage.setItem('sf_travel_board_state', JSON.stringify(dataStructure));
-                        window.location.hash = ''; // Clear clean URL footprint
+                        window.location.hash = ''; 
                     }
                 } catch(e) {
                     console.error("URL package structural read failure", e);
                 }
             }
 
-            // 2. LocalStorage Parsing with structural protection filters
             if (!dataStructure) {
                 try {
                     const rawData = localStorage.getItem('sf_travel_board_state');
                     if (rawData) {
                         const parsed = JSON.parse(rawData);
-                        // Filter out old container arrays if existing to prevent screen blanks
                         if (Array.isArray(parsed) && !parsed.some(item => item.isContainer)) {
                             dataStructure = parsed;
                         }
@@ -327,7 +334,6 @@
                 }
             }
 
-            // 3. Fallback to default structural layout
             if (!dataStructure) dataStructure = defaultLayout;
             
             const topGrid = document.getElementById('topGrid');
@@ -345,7 +351,6 @@
                 }
             });
 
-            // Re-render structural adding node inside Row 1 Space 4 slot position
             const plusSlot = document.createElement('div');
             plusSlot.className = 'add-day-placeholder';
             plusSlot.innerHTML = `<span>+</span>Add New Day Column`;
@@ -372,6 +377,47 @@
             container.className = 'card-container';
             (data.cards || []).forEach(cData => container.appendChild(buildCardNode(cData, data.id)));
 
+            // Drag Over Layout Handling
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+
+            // Card Drop Tracking Logic
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (!draggedCard) return;
+
+                const targetCard = e.target.closest('.card');
+                if (targetCard && targetCard !== draggedCard) {
+                    const rect = targetCard.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    container.insertBefore(draggedCard, next ? targetCard.nextSibling : targetCard);
+                } else {
+                    container.appendChild(draggedCard);
+                }
+
+                // Adjust map context rule variables if entering/leaving Rules block
+                const targetListId = list.getAttribute('data-list-id');
+                const actions = draggedCard.querySelector('.card-actions');
+                let mapLink = draggedCard.querySelector('.map-link');
+
+                if (targetListId === 'rules') {
+                    if (mapLink) mapLink.remove();
+                } else {
+                    if (!mapLink) {
+                        mapLink = document.createElement('a');
+                        mapLink.className = 'map-link';
+                        mapLink.target = '_blank';
+                        mapLink.textContent = '📍';
+                        const tVal = draggedCard.querySelector('.card-title-input').value;
+                        mapLink.href = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(tVal)}`;
+                        actions.insertBefore(mapLink, actions.firstChild);
+                    }
+                }
+                saveBoardToStorage();
+            });
+
             const form = document.createElement('div');
             form.className = 'add-card-form';
             const formInput = document.createElement('input');
@@ -382,19 +428,15 @@
             formBtn.className = 'add-card-btn';
             formBtn.textContent = "Add";
 
-            formBtn.onclick = () => {
+            const addCardAction = () => {
                 if(!formInput.value.trim()) return;
                 container.appendChild(buildCardNode({ title: formInput.value.trim(), notes: '', type: '' }, data.id));
                 formInput.value = '';
                 saveBoardToStorage();
             };
-            formInput.addEventListener('keypress', (e) => {
-                if(e.key === 'Enter' && formInput.value.trim()) {
-                    container.appendChild(buildCardNode({ title: formInput.value.trim(), notes: '', type: '' }, data.id));
-                    formInput.value = '';
-                    saveBoardToStorage();
-                }
-            });
+
+            formBtn.onclick = addCardAction;
+            formInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') addCardAction(); });
 
             form.appendChild(formInput);
             form.appendChild(formBtn);
@@ -408,7 +450,20 @@
         function buildCardNode(cData, listId) {
             const card = document.createElement('div');
             card.className = 'card';
+            card.setAttribute('draggable', 'true');
             if(cData.type) card.classList.add(cData.type);
+
+            // Drag Start tracking state handlers
+            card.addEventListener('dragstart', (e) => {
+                draggedCard = card;
+                card.style.opacity = '0.4';
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragend', () => {
+                draggedCard = null;
+                card.style.opacity = '1';
+            });
 
             const row = document.createElement('div');
             row.className = 'card-header-row';
@@ -426,7 +481,7 @@
                 mapLink.className = 'map-link';
                 mapLink.target = '_blank';
                 mapLink.textContent = '📍';
-                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cData.title)}`;
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(cData.title)}`;
                 actions.appendChild(mapLink);
             }
 
