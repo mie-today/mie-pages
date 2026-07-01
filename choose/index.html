@@ -3,159 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trip "This or That" Builder</title>
+    <title>Trip "This or That" Matcher</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .dragging { opacity: 0.5; border: 2px dashed #6366f1; }
-    </style>
 </head>
-<body class="bg-gray-100 min-h-screen py-6 px-3 sm:px-6 font-sans text-gray-800">
+<body class="bg-slate-50 min-h-screen py-6 px-3 sm:px-6 font-sans text-gray-800">
 
-    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-8 border border-slate-100">
+        
         <header class="text-center mb-6">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mb-1">✈️ Trip "This or That"</h1>
-            <p class="text-gray-500 text-xs sm:text-sm">Tap arrows/drag to reorder, delete options, or add your own custom choices!</p>
+            <h1 id="main-title" class="text-3xl font-black text-indigo-600 tracking-tight mb-1">✈️ Trip "This or That"</h1>
+            <p id="view-subtitle" class="text-slate-500 text-sm font-medium">Design your custom itinerary options.</p>
         </header>
 
-        <div class="bg-indigo-50 p-4 rounded-xl mb-6 border border-indigo-100">
-            <h3 class="text-sm font-bold text-indigo-800 mb-3">➕ Add Custom Option</h3>
-            <div class="flex flex-col gap-3 sm:flex-row sm:gap-2">
-                <input type="text" id="optionA" placeholder="Option A (e.g., Beach)" class="w-full px-3 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                <span class="text-center self-center text-xs font-black text-indigo-400 sm:block hidden">OR</span>
-                <input type="text" id="optionB" placeholder="Option B (e.g., Mountains)" class="w-full px-3 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                <button onclick="addNewPair()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base px-6 py-2.5 rounded-lg transition-colors shadow-sm step-click">Add</button>
+        <div id="creator-controls" class="space-y-4 mb-6">
+            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-inner">
+                <h3 class="text-xs font-black uppercase tracking-wider text-indigo-800 mb-2">➕ Add Custom Choice Pair</h3>
+                <div class="flex flex-col gap-2.5 sm:flex-row">
+                    <input type="text" id="optionA" placeholder="Option A (e.g., Beach)" class="w-full px-3 py-2 text-base sm:text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    <span class="text-center self-center text-xs font-black text-indigo-300 sm:block hidden">OR</span>
+                    <input type="text" id="optionB" placeholder="Option B (e.g., Mountains)" class="w-full px-3 py-2 text-base sm:text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                    <button onclick="addNewPair()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-lg transition-all text-sm shrink-0">Add</button>
+                </div>
             </div>
+            <button onclick="generateShareLink()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-base">
+                🔗 Generate Unique Share Link for Person B
+            </button>
         </div>
 
-        <div id="card-container" class="space-y-3">
+        <div id="voter-controls" class="hidden mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl text-center">
+            <p class="text-amber-900 font-semibold text-sm mb-3">Tap your choices below, then save to send them back!</p>
+            <button onclick="saveAndGenerateResults()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-md transition-all text-base">
+                💾 Save Choices & Copy Result Link
+            </button>
+        </div>
+
+        <div id="results-controls" class="hidden mb-6 bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-center">
+            <p class="text-emerald-900 font-bold text-sm">🎉 Preferences Locked! Here are the choices Person B submitted.</p>
+        </div>
+
+        <div id="card-container" class="space-y-3.5">
             </div>
     </div>
 
     <script>
-        // Default sample data
-        const defaultPairs = [
+        // Default list template
+        let customPairs = [
             { a: "Packed Itinerary", b: "Go with the Flow" },
             { a: "Mountain Hideaway", b: "Beachfront Resort" },
             { a: "Local Coffee Shops", b: "Matcha Bars" },
-            { a: "Active Outdoors", b: "Leisurely Indoors" },
-            { a: "Luxury Hotel Stay", b: "Cozy Airbnb" }
+            { a: "Active Outdoors", b: "Leisurely Indoors" }
         ];
 
+        let currentMode = 'create'; // 'create', 'vote', or 'results'
         const container = document.getElementById('card-container');
 
-        // Render the list
-        function renderPairs(pairs) {
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+
+            if (dataParam) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(escape(atob(dataParam))));
+                    customPairs = decoded;
+                    
+                    // Determine if this dataset already contains votes
+                    const hasVotes = customPairs.some(item => item.voted !== undefined);
+                    
+                    if (hasVotes) {
+                        currentMode = 'results';
+                        document.getElementById('creator-controls').classList.add('hidden');
+                        document.getElementById('results-controls').classList.remove('hidden');
+                        document.getElementById('main-title').innerText = "📊 Trip Results";
+                        document.getElementById('view-subtitle').innerText = "Here is what Person B selected!";
+                    } else {
+                        currentMode = 'vote';
+                        document.getElementById('creator-controls').classList.add('hidden');
+                        document.getElementById('voter-controls').classList.remove('hidden');
+                        document.getElementById('main-title').innerText = "🗳️ Vote Your Trip";
+                        document.getElementById('view-subtitle').innerText = "Select your choices below.";
+                    }
+                } catch (e) {
+                    alert("Link layout corrupted. Reverting to Creator Mode.");
+                    currentMode = 'create';
+                }
+            }
+            renderContainer();
+        });
+
+        function renderContainer() {
             container.innerHTML = '';
-            pairs.forEach(pair => createCard(pair.a, pair.b));
+            customPairs.forEach((pair, index) => {
+                if (currentMode === 'create') {
+                    createCreatorCard(pair.a, pair.b, index);
+                } else if (currentMode === 'vote') {
+                    createVotingCard(pair.a, pair.b, index);
+                } else if (currentMode === 'results') {
+                    createResultsCard(pair.a, pair.b, pair.voted, index);
+                }
+            });
         }
 
-        // Create a single card element
-        function createCard(a, b) {
+        // --- 1. CREATOR CARD MARKUP ---
+        function createCreatorCard(a, b, index) {
             const card = document.createElement('div');
-            // 'card-item' class used for domestic traversing
-            card.className = 'card-item flex items-center justify-between bg-white border border-gray-200 p-3 sm:p-4 rounded-xl cursor-grab active:cursor-grabbing transition-all hover:border-indigo-200 shadow-sm';
-            card.draggable = true;
-
+            card.className = 'flex items-center justify-between bg-white border border-slate-200 p-3 sm:p-4 rounded-xl shadow-sm gap-2';
             card.innerHTML = `
-                <div class="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 select-none">
-                    
-                    <div class="flex flex-col items-center justify-center text-gray-400 bg-gray-50 border border-gray-100 rounded-lg p-1 space-y-1">
-                        <button onclick="moveUp(this)" class="p-1 hover:text-indigo-600 active:scale-110 transition-transform" title="Move Up">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
-                            </svg>
-                        </button>
-                        <button onclick="moveDown(this)" class="p-1 hover:text-indigo-600 active:scale-110 transition-transform" title="Move Down">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="flex flex-1 items-center justify-between text-center px-1 sm:px-4 font-semibold text-xs sm:text-sm md:text-base min-w-0 gap-1.5">
-                        <span class="text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-2 rounded-lg flex-1 truncate max-w-[45%]">${a}</span>
-                        <span class="text-[10px] font-black text-gray-400 px-0.5 shrink-0">OR</span>
-                        <span class="text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-2 rounded-lg flex-1 truncate max-w-[45%]">${b}</span>
-                    </div>
+                <div class="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-lg p-1.5 space-y-1">
+                    <button onclick="changePriority(${index}, -1)" class="p-0.5 hover:text-indigo-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7" /></svg>
+                    </button>
+                    <button onclick="changePriority(${index}, 1)" class="p-0.5 hover:text-indigo-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
                 </div>
-
-                <button onclick="this.closest('.card-item').remove()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors shrink-0 ml-1" title="Delete">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                <div class="flex flex-1 items-center justify-between text-center font-bold text-xs sm:text-sm gap-2 min-w-0">
+                    <span class="text-indigo-700 bg-indigo-50/70 border border-indigo-100 p-2.5 rounded-lg flex-1 truncate">${a}</span>
+                    <span class="text-[10px] text-slate-400 font-black shrink-0">OR</span>
+                    <span class="text-emerald-700 bg-emerald-50/70 border border-emerald-100 p-2.5 rounded-lg flex-1 truncate">${b}</span>
+                </div>
+                <button onclick="deletePair(${index})" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
             `;
-
-            // Desktop Drag and Drop Listeners
-            card.addEventListener('dragstart', () => card.classList.add('dragging'));
-            card.addEventListener('dragend', () => card.classList.remove('dragging'));
-
             container.appendChild(card);
         }
 
-        // Mobile Tapping Mechanics for Position Changing
-         Berk
-        function moveUp(button) {
-            const currentCard = button.closest('.card-item');
-            const previousCard = currentCard.previousElementSibling;
-            if (previousCard) {
-                container.insertBefore(currentCard, previousCard);
-            }
+        // --- 2. VOTING CARD MARKUP ---
+        function createVotingCard(a, b, index) {
+            const card = document.createElement('div');
+            card.className = 'bg-white border border-slate-200 p-4 rounded-xl shadow-sm';
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-3 text-center font-bold text-sm sm:text-base">
+                    <button id="btn-${index}-a" onclick="castVote(${index}, 'a')" class="flex-1 p-3 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 rounded-xl transition-all duration-200 focus:outline-none flex flex-col items-center justify-center gap-1 min-w-0">
+                        <span class="text-indigo-800 break-words w-full text-sm sm:text-base">${a}</span>
+                        <span id="badge-${index}-a" class="hidden text-[10px] font-black uppercase text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full tracking-wider mt-1">✓ Chosen</span>
+                    </button>
+                    <span class="text-xs text-slate-400 font-black shrink-0 px-1">VS</span>
+                    <button id="btn-${index}-b" onclick="castVote(${index}, 'b')" class="flex-1 p-3 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30 rounded-xl transition-all duration-200 focus:outline-none flex flex-col items-center justify-center gap-1 min-w-0">
+                        <span class="text-emerald-800 break-words w-full text-sm sm:text-base">${b}</span>
+                        <span id="badge-${index}-b" class="hidden text-[10px] font-black uppercase text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full tracking-wider mt-1">✓ Chosen</span>
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
         }
 
-        function moveDown(button) {
-            const currentCard = button.closest('.card-item');
-            const nextCard = currentCard.nextElementSibling;
-            if (nextCard) {
-                container.insertBefore(nextCard, currentCard);
-            }
+        // --- 3. READ-ONLY RESULTS CARD MARKUP ---
+        function createResultsCard(a, b, voted, index) {
+            const card = document.createElement('div');
+            card.className = 'bg-white border border-slate-200 p-4 rounded-xl shadow-sm';
+            
+            const aClass = voted === 'a' 
+                ? 'border-2 border-indigo-500 bg-indigo-50/50 font-bold text-indigo-900 shadow-sm' 
+                : 'border border-slate-100 bg-slate-50 opacity-40 text-slate-400 line-through';
+                
+            const bClass = voted === 'b' 
+                ? 'border-2 border-emerald-500 bg-emerald-50/50 font-bold text-emerald-900 shadow-sm' 
+                : 'border border-slate-100 bg-slate-50 opacity-40 text-slate-400 line-through';
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between gap-3 text-center text-sm sm:text-base">
+                    <div class="flex-1 p-3 rounded-xl min-w-0 flex flex-col items-center justify-center ${aClass}">
+                        <span class="break-words w-full">${a}</span>
+                        ${voted === 'a' ? '<span class="text-[10px] font-black uppercase text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full mt-1">Picked</span>' : ''}
+                    </div>
+                    <span class="text-xs text-slate-300 font-black shrink-0 px-1">VS</span>
+                    <div class="flex-1 p-3 rounded-xl min-w-0 flex flex-col items-center justify-center ${bClass}">
+                        <span class="break-words w-full">${b}</span>
+                        ${voted === 'b' ? '<span class="text-[10px] font-black uppercase text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full mt-1">Picked</span>' : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
         }
 
-        // Add New Custom Option
+        // --- LOGIC MECHANICS ---
         function addNewPair() {
             const optA = document.getElementById('optionA').value.trim();
             const optB = document.getElementById('optionB').value.trim();
-
             if (optA && optB) {
-                createCard(optA, optB);
+                customPairs.push({ a: optA, b: optB });
                 document.getElementById('optionA').value = '';
                 document.getElementById('optionB').value = '';
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                renderContainer();
+            }
+        }
+
+        function deletePair(index) {
+            customPairs.splice(index, 1);
+            renderContainer();
+        }
+
+        function changePriority(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex >= 0 && targetIndex < customPairs.length) {
+                const temp = customPairs[index];
+                customPairs[index] = customPairs[targetIndex];
+                customPairs[targetIndex] = temp;
+                renderContainer();
+            }
+        }
+
+        function castVote(itemIndex, selection) {
+            customPairs[itemIndex].voted = selection;
+            const btnA = document.getElementById(`btn-${itemIndex}-a`);
+            const btnB = document.getElementById(`btn-${itemIndex}-b`);
+            const badgeA = document.getElementById(`badge-${itemIndex}-a`);
+            const badgeB = document.getElementById(`badge-${itemIndex}-b`);
+
+            if (selection === 'a') {
+                btnA.className = "flex-1 p-3 border-2 border-indigo-600 bg-indigo-50/60 rounded-xl scale-[1.02] shadow-sm transition-all flex flex-col items-center justify-center gap-1 min-w-0";
+                badgeA.classList.remove('hidden');
+                btnB.className = "flex-1 p-3 border border-slate-100 bg-slate-50 opacity-50 rounded-xl transition-all flex flex-col items-center justify-center gap-1 min-w-0";
+                badgeB.classList.add('hidden');
             } else {
-                alert("Please fill out both options before adding.");
+                btnB.className = "flex-1 p-3 border-2 border-emerald-600 bg-emerald-50/60 rounded-xl scale-[1.02] shadow-sm transition-all flex flex-col items-center justify-center gap-1 min-w-0";
+                badgeB.classList.remove('hidden');
+                btnA.className = "flex-1 p-3 border border-slate-100 bg-slate-50 opacity-50 rounded-xl transition-all flex flex-col items-center justify-center gap-1 min-w-0";
+                badgeA.classList.add('hidden');
             }
         }
 
-        // Desktop Mouse Drag Over Container Logic
-        container.addEventListener('dragover', e => {
-            e.preventDefault();
-            const afterElement = getDragAfterElement(container, e.clientY);
-            const currentDragging = document.querySelector('.dragging');
-            if (currentDragging) {
-                if (afterElement == null) {
-                    container.appendChild(currentDragging);
-                } else {
-                    container.insertBefore(currentDragging, afterElement);
-                }
-            }
-        });
-
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.card-item:not(.dragging)')];
-
-            return draggableElements.reduce((closest, child) => {
-                const box = child.getBoundingClientRect();
-                const offset = y - box.top - box.height / 2;
-                if (offset < 0 && offset > closest.offset) {
-                    return { offset: offset, element: child };
-                } else {
-                    return closest;
-                }
-            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        // Helper to compile data to encrypted string URL
+        function serializeData(array) {
+            return btoa(unescape(encodeURIComponent(JSON.stringify(array))));
         }
 
-        // Initial Setup Load
-        renderPairs(defaultPairs);
+        function generateShareLink() {
+            if (customPairs.length === 0) return alert("Add some options first!");
+            const cleanArray = customPairs.map(item => ({ a: item.a, b: item.b })); // Strip voting history if any exists
+            const uniqueUrl = `${window.location.origin}${window.location.pathname}?data=${serializeData(cleanArray)}`;
+            
+            navigator.clipboard.writeText(uniqueUrl).then(() => {
+                alert("🔗 Link copied! Send this to Person B so they can vote.");
+            });
+        }
+
+        // --- NEW STEP 4 METHOD: ENCODE ANSWERS IN NEW LINK ---
+        function saveAndGenerateResults() {
+            const unanswered = customPairs.some(pair => !pair.voted);
+            if (unanswered) {
+                alert("Please answer all questions before saving!");
+                return;
+            }
+
+            // Create a new URL containing the chosen answers
+            const resultUrl = `${window.location.origin}${window.location.pathname}?data=${serializeData(customPairs)}`;
+
+            navigator.clipboard.writeText(resultUrl).then(() => {
+                alert("💾 Choices Saved Successfully!\n\nThe results link has been copied to your clipboard. Send it back to Person A so they can see your final itinerary choices!");
+            }).catch(() => {
+                alert(`Saved! Copy this results link manually:\n\n${resultUrl}`);
+            });
+        }
     </script>
 </body>
 </html>
