@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trip "This or That" Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dragging { opacity: 0.5; border: 2px dashed #6366f1; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-6 px-3 sm:px-6 font-sans text-gray-800">
+
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-4 sm:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mb-1">✈️ Trip "This or That"</h1>
+            <p class="text-gray-500 text-xs sm:text-sm">Tap arrows/drag to reorder, delete options, or add your own custom choices!</p>
+        </header>
+
+        <div class="bg-indigo-50 p-4 rounded-xl mb-6 border border-indigo-100">
+            <h3 class="text-sm font-bold text-indigo-800 mb-3">➕ Add Custom Option</h3>
+            <div class="flex flex-col gap-3 sm:flex-row sm:gap-2">
+                <input type="text" id="optionA" placeholder="Option A (e.g., Beach)" class="w-full px-3 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <span class="text-center self-center text-xs font-black text-indigo-400 sm:block hidden">OR</span>
+                <input type="text" id="optionB" placeholder="Option B (e.g., Mountains)" class="w-full px-3 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                <button onclick="addNewPair()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base px-6 py-2.5 rounded-lg transition-colors shadow-sm step-click">Add</button>
+            </div>
+        </div>
+
+        <div id="card-container" class="space-y-3">
+            </div>
+    </div>
+
+    <script>
+        // Default sample data
+        const defaultPairs = [
+            { a: "Packed Itinerary", b: "Go with the Flow" },
+            { a: "Mountain Hideaway", b: "Beachfront Resort" },
+            { a: "Local Coffee Shops", b: "Matcha Bars" },
+            { a: "Active Outdoors", b: "Leisurely Indoors" },
+            { a: "Luxury Hotel Stay", b: "Cozy Airbnb" }
+        ];
+
+        const container = document.getElementById('card-container');
+
+        // Render the list
+        function renderPairs(pairs) {
+            container.innerHTML = '';
+            pairs.forEach(pair => createCard(pair.a, pair.b));
+        }
+
+        // Create a single card element
+        function createCard(a, b) {
+            const card = document.createElement('div');
+            // 'card-item' class used for domestic traversing
+            card.className = 'card-item flex items-center justify-between bg-white border border-gray-200 p-3 sm:p-4 rounded-xl cursor-grab active:cursor-grabbing transition-all hover:border-indigo-200 shadow-sm';
+            card.draggable = true;
+
+            card.innerHTML = `
+                <div class="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0 select-none">
+                    
+                    <div class="flex flex-col items-center justify-center text-gray-400 bg-gray-50 border border-gray-100 rounded-lg p-1 space-y-1">
+                        <button onclick="moveUp(this)" class="p-1 hover:text-indigo-600 active:scale-110 transition-transform" title="Move Up">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+                            </svg>
+                        </button>
+                        <button onclick="moveDown(this)" class="p-1 hover:text-indigo-600 active:scale-110 transition-transform" title="Move Down">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-1 items-center justify-between text-center px-1 sm:px-4 font-semibold text-xs sm:text-sm md:text-base min-w-0 gap-1.5">
+                        <span class="text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-2 rounded-lg flex-1 truncate max-w-[45%]">${a}</span>
+                        <span class="text-[10px] font-black text-gray-400 px-0.5 shrink-0">OR</span>
+                        <span class="text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-2 rounded-lg flex-1 truncate max-w-[45%]">${b}</span>
+                    </div>
+                </div>
+
+                <button onclick="this.closest('.card-item').remove()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 active:bg-red-50 rounded-lg transition-colors shrink-0 ml-1" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            `;
+
+            // Desktop Drag and Drop Listeners
+            card.addEventListener('dragstart', () => card.classList.add('dragging'));
+            card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+            container.appendChild(card);
+        }
+
+        // Mobile Tapping Mechanics for Position Changing
+         Berk
+        function moveUp(button) {
+            const currentCard = button.closest('.card-item');
+            const previousCard = currentCard.previousElementSibling;
+            if (previousCard) {
+                container.insertBefore(currentCard, previousCard);
+            }
+        }
+
+        function moveDown(button) {
+            const currentCard = button.closest('.card-item');
+            const nextCard = currentCard.nextElementSibling;
+            if (nextCard) {
+                container.insertBefore(nextCard, currentCard);
+            }
+        }
+
+        // Add New Custom Option
+        function addNewPair() {
+            const optA = document.getElementById('optionA').value.trim();
+            const optB = document.getElementById('optionB').value.trim();
+
+            if (optA && optB) {
+                createCard(optA, optB);
+                document.getElementById('optionA').value = '';
+                document.getElementById('optionB').value = '';
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            } else {
+                alert("Please fill out both options before adding.");
+            }
+        }
+
+        // Desktop Mouse Drag Over Container Logic
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(container, e.clientY);
+            const currentDragging = document.querySelector('.dragging');
+            if (currentDragging) {
+                if (afterElement == null) {
+                    container.appendChild(currentDragging);
+                } else {
+                    container.insertBefore(currentDragging, afterElement);
+                }
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.card-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Initial Setup Load
+        renderPairs(defaultPairs);
+    </script>
+</body>
+</html>
