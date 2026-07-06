@@ -877,9 +877,9 @@ function initMoPicker(){
 
 function bindAll(s){
   // Calendar
-  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();});
-  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();});
-  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();});
+  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();loadHealth();});
+  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();loadHealth();});
+  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();_resetMonthScopedState();loadEvents();loadFinance();loadHealth();});
   // Month/Year picker
   initMoPicker();
   // Calendars popup
@@ -2163,6 +2163,7 @@ function decideState(){
 function _resetMonthScopedState(){
   _dataFlags.events=null;
   _dataFlags.finance=null;
+  _dataFlags.health=null; // [수정] Health가 monthly로 바뀌면서 이것도 월 이동 시 리셋 대상에 포함되어야 함
   _autoStateDone=false;
 }
 
