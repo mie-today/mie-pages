@@ -169,26 +169,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 /* ── Health card ── */
 .health-card{flex-shrink:0;}
-.h-vitals{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
-.h-vc{background:var(--bg2);border-radius:7px;padding:6px 9px;}
-.h-vi{font-size:12px;margin-bottom:2px;}
-.h-vv{font-size:12px;font-weight:500;color:var(--txt);}
-.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
-.h-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
-.h-cell{display:flex;flex-direction:column;gap:1px;}
-.h-main{font-size:11px;font-weight:500;color:var(--txt);}
-.h-sub{font-size:9px;color:var(--txt3);}
-.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
-.hwl{display:flex;flex-direction:column;}
-.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
-.hw-lbl{font-size:9px;color:var(--txt3);}
-.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
-.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
-
-/* compact health: hide rows & weight */
-.h-compact .h-row,.h-compact .h-wt{display:none;}
-.h-compact .h-vitals{gap:4px;}
-.h-compact .h-vc{padding:5px 7px;}
+.h-summary{display:flex;flex-direction:column;gap:6px;}
+.h-line{font-size:11px;color:var(--txt);line-height:1.4;}
+.h-line b{font-weight:600;color:var(--txt3);font-size:9px;text-transform:uppercase;letter-spacing:.03em;margin-right:6px;}
+.h-compact .h-line{font-size:10px;}
 
 /* ── Input card ── */
 .input-card{flex:1;display:flex;flex-direction:column;}
@@ -229,23 +213,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .unit-btn:last-child{border-right:none;}
 .unit-btn:hover{color:var(--txt);}
 .unit-btn.on{background:var(--blue);color:#fff;}
-/* Health 2-line vitals */
-.h-vc-top{display:flex;align-items:center;gap:4px;margin-bottom:2px;}
-.h-vi{font-size:11px;flex-shrink:0;}
-.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;line-height:1.2;}
-.h-vv{font-size:13px;font-weight:600;color:var(--txt);line-height:1.2;}
-/* 4-col calorie/steps/water row */
-.h-row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:5px;padding:5px 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);}
-.h-cell{display:flex;flex-direction:column;gap:1px;}
-.h-main{font-size:11px;font-weight:600;color:var(--txt);}
-.h-sub{font-size:9px;color:var(--txt3);}
-/* Weight row */
-.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
-.hwl{display:flex;flex-direction:column;}
-.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
-.hw-lbl{font-size:9px;color:var(--txt3);}
-.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
-.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
+/* Health summary line styling now lives in the single .h-summary/.h-line block above */
 /* Add panel B-plan */
 .add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
 .add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
@@ -398,7 +366,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <span id="wb-wx"></span>
     </div>
     <div class="tb-avatar" id="tb-av"></div>
-    <button class="tb-signout" id="refresh-btn" title="Reload Finance/Health/Tasks/Projects/Events data">Refresh</button>
     <button class="tb-signout" id="signout-btn">Sign out</button>
   </div>
 </div>
@@ -1545,8 +1512,15 @@ document.getElementById('signout-btn').addEventListener('click',function(){
   fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){window.location.replace('/');});
 });
 
-/* ── Manual refresh (다른 세션에서 바뀐 데이터 반영용, polling 없음) ── */
-document.getElementById('refresh-btn').addEventListener('click',function(){
+/* ── 다른 세션에서 바뀐 데이터 반영: 탭 포커스 복귀 시 자동 새로고침 ──
+   버튼 없음. 이 탭에서 다른 탭/앱으로 갔다가 돌아올 때만 발동.
+   너무 잦은 재요청을 막기 위해 마지막 실행 후 최소 10초 간격을 둠. ── */
+var _lastAutoRefreshAt=0;
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='visible')return;
+  var now=Date.now();
+  if(now-_lastAutoRefreshAt<10000)return; // 10초 미만이면 스킵(연속 탭 전환 시 과호출 방지)
+  _lastAutoRefreshAt=now;
   _resetAllDataState();
 });
 
@@ -1824,7 +1798,9 @@ function loadFinance(){
       buildCalGridFromEvents();
       // Finance 카드 렌더링 후 _checkAllLoaded 호출
       renderFinance(data);
-      _dataFlags.finance=true;
+      // [합의된 수정] summary 객체 존재 여부가 아니라 실제 거래 유무로 판정
+      var hasRealTransactions=(data.income||[]).length>0||(data.expenses||[]).length>0||(data.savings||[]).length>0;
+      _dataFlags.finance=hasRealTransactions;
       _checkAllLoaded();
     })
     .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();});
@@ -1865,83 +1841,80 @@ function renderFinance(data){
 
 /* ── Health API ── */
 function loadHealth(){
-  var now=new Date();
-  var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var body=document.getElementById('health-card-body');
-  fetch(BACKEND+'/api/me/health?date='+ds+'&period=daily&tab=all',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data){var hbody=document.getElementById('health-card-body');if(hbody)hbody.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.health=false;_checkAllLoaded();return;}
-      // 실제 데이터가 있는지 확인 (빈 배열/빈 summary 제외)
-      var s=data.summary||{};var arr=data.health||[];
-      var hasRealData=(arr.length>0)||Object.keys(s).some(function(k){return s[k]!=null&&s[k]!==0;});
-      _dataFlags.health=hasRealData;
-      _checkAllLoaded();
-      renderHealthData(data);
-    })
-    .catch(function(){_dataFlags.health=false;_checkAllLoaded();});
+  // [재설계] 오늘 하루(daily) 대신 현재 보고 있는 달(monthly) 전체를 조회.
+  // tab=all은 백엔드 기준 food/activity/health/sleep/mood/custom 6개만 포함하므로
+  // (index.js tabsToFetch 참고, water/medication/womens는 안 걸림),
+  // hasHealth 판정에 필요한 3개 탭은 별도로 개별 요청한다.
+  // → 이건 백엔드 index.js 수정 없이도 되는 프론트 전용 워크어라운드다.
+  // 백엔드가 나중에 tab=all에 13개 탭을 다 포함시키면 이 3개 fetch는 지워도 된다.
+  var ym1st=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-01';
+  var base=BACKEND+'/api/me/health?date='+ym1st+'&period=monthly';
+  Promise.all([
+    fetch(base+'&tab=all',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}),
+    fetch(base+'&tab=womens',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}),
+    fetch(base+'&tab=water',{credentials:'include'}).then(function(r){return r.ok?r.json():null;}),
+    fetch(base+'&tab=medication',{credentials:'include'}).then(function(r){return r.ok?r.json():null;})
+  ]).then(function(results){
+    var all=results[0]||{}, womensRes=results[1]||{}, waterRes=results[2]||{}, medRes=results[3]||{};
+    var health=all.health||[], sleep=all.sleep||[], mood=all.mood||[], custom=all.custom||[],
+        food=all.food||[], activity=all.activity||[];
+    var womens=womensRes.womens||[], water=waterRes.water||[], medication=medRes.medication||[];
+    // hasHealth: 카드에 안 보이는 Mood/Water/Medication도 판정엔 포함 (합의된 내용)
+    var hasRealData = health.length>0||sleep.length>0||mood.length>0||custom.length>0||
+                      food.length>0||activity.length>0||womens.length>0||water.length>0||medication.length>0;
+    _dataFlags.health=hasRealData;
+    _checkAllLoaded();
+    renderHealthData({health:health, sleep:sleep, womens:womens});
+  }).catch(function(){_dataFlags.health=false;_checkAllLoaded();});
 }
-function renderHealth(data){
-  var body=document.getElementById('health-card-body');if(!body)return;
-  var s=data.summary||{};
-  var healthArr=data.health||[];
-  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
-  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
 
-  // Vitals
-  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
-  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
-  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
-  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
-
-  var html='<div class="h-vitals">';
-  html+='<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">'+(bp||'—')+'</div><div class="h-vl">Blood Pressure</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">'+(hr||'—')+'</div><div class="h-vl">Heart Rate</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">'+(spo2||'—')+'</div><div class="h-vl">SpO2</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">'+(gluc||'—')+'</div><div class="h-vl">Glucose</div></div>';
-  html+='</div>';
-
-  if(!compact){
-    // Cal Intake / Burned
-    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
-    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
-    if(calIn||calB){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div></div>';
-    }
-    // Steps / Water
-    var steps=s.total_steps?s.total_steps.toLocaleString():null;
-    var dist=s.total_distance_km?s.total_distance_km.toFixed(2)+' km':null;
-    var water=s.water_ml?s.water_ml.toLocaleString()+' ml':null;
-    if(steps||water){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(water||'—')+'</div><div class="h-sub">Water</div></div></div>';
-    }
-    // Sleep / Mood
-    var sleepStr=null;
-    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
-    var mood=s.mood||null;
-    if(sleepStr||mood){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Quality '+s.sleep_quality+'/5':'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
-    }
-    // Weight
-    if(lh&&lh.weight_kg){
-      var wkg=lh.weight_kg.toFixed(1);
-      var wlb=(lh.weight_kg*2.20462).toFixed(2);
-      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wkg+' kg / '+wlb+' lb</div><div class="hw-lbl">Weight today</div></div></div>';
-    }
+// 월간 BP/HR/Glucose/Weight 집계. HR/Glucose의 Rest·Active, Fasting·Post-meal 구분은
+// 백엔드 health(Body) 시트에 해당 컨텍스트 필드가 아직 없어(index.js 확인함) 실제로는
+// 항상 미구분 값만 온다 — 필드가 있으면 자동으로 분리 표시되도록 만들어둠(hr_context/glucose_context 가정).
+function _aggHealthMonthly(health){
+  function stats(vals){
+    vals=vals.filter(function(v){return v!=null&&!isNaN(v);});
+    if(!vals.length)return null;
+    var sum=vals.reduce(function(a,b){return a+b;},0);
+    return {avg:Math.round((sum/vals.length)*10)/10, low:Math.min.apply(null,vals), high:Math.max.apply(null,vals)};
   }
-
-  body.innerHTML=html;
+  var bpSys=stats(health.map(function(h){return h.blood_pressure_sys;}));
+  var bpDia=stats(health.map(function(h){return h.blood_pressure_dia;}));
+  var weight=stats(health.map(function(h){return h.weight_kg;}));
+  var hrRest=[],hrActive=[],hrAll=[];
+  health.forEach(function(h){
+    if(h.heart_rate_bpm==null)return;
+    hrAll.push(h.heart_rate_bpm);
+    if(h.heart_rate_context==='rest')hrRest.push(h.heart_rate_bpm);
+    else if(h.heart_rate_context==='active')hrActive.push(h.heart_rate_bpm);
+  });
+  var glucFast=[],glucPost=[],glucAll=[];
+  health.forEach(function(h){
+    if(h.glucose_mgdl==null)return;
+    glucAll.push(h.glucose_mgdl);
+    if(h.glucose_context==='fasting')glucFast.push(h.glucose_mgdl);
+    else if(h.glucose_context==='post_meal')glucPost.push(h.glucose_mgdl);
+  });
+  var avg=function(a){return a.length?Math.round((a.reduce(function(x,y){return x+y;},0)/a.length)):null;};
+  return {
+    bpSys:bpSys, bpDia:bpDia, weight:weight,
+    hr:{rest:avg(hrRest), active:avg(hrActive), combined:avg(hrAll), hasContext:hrRest.length>0||hrActive.length>0},
+    glucose:{fasting:avg(glucFast), post:avg(glucPost), combined:avg(glucAll), hasContext:glucFast.length>0||glucPost.length>0}
+  };
 }
-
+function _fmtMD(dateStr){
+  if(!dateStr)return null;
+  var d=new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime()))return dateStr;
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+/* [재설계] renderHealth(data): 구 daily 스냅샷 렌더러 — 더 이상 안 씀 (dead code였던 것 제거) */
 
 /* ── Unit toggle (Health) ── */
 var currentUnit2='metric';
 var UNIT_DATA2={
-  metric:{dist:'km',water_unit:'ml',wtFmt:function(kg){return kg.toFixed(1)+' kg / '+(kg*2.20462).toFixed(2)+' lb';},wdiff:'kg'},
-  us:    {dist:'mi', water_unit:'fl oz',wtFmt:function(kg){return (kg*2.20462).toFixed(2)+' lb / '+kg.toFixed(1)+' kg';},wdiff:'lb'}
+  metric:{wtFmt:function(kg){return kg.toFixed(1)+' kg';}},
+  us:    {wtFmt:function(kg){return (kg*2.20462).toFixed(1)+' lb';}}
 };
 function setUnit(u){
   currentUnit2=u;
@@ -1949,59 +1922,69 @@ function setUnit(u){
   var bu=document.getElementById('btn-us');
   if(bm)bm.classList.toggle('on',u==='metric');
   if(bu)bu.classList.toggle('on',u==='us');
-  // Re-render health with new unit if data available
-  var body=document.getElementById('health-card-body');
-  if(body&&window._lastHealthData)renderHealthData(window._lastHealthData);
+  if(window._lastHealthData)renderHealthData(window._lastHealthData);
 }
+
+/* [재설계 2026-07] 월간 6줄 요약 — compact(S4/S8)와 full-width(S3/S6) 동일 내용.
+   빈 줄은 통째로 숨김. HR/Glucose는 컨텍스트 필드 있는 쪽만 표시(둘 다 없으면 결합 평균으로 폴백).
+   Period는 womens 탭의 이번 달 period_start/period_end 사용 — 월경계 넘는 기간은
+   시작월 기준으로만 잡히는 백엔드 matchesPeriod_ 한계가 있음(알려진 제약, 이번 라운드 미해결). */
 function renderHealthData(data){
   window._lastHealthData=data;
   var body=document.getElementById('health-card-body');if(!body)return;
-  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
-  var s=data.summary||{};
-  var healthArr=data.health||[];
-  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
+  var health=data.health||[];
+  var sleep=data.sleep||[];
+  var womens=data.womens||[];
   var u=UNIT_DATA2[currentUnit2]||UNIT_DATA2['metric'];
-  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
-  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
-  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
-  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
-  var html='<div class="h-vitals">';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩺</span><span class="h-vl">Blood Pressure</span></div><div class="h-vv">'+(bp||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">❤️</span><span class="h-vl">Heart Rate</span></div><div class="h-vv">'+(hr||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🌬️</span><span class="h-vl">SpO2</span></div><div class="h-vv">'+(spo2||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩸</span><span class="h-vl">Glucose</span></div><div class="h-vv">'+(gluc||'—')+'</div></div>';
-  html+='</div>';
-  if(!compact){
-    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
-    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
-    var steps=s.total_steps?s.total_steps.toLocaleString():null;
-    var dist=s.total_distance_km?(currentUnit2==='us'?(s.total_distance_km*0.621371).toFixed(2)+' mi':s.total_distance_km.toFixed(2)+' km'):null;
-    var waterRaw=s.water_ml||null;
-    var waterStr=waterRaw?(currentUnit2==='us'?(waterRaw/29.5735).toFixed(1)+' fl oz':waterRaw.toLocaleString()+' ml'):null;
-    html+='<div class="h-row4">';
-    html+='<div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(waterStr||'—')+'</div><div class="h-sub">Water</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
-    html+='</div>';
-    var sleepStr=null;
-    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
-    var mood=s.mood||null;
-    if(sleepStr||mood){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Q'+s.sleep_quality+'/5':'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
-    }
-    if(lh&&lh.weight_kg){
-      var wval=u.wtFmt(lh.weight_kg);
-      var wdiff=(lh.weight_diff_kg!=null)?(lh.weight_diff_kg<0?'↓ ':'↑ ')+Math.abs(lh.weight_diff_kg).toFixed(1)+' '+u.wdiff:'';
-      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wval+'</div><div class="hw-lbl">Weight today</div></div>';
-      if(wdiff)html+='<div style="text-align:right"><div class="hw-diff">'+wdiff+'</div><div class="hw-dlbl">vs last week</div></div>';
-      html+='</div>';
-    }
+  var agg=_aggHealthMonthly(health);
+  var lines=[];
+
+  if(agg.bpSys)lines.push('<div class="h-line"><b>BP Sys</b>  Avg '+agg.bpSys.avg+' · Low '+agg.bpSys.low+' · High '+agg.bpSys.high+'</div>');
+  if(agg.bpDia)lines.push('<div class="h-line"><b>BP Dia</b>  Avg '+agg.bpDia.avg+' · Low '+agg.bpDia.low+' · High '+agg.bpDia.high+'</div>');
+
+  var hrParts=[];
+  if(agg.hr.hasContext){
+    if(agg.hr.rest!=null)hrParts.push('Rest Avg '+agg.hr.rest+' bpm');
+    if(agg.hr.active!=null)hrParts.push('Active Avg '+agg.hr.active+' bpm');
+  } else if(agg.hr.combined!=null){
+    hrParts.push('Avg '+agg.hr.combined+' bpm'); // Rest/Active 구분 필드 없음 → 결합 평균 폴백
   }
-  body.innerHTML=html;
+  if(hrParts.length)lines.push('<div class="h-line"><b>HR</b>  '+hrParts.join(' | ')+'</div>');
+
+  var glucParts=[];
+  if(agg.glucose.hasContext){
+    if(agg.glucose.fasting!=null)glucParts.push('Fasting '+agg.glucose.fasting);
+    if(agg.glucose.post!=null)glucParts.push('Post-meal '+agg.glucose.post);
+  } else if(agg.glucose.combined!=null){
+    glucParts.push('Avg '+agg.glucose.combined+' mg/dL'); // Fasting/Post 구분 필드 없음 → 결합 평균 폴백
+  }
+  if(glucParts.length)lines.push('<div class="h-line"><b>Glucose</b>  '+glucParts.join(' | ')+'</div>');
+
+  if(agg.weight){
+    var w=agg.weight;
+    lines.push('<div class="h-line"><b>Weight</b>  Avg '+u.wtFmt(w.avg)+' · Low '+u.wtFmt(w.low)+' · High '+u.wtFmt(w.high)+'</div>');
+  }
+
+  var sleepVals=sleep.map(function(s){return s.duration_min;}).filter(function(v){return v!=null;});
+  if(sleepVals.length){
+    var avgMin=sleepVals.reduce(function(a,b){return a+b;},0)/sleepVals.length;
+    var hrs=Math.floor(avgMin/60),mins=Math.round(avgMin%60);
+    lines.push('<div class="h-line"><b>Sleep</b>  Avg '+hrs+'h '+mins+'m</div>');
+  }
+
+  var periodEntry=womens.filter(function(w){return w.period_start;}).slice(-1)[0];
+  if(periodEntry&&periodEntry.period_start){
+    var startStr=_fmtMD(periodEntry.period_start);
+    var endStr=periodEntry.period_end?_fmtMD(periodEntry.period_end):null;
+    lines.push('<div class="h-line"><b>Period</b>  '+startStr+(endStr?' – '+endStr:' (ongoing)')+'</div>');
+  }
+
+  body.innerHTML = lines.length
+    ? '<div class="h-summary">'+lines.join('')+'</div>'
+    : '<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data this month</div>';
 }
 
+/* ── Add panel 2 (5-tab B-plan) ── */
 /* ── Add panel 2 (5-tab B-plan) ── */
 var ADD2_TYPES=['ev','tk','fin','hl','pr'];
 var add2Invitees=[];
