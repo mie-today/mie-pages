@@ -33,11 +33,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
 .tb-signout:hover{text-decoration:underline;}
 /* ========== LAYOUT ========== */
-/* State 1: 2 cols (60/40). Mid col hidden. Right col = s1-task + input */
-/* State 2: 3 cols (40/30/30). Mid = today-card. Right = fin + input */
-/* State 3: 3 cols (40/30/30). Mid = task + proj. Right = fin + health + input */
-/* State 4: 3 cols (40/30/30). Mid = today-card. Right = fin + health-compact + input */
-/* State 5: 3 cols (40/30/30). Mid = task + proj. Right = fin + input */
+/* Unified layout (fixed, no states): 3 cols.
+   Left = Calendar. Mid = Day View (Events incl. Finance/Health/Project sub-dividers, then Tasks).
+   Right = Input panel, collapsible to a slim icon strip via the ‹ / › toggle.
+   Closed widths: 46fr 34fr 20fr. Open widths: 40fr 30fr 30fr. */
 
 .grid{display:grid;flex:1;gap:14px;padding:14px 24px;overflow:hidden;min-height:0;grid-template-rows:1fr;align-items:stretch;align-content:stretch;}
 
@@ -142,57 +141,16 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
 .task-tag.done{background:var(--bg3);color:var(--txt3);}
 
-/* ── Task card ── */
-.task-card{overflow:hidden;min-height:0;display:flex;flex-direction:column;}
-
-/* ── Projects card ── */
-.proj-card{overflow:hidden;min-height:0;display:flex;flex-direction:column;}
-.proj-item{display:flex;flex-direction:column;padding:5px 0;border-bottom:.5px solid var(--b1);}
-.proj-item:last-child{border-bottom:none;}
-.proj-r1{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-.proj-name{font-size:11px;font-weight:500;color:var(--txt);}
-.proj-pct{font-size:10px;color:var(--txt3);}
-.proj-bar-wrap{width:100%;height:3px;background:var(--bg3);border-radius:2px;margin-bottom:3px;}
-.proj-bar{height:3px;border-radius:2px;}
-.proj-meta{font-size:9px;color:var(--txt3);}
-
-/* ── Finance card ── */
-.fin-card{flex-shrink:0;}
-.fin-rem{font-size:22px;font-weight:300;color:var(--txt);margin-bottom:6px;}
-.fin-rem span{font-size:11px;font-weight:400;color:var(--txt3);margin-left:3px;}
-.fin-bar{height:5px;border-radius:3px;background:var(--bg3);display:flex;overflow:hidden;margin-bottom:9px;gap:1px;}
-.fin-seg{height:100%;}
-.fin-legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;}
-.fin-li{display:flex;align-items:center;gap:5px;}
-.fin-ld{width:7px;height:7px;border-radius:50%;}
-.fin-lt{font-size:10px;color:var(--txt2);}
-
-/* ── Health card ── */
-.health-card{flex-shrink:0;}
-.h-vitals{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
-.h-vc{background:var(--bg2);border-radius:7px;padding:6px 9px;}
-.h-vi{font-size:12px;margin-bottom:2px;}
-.h-vv{font-size:12px;font-weight:500;color:var(--txt);}
-.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
-.h-row{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px;}
-.h-cell{display:flex;flex-direction:column;gap:1px;}
-.h-main{font-size:11px;font-weight:500;color:var(--txt);}
-.h-sub{font-size:9px;color:var(--txt3);}
-.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
-.hwl{display:flex;flex-direction:column;}
-.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
-.hw-lbl{font-size:9px;color:var(--txt3);}
-.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
-.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
-
-/* compact health: hide rows & weight */
-.h-compact .h-row,.h-compact .h-wt{display:none;}
-.h-compact .h-vitals{gap:4px;}
-.h-compact .h-vc{padding:5px 7px;}
+/* ── Input strip (collapsed state) ── */
+.input-strip{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;padding:12px 0;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);}
+.input-strip-lbl{writing-mode:vertical-rl;font-size:11px;color:var(--txt2);letter-spacing:1px;}
+.input-toggle-btn{width:26px;height:26px;border-radius:8px;border:.5px solid var(--b1);background:var(--bg);color:var(--txt2);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;}
+.input-toggle-btn:hover{background:var(--bg2);}
+.input-close-btn{margin:0 4px 0 6px;}
 
 /* ── Input card ── */
 .input-card{flex:1;display:flex;flex-direction:column;}
-.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.inp-tabs{display:flex;align-items:center;border-bottom:.5px solid var(--b1);flex-shrink:0;}
 .inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
 .inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
 .inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 12px;}
@@ -223,29 +181,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .add-type-btn{flex:1;padding:8px;border:.5px solid var(--b1);border-radius:8px;background:var(--bg2);font-family:'Inter',sans-serif;font-size:11px;color:var(--txt2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .12s;}
 .add-type-btn:hover,.add-type-btn.sel{background:rgba(28,126,214,.08);border-color:var(--blue);color:var(--blue);}
 .add-ic{width:22px;height:22px;color:inherit;}
-/* ── Unit toggle (Health) ── */
-.unit-toggle{display:flex;align-items:center;border:.5px solid var(--b1);border-radius:5px;overflow:hidden;flex-shrink:0;}
-.unit-btn{font-size:9px;font-weight:600;padding:3px 8px;background:var(--bg2);color:var(--txt3);border:none;border-right:.5px solid var(--b1);cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;letter-spacing:.02em;}
-.unit-btn:last-child{border-right:none;}
-.unit-btn:hover{color:var(--txt);}
-.unit-btn.on{background:var(--blue);color:#fff;}
-/* Health 2-line vitals */
-.h-vc-top{display:flex;align-items:center;gap:4px;margin-bottom:2px;}
-.h-vi{font-size:11px;flex-shrink:0;}
-.h-vl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;line-height:1.2;}
-.h-vv{font-size:13px;font-weight:600;color:var(--txt);line-height:1.2;}
-/* 4-col calorie/steps/water row */
-.h-row4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:5px;padding:5px 0;border-top:.5px solid var(--b1);border-bottom:.5px solid var(--b1);}
-.h-cell{display:flex;flex-direction:column;gap:1px;}
-.h-main{font-size:11px;font-weight:600;color:var(--txt);}
-.h-sub{font-size:9px;color:var(--txt3);}
-/* Weight row */
-.h-wt{border-top:.5px solid var(--b1);margin-top:5px;padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
-.hwl{display:flex;flex-direction:column;}
-.hw-val{font-size:12px;font-weight:500;color:var(--txt);}
-.hw-lbl{font-size:9px;color:var(--txt3);}
-.hw-diff{font-size:11px;font-weight:500;color:var(--teal);}
-.hw-dlbl{font-size:9px;color:var(--txt3);text-align:right;}
 /* Add panel B-plan */
 .add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
 .add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
@@ -289,29 +224,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .add-sub{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;flex-shrink:0;}
 .add-sub:hover{opacity:.9;}
 .add-st{font-size:10px;min-height:13px;flex-shrink:0;}
-
-/* State-1 task (in right col) */
-.s1-task-card{flex-shrink:0;}
-
-/* ── Calendar event list (below grid, for extra calendars) ── */
-.cal-ev-section{flex-shrink:0;border-top:.5px solid var(--b1);overflow:hidden;}
-.cal-ev-hdr{padding:7px 14px 3px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
-.cal-ev-list{overflow-y:auto;max-height:180px;padding-bottom:8px;}
-.cal-ev-list::-webkit-scrollbar{width:3px;}
-.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-.cal-ev-list{padding:6px 10px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;max-height:228px;}
-.cal-ev-list::-webkit-scrollbar{width:3px;}
-.cal-ev-list::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-.cal-ev-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 4px;font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
-.cal-ev-row{display:flex;align-items:stretch;gap:0;padding:4px 14px;cursor:pointer;border-left:2px solid transparent;}
-.cal-ev-row:hover{background:var(--bg2);}
-.cal-ev-bar{width:2.5px;border-radius:2px;flex-shrink:0;margin-right:10px;align-self:stretch;min-height:16px;}
-.cal-ev-time-col{width:86px;flex-shrink:0;font-size:10px;color:var(--txt3);line-height:1.4;padding-top:1px;}
-.cal-ev-info{flex:1;min-width:0;}
-.cal-ev-title{font-size:11px;font-weight:400;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5;}
-.cal-ev-title.is-link{color:var(--blue);}
-.cal-ev-loc{font-size:10px;color:var(--txt3);margin-top:1px;}
-.cal-ev-empty{font-size:11px;color:var(--txt3);text-align:center;padding:10px 0;font-style:italic;}
 
 /* Popup: two sections separator */
 .cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px;padding-top:8px;border-top:.5px solid var(--b1);}
@@ -467,14 +379,14 @@ var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
 var _finByDate={};  // 날짜별 Finance 거래 목록 {YYYY-MM-DD: [{type,category,amount,notes}]}
-/* ── Auto-state: 각 데이터 로드 결과 추적 ── */
-var _dataFlags={events:null,tasks:null,finance:null,health:null,projects:null};
-var _autoStateDone=false; // 이미 자동 전환했으면 다시 안 함
+var _healthByDate={}; // 날짜별 Health 기록 {YYYY-MM-DD: {...record}}
+// 가정: /api/me/health?month=YYYY-MM&period=monthly 가 그 달 전체 기록을
+// 날짜(date) 필드 포함 배열로 반환한다는 전제로 아래 loadHealth()를 작성함.
+// 실제 백엔드 응답 포맷이 다르면 loadHealth()의 그룹핑 로직만 수정하면 됨.
 
 var selectedDateStr=null; // 달력에서 클릭된 날짜
-var calHasTodayCard=false; // S2/S4에서는 Today카드가 이벤트를 담당
-var calYear=2026, calMonth=5;
-var currentState=3;
+var _initD=new Date();
+var calYear=_initD.getFullYear(), calMonth=_initD.getMonth();
 var curViewEv=null, curEditEv=null, selFile=null;
 
 var DEMO_CAL=[
@@ -547,10 +459,6 @@ function calCardHTML(){
       +'<div class="cal-dow-row"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div><div class="cal-dow">THURS</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>'
       +'<div class="cal-grid" id="cal-grid"></div>'
     +'</div>'
-    +'<div class="cal-ev-section" id="cal-ev-section">'
-      +'<div class="cal-ev-hdr"><span>Events</span><span id="cal-ev-hdr-lbl" style="font-size:10px;font-weight:400;color:var(--txt2);text-transform:none;letter-spacing:0;"></span></div>'
-      +'<div class="cal-ev-list" id="cal-ev-list"></div>'
-    +'</div>'
     +'<div class="cal-foot">'
       +'<span class="cal-leg-lbl">Calendars</span>'
       +'<div class="leg-items" id="cal-leg"></div>'
@@ -578,78 +486,10 @@ function todayCardHTML(){
   +'</div>';
 }
 
-function taskCardHTML(){
-  return '<div class="card task-card">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      +'Task</span>'
-      +'<select class="all-list-sel" id="task-list-filter" onchange="renderTasksByFilter()"><option value="all">All List ▾</option></select>'
-    +'</div>'
-    +'<div class="card-body" id="task-list"></div>'
-  +'</div>';
-}
-
-function projCardHTML(){
-  return '<div class="card proj-card">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>'
-      +'Projects</span>'
-      +'<button class="card-hd-link">All →</button>'
-    +'</div>'
-    +'<div class="card-body" id="proj-list"></div>'
-  +'</div>';
-}
-
-
-function finCardHTML(){
-  return '<div class="card fin-card">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg>'
-      +'Finance — Monthly</span><button class="card-hd-link">›</button></div>'
-    +'<div class="card-body" id="fin-card-body">'
-      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
-    +'</div>'
-  +'</div>';
-}
-
-function healthCardHTML(compact){
-  var unitHtml='<div class="unit-toggle"><button class="unit-btn on" id="btn-metric" onclick="setUnit(\'metric\')">Metric</button><button class="unit-btn" id="btn-us" onclick="setUnit(\'us\')">US</button></div>';
-  var bodyId='health-card-body';
-  return '<div class="card health-card'+(compact?' h-compact':'')+'" id="health-card-wrap">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>'
-      +'Health</span>'
-      +'<div style="display:flex;align-items:center;gap:8px;">'+unitHtml+'<button class="card-hd-link">View all →</button></div>'
-    +'</div>'
-    +'<div class="card-body" id="'+bodyId+'">'
-      +'<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">Loading…</div>'
-    +'</div>'
-  +'</div>';
-}
-function projCardHTML(){
-  return '<div class="card proj-card">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>'
-      +'Projects</span>'
-      +'<button class="card-hd-link">All →</button>'
-    +'</div>'
-    +'<div class="card-body" id="proj-list"></div>'
-  +'</div>';
-}
-
-
-function s1TaskCardHTML(){
-  return '<div class="card s1-task-card">'
-    +'<div class="card-hd"><span class="card-hd-title">'
-      +'<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      +'Task</span><select class="all-list-sel" id="s1-task-filter" onchange="renderS1TasksByFilter()"><option value="all">All List ▾</option></select></div>'
-    +'<div class="card-body" id="s1-task-list"></div>'
-  +'</div>';
-}
-
 function inputCardHTML(){
   return '<div class="card input-card">'
     +'<div class="inp-tabs">'
+      +'<button class="input-toggle-btn input-close-btn" id="input-close-btn" title="Collapse panel" aria-label="Collapse panel">›</button>'
       +'<button class="inp-tab on" id="tab-send" onclick="switchTab(\'send\')">Send Message</button>'
       +'<button class="inp-tab" id="tab-add" onclick="switchTab(\'add\')">+ Add</button>'
     +'</div>'
@@ -798,63 +638,52 @@ function inputCardHTML(){
 
 
 /* ── State rendering ── */
-function renderGrid(s){
+var inputOpen=true; // Input 패널 열림/닫힘 상태
+
+function renderGrid(){
   var g=document.getElementById('main-grid');
   g.innerHTML='';
-  if(s===1){
-    g.style.gridTemplateColumns='1fr 1fr';
-    var L=document.createElement('div');L.className='col-left';L.style.cssText='display:flex;flex-direction:column;min-height:0;';L.innerHTML=calCardHTML();
-    var R=document.createElement('div');R.className='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;gap:14px;';R.innerHTML=s1TaskCardHTML()+inputCardHTML();
-    g.appendChild(L);g.appendChild(R);
-  } else if(s===2){
-    // S2: cal | day-view | fin+input
-    calHasTodayCard=true;
-    g.style.gridTemplateColumns='40fr 30fr 30fr';
-    var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
-    var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;gap:14px;overflow:hidden;';R.innerHTML=finCardHTML()+inputCardHTML();
-    g.appendChild(L);g.appendChild(M);g.appendChild(R);
-  } else if(s===3){
-    // S3 (was S5): cal | task+proj | fin+input  (no Health)
-    calHasTodayCard=false;
-    g.style.gridTemplateColumns='40fr 30fr 30fr';
-    var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
-    var M=document.createElement('div');M.style.cssText='display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;height:100%;overflow:hidden;';M.innerHTML=taskCardHTML()+projCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;gap:14px;overflow:hidden;';R.innerHTML=finCardHTML()+inputCardHTML();
-    g.appendChild(L);g.appendChild(M);g.appendChild(R);
-  } else if(s===4){
-    // S4: cal | today | fin+health(compact)+input
-    calHasTodayCard=true;
-    g.style.gridTemplateColumns='40fr 30fr 30fr';
-    var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
-    var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;gap:14px;overflow:hidden;';R.innerHTML=finCardHTML()+healthCardHTML(true)+inputCardHTML();
-    g.appendChild(L);g.appendChild(M);g.appendChild(R);
-  } else if(s===5){
-    // S5 FULL (was S3): cal | task+proj | fin+health+input
-    calHasTodayCard=false;
-    g.style.gridTemplateColumns='40fr 30fr 30fr';
-    var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
-    var M=document.createElement('div');M.style.cssText='display:grid;grid-template-rows:1fr 1fr;gap:14px;flex:1;min-height:0;height:100%;overflow:hidden;';M.innerHTML=taskCardHTML()+projCardHTML();
-    var R=document.createElement('div');R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;gap:14px;overflow:hidden;';R.innerHTML=finCardHTML()+healthCardHTML(false)+inputCardHTML();
-    g.appendChild(L);g.appendChild(M);g.appendChild(R);
-  }
-  bindAll(s);
+  g.style.transition='grid-template-columns .22s ease';
+  g.style.gridTemplateColumns=inputOpen?'40fr 30fr 30fr':'46fr 34fr 20fr';
+  var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
+  var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
+  var R=document.createElement('div');R.id='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';
+  R.innerHTML=inputStripHTML()+inputCardHTML();
+  g.appendChild(L);g.appendChild(M);g.appendChild(R);
+  applyInputOpenState();
+  bindAll();
 }
 
-function setState(s){
-  currentState=s;
-  renderGrid(s);
+function inputStripHTML(){
+  return '<div class="input-strip" id="input-strip">'
+    +'<button class="input-toggle-btn" id="input-open-btn" title="Open message panel" aria-label="Open message panel">‹</button>'
+    +'<div class="input-strip-lbl">Message</div>'
+  +'</div>';
+}
+
+// Input 패널 DOM은 항상 마운트해두고, 열림/닫힘은 CSS class로만 토글한다.
+// (매번 innerHTML을 다시 그리면 send-btn/switchTab 등 리스너를 재바인딩해야 해서 깨지기 쉬움)
+function applyInputOpenState(){
+  var strip=document.getElementById('input-strip');
+  var card=document.querySelector('.input-card');
+  if(strip)strip.style.display=inputOpen?'none':'flex';
+  if(card)card.style.display=inputOpen?'flex':'none';
+}
+
+function toggleInputPanel(open){
+  inputOpen=open;
+  var g=document.getElementById('main-grid');
+  if(g)g.style.gridTemplateColumns=inputOpen?'40fr 30fr 30fr':'46fr 34fr 20fr';
+  applyInputOpenState();
+}
+
+function initApp(){
+  renderGrid();
   buildCalGrid();
   buildCalLegend();
   renderTodayEvents();
-  renderCalEventList();
-  renderTasks(s);
-  renderProjects(s);
+  renderTasks();
   renderDraftList();
-  // Finance/Health 카드는 setState 후 innerHTML이 재생성되므로 데이터 재주입
-  // _autoStateDone=true 이후(초기 자동전환 완료)에만 재로드 (decideState 루프 방지)
-  setTimeout(function(){if(window._lastFinData)renderFinance(window._lastFinData);if(window._lastHealthData)renderHealthData(window._lastHealthData);setTimeout(function(){setUnit(currentUnit2);},0);},0);
 }
 
 /* ── Month/Year Picker ── */
@@ -877,6 +706,7 @@ function buildMPGrid(){
       buildCalGrid();
       loadEvents();
       loadFinance();
+      loadHealth();
       document.getElementById('mo-picker').classList.remove('open');
     });
     grid.appendChild(btn);
@@ -902,11 +732,11 @@ function initMoPicker(){
   });
 }
 
-function bindAll(s){
+function bindAll(){
   // Calendar
-  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();loadEvents();loadFinance();});
-  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();loadEvents();loadFinance();});
-  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();loadEvents();loadFinance();});
+  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
+  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
+  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();loadEvents();loadFinance();loadHealth();});
   // Month/Year picker
   initMoPicker();
   // Calendars popup
@@ -925,6 +755,11 @@ function bindAll(s){
   if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
   if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
   if(sb)sb.addEventListener('click',doSend);
+  // Input panel collapse/expand
+  var openBtn=document.getElementById('input-open-btn');
+  var closeBtn=document.getElementById('input-close-btn');
+  if(openBtn)openBtn.addEventListener('click',function(){toggleInputPanel(true);});
+  if(closeBtn)closeBtn.addEventListener('click',function(){toggleInputPanel(false);});
 }
 
 /* ── Calendar legend & popup ── */
@@ -1049,8 +884,8 @@ function buildCalLegend(){
         (function(cm,ck){
           ck.addEventListener('change',function(){
             cm.enabled=ck.checked;
-            // 선택된 Other 달력의 이벤트를 하단 Event List로 표시
-            renderOtherCalEventList();
+            // 달력 그리드 마커 갱신 (예전엔 하단 Event List도 갱신했으나 그 UI는 삭제됨)
+            buildCalGridFromEvents();
           });
         })(c,chk);
         row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
@@ -1159,120 +994,15 @@ function buildCalGrid(){
       // selected-day 하이라이트 이동
       document.querySelectorAll('.cal-day.selected-day').forEach(function(c){c.classList.remove('selected-day');});
       cell.classList.add('selected-day');
-      renderCalEventList();
       renderDayView(dstr);
     });;})(ds,other);
     g.appendChild(cell);
   }
   // 이벤트 데이터로 마커 빌드
   buildCalGridFromEvents();
-  // S2/S4: Today 카드가 이벤트를 담당 → 달력 하단 EVENTS 섹션 숨김
-  var evSec=document.getElementById('cal-ev-section');
-  if(evSec){evSec.style.display=calHasTodayCard?'none':'';}
 }
 
 /* ── Calendar Event List (클릭한 날짜 기준) ── */
-function renderCalEventList(){
-  var section=document.getElementById('cal-ev-section');
-  var list=document.getElementById('cal-ev-list');
-  var hdr=document.getElementById('cal-ev-hdr-lbl');
-  if(!list)return;
-  // S2, S4: 가운데 Today card가 이벤트를 표시하므로 이 섹션 숨김
-  if(currentState===2||currentState===4){
-    if(section)section.style.display='none';
-    return;
-  }
-  if(section)section.style.display='';
-  list.innerHTML='';
-
-  // 날짜 선택 전이면 오늘 날짜 기준
-  var now=new Date();
-  var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var ds=selectedDateStr||todayStr;
-
-  // 날짜 헤더 표시
-  if(hdr){
-    var d=new Date(ds+'T12:00:00');
-    hdr.textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
-  }
-
-  // 선택 날짜 이벤트
-  var dayEvs=(eventsByDate[ds]||[]).slice();
-
-  // 선택된 Other 달력 이벤트 (해당 날짜)
-  var enabledOther=otherCals.filter(function(c){return c.enabled;});
-  var otherEvs=[];
-  if(enabledOther.length){
-    var enabledIds=enabledOther.map(function(c){return c.id;});
-    otherEvs=(eventsByDate[ds]||[]).filter(function(ev){return enabledIds.indexOf(ev.calId)!==-1;});
-  }
-
-  // 합쳐서 정렬
-  var allDayEvs=dayEvs.concat(otherEvs.filter(function(e){return dayEvs.indexOf(e)===-1;}));
-  allDayEvs.sort(function(a,b){
-    if(a.allDay&&!b.allDay)return -1;
-    if(!a.allDay&&b.allDay)return 1;
-    return new Date(a.start)-new Date(b.start);
-  });
-
-  if(!allDayEvs.length){
-    var empty=document.createElement('div');
-    empty.className='cal-ev-empty';
-    empty.textContent='No events.';
-    list.appendChild(empty);
-    return;
-  }
-
-  // 선택 날짜 셀 하이라이트
-  document.querySelectorAll('.cal-day.selected-day').forEach(function(el){el.classList.remove('selected-day');});
-  document.querySelectorAll('.cal-day').forEach(function(el){
-    if(el.getAttribute('data-date')===ds)el.classList.add('selected-day');
-  });
-
-  allDayEvs.forEach(function(ev){
-    var defaultE=primaryCals.find(function(c){return c.summary==='Default';});
-    var privateE=primaryCals.find(function(c){return c.summary==='Private';});
-    var klaiveE=primaryCals.find(function(c){return c.summary==='KLAIVE';});
-    var womensE=primaryCals.find(function(c){return c.summary==="Women's Health";});
-    var pid=primaryCals.length?primaryCals[0].id:null;
-    var color=resolveEventColor(ev,pid,defaultE,privateE,klaiveE,womensE)||PRIMARY_CAL_COLORS['Default'];
-    renderCalEvRow(list,ev,color);
-  });
-}
-
-function renderCalEvRow(list, ev, color){
-  var row=document.createElement('div');row.className='cal-ev-row';
-  // 색상 세로 바
-  var bar=document.createElement('div');bar.className='cal-ev-bar';bar.style.background=color;bar.style.borderRadius='2px';
-  // 시간 컬럼
-  var tc=document.createElement('div');tc.className='cal-ev-time-col';
-  if(ev.allDay){
-    tc.textContent='All day';
-  } else {
-    var sd=new Date(ev.start);
-    var ed=ev.end?new Date(ev.end):null;
-    var startStr=sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    var endStr=ed?ed.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
-    tc.innerHTML=startStr+(endStr?'<br>'+endStr:'');
-  }
-  // 제목 + 위치
-  var info=document.createElement('div');info.className='cal-ev-info';
-  var tt=document.createElement('div');
-  tt.className='cal-ev-title'+(ev.isLink?' is-link':'');
-  tt.textContent=ev.title||'No Title';
-  tt.title=ev.title||'';
-  info.appendChild(tt);
-  if(ev.loc){
-    var lv=document.createElement('div');lv.className='cal-ev-loc';lv.textContent='📍 '+ev.loc;info.appendChild(lv);
-  }
-  row.appendChild(bar);row.appendChild(tc);row.appendChild(info);
-  row.addEventListener('click',function(){openEvView(ev);});
-  list.appendChild(row);
-}
-
-// Other 달력 체크박스 변경 시 호출 (이전 이름 유지)
-function renderOtherCalEventList(){renderCalEventList();}
-
 /* ── Day View render ── */
 function renderDayView(ds){
   // 날짜 헤더 업데이트
@@ -1313,8 +1043,10 @@ function renderTodayEvents(dateStr){
   var TYPE_COLOR={income:'var(--teal)',expense:'var(--red)',saving:'var(--blue)'};
   function fmtAmt(v){return(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
   var finRows=_finByDate[ds]||[];
+  var healthRows=_healthByDate[ds]||[];
+  var projects=allProjects.length?allProjects:[];
 
-  if(!evs.length&&!finRows.length){
+  if(!evs.length&&!finRows.length&&!healthRows.length&&!projects.length){
     var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;
   }
 
@@ -1359,6 +1091,55 @@ function renderTodayEvents(dateStr){
       c.appendChild(item);
     });
   }
+
+  // Health 기록 렌더링 (amber 구분선) — 선택한 날짜(ds) 기준, _healthByDate에서 조회
+  if(healthRows.length){
+    var hDivider=document.createElement('div');
+    hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
+    hDivider.textContent='Health';
+    c.appendChild(hDivider);
+
+    var lastH=healthRows[healthRows.length-1];
+    var hMetrics=[];
+    if(lastH.weight_kg)hMetrics.push({label:'Weight',val:lastH.weight_kg.toFixed(1)+' kg'});
+    if(lastH.blood_pressure_sys&&lastH.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:lastH.blood_pressure_sys+'/'+lastH.blood_pressure_dia});
+    if(lastH.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:lastH.heart_rate_bpm+' bpm'});
+    if(lastH.glucose_mgdl)hMetrics.push({label:'Glucose',val:lastH.glucose_mgdl+' mg/dL'});
+    hMetrics.forEach(function(m){
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
+      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
+      var bd=document.createElement('div');bd.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=m.label;
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
+      nm.appendChild(sub);
+      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      c.appendChild(item);
+    });
+  }
+
+  // Project 진행률 렌더링 (blue 구분선) — 날짜 개념이 없어 항상 표시
+  if(projects.length){
+    var pDivider=document.createElement('div');
+    pDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--cblue);padding:8px 2px 4px;';
+    pDivider.textContent='Project';
+    c.appendChild(pDivider);
+
+    projects.forEach(function(p){
+      var pct=Math.round((p.completed||0)/(p.total||1)*100);
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--cblue)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent=pct+'%';
+      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
+      var bd=document.createElement('div');bd.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=p.name||p.title||'Untitled';
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=(p.completed||0)+' of '+(p.total||0)+' tasks'+(p.due?' · Due '+p.due:'');
+      nm.appendChild(sub);
+      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      c.appendChild(item);
+    });
+  }
 }
 
 /* ── Tasks ── */
@@ -1380,89 +1161,26 @@ function toggleTask(t,cb,row){
   var tag=row.querySelector('.task-tag');if(tag){tag.className='task-tag '+(t.status==='completed'?'done':'today');tag.textContent=t.status==='completed'?'done':'today';}
   fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:t.listId||'@default',status:t.status,title:t.title||'',notes:t.notes||''})}).catch(function(){});
 }
-function populateTaskFilter(selId){
-  var sel=document.getElementById(selId);
-  if(!sel)return;
-  var cur=sel.value||'all';
-  sel.innerHTML='<option value="all">All List ▾</option>';
-  taskLists.forEach(function(l){
-    var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);
-  });
-  if(cur!=='all'&&taskLists.find(function(l){return l.id===cur;}))sel.value=cur;
-  else sel.value='all';
-}
-function getFilteredTasks(selId){
-  var sel=document.getElementById(selId);
-  var filterVal=sel?sel.value:'all';
-  var base=allTasks.length?allTasks:DEMO_TASKS;
-  // completed 태스크 제외
-  var active=base.filter(function(t){return t.status!=='completed';});
-  if(filterVal==='all')return active;
-  return active.filter(function(t){return t.listId===filterVal;});
-}
-function renderTasksByFilter(){
-  var tasks=getFilteredTasks('task-list-filter');
-  var c=document.getElementById('task-list');
-  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
-}
-function renderS1TasksByFilter(){
-  var tasks=getFilteredTasks('s1-task-filter');
-  var c=document.getElementById('s1-task-list');
-  if(c){c.innerHTML='';tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});}
-}
-function renderTasks(s){
-  var tasks=allTasks.length?allTasks:DEMO_TASKS;
-  // populate dropdowns first
-  populateTaskFilter('task-list-filter');
-  populateTaskFilter('s1-task-filter');
-  // Day View task list — 오늘 날짜 due date 기준 (초기 로드)
+function renderTasks(){
+  // Day View task list — 선택한 날짜(없으면 오늘) due date 기준
   var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
   renderDayViewTasks(selectedDateStr||todayStr);
-  // main task card (respect filter, completed already excluded inside getFilteredTasks)
-  renderTasksByFilter();
-  // s1 task card
-  renderS1TasksByFilter();
 }
 
 /* ── Projects ── */
+// allProjects는 Today List의 Project 서브디바이더(renderTodayEvents 안)에서 사용한다.
+// 날짜 개념이 없는 데이터라 항상 전체 표시하며, 별도 proj-card는 더 이상 없다.
 var allProjects=[];
-function renderProjects(s){
-  var c=document.getElementById('proj-list');if(!c)return;c.innerHTML='';
-  var projects=allProjects.length?allProjects:[];
-  if(!projects.length){
-    var em=document.createElement('div');
-    em.style.cssText='font-size:11px;color:var(--txt3);text-align:center;padding:16px 0;';
-    em.textContent='No projects yet.';
-    c.appendChild(em);return;
-  }
-  projects.forEach(function(p){
-    var pct=Math.round((p.completed||0)/(p.total||1)*100);
-    var item=document.createElement('div');item.className='proj-item';
-    var r1=document.createElement('div');r1.className='proj-r1';
-    var nm=document.createElement('span');nm.className='proj-name';nm.textContent=p.name||p.title||'Untitled';
-    var pctEl=document.createElement('span');pctEl.className='proj-pct';pctEl.textContent=pct+'%';
-    r1.appendChild(nm);r1.appendChild(pctEl);
-    var bw=document.createElement('div');bw.className='proj-bar-wrap';
-    var b=document.createElement('div');b.className='proj-bar';b.style.background=p.color||'var(--blue)';b.style.width=pct+'%';bw.appendChild(b);
-    var meta=document.createElement('div');meta.className='proj-meta';
-    var taskStr=(p.completed||0)+' of '+(p.total||0)+' tasks';
-    var dueStr=p.due?'· Due '+p.due:'';
-    meta.textContent=taskStr+' '+dueStr;
-    item.appendChild(r1);item.appendChild(bw);item.appendChild(meta);c.appendChild(item);
-  });
-}
 function loadProjects(){
   fetch(BACKEND+'/api/me/projects',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data){allProjects=[];_dataFlags.projects=false;_checkAllLoaded();renderProjects(currentState);return;}
+      if(!data){allProjects=[];renderTodayEvents(selectedDateStr);return;}
       var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
       allProjects=items;
-      _dataFlags.projects=(items.length>0);
-      _checkAllLoaded();
-      renderProjects(currentState);
+      renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){allProjects=[];_dataFlags.projects=false;_checkAllLoaded();renderProjects(currentState);});
+    .catch(function(){allProjects=[];renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Input tab ── */
@@ -1529,8 +1247,9 @@ function doSend(){
     setTimeout(function(){if(ss)ss.textContent='';},2500);return;
   }
   sb.disabled=true;
+  var _sendTs=Date.now();
   fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
-    .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}mi.value='';selFile=null;var fi=document.getElementById('file-input');if(fi)fi.value='';var fr=document.getElementById('fname-row');if(fr)fr.style.display='none';}else{if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';}}})
+    .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}mi.value='';selFile=null;var fi=document.getElementById('file-input');if(fi)fi.value='';var fr=document.getElementById('fname-row');if(fr)fr.style.display='none';_pollSyncStatusAfterSend(_sendTs);}else{if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';}}})
     .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
     .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
 }
@@ -1702,7 +1421,11 @@ function navClick(btn){
   var lbl=btn.querySelector('.nav-lbl');
   var name=lbl?lbl.textContent.trim():'';
   if(name==='Overview'){
-    setState(currentState);
+    renderGrid();
+    buildCalGrid();
+    buildCalLegend();
+    renderTodayEvents();
+    renderTasks();
   } else if(name==='Calendar'){
     showEmptyState('Calendar');
   } else {
@@ -1783,35 +1506,27 @@ function loadEvents(){
       buildCalGridFromEvents();
       var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
       renderDayView(selectedDateStr||todayStr);
-      renderCalEventList();
-      // 오늘 이벤트 유무로 판단
-      _dataFlags.events=(allEvents.length>0);
-      _checkAllLoaded();
     })
-    .catch(function(){_dataFlags.events=false;_checkAllLoaded();});
+    .catch(function(){});
 }
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks(currentState);return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();_dataFlags.tasks=(allTasks.filter(function(t){return t.status!=='completed';}).length>0);_checkAllLoaded();renderTasks(currentState);})
-    .catch(function(){allTasks=DEMO_TASKS.slice();_dataFlags.tasks=false;_checkAllLoaded();renderTasks(currentState);});
+    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks();return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks();})
+    .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks();});
 }
 
 
 /* ── Finance API ── */
 function loadFinance(){
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
-  var body=document.getElementById('fin-card-body');
   fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data||!data.summary){
-        if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';
-        _dataFlags.finance=false;_checkAllLoaded();return;
-      }
-      // Finance 거래 날짜 추출 → _finDateSet + _finByDate 갱신
       _finDateSet={};
       _finByDate={};
+      if(!data||!data.summary){renderTodayEvents(selectedDateStr);return;}
+      // Finance 거래 날짜 추출 → _finDateSet + _finByDate 갱신
       function _addFinRow(type,r){
         if(!r.date)return;
         _finDateSet[r.date]=true;
@@ -1821,186 +1536,30 @@ function loadFinance(){
       (data.income||[]).forEach(function(r){_addFinRow('income',r);});
       (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
       (data.savings||[]).forEach(function(r){_addFinRow('saving',r);});
-      // 달력 마커 재빌드 (Finance teal 마커 반영)
+      // 달력 마커 재빌드 (Finance teal 마커 반영) + Today List 재렌더링
       buildCalGridFromEvents();
-      // Finance 카드 렌더링 후 _checkAllLoaded 호출
-      renderFinance(data);
-      _dataFlags.finance=true;
-      _checkAllLoaded();
+      renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){if(body)body.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.finance=false;_checkAllLoaded();});
+    .catch(function(){renderTodayEvents(selectedDateStr);});
 }
-function renderFinance(data){
-  window._lastFinData=data;
-  var body=document.getElementById('fin-card-body');if(!body)return;
-  var s=data.summary;
-  var inc=(s.income&&s.income.actual)||0;
-  var rem=s.remaining||0;
-  var NEEDS_CATS=['Housing','Utilities','Groceries','Transportation','Insurance','Healthcare','Childcare','Education','Phone','Internet','Debt Payments','Subscriptions','Personal Care'];
-  function isNeeds(cat){return NEEDS_CATS.indexOf(cat)!==-1;}
-  var needsAmt=(data.expenses||[]).filter(function(r){return isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
-  var wantsAmt=(data.expenses||[]).filter(function(r){return !isNeeds(r.category);}).reduce(function(a,r){return a+r.amount;},0);
-  var savAmt=(s.savings&&s.savings.actual)||0;
-  function pct(v,t){return t?Math.round(v/t*100):0;}
-  var incAmt=inc||1;
-  var wE=pct(needsAmt,incAmt),wS=pct(savAmt,incAmt),wR=pct(wantsAmt,incAmt);
-  var tot=wE+wS+wR;
-  if(tot>100){var sc=100/tot;wE=Math.round(wE*sc);wS=Math.round(wS*sc);wR=100-wE-wS;}
-  wE=wE>0?Math.max(wE,3):0;wS=wS>0?Math.max(wS,3):0;wR=wR>0?Math.max(wR,3):0;
-  function fmtS(v){return(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString();}
-  var remColor=rem>=0?'var(--teal)':'var(--red)';
-  body.innerHTML=
-    '<div class="fin-rem" style="color:'+remColor+'">'+fmtS(rem)+' <span>Remaining</span></div>'
-    +'<div class="fin-bar">'
-      +(wE>0?'<div class="fin-seg" style="width:'+wE+'%;background:var(--red);border-radius:3px 0 0 3px;"></div>':'')
-      +(wS>0?'<div class="fin-seg" style="width:'+wS+'%;background:var(--teal);margin-left:1px;"></div>':'')
-      +(wR>0?'<div class="fin-seg" style="width:'+wR+'%;background:#D3D1C7;border-radius:0 3px 3px 0;margin-left:1px;"></div>':'')
-    +'</div>'
-    +'<div class="fin-legend">'
-      +'<div class="fin-li"><div class="fin-ld" style="background:var(--blue);"></div><span class="fin-lt">Income '+fmtS(inc)+' (100%)</span></div>'
-      +'<div class="fin-li"><div class="fin-ld" style="background:var(--teal);"></div><span class="fin-lt">Savings '+fmtS(savAmt)+' ('+pct(savAmt,incAmt)+'%)</span></div>'
-      +'<div class="fin-li"><div class="fin-ld" style="background:var(--red);"></div><span class="fin-lt">Needs '+fmtS(needsAmt)+' ('+pct(needsAmt,incAmt)+'%)</span></div>'
-      +'<div class="fin-li"><div class="fin-ld" style="background:#D3D1C7;"></div><span class="fin-lt">Wants '+fmtS(wantsAmt)+' ('+pct(wantsAmt,incAmt)+'%)</span></div>'
-    +'</div>';
-}
-
 /* ── Health API ── */
 function loadHealth(){
-  var now=new Date();
-  var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var body=document.getElementById('health-card-body');
-  fetch(BACKEND+'/api/me/health?date='+ds+'&period=daily&tab=all',{credentials:'include'})
+  var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/health?month='+ym+'&period=monthly&tab=all',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(!data){var hbody=document.getElementById('health-card-body');if(hbody)hbody.innerHTML='<div style="font-size:11px;color:var(--txt3);text-align:center;padding:12px 0;">No data</div>';_dataFlags.health=false;_checkAllLoaded();return;}
-      // 실제 데이터가 있는지 확인 (빈 배열/빈 summary 제외)
-      var s=data.summary||{};var arr=data.health||[];
-      var hasRealData=(arr.length>0)||Object.keys(s).some(function(k){return s[k]!=null&&s[k]!==0;});
-      _dataFlags.health=hasRealData;
-      _checkAllLoaded();
-      renderHealthData(data);
+      _healthByDate={};
+      if(!data){renderTodayEvents(selectedDateStr);return;}
+      var arr=Array.isArray(data.health)?data.health:[];
+      arr.forEach(function(rec){
+        var ds=rec.date||(rec.recorded_at||'').slice(0,10)||(rec.timestamp||'').slice(0,10);
+        if(!ds)return;
+        if(!_healthByDate[ds])_healthByDate[ds]=[];
+        _healthByDate[ds].push(rec);
+      });
+      renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){_dataFlags.health=false;_checkAllLoaded();});
-}
-function renderHealth(data){
-  var body=document.getElementById('health-card-body');if(!body)return;
-  var s=data.summary||{};
-  var healthArr=data.health||[];
-  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
-  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
-
-  // Vitals
-  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
-  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
-  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
-  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
-
-  var html='<div class="h-vitals">';
-  html+='<div class="h-vc"><div class="h-vi">🩺</div><div class="h-vv">'+(bp||'—')+'</div><div class="h-vl">Blood Pressure</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">❤️</div><div class="h-vv">'+(hr||'—')+'</div><div class="h-vl">Heart Rate</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">🌬️</div><div class="h-vv">'+(spo2||'—')+'</div><div class="h-vl">SpO2</div></div>';
-  html+='<div class="h-vc"><div class="h-vi">🩸</div><div class="h-vv">'+(gluc||'—')+'</div><div class="h-vl">Glucose</div></div>';
-  html+='</div>';
-
-  if(!compact){
-    // Cal Intake / Burned
-    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
-    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
-    if(calIn||calB){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div></div>';
-    }
-    // Steps / Water
-    var steps=s.total_steps?s.total_steps.toLocaleString():null;
-    var dist=s.total_distance_km?s.total_distance_km.toFixed(2)+' km':null;
-    var water=s.water_ml?s.water_ml.toLocaleString()+' ml':null;
-    if(steps||water){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(water||'—')+'</div><div class="h-sub">Water</div></div></div>';
-    }
-    // Sleep / Mood
-    var sleepStr=null;
-    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
-    var mood=s.mood||null;
-    if(sleepStr||mood){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Quality '+s.sleep_quality+'/5':'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
-    }
-    // Weight
-    if(lh&&lh.weight_kg){
-      var wkg=lh.weight_kg.toFixed(1);
-      var wlb=(lh.weight_kg*2.20462).toFixed(2);
-      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wkg+' kg / '+wlb+' lb</div><div class="hw-lbl">Weight today</div></div></div>';
-    }
-  }
-
-  body.innerHTML=html;
-}
-
-
-/* ── Unit toggle (Health) ── */
-var currentUnit2='metric';
-var UNIT_DATA2={
-  metric:{dist:'km',water_unit:'ml',wtFmt:function(kg){return kg.toFixed(1)+' kg / '+(kg*2.20462).toFixed(2)+' lb';},wdiff:'kg'},
-  us:    {dist:'mi', water_unit:'fl oz',wtFmt:function(kg){return (kg*2.20462).toFixed(2)+' lb / '+kg.toFixed(1)+' kg';},wdiff:'lb'}
-};
-function setUnit(u){
-  currentUnit2=u;
-  var bm=document.getElementById('btn-metric');
-  var bu=document.getElementById('btn-us');
-  if(bm)bm.classList.toggle('on',u==='metric');
-  if(bu)bu.classList.toggle('on',u==='us');
-  // Re-render health with new unit if data available
-  var body=document.getElementById('health-card-body');
-  if(body&&window._lastHealthData)renderHealthData(window._lastHealthData);
-}
-function renderHealthData(data){
-  window._lastHealthData=data;
-  var body=document.getElementById('health-card-body');if(!body)return;
-  var compact=document.getElementById('health-card-wrap')&&document.getElementById('health-card-wrap').classList.contains('h-compact');
-  var s=data.summary||{};
-  var healthArr=data.health||[];
-  var lh=healthArr.length?healthArr[healthArr.length-1]:null;
-  var u=UNIT_DATA2[currentUnit2]||UNIT_DATA2['metric'];
-  var bp=(lh&&lh.blood_pressure_sys&&lh.blood_pressure_dia)?(lh.blood_pressure_sys+'/'+lh.blood_pressure_dia):null;
-  var hr=(lh&&lh.heart_rate_bpm)?lh.heart_rate_bpm+' bpm':null;
-  var spo2=(lh&&lh.spo2_pct)?lh.spo2_pct+'%':null;
-  var gluc=(lh&&lh.glucose_mgdl)?lh.glucose_mgdl+' mg/dL':null;
-  var html='<div class="h-vitals">';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩺</span><span class="h-vl">Blood Pressure</span></div><div class="h-vv">'+(bp||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">❤️</span><span class="h-vl">Heart Rate</span></div><div class="h-vv">'+(hr||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🌬️</span><span class="h-vl">SpO2</span></div><div class="h-vv">'+(spo2||'—')+'</div></div>';
-  html+='<div class="h-vc"><div class="h-vc-top"><span class="h-vi">🩸</span><span class="h-vl">Glucose</span></div><div class="h-vv">'+(gluc||'—')+'</div></div>';
-  html+='</div>';
-  if(!compact){
-    var calIn=s.total_calories_kcal?Math.round(s.total_calories_kcal).toLocaleString():null;
-    var calB=s.total_calories_burned_kcal?Math.round(s.total_calories_burned_kcal).toLocaleString():null;
-    var steps=s.total_steps?s.total_steps.toLocaleString():null;
-    var dist=s.total_distance_km?(currentUnit2==='us'?(s.total_distance_km*0.621371).toFixed(2)+' mi':s.total_distance_km.toFixed(2)+' km'):null;
-    var waterRaw=s.water_ml||null;
-    var waterStr=waterRaw?(currentUnit2==='us'?(waterRaw/29.5735).toFixed(1)+' fl oz':waterRaw.toLocaleString()+' ml'):null;
-    html+='<div class="h-row4">';
-    html+='<div class="h-cell"><div class="h-main">'+(calIn||'—')+'</div><div class="h-sub">Cal Intake</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(calB||'—')+'</div><div class="h-sub">Cal Burned</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(waterStr||'—')+'</div><div class="h-sub">Water</div></div>';
-    html+='<div class="h-cell"><div class="h-main">'+(steps||'—')+'</div><div class="h-sub">Steps'+(dist?' · '+dist:'')+'</div></div>';
-    html+='</div>';
-    var sleepStr=null;
-    if(s.sleep_duration_min!=null){var hrs=Math.floor(s.sleep_duration_min/60),mins=Math.round(s.sleep_duration_min%60);sleepStr=hrs+'h '+mins+'m';}
-    var mood=s.mood||null;
-    if(sleepStr||mood){
-      html+='<div class="h-row"><div class="h-cell"><div class="h-main">'+(sleepStr||'—')+'</div><div class="h-sub">😴 Sleep'+(s.sleep_quality?' · Q'+s.sleep_quality+'/5':'')+'</div></div>';
-      html+='<div class="h-cell"><div class="h-main">'+(mood||'—')+'</div><div class="h-sub">Mood</div></div></div>';
-    }
-    if(lh&&lh.weight_kg){
-      var wval=u.wtFmt(lh.weight_kg);
-      var wdiff=(lh.weight_diff_kg!=null)?(lh.weight_diff_kg<0?'↓ ':'↑ ')+Math.abs(lh.weight_diff_kg).toFixed(1)+' '+u.wdiff:'';
-      html+='<div class="h-wt"><div class="hwl"><div class="hw-val">'+wval+'</div><div class="hw-lbl">Weight today</div></div>';
-      if(wdiff)html+='<div style="text-align:right"><div class="hw-diff">'+wdiff+'</div><div class="hw-dlbl">vs last week</div></div>';
-      html+='</div>';
-    }
-  }
-  body.innerHTML=html;
+    .catch(function(){_healthByDate={};renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
@@ -2109,51 +1668,47 @@ function submitAdd2(type){
 }
 
 
-/* ══════════════════════════════════════════════════
-   decideState(): 모든 데이터 로드 완료 후 최적 State 결정
-   
-   State 매트릭스:
-   S1 (50:50): 데이터 없음 — Calendar | Task+Input
-   S2 (3col) : Events 또는 Tasks 있음, Health/Projects 없음 — Calendar | Today | Finance+Input
-   S3 (3col) : Projects 있음, Health 없음 — Calendar | Task+Proj | Finance+Input
-   S4 (3col) : Health 있음, Projects 없음 — Calendar | Today | Finance+Health(compact)+Input
-   S5 (3col) : Health + Projects 모두 있음 — Calendar | Task+Proj | Finance+Health+Input
-════════════════════════════════════════════════════ */
-function _checkAllLoaded(){
-  // 5개 중 null 이 남아있으면 (아직 미완료) 대기
-  var flags=_dataFlags;
-  if(flags.events===null||flags.tasks===null||flags.finance===null||flags.health===null||flags.projects===null)return;
-  if(_autoStateDone)return;
-  _autoStateDone=true;
-  decideState();
+/* ── 메시지 전송으로 데이터가 바뀔 수 있는 경우 재계산 ──
+   어떤 카테고리(이벤트/태스크/재무/헬스/프로젝트)로 파싱될지 미리 알 수 없으므로
+   5개 전부 재요청한다. (_pollSyncStatusAfterSend에서 호출) */
+function _resetAllDataState(){
+  loadEvents();loadTasks();loadFinance();loadHealth();loadProjects();
 }
-function decideState(){
-  var hasEvents  = _dataFlags.events   === true;
-  var hasTasks   = _dataFlags.tasks    === true;
-  var hasFinance = _dataFlags.finance  === true;
-  var hasHealth  = _dataFlags.health   === true;
-  var hasProjects= _dataFlags.projects === true;
-  var hasActivity= hasEvents || hasTasks;
-  var target;
-  if(hasHealth && hasProjects){
-    target=5; // Full: Task+Proj + Health
-  } else if(hasHealth && !hasProjects){
-    target=4; // Health compact + Today
-  } else if(!hasHealth && hasProjects){
-    target=3; // Task+Proj, no Health
-  } else if(hasActivity || hasFinance){
-    target=2; // Today card: Events+Tasks
-  } else {
-    target=1; // 데이터 없음: S1 (50:50)
-  }
-  console.log('[KLAIVE] Auto-state: events='+hasEvents+' tasks='+hasTasks+' finance='+hasFinance+' health='+hasHealth+' projects='+hasProjects+' → S'+target);
-  setState(target);
+
+/* ── /api/me/sync-status 폴링 ──
+   메시지 전송(r.ok) 시점은 "Gmail 전송 성공"일 뿐 "시트 반영 완료"가 아니다.
+   실제 반영은 Gmail push → Pub/Sub → Apps Script processAll() 이라는 별도
+   비동기 체인을 거치므로, 백엔드가 기록한 lastSyncAt이 전송 시점보다 뒤로
+   갱신될 때까지 폴링한다. 정확한 "이 메시지의 파싱 완료" 신호는 아니고
+   "그 계정에 대한 gmail-push 처리가 마지막으로 언제 성공했는가"에 대한
+   힌트이므로, 오탐(다른 메일로 인한 갱신)이 섞일 수 있다 — 재조회 자체는
+   무해하므로 그대로 둔다. Apps Script 실패 시엔 lastSyncAt이 안 바뀌므로
+   타임아웃 후 포기한다(사용자에게 실패를 알리진 않음 — 범위 밖). */
+var _syncPollTimer=null;
+function _pollSyncStatusAfterSend(sendTs){
+  if(_syncPollTimer)clearInterval(_syncPollTimer);
+  var attempts=0, MAX_ATTEMPTS=20, INTERVAL_MS=3000; // 최대 약 60초
+  _syncPollTimer=setInterval(function(){
+    attempts++;
+    fetch(BACKEND+'/api/me/sync-status',{credentials:'include'})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(data){
+        var lastSyncMs=(data&&data.lastSyncAt)?new Date(data.lastSyncAt).getTime():0;
+        if(lastSyncMs>sendTs){
+          clearInterval(_syncPollTimer);_syncPollTimer=null;
+          _resetAllDataState();
+          return;
+        }
+        if(attempts>=MAX_ATTEMPTS){clearInterval(_syncPollTimer);_syncPollTimer=null;}
+      })
+      .catch(function(){ if(attempts>=MAX_ATTEMPTS){clearInterval(_syncPollTimer);_syncPollTimer=null;} });
+  },INTERVAL_MS);
 }
 
 /* ── Init ── */
 function init(){
   startClock();loadWeather();
-  setState(1); // S1으로 시작 (50:50), 데이터 로드 완료 후 decideState()가 최적 State로 전환
+  initApp(); // 고정 레이아웃 1회 렌더 (Calendar | Day View | Input)
   loadUserInfo();
   loadCalendarList();
   loadEvents();
