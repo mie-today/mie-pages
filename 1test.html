@@ -141,9 +141,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
 .task-tag.done{background:var(--bg3);color:var(--txt3);}
 
-/* ── Input strip (collapsed state) ── */
-.input-strip{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;padding:12px 0;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);}
-.input-strip-lbl{writing-mode:vertical-rl;font-size:11px;color:var(--txt2);letter-spacing:1px;}
+/* ── Input strip (collapsed state) — 화면 크기와 무관하게 항상 56px 고정폭 ── */
+.input-strip{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);}
 .input-toggle-btn{width:26px;height:26px;border-radius:8px;border:.5px solid var(--b1);background:var(--bg);color:var(--txt2);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;}
 .input-toggle-btn:hover{background:var(--bg2);}
 .input-close-btn{margin:0 4px 0 6px;}
@@ -207,6 +206,11 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .invite-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
 .afi-sm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
 .afi-sm:focus{border-color:var(--blue);}
+/* .add-form-scroll은 세로 방향 flex라서, 그 직계 자식으로 들어간 select/input(.afi-sm)이
+   flex:1을 세로 성장으로 해석해 버려 카테고리 select/description 칸이 비정상적으로 커지는
+   문제가 있었다. 가로 그룹(.af-row) 안에서는 flex:1(반반 분배)을 그대로 쓰고, 세로 컨테이너에
+   직접 들어간 것만 자연 높이로 고정한다. */
+.add-form-scroll>.afi-sm,.add-form-scroll>select.afi-sm{flex:0 0 auto;}
 .af-row{display:flex;gap:5px;flex-shrink:0;}
 .afl-sm{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
 .add-more-toggle{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;text-align:left;flex-shrink:0;}
@@ -644,7 +648,7 @@ function renderGrid(){
   var g=document.getElementById('main-grid');
   g.innerHTML='';
   g.style.transition='grid-template-columns .22s ease';
-  g.style.gridTemplateColumns=inputOpen?'40fr 30fr 30fr':'46fr 34fr 20fr';
+  g.style.gridTemplateColumns=inputOpen?'4fr 3fr 3fr':'4fr 3fr 56px';
   var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
   var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
   var R=document.createElement('div');R.id='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';
@@ -657,7 +661,6 @@ function renderGrid(){
 function inputStripHTML(){
   return '<div class="input-strip" id="input-strip">'
     +'<button class="input-toggle-btn" id="input-open-btn" title="Open message panel" aria-label="Open message panel">‹</button>'
-    +'<div class="input-strip-lbl">Message</div>'
   +'</div>';
 }
 
@@ -673,7 +676,8 @@ function applyInputOpenState(){
 function toggleInputPanel(open){
   inputOpen=open;
   var g=document.getElementById('main-grid');
-  if(g)g.style.gridTemplateColumns=inputOpen?'40fr 30fr 30fr':'46fr 34fr 20fr';
+  // 닫힘 상태는 항상 56px 고정폭 — 화면 크기와 무관하게 얇은 아이콘 스트립 유지
+  if(g)g.style.gridTemplateColumns=inputOpen?'4fr 3fr 3fr':'4fr 3fr 56px';
   applyInputOpenState();
 }
 
