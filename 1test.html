@@ -8,7 +8,7 @@
 <style>
 :root{
   --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
-  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;--txtdark:#4f4d46;
   --blue:#1C7ED6;--teal:#1D9E75;
   --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
   --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
@@ -111,7 +111,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .today-card{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
 .today-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 8px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
 .today-title{font-size:13px;font-weight:500;}
-.today-date{font-size:10px;color:var(--txt3);}
+.today-date{font-size:10.5px;color:var(--txtdark);}
 .today-inner{flex:1;overflow-y:auto;padding:0 14px 12px;min-height:0;}
 .today-inner::-webkit-scrollbar{width:3px;}
 .today-inner::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
@@ -150,7 +150,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 /* ── Input card ── */
 .input-card{flex:1;display:flex;flex-direction:column;}
 .inp-tabs{display:flex;align-items:center;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+.inp-tab{flex:1;padding:9px 0;font-size:11.5px;font-weight:500;color:var(--txtdark);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
 .inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
 .inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 12px;}
 .inp-panel.on{display:flex;}
@@ -182,8 +182,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .add-ic{width:22px;height:22px;color:inherit;}
 /* Add panel B-plan */
 .add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
-.add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
-.add-type-tab:hover{color:var(--txt2);}
+.add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txtdark);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
+.add-type-tab:hover{color:var(--txtdark);}
 .add-type-tab.sel{color:var(--blue);border-bottom-color:var(--blue);}
 .add-type-tab svg{width:10px;height:10px;flex-shrink:0;}
 .add-form-b{display:none;flex-direction:column;flex:1;min-height:0;}
@@ -599,7 +599,7 @@ function inputCardHTML(){
         +'<div class="add-form-scroll">'
           +'<div class="af-row" style="margin-top:6px;flex-wrap:wrap;">'
             +'<select class="afi-sm" id="ahl-type" onchange="updateHealthFieldsDash()">'
-              +'<option value="">Metric ▾</option>'
+              +'<option value="">Type ▾</option>'
               +'<option value="weight">⚖️ Weight</option>'
               +'<option value="bp">🩺 Blood Pressure</option>'
               +'<option value="hr">❤️ Heart Rate</option>'
@@ -1116,7 +1116,10 @@ function renderTodayEvents(dateStr){
 
     var lastH=healthRows[healthRows.length-1];
     var hMetrics=[];
-    if(lastH.weight_kg)hMetrics.push({label:'Weight',val:lastH.weight_kg.toFixed(1)+' kg'});
+    if(lastH.weight_kg){
+      var wlb=(lastH.weight_lb!=null&&lastH.weight_lb!=='')?lastH.weight_lb:(lastH.weight_kg*2.20462);
+      hMetrics.push({label:'Weight',val:lastH.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb'});
+    }
     if(lastH.blood_pressure_sys&&lastH.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:lastH.blood_pressure_sys+'/'+lastH.blood_pressure_dia});
     if(lastH.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:lastH.heart_rate_bpm+' bpm'});
     if(lastH.glucose_mgdl)hMetrics.push({label:'Glucose',val:lastH.glucose_mgdl+' mg/dL'});
