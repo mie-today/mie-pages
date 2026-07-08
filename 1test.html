@@ -1532,7 +1532,26 @@ function openHealthEdit(metricType,row){
   document.getElementById('healthed-title').textContent=HEALTH_ED_TITLES[metricType]||'Edit Record';
   var fw=document.getElementById('healthed-fields');
   if(metricType==='weight'){
-    fw.innerHTML='<div class="ff"><label class="fl">Weight (kg)</label><input class="fi" type="number" step="0.1" id="healthed-weight" value="'+row.weight_kg+'"/></div>';
+    var storedUnit=getUnitPref();
+    var kgVal=row.weight_kg;
+    var lbVal=(row.weight_lb!=null&&row.weight_lb!=='')?row.weight_lb:(row.weight_kg*2.20462);
+    fw.innerHTML='<div class="fr2">'
+      +'<div class="ff"><label class="fl" id="healthed-weight-label">'+(storedUnit==='us'?'Weight (lb)':'Weight (kg)')+'</label><input class="fi" type="number" step="0.1" id="healthed-weight" value="'+(storedUnit==='us'?(+lbVal).toFixed(1):(+kgVal).toFixed(1))+'"/></div>'
+      +'<div class="ff"><label class="fl">Unit</label><select class="fi" id="healthed-weight-unit">'
+        +'<option value="metric"'+(storedUnit!=='us'?' selected':'')+'>Metric (kg)</option>'
+        +'<option value="us"'+(storedUnit==='us'?' selected':'')+'>US (lb)</option>'
+      +'</select></div>'
+    +'</div>';
+    document.getElementById('healthed-weight-unit').addEventListener('change',function(){
+      var nu=this.value;setUnitPref(nu);
+      var wi=document.getElementById('healthed-weight'),lbl=document.getElementById('healthed-weight-label');
+      var cur=parseFloat(wi.value)||0,wasUs=lbl.textContent.indexOf('lb')!==-1;
+      var newVal=cur;
+      if(nu==='us'&&!wasUs)newVal=cur*2.20462;
+      else if(nu==='metric'&&wasUs)newVal=cur/2.20462;
+      wi.value=newVal.toFixed(1);
+      lbl.textContent=(nu==='us'?'Weight (lb)':'Weight (kg)');
+    });
   } else if(metricType==='bp'){
     fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl">Systolic</label><input class="fi" type="number" id="healthed-sys" value="'+row.blood_pressure_sys+'"/></div><div class="ff"><label class="fl">Diastolic</label><input class="fi" type="number" id="healthed-dia" value="'+row.blood_pressure_dia+'"/></div></div>';
   } else if(metricType==='hr'){
@@ -1557,7 +1576,11 @@ document.getElementById('healthed-save').addEventListener('click',function(){
     if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
     var mt=curEditHealth.metricType;
     var data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
-    if(mt==='weight'){data.weight_kg=parseFloat(document.getElementById('healthed-weight').value)||0;}
+    if(mt==='weight'){
+      var wUnit=document.getElementById('healthed-weight-unit').value;
+      var wVal=parseFloat(document.getElementById('healthed-weight').value)||0;
+      if(wUnit==='us'){data.weight_lb=wVal;}else{data.weight_kg=wVal;}
+    }
     else if(mt==='bp'){data.blood_pressure_sys=parseFloat(document.getElementById('healthed-sys').value)||0;data.blood_pressure_dia=parseFloat(document.getElementById('healthed-dia').value)||0;}
     else if(mt==='hr'){data.heart_rate_bpm=parseFloat(document.getElementById('healthed-hr').value)||0;}
     else if(mt==='glucose'){data.glucose_mgdl=parseFloat(document.getElementById('healthed-glucose').value)||0;}
