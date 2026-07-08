@@ -376,6 +376,31 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<div class="modal-bg h" id="fin-edit-modal">
+  <div class="mb" style="max-width:380px;">
+    <div class="mhd"><div class="mt">Edit Transaction</div><button class="mx" id="fin-edit-close">×</button></div>
+    <div class="fr2">
+      <div class="ff"><label class="fl">Amount</label><input class="fi" type="number" step="0.01" id="fined-amount"/></div>
+      <div class="ff"><label class="fl">Date</label><input class="fi" type="date" id="fined-date"/></div>
+    </div>
+    <div class="ff"><label class="fl">Category</label><input class="fi" type="text" id="fined-category"/></div>
+    <div class="ff"><label class="fl">Sublabel</label><input class="fi" type="text" id="fined-sublabel"/></div>
+    <div class="ff"><label class="fl">Notes</label><input class="fi" type="text" id="fined-notes"/></div>
+    <div class="mac"><button class="bc" id="fined-cancel">Cancel</button><button class="bs" id="fined-save">Save Changes</button><button class="bd" id="fined-delete">🗑</button></div>
+    <div class="mst" id="fined-st"></div>
+  </div>
+</div>
+
+<div class="modal-bg h" id="health-edit-modal">
+  <div class="mb" style="max-width:380px;">
+    <div class="mhd"><div class="mt" id="healthed-title">Edit Record</div><button class="mx" id="healthed-close">×</button></div>
+    <div id="healthed-fields"></div>
+    <div class="ff"><label class="fl">Notes</label><input class="fi" type="text" id="healthed-notes"/></div>
+    <div class="mac"><button class="bc" id="healthed-cancel">Cancel</button><button class="bs" id="healthed-save">Save Changes</button><button class="bd" id="healthed-delete">🗑</button></div>
+    <div class="mst" id="healthed-st"></div>
+  </div>
+</div>
+
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
@@ -1091,7 +1116,7 @@ function renderTodayEvents(dateStr){
 
     finRows.forEach(function(r){
       var color=TYPE_COLOR[r.type]||'var(--teal)';
-      var item=document.createElement('div');item.className='ev-item';
+      var item=document.createElement('div');item.className='ev-item';item.style.cursor='pointer';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
       var td=document.createElement('div');td.className='ev-time';
       td.textContent=TYPE_LABEL[r.type]||r.type;
@@ -1103,6 +1128,7 @@ function renderTodayEvents(dateStr){
       sub.textContent=fmtAmt(r.amount)+(r.notes?' · '+r.notes:'');
       nm.appendChild(sub);
       bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      item.addEventListener('click',function(){openFinEdit(r);});
       c.appendChild(item);
     });
   }
@@ -1114,17 +1140,18 @@ function renderTodayEvents(dateStr){
     hDivider.textContent='Health';
     c.appendChild(hDivider);
 
-    var lastH=healthRows[healthRows.length-1];
     var hMetrics=[];
-    if(lastH.weight_kg){
-      var wlb=(lastH.weight_lb!=null&&lastH.weight_lb!=='')?lastH.weight_lb:(lastH.weight_kg*2.20462);
-      hMetrics.push({label:'Weight',val:lastH.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb'});
-    }
-    if(lastH.blood_pressure_sys&&lastH.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:lastH.blood_pressure_sys+'/'+lastH.blood_pressure_dia});
-    if(lastH.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:lastH.heart_rate_bpm+' bpm'});
-    if(lastH.glucose_mgdl)hMetrics.push({label:'Glucose',val:lastH.glucose_mgdl+' mg/dL'});
+    healthRows.forEach(function(row){
+      if(row.weight_kg){
+        var wlb=(row.weight_lb!=null&&row.weight_lb!=='')?row.weight_lb:(row.weight_kg*2.20462);
+        hMetrics.push({label:'Weight',val:row.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb',metricType:'weight',row:row});
+      }
+      if(row.blood_pressure_sys&&row.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:row.blood_pressure_sys+'/'+row.blood_pressure_dia,metricType:'bp',row:row});
+      if(row.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:row.heart_rate_bpm+' bpm',metricType:'hr',row:row});
+      if(row.glucose_mgdl)hMetrics.push({label:'Glucose',val:row.glucose_mgdl+' mg/dL',metricType:'glucose',row:row});
+    });
     hMetrics.forEach(function(m){
-      var item=document.createElement('div');item.className='ev-item';
+      var item=document.createElement('div');item.className='ev-item';item.style.cursor='pointer';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
       var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
       td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
@@ -1133,6 +1160,7 @@ function renderTodayEvents(dateStr){
       var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
       nm.appendChild(sub);
       bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      item.addEventListener('click',function(){openHealthEdit(m.metricType,m.row);});
       c.appendChild(item);
     });
   }
@@ -1410,6 +1438,153 @@ document.getElementById('ed-delete').addEventListener('click',function(){
     .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 
+/* ── Finance 편집/삭제 모달 ──
+   주의: /api/me/finance/transaction/edit·delete가 요구하는 rowIdx는 "이 탭 시트 전체에서
+   빈 줄/금액 0 제외 몇 번째 데이터 행인가"를 백엔드가 다시 세어 계산한 값이라, Day View에
+   표시된 (월 단위로 필터링된) 목록 안에서의 순번과 다를 수 있다. 그래서 편집/삭제 직전에
+   ?ytd=true(필터 없이 탭 전체 반환)로 한 번 더 조회해서 _sheet_row가 일치하는 위치를 찾아
+   그 위치를 rowIdx로 사용한다. */
+var curEditFin=null; // {type,category,amount,notes,sublabel,date,_sheet_row,event_id}
+var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
+
+function findFinRowIdx_(tabName,sheetRow){
+  return fetch(BACKEND+'/api/me/finance?ytd=true',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data)return null;
+      var key=(tabName==='income')?'income':(tabName==='expenses'?'expenses':'savings');
+      var arr=Array.isArray(data[key])?data[key]:[];
+      for(var i=0;i<arr.length;i++){if(arr[i]._sheet_row===sheetRow)return i;}
+      return null;
+    });
+}
+function openFinEdit(r){
+  curEditFin=r;
+  document.getElementById('fined-amount').value=r.amount;
+  document.getElementById('fined-date').value=r.date;
+  document.getElementById('fined-category').value=r.category;
+  document.getElementById('fined-sublabel').value=r.sublabel||'';
+  document.getElementById('fined-notes').value=r.notes||'';
+  document.getElementById('fined-st').textContent='';
+  document.getElementById('fin-edit-modal').classList.remove('h');
+}
+document.getElementById('fin-edit-close').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
+document.getElementById('fined-cancel').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
+document.getElementById('fin-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditFin=null;}});
+document.getElementById('fined-save').addEventListener('click',function(){
+  if(!curEditFin)return;
+  var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
+  var self=this;
+  var tabName=FIN_TABNAME_MAP[curEditFin.type]||curEditFin.type;
+  findFinRowIdx_(tabName,curEditFin._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    var body={tabName:tabName,rowIdx:idx,
+      amount:parseFloat(document.getElementById('fined-amount').value)||0,
+      date:document.getElementById('fined-date').value,
+      category:document.getElementById('fined-category').value.trim(),
+      sublabel:document.getElementById('fined-sublabel').value.trim(),
+      notes:document.getElementById('fined-notes').value.trim(),
+      eventId:curEditFin.event_id||''};
+    fetch(BACKEND+'/api/me/finance/transaction/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('fined-delete').addEventListener('click',function(){
+  if(!curEditFin||!confirm('Delete this transaction?'))return;
+  var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  var self=this;
+  var tabName=FIN_TABNAME_MAP[curEditFin.type]||curEditFin.type;
+  findFinRowIdx_(tabName,curEditFin._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    fetch(BACKEND+'/api/me/finance/transaction/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tabName:tabName,rowIdx:idx,eventId:curEditFin.event_id||''})})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+
+/* ── Health 편집/삭제 모달 (weight/bp/hr/glucose — tab:'health')
+   주의: /api/me/health/log/edit·delete가 요구하는 row_idx도 Finance와 동일한 문제가 있어
+   (Day View는 기간 필터링된 목록), ?period=all(필터 없이 탭 전체 반환)로 한 번 더 조회해서
+   _sheet_row가 일치하는 위치를 row_idx로 사용한다. */
+var curEditHealth=null; // {metricType, row}
+var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose'};
+
+function findHealthRowIdx_(sheetRow){
+  var anyDate=new Date().toISOString().slice(0,10);
+  return fetch(BACKEND+'/api/me/health?date='+anyDate+'&period=all&tab=health',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data)return null;
+      var arr=Array.isArray(data.health)?data.health:[];
+      for(var i=0;i<arr.length;i++){if(arr[i]._sheet_row===sheetRow)return i;}
+      return null;
+    });
+}
+function openHealthEdit(metricType,row){
+  curEditHealth={metricType:metricType,row:row};
+  document.getElementById('healthed-title').textContent=HEALTH_ED_TITLES[metricType]||'Edit Record';
+  var fw=document.getElementById('healthed-fields');
+  if(metricType==='weight'){
+    fw.innerHTML='<div class="ff"><label class="fl">Weight (kg)</label><input class="fi" type="number" step="0.1" id="healthed-weight" value="'+row.weight_kg+'"/></div>';
+  } else if(metricType==='bp'){
+    fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl">Systolic</label><input class="fi" type="number" id="healthed-sys" value="'+row.blood_pressure_sys+'"/></div><div class="ff"><label class="fl">Diastolic</label><input class="fi" type="number" id="healthed-dia" value="'+row.blood_pressure_dia+'"/></div></div>';
+  } else if(metricType==='hr'){
+    fw.innerHTML='<div class="ff"><label class="fl">Heart Rate (bpm)</label><input class="fi" type="number" id="healthed-hr" value="'+row.heart_rate_bpm+'"/></div>';
+  } else if(metricType==='glucose'){
+    fw.innerHTML='<div class="ff"><label class="fl">Glucose (mg/dL)</label><input class="fi" type="number" id="healthed-glucose" value="'+row.glucose_mgdl+'"/></div>';
+  } else {
+    fw.innerHTML='';
+  }
+  document.getElementById('healthed-notes').value=row.notes||'';
+  document.getElementById('healthed-st').textContent='';
+  document.getElementById('health-edit-modal').classList.remove('h');
+}
+document.getElementById('healthed-close').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
+document.getElementById('healthed-cancel').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
+document.getElementById('health-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditHealth=null;}});
+document.getElementById('healthed-save').addEventListener('click',function(){
+  if(!curEditHealth)return;
+  var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
+  var self=this;
+  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    var mt=curEditHealth.metricType;
+    var data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
+    if(mt==='weight'){data.weight_kg=parseFloat(document.getElementById('healthed-weight').value)||0;}
+    else if(mt==='bp'){data.blood_pressure_sys=parseFloat(document.getElementById('healthed-sys').value)||0;data.blood_pressure_dia=parseFloat(document.getElementById('healthed-dia').value)||0;}
+    else if(mt==='hr'){data.heart_rate_bpm=parseFloat(document.getElementById('healthed-hr').value)||0;}
+    else if(mt==='glucose'){data.glucose_mgdl=parseFloat(document.getElementById('healthed-glucose').value)||0;}
+    fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx,data:data})})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('healthed-delete').addEventListener('click',function(){
+  if(!curEditHealth||!confirm('Delete this record?'))return;
+  var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  var self=this;
+  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx})})
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+
+
 /* ── Day modal ── */
 function openDayModal(ds,evs){
   var d=new Date(ds+'T12:00:00');
@@ -1580,7 +1755,7 @@ function loadFinance(){
         if(!r.date)return;
         _finDateSet[r.date]=true;
         if(!_finByDate[r.date])_finByDate[r.date]=[];
-        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||''});
+        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||'',date:r.date,_sheet_row:r._sheet_row,event_id:r.event_id||''});
       }
       (data.income||[]).forEach(function(r){_addFinRow('income',r);});
       (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
