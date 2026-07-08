@@ -384,6 +384,7 @@ var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
 var _finByDate={};  // 날짜별 Finance 거래 목록 {YYYY-MM-DD: [{type,category,amount,notes}]}
 var _healthByDate={}; // 날짜별 Health 기록 {YYYY-MM-DD: {...record}}
+var _activityByDate={}; // 날짜별 Activity 기록 (steps/distance 등) {YYYY-MM-DD: [{...record}]}
 // 가정: /api/me/health?month=YYYY-MM&period=monthly 가 그 달 전체 기록을
 // 날짜(date) 필드 포함 배열로 반환한다는 전제로 아래 loadHealth()를 작성함.
 // 실제 백엔드 응답 포맷이 다르면 loadHealth()의 그룹핑 로직만 수정하면 됨.
@@ -585,6 +586,7 @@ function inputCardHTML(){
             +'<optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>'
             +'<optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>'
           +'</select>'
+          +'<input class="afi-sm" type="text" placeholder="Sublabel (optional)" id="afin-sublabel"/>'
           +'<input class="afi-sm" type="text" placeholder="Description (optional)" id="afin-desc"/>'
         +'</div>'
         +'<div class="add-form-footer">'
@@ -595,7 +597,7 @@ function inputCardHTML(){
       
       +'<div class="add-form-b" id="afb-hl">'
         +'<div class="add-form-scroll">'
-          +'<div class="af-row" style="margin-top:6px;">'
+          +'<div class="af-row" style="margin-top:6px;flex-wrap:wrap;">'
             +'<select class="afi-sm" id="ahl-type" onchange="updateHealthFieldsDash()">'
               +'<option value="">Metric ▾</option>'
               +'<option value="weight">⚖️ Weight</option>'
@@ -603,16 +605,24 @@ function inputCardHTML(){
               +'<option value="hr">❤️ Heart Rate</option>'
               +'<option value="glucose">🩸 Glucose</option>'
               +'<option value="steps">👟 Steps</option>'
+              +'<option value="distance">🏃 Distance</option>'
               +'<option value="water">💧 Water</option>'
               +'<option value="sleep">😴 Sleep</option>'
               +'<option value="mood">😊 Mood</option>'
             +'</select>'
             +'<input class="afi-sm" type="date" id="ahl-date"/>'
+            +'<select class="afi-sm" id="ahl-unit" onchange="setUnitPref(this.value);updateHealthFieldsDash();">'
+              +'<option value="metric"'+(getUnitPref()!=='us'?' selected':'')+'>Metric (kg/km/ml)</option>'
+              +'<option value="us"'+(getUnitPref()==='us'?' selected':'')+'>US (lb/mi/fl oz)</option>'
+            +'</select>'
           +'</div>'
           +'<div id="ahl-value-wrap"><input class="afi-sm" type="number" placeholder="Value" step="0.1"/></div>'
           +'<input class="afi-sm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>'
         +'</div>'
         +'<div class="add-form-footer">'
+          +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">'
+            +'<input type="checkbox" id="ahl-add-to-calendar"/> 📅 Add to Calendar'
+          +'</label>'
           +'<button class="add-sub-full" onclick="submitAdd2(\'hl\')">Add Record</button>'
           +'<div class="add-form-st" id="ast-hl"></div>'
         +'</div>'
@@ -1048,9 +1058,10 @@ function renderTodayEvents(dateStr){
   function fmtAmt(v){return(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
   var finRows=_finByDate[ds]||[];
   var healthRows=_healthByDate[ds]||[];
+  var activityRows=_activityByDate[ds]||[];
   var projects=allProjects.length?allProjects:[];
 
-  if(!evs.length&&!finRows.length&&!healthRows.length&&!projects.length){
+  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!projects.length){
     var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;
   }
 
@@ -1113,6 +1124,32 @@ function renderTodayEvents(dateStr){
       var item=document.createElement('div');item.className='ev-item';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
       var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
+      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
+      var bd=document.createElement('div');bd.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=m.label;
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
+      nm.appendChild(sub);
+      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      c.appendChild(item);
+    });
+  }
+
+  // Activity 기록 렌더링 (purple 구분선) — 선택한 날짜(ds)의 steps/distance 합산, _activityByDate에서 조회
+  if(activityRows.length){
+    var acDivider=document.createElement('div');
+    acDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);padding:8px 2px 4px;';
+    acDivider.textContent='Activity';
+    c.appendChild(acDivider);
+
+    var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
+    var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
+    var acMetrics=[];
+    if(totalSteps)acMetrics.push({label:'Steps',val:totalSteps.toLocaleString()+' steps'});
+    if(totalDistKm)acMetrics.push({label:'Distance',val:totalDistKm+' km'});
+    acMetrics.forEach(function(m){
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--purple)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent='🏃 Activity';
       td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
       var bd=document.createElement('div');bd.className='ev-body';
       var nm=document.createElement('div');nm.className='ev-name';nm.textContent=m.label;
@@ -1215,7 +1252,7 @@ function submitEv(){
   var ed=document.getElementById('ae-edate').value,et=document.getElementById('ae-etime').value;
   var loc=document.getElementById('ae-loc').value.trim();
   st.style.color='var(--txt3)';st.textContent='Saving…';
-  fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,start:t?d+'T'+t+':00':d,end:ed?(et?ed+'T'+et+':00':ed):null,location:loc})})
+  fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,start:t?d+'T'+t+':00':d,end:ed?(et?ed+'T'+et+':00':ed):null,location:loc,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
     .then(function(r){if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Event added!';document.getElementById('ae-title').value='';setTimeout(function(){st.textContent='';},2500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
     .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';});
 }
@@ -1261,6 +1298,11 @@ function doSend(){
 /* ── Drafts ── */
 function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
 function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
+
+/* ── Unit preference (metric/us) — Health +Add에서 weight/water/distance에 사용 ── */
+var UNIT_PREF_KEY='klaive_unit_pref';
+function getUnitPref(){try{return localStorage.getItem(UNIT_PREF_KEY)||'metric';}catch(e){return'metric';}}
+function setUnitPref(v){try{localStorage.setItem(UNIT_PREF_KEY,v==='us'?'us':'metric');}catch(e){}}
 function renderDraftList(){
   var drafts=getDrafts();
   var wrap=document.getElementById('draft-wrap');
@@ -1549,21 +1591,28 @@ function loadFinance(){
 /* ── Health API ── */
 function loadHealth(){
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
-  fetch(BACKEND+'/api/me/health?month='+ym+'&period=monthly&tab=all',{credentials:'include'})
+  fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      _healthByDate={};
+      _healthByDate={};_activityByDate={};
       if(!data){renderTodayEvents(selectedDateStr);return;}
       var arr=Array.isArray(data.health)?data.health:[];
       arr.forEach(function(rec){
-        var ds=rec.date||(rec.recorded_at||'').slice(0,10)||(rec.timestamp||'').slice(0,10);
+        var ds=(rec.stamp_date||'').slice(0,10);
         if(!ds)return;
         if(!_healthByDate[ds])_healthByDate[ds]=[];
         _healthByDate[ds].push(rec);
       });
+      var actArr=Array.isArray(data.activity)?data.activity:[];
+      actArr.forEach(function(rec){
+        var ds=(rec.stamp_date||'').slice(0,10);
+        if(!ds)return;
+        if(!_activityByDate[ds])_activityByDate[ds]=[];
+        _activityByDate[ds].push(rec);
+      });
       renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){_healthByDate={};renderTodayEvents(selectedDateStr);});
+    .catch(function(){_healthByDate={};_activityByDate={};renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
@@ -1615,15 +1664,17 @@ function renderInviteChips2(){
 function updateHealthFieldsDash(){
   var type=document.getElementById('ahl-type');if(!type)return;
   var wrap=document.getElementById('ahl-value-wrap');if(!wrap)return;
+  var unit=getUnitPref(); // 'metric' | 'us'
   var t={
-    weight:'<input class="afi-sm" type="number" placeholder="Weight (kg or lb)" step="0.1" min="0"/>',
-    bp:'<div class="af-row"><input class="afi-sm" type="number" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afi-sm" type="number" placeholder="Diastolic" min="0"/></div>',
-    hr:'<input class="afi-sm" type="number" placeholder="BPM" min="0"/>',
-    glucose:'<input class="afi-sm" type="number" placeholder="mg/dL" min="0" step="1"/>',
-    steps:'<input class="afi-sm" type="number" placeholder="Steps" min="0" step="1"/>',
-    water:'<input class="afi-sm" type="number" placeholder="ml or fl oz" min="0" step="10"/>',
-    sleep:'<div class="af-row"><input class="afi-sm" type="number" placeholder="Hours" min="0" max="24" step="0.5"/><select class="afi-sm"><option>Q5/5</option><option>Q4/5</option><option selected>Q3/5</option><option>Q2/5</option><option>Q1/5</option></select></div>',
-    mood:'<select class="afi-sm"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'
+    weight:'<input class="afi-sm" type="number" id="ahl-val-weight" placeholder="'+(unit==='us'?'Weight (lb)':'Weight (kg)')+'" step="0.1" min="0"/>',
+    bp:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sys" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afi-sm" type="number" id="ahl-val-dia" placeholder="Diastolic" min="0"/></div>',
+    hr:'<input class="afi-sm" type="number" id="ahl-val-hr" placeholder="BPM" min="0"/>',
+    glucose:'<input class="afi-sm" type="number" id="ahl-val-glucose" placeholder="mg/dL" min="0" step="1"/>',
+    steps:'<input class="afi-sm" type="number" id="ahl-val-steps" placeholder="Steps" min="0" step="1"/>',
+    distance:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-distance" placeholder="'+(unit==='us'?'Distance (mi)':'Distance (km)')+'" min="0" step="0.01"/><select class="afi-sm" id="ahl-val-distance-type"><option value="Run">🏃 Run</option><option value="Walk">🚶 Walk</option><option value="Bike">🚴 Bike</option></select></div>',
+    water:'<input class="afi-sm" type="number" id="ahl-val-water" placeholder="'+(unit==='us'?'Water (fl oz)':'Water (ml)')+'" min="0" step="10"/>',
+    sleep:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sleep-hours" placeholder="Hours" min="0" max="24" step="0.5"/><select class="afi-sm" id="ahl-val-sleep-quality"><option>Q5/5</option><option>Q4/5</option><option selected>Q3/5</option><option>Q2/5</option><option>Q1/5</option></select></div>',
+    mood:'<select class="afi-sm" id="ahl-val-mood"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'
   };
   wrap.innerHTML=t[type.value]||'<input class="afi-sm" type="number" placeholder="Value" step="0.1"/>';
 }
@@ -1640,7 +1691,7 @@ function submitAdd2(type){
     var loc=document.getElementById('ae2-loc');var notes=document.getElementById('ae2-notes');
     var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;
     var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;
-    fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees})})
+    fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
       .then(function(r){if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('ev','❌ Error.','var(--red)');});
   } else if(type==='tk'){
@@ -1653,14 +1704,68 @@ function submitAdd2(type){
     var a=document.getElementById('afin-amt');var cat=document.getElementById('afin-cat');
     if(!a||!a.value||!cat||!cat.value){showAddSt('fin','Amount & category required.','var(--red)');return;}
     var desc=document.getElementById('afin-desc');var date=document.getElementById('afin-date');
-    fetch(BACKEND+'/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat.value,description:desc?desc.value:'',date:date?date.value:nd})})
-      .then(function(r){if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');}else{showAddSt('fin','❌ Failed.','var(--red)');}})
+    var sublabel=document.getElementById('afin-sublabel');
+    var grp=(cat.selectedOptions&&cat.selectedOptions[0]&&cat.selectedOptions[0].parentElement&&cat.selectedOptions[0].parentElement.label)||'';
+    var finType=(grp==='Needs'||grp==='Wants')?'Expenses':(grp==='Income'?'Income':(grp==='Savings'?'Savings':'Expenses'));
+    fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd})})
+      .then(function(r){if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');}else{showAddSt('fin','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('fin','❌ Error.','var(--red)');});
   } else if(type==='hl'){
     var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAddSt('hl','Select a metric.','var(--red)');return;}
     var notes=document.getElementById('ahl-notes');var hdate=document.getElementById('ahl-date');
-    fetch(BACKEND+'/api/me/health/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:ht.value,date:hdate?hdate.value:nd,notes:notes?notes.value:''})})
-      .then(function(r){if(r.ok){showAddSt('hl','✅ Record saved!','var(--teal)');notes&&(notes.value='');}else{showAddSt('hl','❌ Failed.','var(--red)');}})
+    var unit=getUnitPref(); // 'metric' | 'us'
+    var now=new Date();
+    var hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0');
+    var stampDate=(hdate&&hdate.value?hdate.value:nd)+' '+hh+':'+mi+':'+ss;
+    var mtype=ht.value,tab=null,data=null;
+    if(mtype==='weight'){
+      var w=document.getElementById('ahl-val-weight');
+      if(!w||!w.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data=(unit==='us')?{weight_lb:parseFloat(w.value)}:{weight_kg:parseFloat(w.value)};
+    } else if(mtype==='bp'){
+      var sys=document.getElementById('ahl-val-sys'),dia=document.getElementById('ahl-val-dia');
+      if(!sys||!sys.value||!dia||!dia.value){showAddSt('hl','Systolic & diastolic required.','var(--red)');return;}
+      tab='health';data={blood_pressure_sys:parseFloat(sys.value),blood_pressure_dia:parseFloat(dia.value)};
+    } else if(mtype==='hr'){
+      var hr=document.getElementById('ahl-val-hr');
+      if(!hr||!hr.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data={heart_rate_bpm:parseFloat(hr.value)};
+    } else if(mtype==='glucose'){
+      var gl=document.getElementById('ahl-val-glucose');
+      if(!gl||!gl.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data={glucose_mgdl:parseFloat(gl.value)};
+    } else if(mtype==='sleep'){
+      var hrs=document.getElementById('ahl-val-sleep-hours'),q=document.getElementById('ahl-val-sleep-quality');
+      if(!hrs||!hrs.value){showAddSt('hl','Hours required.','var(--red)');return;}
+      var qm=q&&q.value?q.value.match(/(\d+)\//):null;
+      tab='sleep';data={duration_min:Math.round(parseFloat(hrs.value)*60),quality_1to5:qm?parseInt(qm[1],10):null};
+    } else if(mtype==='mood'){
+      var md=document.getElementById('ahl-val-mood');
+      if(!md||!md.value){showAddSt('hl','Select a mood.','var(--red)');return;}
+      tab='mood';data={mood:md.value};
+    } else if(mtype==='water'){
+      var wt=document.getElementById('ahl-val-water');
+      if(!wt||!wt.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='water';data=(unit==='us')?{amount_floz:parseFloat(wt.value)}:{amount_ml:parseFloat(wt.value)};
+    } else if(mtype==='steps'){
+      var stp=document.getElementById('ahl-val-steps');
+      if(!stp||!stp.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='activity';data={category:'Cardio',type:'Steps',steps:parseInt(stp.value,10)};
+    } else if(mtype==='distance'){
+      var dist=document.getElementById('ahl-val-distance'),dtype=document.getElementById('ahl-val-distance-type');
+      if(!dist||!dist.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='activity';
+      data={category:'Cardio',type:(dtype?dtype.value:'Run')};
+      if(unit==='us'){data.distance_mi=parseFloat(dist.value);}else{data.distance_km=parseFloat(dist.value);}
+    } else {
+      showAddSt('hl','Unsupported metric.','var(--red)');return;
+    }
+    data.stamp_date=stampDate;
+    data.notes=notes?notes.value:'';
+    var atc=document.getElementById('ahl-add-to-calendar');
+    data.add_to_calendar=(atc&&atc.checked)?'Y':'';
+    fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:tab,data:data,unit_pref:unit})})
+      .then(function(r){if(r.ok){showAddSt('hl','✅ Record saved!','var(--teal)');notes&&(notes.value='');loadHealth();}else{showAddSt('hl','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('hl','❌ Error.','var(--red)');});
   } else if(type==='pr'){
     var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAddSt('pr','Name required.','var(--red)');return;}
