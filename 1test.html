@@ -298,7 +298,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app-root" style="visibility:hidden;">
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -401,9 +401,49 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<div class="modal-bg h" id="reauth-modal-full">
+  <div class="mb" style="max-width:340px;text-align:center;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Reconnect your Google account</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">We need you to reconnect to keep<br/>showing your calendar, events, and tasks</div>
+    <a href="/login" class="bs" id="reauth-full-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+  </div>
+</div>
+
+<div class="modal-bg h" id="reauth-modal-partial">
+  <div class="mb" style="max-width:340px;text-align:center;position:relative;">
+    <button class="mx" id="reauth-partial-close" style="position:absolute;top:8px;right:12px;">×</button>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Saved, but not added to your calendar</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">Your entry was saved. Reconnect Google<br/>to also sync it to your calendar</div>
+    <a href="/login" class="bs" id="reauth-partial-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+  </div>
+</div>
+
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
+
+/* ── Reauth (Google 재연결) 감지 ── */
+var reauthModalShown=false;
+function showReauthModal(kind){
+  if(reauthModalShown)return;
+  reauthModalShown=true;
+  var el=document.getElementById(kind==='full'?'reauth-modal-full':'reauth-modal-partial');
+  if(el)el.classList.remove('h');
+}
+// 401은 이 앱의 라우트에서 REAUTH_REQUIRED 전용 상태코드 — 바디를 안 읽어도 상태코드만으로 판별 가능
+function checkReauthStatus(status){
+  if(status===401){showReauthModal('full');return true;}
+  return false;
+}
+// health/log, finance/transaction은 200이어도 calendar_reauth_required:true를 줄 수 있음(부분 실패)
+function checkReauthBody(body){
+  if(body&&body.calendar_reauth_required===true){showReauthModal('partial');return true;}
+  return false;
+}
+document.getElementById('reauth-full-btn').addEventListener('click',function(){location.href='/login';});
+document.getElementById('reauth-partial-btn').addEventListener('click',function(){location.href='/login';});
+document.getElementById('reauth-partial-close').addEventListener('click',function(){document.getElementById('reauth-modal-partial').classList.add('h');reauthModalShown=false;});
+
 var DRAFT_KEY='mie_drafts_klaive';
 var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
@@ -615,6 +655,9 @@ function inputCardHTML(){
           +'<input class="afi-sm" type="text" placeholder="Description (optional)" id="afin-desc"/>'
         +'</div>'
         +'<div class="add-form-footer">'
+          +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">'
+            +'<input type="checkbox" id="afin-add-to-calendar"/> 📅 Add to Calendar'
+          +'</label>'
           +'<button class="add-sub-full" onclick="submitAdd2(\'fin\')">Add Entry</button>'
           +'<div class="add-form-st" id="ast-fin"></div>'
         +'</div>'
@@ -1284,7 +1327,7 @@ function submitEv(){
   var loc=document.getElementById('ae-loc').value.trim();
   st.style.color='var(--txt3)';st.textContent='Saving…';
   fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,start:t?d+'T'+t+':00':d,end:ed?(et?ed+'T'+et+':00':ed):null,location:loc,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
-    .then(function(r){if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Event added!';document.getElementById('ae-title').value='';setTimeout(function(){st.textContent='';},2500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Event added!';document.getElementById('ae-title').value='';setTimeout(function(){st.textContent='';},2500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
     .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';});
 }
 function submitTask(){
@@ -1297,7 +1340,7 @@ function submitTask(){
   var listId=document.getElementById('at-list').value||'@default';
   st.style.color='var(--txt3)';st.textContent='Saving…';
   fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,notes:notes,due:due,priority:prio,listId:listId})})
-    .then(function(r){if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Task added!';document.getElementById('at-title').value='';setTimeout(function(){st.textContent='';loadTasks();},1500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Task added!';document.getElementById('at-title').value='';setTimeout(function(){st.textContent='';loadTasks();},1500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
     .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';});
 }
 
@@ -1392,7 +1435,7 @@ document.getElementById('ev-dc-ok').addEventListener('click',function(){
   if(!curViewEv)return;var btn=this,st=document.getElementById('ev-dc-st');
   btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
-    .then(function(r){if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();}else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();}else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}})
     .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
 });
 
@@ -1426,7 +1469,7 @@ document.getElementById('ed-save').addEventListener('click',function(){
   this.disabled=true;s.style.color='var(--txt3)';s.textContent='Saving…';
   var self=this;
   fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary',title:nt,start:ns,end:ne,location:nl,description:nde})})
-    .then(function(r){if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
     .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 document.getElementById('ed-delete').addEventListener('click',function(){
@@ -1434,7 +1477,7 @@ document.getElementById('ed-delete').addEventListener('click',function(){
   var s=document.getElementById('ed-st');this.disabled=true;s.style.color='var(--txt3)';s.textContent='Deleting…';
   var self=this;
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary'})})
-    .then(function(r){if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
     .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 
@@ -1689,7 +1732,7 @@ function loadUserInfo(){
 }
 function loadCalendarList(){
   fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data){
         // fallback: Demo 데이터로 classify
@@ -1724,7 +1767,7 @@ function loadEvents(){
   eventsByDate={};
   buildCalGridFromEvents(); // 즉시 마커 초기화
   fetch(BACKEND+'/api/me/events?'+new URLSearchParams({timeMin:rangeStart.toISOString(),timeMax:rangeEnd.toISOString()}),{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data)return;
       var items=Array.isArray(data.events)?data.events:[];
@@ -1758,7 +1801,7 @@ function loadEvents(){
 }
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks();return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks();})
     .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks();});
 }
@@ -1893,23 +1936,24 @@ function submitAdd2(type){
     var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;
     var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;
     fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
-      .then(function(r){if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('ev','❌ Error.','var(--red)');});
   } else if(type==='tk'){
     var t=document.getElementById('at2-title');if(!t||!t.value.trim()){showAddSt('tk','Title required.','var(--red)');return;}
     var due=document.getElementById('at2-due');var list=document.getElementById('at2-list');
     fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:list?list.value:'@default'})})
-      .then(function(r){if(r.ok){showAddSt('tk','✅ Task added!','var(--teal)');t.value='';setTimeout(function(){loadTasks();},1000);}else{showAddSt('tk','❌ Failed.','var(--red)');}})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('tk','✅ Task added!','var(--teal)');t.value='';setTimeout(function(){loadTasks();},1000);}else{showAddSt('tk','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('tk','❌ Error.','var(--red)');});
   } else if(type==='fin'){
     var a=document.getElementById('afin-amt');var cat=document.getElementById('afin-cat');
     if(!a||!a.value||!cat||!cat.value){showAddSt('fin','Amount & category required.','var(--red)');return;}
     var desc=document.getElementById('afin-desc');var date=document.getElementById('afin-date');
     var sublabel=document.getElementById('afin-sublabel');
+    var finAtc=document.getElementById('afin-add-to-calendar');
     var grp=(cat.selectedOptions&&cat.selectedOptions[0]&&cat.selectedOptions[0].parentElement&&cat.selectedOptions[0].parentElement.label)||'';
     var finType=(grp==='Needs'||grp==='Wants')?'Expenses':(grp==='Income'?'Income':(grp==='Savings'?'Savings':'Expenses'));
-    fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd})})
-      .then(function(r){if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');}else{showAddSt('fin','❌ Failed.','var(--red)');}})
+    fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd,createCalendarEvent:!!(finAtc&&finAtc.checked)})})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
       .catch(function(){showAddSt('fin','❌ Error.','var(--red)');});
   } else if(type==='hl'){
     var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAddSt('hl','Select a metric.','var(--red)');return;}
@@ -1966,7 +2010,7 @@ function submitAdd2(type){
     var atc=document.getElementById('ahl-add-to-calendar');
     data.add_to_calendar=(atc&&atc.checked)?'Y':'';
     fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:tab,data:data,unit_pref:unit})})
-      .then(function(r){if(r.ok){showAddSt('hl','✅ Record saved!','var(--teal)');notes&&(notes.value='');loadHealth();}else{showAddSt('hl','❌ Failed.','var(--red)');}})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('hl','✅ Record saved!','var(--teal)');notes&&(notes.value='');loadHealth();}else{showAddSt('hl','❌ Failed.','var(--red)');}});})
       .catch(function(){showAddSt('hl','❌ Error.','var(--red)');});
   } else if(type==='pr'){
     var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAddSt('pr','Name required.','var(--red)');return;}
@@ -2027,7 +2071,20 @@ function init(){
   loadHealth();
   loadProjects();
 }
-init();
+// 인증 가드: 콘텐츠를 그리기 전에 로그인 여부부터 확인. 이 사이트는 정적 호스팅이라
+// 서버가 리다이렉트를 못 해주므로, 클라이언트에서 직접 체크하고 안 되어 있으면 /login으로 보낸다.
+function guardAndInit(){
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){return r.json().catch(function(){return null;});})
+    .then(function(data){
+      if(!data||!data.connected){location.href='/login';return;}
+      var appEl=document.getElementById('app-root');
+      if(appEl)appEl.style.visibility='visible';
+      init();
+    })
+    .catch(function(){location.href='/login';});
+}
+guardAndInit();
 </script>
 </body>
 </html>
