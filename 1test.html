@@ -405,7 +405,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="mb" style="max-width:340px;text-align:center;">
     <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Reconnect your Google account</div>
     <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">We need you to reconnect to keep<br/>showing your calendar, events, and tasks</div>
-    <a href="/login" class="bs" id="reauth-full-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+    <a href="https://api.mie.today/auth/google" class="bs" id="reauth-full-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
   </div>
 </div>
 
@@ -414,7 +414,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <button class="mx" id="reauth-partial-close" style="position:absolute;top:8px;right:12px;">×</button>
     <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Saved, but not added to your calendar</div>
     <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">Your entry was saved. Reconnect Google<br/>to also sync it to your calendar</div>
-    <a href="/login" class="bs" id="reauth-partial-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+    <a href="https://api.mie.today/auth/google" class="bs" id="reauth-partial-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
   </div>
 </div>
 
@@ -440,8 +440,8 @@ function checkReauthBody(body){
   if(body&&body.calendar_reauth_required===true){showReauthModal('partial');return true;}
   return false;
 }
-document.getElementById('reauth-full-btn').addEventListener('click',function(){location.href='/login';});
-document.getElementById('reauth-partial-btn').addEventListener('click',function(){location.href='/login';});
+document.getElementById('reauth-full-btn').addEventListener('click',function(){location.href=BACKEND+'/auth/google';});
+document.getElementById('reauth-partial-btn').addEventListener('click',function(){location.href=BACKEND+'/auth/google';});
 document.getElementById('reauth-partial-close').addEventListener('click',function(){document.getElementById('reauth-modal-partial').classList.add('h');reauthModalShown=false;});
 
 var DRAFT_KEY='mie_drafts_klaive';
