@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>KLAIVE</title>
+<title>KLAIVE · Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js"></script>
 <style>
+/* ══ Root (0626dash-prod.html 기준) ══ */
 :root{
   --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
-  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;--txtdark:#4f4d46;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;
   --blue:#1C7ED6;--teal:#1D9E75;
   --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
   --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
@@ -18,7 +20,7 @@
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);font-size:13px;}
 .app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 
-/* Topbar */
+/* ══ Topbar — 0626dash-prod.html 완전 동일 ══ */
 .topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;}
 .tb-left{display:flex;align-items:center;gap:14px;}
 .logo{font-size:13px;font-weight:500;letter-spacing:8px;text-transform:uppercase;user-select:none;}
@@ -32,158 +34,170 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .tb-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .tb-signout{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
 .tb-signout:hover{text-decoration:underline;}
-/* ========== LAYOUT ========== */
-/* Unified layout (fixed, no states): 3 cols.
-   Left = Calendar. Mid = Day View (Events incl. Finance/Health/Project sub-dividers, then Tasks).
-   Right = Input panel, collapsible to a slim icon strip via the ‹ / › toggle.
-   Closed widths: 46fr 34fr 20fr. Open widths: 40fr 30fr 30fr. */
 
-.grid{display:grid;flex:1;gap:14px;padding:14px 24px;overflow:hidden;min-height:0;grid-template-rows:1fr;align-items:stretch;align-content:stretch;}
+/* ══ Main ══ */
+.main{flex:1;display:flex;overflow:hidden;padding:12px;gap:12px;min-height:0;}
 
-/* Column wrappers */
-.col-left,.col-mid,.col-right{display:flex;flex-direction:column;gap:14px;min-height:0;}
+/* ══ Calendar column ══ */
+.cal-col{flex:3;min-width:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;min-height:0;}
 
-/* Cards */
-.card{background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-.card-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.card-hd-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);display:flex;align-items:center;gap:4px;}
-.card-hd-link{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;padding:0;}
-.card-hd-link:hover{text-decoration:underline;}
-.card-body{flex:1;overflow-y:auto;padding:12px 14px;min-height:0;}
-.card-body::-webkit-scrollbar{width:3px;}
-.card-body::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-
-/* ── Calendar ── */
-.cal-card{flex:1;}
+/* Calendar header */
 .cal-topbar{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
 .cal-navg{display:flex;align-items:center;gap:2px;margin-right:auto;position:relative;}
-.cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;padding:3px 8px;font-size:13px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.cal-nbtn{background:none;border:.5px solid var(--b1);border-radius:4px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .cal-nbtn:hover{background:var(--bg2);}
-.cal-mo{font-size:14px;font-weight:500;padding:0 8px;min-width:90px;text-align:center;cursor:pointer;border-radius:4px;transition:background .12s;}
+.cal-mo{font-size:14px;font-weight:500;color:var(--txt);padding:0 8px;min-width:90px;text-align:center;cursor:pointer;border-radius:4px;transition:background .12s;}
 .cal-mo:hover{background:var(--bg2);}
 /* Month/Year picker */
 .mo-picker{position:absolute;top:calc(100% + 6px);left:0;z-index:200;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.13);padding:14px;min-width:210px;display:none;}
 .mo-picker.open{display:block;}
 .mpy-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .mpy-yr{font-size:13px;font-weight:600;color:var(--txt);}
-.mpy-nav{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--txt2);font-family:'Inter',sans-serif;}
+.mpy-nav{background:none;border:.5px solid var(--b1);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--txt2);}
 .mpy-nav:hover{background:var(--bg2);}
 .mpy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
 .mpy-m{padding:6px 4px;border:none;background:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--txt2);text-align:center;}
 .mpy-m:hover{background:var(--bg2);}
 .mpy-m.cur{background:var(--blue);color:#fff;font-weight:600;}
-.cal-today-btn,.cal-view-sel{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.cal-today-btn{background:var(--bg2);border:.5px solid var(--b1);border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
 .cal-today-btn:hover{background:var(--bg3);}
-.cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;padding:4px 22px 4px 10px;font-weight:500;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
-.cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0 10px 6px;min-height:0;}
-.cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding-top:7px;flex-shrink:0;}
-.cal-dow{font-size:9px;font-weight:600;color:var(--txt3);text-align:center;padding:2px 0 4px;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);flex:1;border-top:.5px solid var(--b1);}
-.cal-day{border-right:.5px solid var(--b1);border-bottom:.5px solid var(--b1);padding:3px 4px 4px;cursor:pointer;display:flex;flex-direction:column;transition:background .1s;}
-.cal-day:hover{background:var(--bg2);}
-.cal-day:nth-child(7n){border-right:none;}
-.cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;}
-.cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
-.cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
-.cal-day.selected-day{background:rgba(28,126,214,0.04);}
-.cal-day.selected-day .cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
-.cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
-.cal-mk{height:2px;border-radius:1px;width:100%;}
+.cal-view-sel{appearance:none;background:var(--blue);color:#fff;border:none;border-radius:4px;padding:4px 24px 4px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='white'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
+.cal-add-btn{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+.cal-add-btn:hover{opacity:.9;}
+
+/* FullCalendar container — flex:1 so it fills remaining space */
+#cal-wrap{flex:1;min-height:0;overflow:hidden;padding:0 8px 4px;}
+#cal-wrap .fc{height:100%;}
+
+/* Calendar footer */
 .cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
-.cal-leg-lbl{font-size:10px;color:var(--txt3);}
-.leg-items{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.leg-items{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
 .leg-item{display:flex;align-items:center;gap:4px;}
 .leg-dot{width:7px;height:7px;border-radius:50%;}
 .leg-txt{font-size:10px;color:var(--txt2);}
-.cals-btn{display:flex;align-items:center;gap:4px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;margin-left:auto;}
+.cals-btn{display:flex;align-items:center;gap:4px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:4px 9px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;flex-shrink:0;}
 .cals-btn:hover{background:var(--bg2);}
 .cal-popup{position:absolute;bottom:42px;right:14px;z-index:50;background:var(--bg);border:.5px solid var(--b2);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.1);padding:12px 14px;min-width:200px;display:none;}
 .cal-popup.open{display:block;}
-.cal-pop-title{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;}
+.cal-pop-sec:first-child{margin-top:0;}
 .cal-row{display:flex;align-items:center;gap:6px;padding:4px 3px;border-radius:6px;}
 .cal-row:hover{background:var(--bg2);}
 .cal-row-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
 .cal-row input[type=checkbox]{width:11px;height:11px;accent-color:var(--blue);cursor:pointer;}
 .cal-row-name{font-size:11px;color:var(--txt);flex:1;}
-.cal-row-name.primary{font-weight:500;}
 
-/* ── Day View card (formerly Today card) ── */
-.today-card{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
-.today-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 8px;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.today-title{font-size:13px;font-weight:500;}
-.today-date{font-size:10.5px;color:var(--txtdark);}
-.today-inner{flex:1;overflow-y:auto;padding:0 14px 12px;min-height:0;}
+/* ══ FullCalendar overrides (index_14_.html 방식) ══ */
+.fc .fc-daygrid-day-events{padding:0 2px 2px !important;}
+.fc .fc-event,.fc .fc-event-main,.fc .fc-daygrid-event,.fc .fc-daygrid-event-harness .fc-event{background:transparent !important;background-color:transparent !important;border:none !important;box-shadow:none !important;padding:0 !important;}
+.fc .fc-daygrid-event-dot{display:none !important;}
+.fc .fc-col-header-cell{background:var(--bg2) !important;font-size:10px !important;font-weight:600 !important;color:var(--txt3) !important;border:none !important;}
+.fc .fc-col-header-cell .fc-col-header-cell-cushion{padding:4px !important;color:var(--txt3) !important;text-decoration:none !important;}
+.fc .fc-daygrid-day{border:none !important;background:var(--bg) !important;}
+.fc .fc-daygrid-day.fc-day-today{background:rgba(28,126,214,0.04) !important;}
+.fc-theme-standard .fc-scrollgrid{border:.5px solid var(--b1) !important;}
+.fc-theme-standard td,.fc-theme-standard th{border:none !important;}
+.fc .fc-daygrid-body tr{border-bottom:.5px solid var(--b1) !important;}
+.fc .fc-daygrid-more-link{display:none !important;}
+.fc .fc-daygrid-day .fc-daygrid-day-top{padding:2px 4px !important;overflow:visible !important;flex-direction:row !important;}
+.fc .fc-daygrid-day-number{font-size:11px !important;font-weight:500;color:var(--txt2) !important;cursor:pointer !important;width:20px !important;height:20px !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;border-radius:50%;margin:0 !important;float:none !important;text-decoration:none !important;transition:background .1s;}
+.fc .fc-daygrid-day-number:hover{background:rgba(28,126,214,0.1);color:var(--blue) !important;}
+.fc .fc-day-today .fc-daygrid-day-number{background:var(--teal) !important;color:#fff !important;font-weight:600 !important;}
+.mie-more{display:block;margin:1px 4px;font-size:10px;color:var(--txt3);cursor:pointer;font-weight:500;}
+.mie-more:hover{color:var(--blue);}
+/* Week / Day timegrid */
+.fc .fc-timegrid-slot{height:2em !important;}
+.fc .fc-timegrid-axis-cushion{font-size:9px !important;color:var(--txt3) !important;}
+.fc-timegrid-col.fc-day-today{background:rgba(28,126,214,0.02) !important;}
+
+/* ══ Right panel ══ */
+.right-panel{flex:2;min-width:0;display:flex;flex-direction:column;gap:12px;min-height:0;}
+
+/* Today card */
+.today-card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.today-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 0;flex-shrink:0;}
+.today-title{font-size:13px;font-weight:500;color:var(--txt);}
+.today-dt{font-size:10px;color:var(--txt3);}
+.today-inner{flex:1;overflow-y:auto;padding:0 14px 10px;}
 .today-inner::-webkit-scrollbar{width:3px;}
 .today-inner::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-.sec-row{display:flex;align-items:center;gap:8px;padding:10px 0 6px;}
-.sec-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);flex-shrink:0;}
+.sec-row{display:flex;align-items:center;gap:8px;padding:9px 0 5px;}
+.sec-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);flex-shrink:0;}
 .sec-line{flex:1;height:.5px;background:var(--b1);}
-.sec-right{font-size:10px;color:var(--txt2);}
-.all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
+.all-list-sel{font-size:10px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 18px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;flex-shrink:0;}
 .ev-item{display:flex;align-items:flex-start;gap:8px;background:var(--bg2);border-radius:7px;padding:6px 8px;margin-bottom:4px;cursor:pointer;}
 .ev-item:hover{background:var(--bg3);}
-.ev-bar{width:2px;border-radius:1px;flex-shrink:0;align-self:stretch;min-height:18px;}
-.ev-time{font-size:11px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.3;}
-.ev-body{flex:1;}
-.ev-name{font-size:13px;color:var(--txt);line-height:1.4;word-break:break-word;white-space:normal;}
-.ev-name a{color:var(--blue);text-decoration:none;word-break:break-all;}
-.ev-name a:hover{text-decoration:underline;}
-.ev-sub{font-size:11px;color:var(--txt3);margin-top:2px;word-break:break-word;white-space:normal;}
-.task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;cursor:default;}
+.ev-bar{width:2px;border-radius:1px;flex-shrink:0;align-self:stretch;min-height:16px;}
+.ev-time{font-size:9px;color:var(--txt3);width:70px;flex-shrink:0;padding-top:1px;line-height:1.5;}
+.ev-body{flex:1;min-width:0;}
+.ev-nm{font-size:11px;color:var(--txt);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev-sub{font-size:9px;color:var(--txt3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-item{display:flex;align-items:center;gap:8px;padding:5px 2px;border-radius:6px;}
 .task-item:hover{background:var(--bg2);}
 .task-cb{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--b2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .12s;}
 .task-cb:hover{border-color:var(--blue);}
-.task-cb.done{background:var(--blue);border-color:var(--blue);}
-.task-cb.done::after{content:'✓';color:#fff;font-size:8px;font-weight:700;}
-.task-nm{flex:1;font-size:13px;color:var(--txt);}
-.task-nm.s{text-decoration:line-through;color:var(--txt3);}
-.task-tag{font-size:11px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
-.task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
-.task-tag.done{background:var(--bg3);color:var(--txt3);}
+.task-cb.chk{background:var(--blue);border-color:var(--blue);}
+.task-cb.chk::after{content:'✓';color:#fff;font-size:8px;font-weight:700;}
+.task-nm{flex:1;font-size:11px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.task-tag{font-size:9px;border-radius:6px;padding:2px 6px;flex-shrink:0;background:rgba(28,126,214,.1);color:var(--blue);}
+.task-tag.late{background:rgba(226,75,74,.1);color:var(--red);}
 
-/* ── Input strip (collapsed state) — 화면 크기와 무관하게 항상 56px 고정폭 ── */
-.input-strip{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);}
-.input-toggle-btn{width:26px;height:26px;border-radius:8px;border:.5px solid var(--b1);background:var(--bg);color:var(--txt2);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;}
-.input-toggle-btn:hover{background:var(--bg2);}
-.input-close-btn{margin:0 4px 0 6px;}
-
-/* ── Input card ── */
-.input-card{flex:1;display:flex;flex-direction:column;}
-.inp-tabs{display:flex;align-items:center;border-bottom:.5px solid var(--b1);flex-shrink:0;}
-.inp-tab{flex:1;padding:9px 0;font-size:11.5px;font-weight:500;color:var(--txtdark);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
+/* Input card */
+.input-card{flex:0 0 240px;display:flex;flex-direction:column;background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.inp-tabs{display:flex;border-bottom:.5px solid var(--b1);flex-shrink:0;}
+.inp-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;color:var(--txt3);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .12s;}
 .inp-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
-.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 12px;}
+.inp-panel{flex:1;display:none;flex-direction:column;min-height:0;padding:10px 14px 10px;}
 .inp-panel.on{display:flex;}
-.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:10px 12px;}
+.msg-ta{flex:1;resize:none;border:none;outline:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--txt);background:var(--bg2);border-radius:8px;padding:9px 11px;min-height:52px;}
 .msg-ta::placeholder{color:var(--txt3);}
-.inp-actions{display:flex;align-items:center;gap:8px;margin-top:8px;flex-shrink:0;}
-.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 10px;cursor:pointer;flex-shrink:0;}
+.inp-actions{display:flex;align-items:center;gap:8px;margin-top:7px;flex-shrink:0;}
+.attach-lbl{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:5px 9px;cursor:pointer;flex-shrink:0;}
 .attach-lbl:hover{background:var(--bg3);}
 .send-btn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 .send-btn:hover{opacity:.9;}
 .draft-row{display:flex;align-items:center;gap:5px;margin-top:5px;flex-shrink:0;}
 .draft-lbl{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);cursor:pointer;user-select:none;}
 .draft-lbl input{width:11px;height:11px;accent-color:var(--blue);cursor:pointer;}
-.sst{font-size:10px;min-height:13px;margin-top:3px;flex-shrink:0;}
-.fname-row{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:10px;color:var(--txt2);}
+.sst{font-size:10px;min-height:12px;margin-top:3px;flex-shrink:0;}
+.fname-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10px;color:var(--txt2);flex-shrink:0;}
 .rm-btn{background:none;border:none;cursor:pointer;color:var(--txt3);font-size:11px;padding:0;}
-.draft-wrap{border:.5px solid var(--b1);border-radius:7px;overflow:hidden;margin-top:4px;max-height:90px;overflow-y:auto;display:none;flex-shrink:0;}
-.d-item{display:flex;align-items:center;gap:6px;padding:5px 8px;cursor:pointer;border-bottom:.5px solid var(--b1);}
-.d-item:last-child{border-bottom:none;}
-.d-item:hover{background:var(--bg2);}
-.d-item-t{flex:1;font-size:10px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.d-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:0;}
-.d-del:hover{color:var(--red);}
+.dw{border:.5px solid var(--b1);border-radius:7px;overflow:hidden;margin-top:4px;max-height:60px;overflow-y:auto;display:none;flex-shrink:0;}
+.di{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;border-bottom:.5px solid var(--b1);}
+.di:last-child{border-bottom:none;}
+.di:hover{background:var(--bg2);}
+.di-t{flex:1;font-size:10px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.di-d{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:0;}
 
-/* Add panel */
-.add-type-row{display:flex;gap:8px;flex-shrink:0;}
-.add-type-btn{flex:1;padding:8px;border:.5px solid var(--b1);border-radius:8px;background:var(--bg2);font-family:'Inter',sans-serif;font-size:11px;color:var(--txt2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .12s;}
-.add-type-btn:hover,.add-type-btn.sel{background:rgba(28,126,214,.08);border-color:var(--blue);color:var(--blue);}
-.add-ic{width:22px;height:22px;color:inherit;}
-/* Add panel B-plan */
-.add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
-.add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txtdark);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
-.add-type-tab:hover{color:var(--txtdark);}
+/* + Add panel */
+.add-type-sect{display:flex;flex-direction:row;flex-wrap:nowrap;border-bottom:.5px solid var(--b1);flex-shrink:0;margin-bottom:2px;}
+.att{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);cursor:pointer;white-space:nowrap;margin-bottom:-1px;}
+.att:hover{color:var(--txt2);}
+.att.sel{color:var(--blue);border-bottom-color:var(--blue);}
+.att svg{width:10px;height:10px;flex-shrink:0;}
+.afb{display:none;flex-direction:column;flex:1;min-height:0;}
+.afb.vis{display:flex;}
+.afs{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:5px;padding-bottom:4px;}
+.afs::-webkit-scrollbar{display:none;}
+.aff{flex-shrink:0;padding-top:5px;border-top:.5px solid var(--b1);}
+.asf{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.asf:hover{opacity:.9;}
+.ast{font-size:10px;min-height:12px;text-align:center;}
+.afi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.afi:focus{border-color:var(--blue);}
+.afsm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.afsm:focus{border-color:var(--blue);}
+.afr{display:flex;gap:5px;flex-shrink:0;}
+.amt{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;flex-shrink:0;}
+.aex{display:none;flex-direction:column;gap:5px;flex-shrink:0;}
+.aex.vis{display:flex;}
+.ich{display:flex;flex-wrap:wrap;gap:3px;}
+.icp{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
+.icx{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
+
+/* ── 1test 이식(+Add, Day View) 전용 클래스 — 위 구버전(.att/.afb 등)과 별개로 공존 ── */
+.add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
+.add-type-tab:hover{color:var(--txt2);}
 .add-type-tab.sel{color:var(--blue);border-bottom-color:var(--blue);}
 .add-type-tab svg{width:10px;height:10px;flex-shrink:0;}
 .add-form-b{display:none;flex-direction:column;flex:1;min-height:0;}
@@ -191,11 +205,11 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .add-form-scroll{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding-bottom:4px;}
 .add-form-scroll::-webkit-scrollbar{display:none;}
 .add-form-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+.add-form-scroll>.afi-sm,.add-form-scroll>select.afi-sm{flex:0 0 auto;}
 .add-form-footer{flex-shrink:0;padding-top:6px;border-top:.5px solid var(--b1);}
 .add-sub-full{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 .add-sub-full:hover{opacity:.9;}
 .add-form-st{font-size:10px;min-height:13px;text-align:center;}
-/* Invite chips */
 .invite-row{display:flex;gap:5px;align-items:center;}
 .invite-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
 .invite-in::placeholder{color:var(--txt3);}
@@ -206,85 +220,45 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .invite-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
 .afi-sm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
 .afi-sm:focus{border-color:var(--blue);}
-/* .add-form-scroll은 세로 방향 flex라서, 그 직계 자식으로 들어간 select/input(.afi-sm)이
-   flex:1을 세로 성장으로 해석해 버려 카테고리 select/description 칸이 비정상적으로 커지는
-   문제가 있었다. 가로 그룹(.af-row) 안에서는 flex:1(반반 분배)을 그대로 쓰고, 세로 컨테이너에
-   직접 들어간 것만 자연 높이로 고정한다. */
-.add-form-scroll>.afi-sm,.add-form-scroll>select.afi-sm{flex:0 0 auto;}
 .af-row{display:flex;gap:5px;flex-shrink:0;}
-.afl-sm{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
 .add-more-toggle{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;text-align:left;flex-shrink:0;}
 .add-extra-b{display:none;flex-direction:column;gap:5px;flex-shrink:0;}
 .add-extra-b.vis{display:flex;}
 
-.add-form{display:none;flex-direction:column;gap:5px;margin-top:6px;flex:1;overflow-y:auto;}
-.add-form.vis{display:flex;}
-.add-form::-webkit-scrollbar{width:3px;}
-.add-form::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
-.afl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;}
-.afi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
-.afi:focus{border-color:var(--blue);background:var(--bg);}
-.af-r2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.add-sub{background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px;flex-shrink:0;}
-.add-sub:hover{opacity:.9;}
-.add-st{font-size:10px;min-height:13px;flex-shrink:0;}
-
-/* Popup: two sections separator */
-.cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px;padding-top:8px;border-top:.5px solid var(--b1);}
-.cal-pop-sec:first-child{border-top:none;margin-top:0;padding-top:0;}
-
-/* ── Bottom nav ── */
+/* ══ Bottom Nav — 0626dash-prod.html 완전 동일 ══ */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
-.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-right:.5px solid var(--b1);color:var(--txt3);cursor:pointer;background:none;border-top:2px solid transparent;border-bottom:none;border-left:none;font-family:'Inter',sans-serif;padding:0;transition:color .12s;}
-.nav-tab:last-child{border-right:none;}
-.nav-tab.on{color:var(--blue);border-top-color:var(--blue);}
-.nav-tab:hover:not(.on){color:var(--txt2);}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);padding:0;transition:color .12s;text-decoration:none;}
+.nav-tab:hover{color:var(--txt2);}
+.nav-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
 .nav-tab svg{width:14px;height:14px;}
-.nav-lbl{font-size:11px;}
 
-/* ── Modals ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:500;padding:16px;}
+/* ══ Modals ══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:16px;}
 .modal-bg.h{display:none;}
-.mb{background:var(--bg);border-radius:var(--r);padding:20px;max-width:min(420px,90vw);width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:mIn .16s ease;}
 @keyframes mIn{from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
-.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.mt{font-size:14px;font-weight:600;}
-.mx{background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;line-height:1;}
-.ff{margin-bottom:9px;}
-.fl{font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:3px;}
-.fi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:6px 9px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;transition:border-color .12s;}
-.fi:focus{border-color:var(--blue);background:var(--bg);}
-.fi.lg{height:62px;resize:none;}
-.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.mac{display:flex;gap:7px;margin-top:12px;}
-.bs{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
-.bs:hover{opacity:.9;}
-.bc{flex:1;background:var(--bg2);color:var(--txt2);border:.5px solid var(--b1);border-radius:6px;padding:7px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
-.bc:hover{background:var(--bg3);}
-.bd{background:var(--bg);color:var(--red);border:.5px solid rgba(226,75,74,.3);border-radius:6px;padding:7px 10px;font-size:12px;cursor:pointer;}
-.bd:hover{background:rgba(226,75,74,.06);}
-.mst{font-size:10px;text-align:center;margin-top:6px;min-height:13px;}
-.ebadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:rgba(28,126,214,.1);color:var(--blue);border-radius:4px;padding:2px 6px;}
 /* Event view */
-.evb{background:var(--bg);border-radius:14px;max-width:min(420px,90vw);width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);animation:mIn .16s ease;}
-.evt{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:10px 12px 6px;border-bottom:.5px solid var(--b1);position:sticky;top:0;background:var(--bg);z-index:1;}
-.eib{background:none;border:none;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--txt2);transition:background .12s;}
+.evb{background:var(--bg);border-radius:var(--r);max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden;animation:mIn .16s ease;}
+.evt{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:10px 12px 6px;border-bottom:.5px solid var(--b1);}
+.eib{background:none;border:none;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--txt3);}
 .eib:hover{background:var(--bg2);}
 .eib svg{width:16px;height:16px;}
 .evbody{padding:16px 20px 20px;}
-.evcb{width:13px;height:13px;border-radius:3px;flex-shrink:0;margin-top:2px;}
-.evtr{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
-.evtitle{font-size:16px;font-weight:500;color:var(--txt);line-height:1.3;flex:1;word-break:break-word;white-space:normal;}
+.evtr{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.evcb{width:12px;height:12px;border-radius:3px;flex-shrink:0;margin-top:3px;}
+.evtitle{font-size:16px;font-weight:500;color:var(--txt);line-height:1.3;flex:1;word-break:break-word;}
 .evr{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
-.evri{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--txt2);}
+.evri{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--txt3);}
 .evri svg{width:16px;height:16px;}
-.evrt{font-size:12px;color:var(--txt2);line-height:1.5;flex:1;word-break:break-word;white-space:normal;}
-.evrt a{color:var(--blue);text-decoration:none;word-break:break-all;}
-.evrt a:hover{text-decoration:underline;}
-.evcd{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
-.evdc{display:none;padding:12px 20px 16px;border-top:.5px solid var(--b1);}
+.evrt{font-size:12px;color:var(--txt2);line-height:1.5;flex:1;word-break:break-word;}
+.evrt a{color:var(--blue);text-decoration:none;}
+.evcd{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.evdc{display:none;padding:14px 20px;border-top:.5px solid var(--b1);}
+.mst{font-size:10px;text-align:center;margin-top:5px;min-height:12px;}
 /* Day modal */
-.dmb{background:var(--bg);border-radius:var(--r);padding:20px;max-width:min(420px,90vw);width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:mIn .16s ease;}
+.dmb{background:var(--bg);border-radius:var(--r);padding:20px;max-width:380px;width:100%;max-height:78vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.12);animation:mIn .16s ease;}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.mt{font-size:13px;font-weight:600;color:var(--txt);}
+.mx{background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;padding:0 4px;line-height:1;}
 .dei{display:flex;align-items:flex-start;gap:8px;padding:7px 4px;border-bottom:.5px solid var(--b1);cursor:pointer;border-radius:6px;transition:background .1s;}
 .dei:hover{background:var(--bg2);}
 .dei:last-child{border-bottom:none;}
@@ -292,20 +266,58 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .dei-info{flex:1;min-width:0;}
 .det{font-size:9px;color:var(--txt3);margin-bottom:1px;}
 .dett{font-size:12px;font-weight:500;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.del{font-size:9px;color:var(--txt3);margin-top:1px;}
+/* Edit modal */
+.mb{background:var(--bg);border-radius:var(--r);padding:22px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:mIn .18s ease;}
+.ebadge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:rgba(28,126,214,.1);color:var(--blue);border-radius:4px;padding:2px 6px;}
+.ff{margin-bottom:9px;}
+.fl{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.fi{width:100%;border:.5px solid var(--b1);border-radius:6px;padding:6px 9px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.fi:focus{border-color:var(--blue);background:var(--bg);}
+.fi.lg{height:58px;resize:none;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mac{display:flex;gap:7px;margin-top:12px;}
+.bc{flex:1;background:var(--bg2);color:var(--txt2);border:.5px solid var(--b1);border-radius:6px;padding:7px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
+.bs{flex:1;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.bd{background:var(--bg);color:var(--red);border:.5px solid rgba(226,75,74,.4);border-radius:6px;padding:7px 10px;font-size:12px;cursor:pointer;}
+/* Global scrollbar */
 *::-webkit-scrollbar{width:3px;}
 *::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
+/* [auth-wrap 추가] Health/Finance와 동일한 인증 UI 스타일 */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg3);padding:24px;}
+.auth-card{background:var(--bg);border:1px solid var(--b1);border-radius:20px;padding:48px 40px;text-align:center;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.auth-logo{width:56px;height:56px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:24px;margin:0 auto 16px;}
+.auth-title{font-size:22px;font-weight:600;margin-bottom:5px;color:var(--txt);}
+.auth-sub{font-size:13px;color:var(--txt2);margin-bottom:26px;line-height:1.6;}
+.connect-btn{background:var(--blue);color:#fff;border:none;border-radius:50px;padding:12px 34px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.connect-btn:hover{opacity:.9;}
+.spinner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:10px;}
+.spinner{width:24px;height:24px;border:2.5px solid var(--b1);border-top-color:var(--blue);border-radius:50%;animation:spin2 .7s linear infinite;}
+@keyframes spin2{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
-<div class="app" id="app-root" style="visibility:hidden;">
+<!-- [auth-wrap 추가] Health/Finance와 동일한 미인증 시 안내 화면 -->
+<div id="auth-wrap" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">M</div>
+    <div class="auth-title">KLAIVE Calendar</div>
+    <div class="auth-sub">Sign in to view and manage your calendar.</div>
+    <button class="connect-btn" id="connect-btn">Connect Google</button>
+  </div>
+</div>
+<!-- [auth-wrap 추가] 로딩 화면 -->
+<div id="loading-wrap" class="spinner-wrap" style="display:none;">
+  <div class="spinner"></div>
+  <div style="font-size:12px;color:var(--txt2);margin-top:4px;">Loading…</div>
+</div>
+<div id="app" class="app" style="display:none;">
 
-<!-- TOPBAR -->
+<!-- ══ TOPBAR (0626dash-prod.html 완전 동일) ══ -->
 <div class="topbar">
   <div class="tb-left">
     <span class="logo">KL<span class="ai">AI</span>VE</span>
     <div class="tb-div"></div>
-    <div class="tb-userline" id="tb-userline">Welcome, Mie <span id="tb-email-span">(mie@gmail.com)</span></div>
+    <div class="tb-userline" id="tb-userline">Welcome, — <span></span></div>
   </div>
   <div class="tb-right">
     <div class="tb-meta">
@@ -313,33 +325,256 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <span id="wb-time"></span><span class="tb-sep">·</span>
       <span id="wb-wx"></span>
     </div>
-    <div class="tb-avatar" id="tb-av">M</div>
+    <div class="tb-avatar" id="tb-av">—</div>
     <button class="tb-signout" id="signout-btn">Sign out</button>
   </div>
 </div>
 
-<!-- MAIN GRID: rendered by JS based on state -->
-<div class="grid" id="main-grid"></div>
+<!-- ══ MAIN ══ -->
+<div class="main">
 
-<!-- BOTTOM NAV -->
-<div class="bot-nav">
-  <button class="nav-tab on" data-href="/dashboard" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span class="nav-lbl">Overview</span></button>
-  <button class="nav-tab" data-href="/calendar" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span class="nav-lbl">Calendar</span></button>
-  <button class="nav-tab" data-href="/finance" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span class="nav-lbl">Finance</span></button>
-  <button class="nav-tab" data-href="/health" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span class="nav-lbl">Health</span></button>
-  <button class="nav-tab" data-href="/documents" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span class="nav-lbl">Documents</span></button>
-  <button class="nav-tab" data-href="/settings" onclick="navClick(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span class="nav-lbl">Settings</span></button>
+  <!-- Calendar column -->
+  <div class="cal-col">
+    <div class="cal-topbar">
+      <div class="cal-navg">
+        <button class="cal-nbtn" id="cal-prev">‹</button>
+        <span class="cal-mo" id="cal-title">June 2026</span>
+        <button class="cal-nbtn" id="cal-next">›</button>
+        <!-- Month/Year picker popup -->
+        <div class="mo-picker" id="mo-picker">
+          <div class="mpy-hd">
+            <button class="mpy-nav" id="mpy-prev">‹</button>
+            <span class="mpy-yr" id="mpy-yr">2026</span>
+            <button class="mpy-nav" id="mpy-next">›</button>
+          </div>
+          <div class="mpy-grid" id="mpy-grid"></div>
+        </div>
+      </div>
+      <button class="cal-today-btn" id="cal-today-btn">Today</button>
+      <select class="cal-view-sel" id="cal-view-sel">
+        <option value="dayGridMonth">Month</option>
+        <option value="timeGridWeek">Week</option>
+      </select>
+    </div>
+    <div id="cal-wrap"><div id="calendar"></div></div>
+    <div class="cal-foot">
+      <div class="leg-items" id="cal-leg"></div>
+      <button class="cals-btn" id="cals-btn">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        Calendars
+      </button>
+      <div class="cal-popup" id="cal-popup">
+        <div class="cal-pop-sec">My Calendars</div>
+        <div id="cal-pop-my"></div>
+        <div class="cal-pop-sec" id="cal-pop-other-hdr" style="display:none">Other Calendars</div>
+        <div id="cal-pop-other"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right-panel">
+    <!-- Day View card -->
+    <div class="today-card">
+      <div class="today-hd">
+        <span class="today-title">Day View</span>
+        <span class="today-dt" id="dayview-date"></span>
+      </div>
+      <div class="today-inner">
+        <div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>
+        <div id="today-ev-list"></div>
+        <div class="sec-row">
+          <span class="sec-lbl">Tasks</span>
+          <div class="sec-line"></div>
+          <select class="all-list-sel" id="task-filter" onchange="renderTodayTasks()"><option value="all">All List ▾</option></select>
+        </div>
+        <div id="today-task-list"></div>
+      </div>
+    </div>
+
+    <!-- Input card -->
+    <div class="input-card">
+      <div class="inp-tabs">
+        <button class="inp-tab on" id="tab-send" onclick="switchTab('send')">Send Message</button>
+        <button class="inp-tab" id="tab-add" onclick="switchTab('add')">+ Add</button>
+      </div>
+      <!-- Send panel -->
+      <div class="inp-panel on" id="panel-send">
+        <textarea class="msg-ta" id="msg-input" placeholder="Type your message"></textarea>
+        <div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">✕</button></div>
+        <div class="inp-actions">
+          <label class="attach-lbl" for="file-input">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg>Attach
+          </label>
+          <input type="file" id="file-input" style="display:none"/>
+          <button class="send-btn" id="send-btn">SEND</button>
+        </div>
+        <div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>
+        <div class="dw" id="dw"><div id="dl"></div></div>
+        <div class="sst" id="sst"></div>
+      </div>
+      <!-- Add panel (1test 코드 그대로 이식) -->
+      <div class="inp-panel" id="panel-add" style="padding:8px 14px 0;">
+
+        <div class="add-type-sect">
+          <button class="add-type-tab sel" id="abt-ev" onclick="selAddType2('ev')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event
+          </button>
+          <button class="add-type-tab" id="abt-tk" onclick="selAddType2('tk')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task
+          </button>
+          <button class="add-type-tab" id="abt-fin" onclick="selAddType2('fin')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance
+          </button>
+          <button class="add-type-tab" id="abt-hl" onclick="selAddType2('hl')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health
+          </button>
+          <button class="add-type-tab" id="abt-pr" onclick="selAddType2('pr')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project
+          </button>
+        </div>
+
+        <div class="add-form-b vis" id="afb-ev">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Event title" id="ae2-title" style="margin-top:6px;"/>
+            <div class="af-row">
+              <input class="afi-sm" type="date" id="ae2-date"/>
+              <input class="afi-sm" type="time" id="ae2-start"/>
+              <input class="afi-sm" type="time" id="ae2-end"/>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-ev',this,'Invite / Location / Notes')">＋ Invite / Location / Notes</button>
+            <div class="add-extra-b" id="aex-ev">
+              <div class="invite-row"><input class="invite-in" type="email" id="ae2-invite" placeholder="Invite people (email)"/><button class="invite-add-btn" onclick="addInvite2()">+</button></div>
+              <div class="invite-chips" id="ae2-chips"></div>
+              <input class="afi-sm" type="text" placeholder="Location (optional)" id="ae2-loc"/>
+              <textarea class="afi-sm" rows="2" placeholder="Notes (optional)" style="resize:none;" id="ae2-notes"></textarea>
+            </div>
+          </div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('ev')">Add Event</button>
+            <div class="add-form-st" id="ast-ev"></div>
+          </div>
+        </div>
+
+        <div class="add-form-b" id="afb-tk">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Task title" id="at2-title" style="margin-top:6px;"/>
+            <div class="af-row">
+              <select class="afi-sm" id="at2-list"><option value="@default">My Tasks</option></select>
+              <input class="afi-sm" type="date" id="at2-due"/>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-tk',this,'Notes / Priority')">＋ Notes / Priority</button>
+            <div class="add-extra-b" id="aex-tk">
+              <input class="afi-sm" type="text" placeholder="Notes (optional)"/>
+              <select class="afi-sm"><option>High</option><option selected>Medium</option><option>Low</option></select>
+            </div>
+          </div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('tk')">Add Task</button>
+            <div class="add-form-st" id="ast-tk"></div>
+          </div>
+        </div>
+
+        <div class="add-form-b" id="afb-fin">
+          <div class="add-form-scroll">
+            <div class="af-row" style="margin-top:6px;">
+              <input class="afi-sm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/>
+              <input class="afi-sm" type="date" id="afin-date"/>
+            </div>
+            <select class="afi-sm" id="afin-cat">
+              <option value="">Category ▾</option>
+              <optgroup label="Needs"><option>Housing</option><option>Utilities</option><option>Groceries</option><option>Transportation</option><option>Insurance</option><option>Healthcare</option><option>Phone</option><option>Internet</option><option>Subscriptions</option></optgroup>
+              <optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Travel</option><option>Personal Care</option><option>Other</option></optgroup>
+              <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
+              <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
+            </select>
+            <input class="afi-sm" type="text" placeholder="Sublabel (optional)" id="afin-sublabel"/>
+            <input class="afi-sm" type="text" placeholder="Description (optional)" id="afin-desc"/>
+          </div>
+          <div class="add-form-footer">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">
+              <input type="checkbox" id="afin-add-to-calendar"/> 📅 Add to Calendar
+            </label>
+            <button class="add-sub-full" onclick="submitAdd2('fin')">Add Entry</button>
+            <div class="add-form-st" id="ast-fin"></div>
+          </div>
+        </div>
+
+        <div class="add-form-b" id="afb-hl">
+          <div class="add-form-scroll">
+            <div class="af-row" style="margin-top:6px;flex-wrap:wrap;">
+              <select class="afi-sm" id="ahl-type" onchange="updateHealthFieldsDash()">
+                <option value="">Type ▾</option>
+                <option value="weight">⚖️ Weight</option>
+                <option value="bp">🩺 Blood Pressure</option>
+                <option value="hr">❤️ Heart Rate</option>
+                <option value="glucose">🩸 Glucose</option>
+                <option value="steps">👟 Steps</option>
+                <option value="distance">🏃 Distance</option>
+                <option value="water">💧 Water</option>
+                <option value="sleep">😴 Sleep</option>
+                <option value="mood">😊 Mood</option>
+              </select>
+              <input class="afi-sm" type="date" id="ahl-date"/>
+              <select class="afi-sm" id="ahl-unit" onchange="setUnitPref(this.value);updateHealthFieldsDash();">
+                <option value="metric">Metric (kg/km/ml)</option>
+                <option value="us">US (lb/mi/fl oz)</option>
+              </select>
+            </div>
+            <div id="ahl-value-wrap"><input class="afi-sm" type="number" placeholder="Value" step="0.1"/></div>
+            <input class="afi-sm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>
+          </div>
+          <div class="add-form-footer">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">
+              <input type="checkbox" id="ahl-add-to-calendar"/> 📅 Add to Calendar
+            </label>
+            <button class="add-sub-full" onclick="submitAdd2('hl')">Add Record</button>
+            <div class="add-form-st" id="ast-hl"></div>
+          </div>
+        </div>
+
+        <div class="add-form-b" id="afb-pr">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:6px;"/>
+            <div class="af-row">
+              <input class="afi-sm" type="date" id="apr-due"/>
+              <select class="afi-sm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-pr',this,'Description / Members')">＋ Description / Members</button>
+            <div class="add-extra-b" id="aex-pr">
+              <textarea class="afi-sm" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
+              <input class="afi-sm" type="text" placeholder="Member emails (comma separated)"/>
+            </div>
+          </div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('pr')">Create Project</button>
+            <div class="add-form-st" id="ast-pr"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-</div><!-- /app -->
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bot-nav">
+  <button class="nav-tab" onclick="location.href='/dashboard'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg><span>Overview</span></button>
+  <button class="nav-tab on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg><span>Calendar</span></button>
+  <button class="nav-tab" onclick="location.href='/finance'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/></svg><span>Finance</span></button>
+  <button class="nav-tab" onclick="location.href='/health'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg><span>Health</span></button>
+  <button class="nav-tab" onclick="location.href='/documents'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/></svg><span>Documents</span></button>
+  <button class="nav-tab" onclick="location.href='/settings'"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/></svg><span>Settings</span></button>
+</nav>
 
-<!-- MODALS -->
+</div><!-- /app [버그 수정] 원래 이 닫는 태그가 없어 .app div가 body 끝까지 닫히지 않던 문제 수정 -->
+
+<!-- EVENT VIEW MODAL -->
 <div class="modal-bg h" id="ev-modal">
   <div class="evb">
     <div class="evt">
-      <button class="eib" id="ev-edit-btn" title="Edit"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5l3 3L6 17H3v-3L14.5 2.5z"/></svg></button>
-      <button class="eib" id="ev-del-btn" title="Delete"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,6 15,6"/><path d="M8 6V4h4v2"/><rect x="6" y="6" width="8" height="11" rx="1"/></svg></button>
-      <button class="eib" id="ev-close-btn" title="Close"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
+      <button class="eib" id="ev-edit-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5l3 3L6 17H3v-3L14.5 2.5z"/></svg></button>
+      <button class="eib" id="ev-del-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5,6 15,6"/><path d="M8 6V4h4v2"/><rect x="6" y="6" width="8" height="11" rx="1"/></svg></button>
+      <button class="eib" id="ev-close-btn"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg></button>
     </div>
     <div class="evbody">
       <div class="evtr"><div class="evcb" id="ev-cbar"></div><div class="evtitle" id="ev-ttl"></div></div>
@@ -350,32 +585,13 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     </div>
     <div class="evdc" id="ev-dc">
       <div style="font-size:12px;color:var(--txt);margin-bottom:10px;">Delete this event?</div>
-      <div style="display:flex;gap:8px;"><button class="bc" id="ev-dc-cancel">Cancel</button><button class="bs" id="ev-dc-ok" style="background:var(--red);">Delete</button></div>
+      <div style="display:flex;gap:8px;"><button class="bc" id="ev-dc-no">Cancel</button><button class="bs" id="ev-dc-yes" style="background:var(--red);">Delete</button></div>
       <div class="mst" id="ev-dc-st"></div>
     </div>
   </div>
 </div>
 
-<div class="modal-bg h" id="edit-modal">
-  <div class="mb" style="max-width:420px;">
-    <div class="mhd"><div class="mt">Edit Event</div><div style="display:flex;align-items:center;gap:8px;"><span class="ebadge">Google Calendar</span><button class="mx" id="edit-close">×</button></div></div>
-    <div class="ff"><label class="fl">Event Title</label><input class="fi" type="text" id="ed-title" placeholder="Add a title"/></div>
-    <div class="fr2"><div class="ff"><label class="fl">Start Date</label><input class="fi" type="date" id="ed-date"/></div><div class="ff"><label class="fl">Start Time</label><input class="fi" type="time" id="ed-time"/></div></div>
-    <div class="fr2"><div class="ff"><label class="fl">End Date</label><input class="fi" type="date" id="ed-edate"/></div><div class="ff"><label class="fl">End Time</label><input class="fi" type="time" id="ed-etime"/></div></div>
-    <div class="ff"><label class="fl">Location</label><input class="fi" type="text" id="ed-loc" placeholder="Add a location"/></div>
-    <div class="ff"><label class="fl">Description</label><textarea class="fi lg" id="ed-desc" placeholder="Add a description"></textarea></div>
-    <div class="mac"><button class="bc" id="ed-cancel">Cancel</button><button class="bs" id="ed-save">Save Changes</button><button class="bd" id="ed-delete">🗑</button></div>
-    <div class="mst" id="ed-st"></div>
-  </div>
-</div>
-
-<div class="modal-bg h" id="day-modal">
-  <div class="dmb">
-    <div class="mhd"><div class="mt" id="dm-title"></div><button class="mx" id="dm-close">×</button></div>
-    <div id="dm-list"></div>
-  </div>
-</div>
-
+<!-- FIN EDIT MODAL -->
 <div class="modal-bg h" id="fin-edit-modal">
   <div class="mb" style="max-width:380px;">
     <div class="mhd"><div class="mt">Edit Transaction</div><button class="mx" id="fin-edit-close">×</button></div>
@@ -391,6 +607,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<!-- HEALTH EDIT MODAL -->
 <div class="modal-bg h" id="health-edit-modal">
   <div class="mb" style="max-width:380px;">
     <div class="mhd"><div class="mt" id="healthed-title">Edit Record</div><button class="mx" id="healthed-close">×</button></div>
@@ -401,11 +618,25 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="modal-bg h" id="edit-modal">
+  <div class="mb">
+    <div class="mhd"><div class="mt">Edit Event</div><div style="display:flex;align-items:center;gap:8px;"><span class="ebadge">Google Calendar</span><button class="mx" id="edit-close">×</button></div></div>
+    <div class="ff"><label class="fl">Title</label><input class="fi" type="text" id="ed-title" placeholder="Add a title"/></div>
+    <div class="fr2"><div class="ff"><label class="fl">Start Date</label><input class="fi" type="date" id="ed-date"/></div><div class="ff"><label class="fl">Start Time</label><input class="fi" type="time" id="ed-time"/></div></div>
+    <div class="fr2"><div class="ff"><label class="fl">End Date</label><input class="fi" type="date" id="ed-edate"/></div><div class="ff"><label class="fl">End Time</label><input class="fi" type="time" id="ed-etime"/></div></div>
+    <div class="ff"><label class="fl">Location</label><input class="fi" type="text" id="ed-loc" placeholder="Add a location"/></div>
+    <div class="ff"><label class="fl">Description</label><textarea class="fi lg" id="ed-desc"></textarea></div>
+    <div class="mac"><button class="bc" id="ed-cancel">Cancel</button><button class="bs" id="ed-save">Save</button><button class="bd" id="ed-del">🗑</button></div>
+    <div class="mst" id="ed-st"></div>
+  </div>
+</div>
+
 <div class="modal-bg h" id="reauth-modal-full">
   <div class="mb" style="max-width:340px;text-align:center;">
     <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Reconnect your Google account</div>
     <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">We need you to reconnect to keep<br/>showing your calendar, events, and tasks</div>
-    <button class="bs" id="reauth-full-btn" style="width:100%;background:var(--teal);">Reconnect</button>
+    <a href="https://api.mie.today/auth/google?return_to=%2Fcalendar" class="bs" id="reauth-full-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
   </div>
 </div>
 
@@ -414,7 +645,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <button class="mx" id="reauth-partial-close" style="position:absolute;top:8px;right:12px;">×</button>
     <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Saved, but not added to your calendar</div>
     <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">Your entry was saved. Reconnect Google<br/>to also sync it to your calendar</div>
-    <button class="bs" id="reauth-partial-btn" style="width:100%;background:var(--teal);">Reconnect</button>
+    <a href="https://api.mie.today/auth/google?return_to=%2Fcalendar" class="bs" id="reauth-partial-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
   </div>
 </div>
 
@@ -430,345 +661,214 @@ function showReauthModal(kind){
   var el=document.getElementById(kind==='full'?'reauth-modal-full':'reauth-modal-partial');
   if(el)el.classList.remove('h');
 }
-// 401은 이 앱의 라우트에서 REAUTH_REQUIRED 전용 상태코드 — 바디를 안 읽어도 상태코드만으로 판별 가능
 function checkReauthStatus(status){
   if(status===401){showReauthModal('full');return true;}
   return false;
 }
-// health/log, finance/transaction은 200이어도 calendar_reauth_required:true를 줄 수 있음(부분 실패)
 function checkReauthBody(body){
   if(body&&body.calendar_reauth_required===true){showReauthModal('partial');return true;}
   return false;
 }
-document.getElementById('reauth-full-btn').addEventListener('click',function(){location.href='/login';});
-document.getElementById('reauth-partial-btn').addEventListener('click',function(){location.href='/login';});
 document.getElementById('reauth-partial-close').addEventListener('click',function(){document.getElementById('reauth-modal-partial').classList.add('h');reauthModalShown=false;});
+(function(){var au=document.getElementById('ahl-unit');if(au)au.value=getUnitPref();})();
 
-var DRAFT_KEY='mie_drafts_klaive';
-var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
-var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
-var _finByDate={};  // 날짜별 Finance 거래 목록 {YYYY-MM-DD: [{type,category,amount,notes}]}
-var _healthByDate={}; // 날짜별 Health 기록 {YYYY-MM-DD: {...record}}
-var _activityByDate={}; // 날짜별 Activity 기록 (steps/distance 등) {YYYY-MM-DD: [{...record}]}
-// 가정: /api/me/health?month=YYYY-MM&period=monthly 가 그 달 전체 기록을
-// 날짜(date) 필드 포함 배열로 반환한다는 전제로 아래 loadHealth()를 작성함.
-// 실제 백엔드 응답 포맷이 다르면 loadHealth()의 그룹핑 로직만 수정하면 됨.
+/* [auth-wrap 추가] Health/Finance와 동일한 인증 상태 전환 헬퍼 */
+var authWrap=document.getElementById('auth-wrap');
+var loadWrap=document.getElementById('loading-wrap');
+var appEl=document.getElementById('app');
+function show(el){[authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});if(el)el.style.display='';}
+document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
+var DRAFT_KEY='klaive_cal_drafts';
+var MAX_VIS=4;
 
-var selectedDateStr=null; // 달력에서 클릭된 날짜
-var _initD=new Date();
-var calYear=_initD.getFullYear(), calMonth=_initD.getMonth();
-var curViewEv=null, curEditEv=null, selFile=null;
+/* ── 전역 상태 ── */
+var cal=null;
+var calendarMeta=[], primaryCals=[], otherCals=[], primaryId='primary';
+var allEvents=[], eventsByDate={};
+var allTasks=[], taskLists=[];
+var curViewEv=null, curEditEv=null, selFile=null, add2Invitees=[];
+/* ── Day View 통합에 필요한 전역 상태 (1test 이식) ── */
+var selectedDateStr=null;
+var _finDateSet={}; var _finByDate={};
+var _healthByDate={}; var _activityByDate={};
+var allProjects=[];
+var curEditFin=null; var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
+var curEditHealth=null; var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose'};
 
-var DEMO_CAL=[
-  {id:'default',summary:'Default',color:'#378ADD',primary:true,enabled:true},
-  {id:'private',summary:'Private',color:'#534AB7',primary:false,enabled:true},
-  {id:'klaive',summary:'KLAIVE',color:'#1D9E75',primary:false,enabled:true},
-  {id:'womens',summary:"Women's Health",color:'#E24B4A',primary:false,enabled:true},
-];
-var DEMO_EVENTS=[
-  {id:'ev1',title:'https://quaint-club-9f0.notion.site/37f8…',start:'2026-06-14',allDay:true,calColor:'#534AB7',calId:'private',isLink:true},
-  {id:'ev2',title:'Work from home (dashboard/login split)',start:'2026-06-14T11:00:00',end:'2026-06-14T14:00:00',calColor:'#378ADD',calId:'default'},
-  {id:'ev3',title:'Work *Dashboard update',start:'2026-06-14T14:30:00',end:'2026-06-14T15:00:00',loc:'Starbucks, Dublin, CA',calColor:'#378ADD',calId:'default'},
-];
-var DEMO_TASKS=[
-  {id:'t1',title:'Dinner',due:'2026-06-14',status:'needsAction',listId:'@default'},
-  {id:'t2',title:'Medication',due:'2026-06-14',status:'needsAction',listId:'@default'},
-  {id:'t3',title:'Mind Setting – Quiet Time',due:'2026-06-13',status:'completed',listId:'@default'},
-  {id:'t4',title:'Exercise',due:'2026-06-13',status:'completed',listId:'@default'},
-];
-var DEMO_PROJ=[
-  {name:'Dashboard Redesign',color:'#1C7ED6',pct:68,tasks:'8 of 12 tasks',due:'Jun 20'},
-  {name:'Login Flow Update',color:'#534AB7',pct:40,tasks:'4 of 10 tasks',due:'Jun 25'},
-  {name:'Korea Storage Unit',color:'#EF9F27',pct:15,tasks:'2 of 14 tasks',due:'Jul 3'},
-  {name:'SF Trip Planning',color:'#E24B4A',pct:85,tasks:'11 of 13 tasks',due:'Jun 15'},
-];
-var CAL_MK={
-  '2026-06-01':['#378ADD'],'2026-06-02':['#378ADD'],'2026-06-03':['#378ADD'],
-  '2026-06-04':['#378ADD','#534AB7'],'2026-06-07':['#534AB7'],
-  '2026-06-08':['#378ADD'],'2026-06-09':['#378ADD','#E24B4A'],
-  '2026-06-10':['#378ADD'],'2026-06-11':['#378ADD'],
-  '2026-06-12':['#378ADD'],'2026-06-13':['#378ADD'],
-  '2026-06-14':['#534AB7','#378ADD'],'2026-06-15':['#378ADD'],
-  '2026-06-17':['#534AB7'],'2026-06-20':['#378ADD'],
-  '2026-06-25':['#1D9E75','#378ADD'],'2026-06-26':['#378ADD'],
-};
-var REC={1:3,2:43,3:81,4:56,5:127};
+var CAL_COLORS={'Default':'#378ADD','Private':'#534AB7','KLAIVE':'#1D9E75',"Women's Health":'#E24B4A'};
 
-/* ── Clock & Weather ── */
+/* ══ 색상 헬퍼 (index_14_.html pastelFor 방식) ══ */
+function pastelFor(hex){
+  if(!hex||hex.length<7)return{bg:'rgba(55,138,221,0.12)',text:'#378ADD'};
+  try{
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return{bg:'rgba('+r+','+g+','+b+',0.15)',text:hex};
+  }catch(e){return{bg:'rgba(55,138,221,0.12)',text:'#378ADD'};}
+}
+function pastelForCalId(rawColor,calId,vis){
+  if(vis==='private') return pastelFor('#534AB7');
+  if(rawColor) return pastelFor(rawColor);
+  var m=calendarMeta.find(function(c){return c.id===calId&&c.summary!=='Private';});
+  return pastelFor(m?m.color:'#378ADD');
+}
+
+/* ══ Clock & Weather (0626dash-prod.html 동일) ══ */
 function startClock(){
-  function tick(){var n=new Date();document.getElementById('wb-date').textContent=n.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'});document.getElementById('wb-time').textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});}
+  function tick(){
+    var n=new Date();
+    var de=document.getElementById('wb-date'),te=document.getElementById('wb-time');
+    if(de)de.textContent=n.toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+    if(te)te.textContent=n.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true,timeZoneName:'short'});
+  }
   tick();setInterval(tick,30000);
 }
 function wIcon(c){if(c===0)return'☀️';if(c<=2)return'🌤️';if(c===3)return'☁️';if(c<=49)return'🌫️';if(c<=59)return'🌦️';if(c<=69)return'🌧️';if(c<=79)return'❄️';return'⛈️';}
 function loadWeather(){
   var el=document.getElementById('wb-wx');
-  function f(lat,lon){fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto').then(function(r){return r.json();}).then(function(w){var c=Math.round(w.current.temperature_2m),fa=Math.round(c*9/5+32);el.textContent=wIcon(w.current.weathercode)+' '+fa+'°F / '+c+'°C';}).catch(function(){});}
-  if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){f(p.coords.latitude,p.coords.longitude);},function(){f(37.7749,-122.4194);},{timeout:5000});else f(37.7749,-122.4194);
+  function f(lat,lon){
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,weathercode&temperature_unit=celsius&timezone=auto')
+      .then(function(r){return r.json();})
+      .then(function(w){var c=Math.round(w.current.temperature_2m),fa=Math.round(c*9/5+32);if(el)el.textContent=wIcon(w.current.weathercode)+' '+fa+'°F / '+c+'°C';})
+      .catch(function(){});
+  }
+  if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){f(p.coords.latitude,p.coords.longitude);},function(){f(37.7749,-122.4194);},{timeout:5000});
+  else f(37.7749,-122.4194);
 }
 
-/* ── HTML builders ── */
-function calCardHTML(){
-  return '<div class="card cal-card" id="cal-card">'
-    +'<div class="cal-topbar">'
-      +'<div class="cal-navg"><button class="cal-nbtn" id="cal-prev">‹</button>'
-      +'<span class="cal-mo" id="cal-mo">June 2026</span>'
-      +'<button class="cal-nbtn" id="cal-next">›</button>'
-      +'<div class="mo-picker" id="mo-picker">'
-        +'<div class="mpy-hd">'
-          +'<button class="mpy-nav" id="mpy-prev">‹</button>'
-          +'<span class="mpy-yr" id="mpy-yr">2026</span>'
-          +'<button class="mpy-nav" id="mpy-next">›</button>'
-        +'</div>'
-        +'<div class="mpy-grid" id="mpy-grid"></div>'
-      +'</div>'
-      +'</div>'
-      +'<button class="cal-today-btn" id="cal-today">Today</button>'
-      +'<select class="cal-view-sel"><option>Month ▾</option></select>'
-    +'</div>'
-    +'<div class="cal-wrap">'
-      +'<div class="cal-dow-row"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div><div class="cal-dow">THURS</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>'
-      +'<div class="cal-grid" id="cal-grid"></div>'
-    +'</div>'
-    +'<div class="cal-foot">'
-      +'<span class="cal-leg-lbl">Calendars</span>'
-      +'<div class="leg-items" id="cal-leg"></div>'
-      +'<button class="cals-btn" id="cals-btn"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg> Calendars</button>'
-      +'<div class="cal-popup" id="cal-popup">'
-        +'<div class="cal-pop-sec">My Calendars</div>'
-        +'<div id="cal-pop-primary"></div>'
-        +'<div class="cal-pop-sec" id="cal-pop-other-hdr" style="display:none;">Other Calendars</div>'
-        +'<div id="cal-pop-other"></div>'
-      +'</div>'
-    +'</div>'
-  +'</div>';
+/* ══ 캘린더 메타 (0626dash-prod.html classifyCalendars) ══ */
+function classifyCalendars(items,pid){
+  primaryId=pid||'primary';
+  primaryCals=[
+    {id:primaryId,summary:'Default',color:CAL_COLORS['Default'],enabled:true,isPrimary:true,visFilter:'default'},
+    {id:primaryId,summary:'Private',color:CAL_COLORS['Private'],enabled:true,isPrimary:true,visFilter:'private'}
+  ];
+  otherCals=[];
+  items.forEach(function(c){
+    var s=c.summary||'';
+    if(!c.primary){
+      if(s==='KLAIVE'||s.toLowerCase().indexOf('klaive')!==-1){
+        primaryCals.push({id:c.id,summary:'KLAIVE',color:c.backgroundColor||CAL_COLORS['KLAIVE'],enabled:true});
+      }else if(s==="Women's Health"||s.toLowerCase().indexOf("women's health")!==-1){
+        primaryCals.push({id:c.id,summary:"Women's Health",color:c.backgroundColor||CAL_COLORS["Women's Health"],enabled:true});
+      }else{
+        otherCals.push({id:c.id,summary:c.summary||c.id,color:c.backgroundColor||'#9AA0A6',enabled:false});
+      }
+    }
+  });
+  calendarMeta=primaryCals.concat(otherCals);
 }
 
-function todayCardHTML(){
-  var d=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  return '<div class="card today-card">'
-    +'<div class="today-hd"><span class="today-title">Day View</span><span class="today-date" id="dayview-date">'+d+'</span></div>'
-    +'<div class="today-inner">'
-      +'<div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>'
-      +'<div id="today-ev-list"></div>'
-      +'<div class="sec-row"><span class="sec-lbl">Tasks</span><div class="sec-line"></div></div>'
-      +'<div id="today-task-list"></div>'
-    +'</div>'
-  +'</div>';
+function buildCalLegend(){
+  var leg=document.getElementById('cal-leg'),pMy=document.getElementById('cal-pop-my'),pOth=document.getElementById('cal-pop-other'),pOthH=document.getElementById('cal-pop-other-hdr');
+  if(!leg)return;
+  leg.innerHTML='';
+  var seen={};
+  /* Default와 Private는 범례에서 숨김 (요청 #3) */
+  primaryCals.forEach(function(c){
+    if(seen[c.summary])return;seen[c.summary]=true;
+    if(c.summary==='Default'||c.summary==='Private')return;
+    var li=document.createElement('div');li.className='leg-item';
+    var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
+    var tx=document.createElement('span');tx.className='leg-txt';tx.textContent=c.summary;tx.style.opacity=c.enabled?'1':'0.4';
+    li.appendChild(dot);li.appendChild(tx);leg.appendChild(li);
+  });
+  if(pMy){
+    pMy.innerHTML='';var seen2={};
+    primaryCals.forEach(function(c){
+      if(seen2[c.summary])return;seen2[c.summary]=true;
+      if(c.summary==='Default'||c.summary==='Private')return;
+      var row=document.createElement('div');row.className='cal-row';
+      var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+      var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+      var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+      (function(cm,ck,ld){
+        ck.addEventListener('change',function(){
+          primaryCals.forEach(function(pc){if(pc.summary===cm.summary)pc.enabled=ck.checked;});
+          ld.style.background=ck.checked?cm.color:'#ccc';
+          leg.querySelectorAll('.leg-txt').forEach(function(t){
+            if(t.textContent===cm.summary){var d=t.previousElementSibling;if(d)d.style.background=ck.checked?cm.color:'#ccc';t.style.opacity=ck.checked?'1':'0.4';}
+          });
+          applyFilter();
+        });
+      })(c,chk,rdot);
+      row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);pMy.appendChild(row);
+    });
+  }
+  if(pOth&&pOthH){
+    pOth.innerHTML='';
+    if(otherCals.length){
+      pOthH.style.display='';
+      otherCals.forEach(function(c){
+        var row=document.createElement('div');row.className='cal-row';
+        var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
+        var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
+        var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
+        (function(cm,ck){ck.addEventListener('change',function(){cm.enabled=ck.checked;applyFilter();});})(c,chk);
+        row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);pOth.appendChild(row);
+      });
+    }else pOthH.style.display='none';
+  }
 }
 
-function inputCardHTML(){
-  return '<div class="card input-card">'
-    +'<div class="inp-tabs">'
-      +'<button class="input-toggle-btn input-close-btn" id="input-close-btn" title="Collapse panel" aria-label="Collapse panel">›</button>'
-      +'<button class="inp-tab on" id="tab-send" onclick="switchTab(\'send\')">Send Message</button>'
-      +'<button class="inp-tab" id="tab-add" onclick="switchTab(\'add\')">+ Add</button>'
-    +'</div>'
-    
-    +'<div class="inp-panel on" id="panel-send">'
-      +'<textarea class="msg-ta" id="msg-input" placeholder="Type your message"></textarea>'
-      +'<div class="fname-row" id="fname-row" style="display:none"><span id="fname"></span><button class="rm-btn" id="rm-file">✕</button></div>'
-      +'<div class="inp-actions">'
-        +'<label class="attach-lbl" for="file-input"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 7.5l-7 7a4 4 0 0 1-5.65-5.66L8.5 1.17a2.5 2.5 0 0 1 3.54 3.54L4.4 12.36a1 1 0 0 1-1.41-1.41L10 3.93" stroke-linecap="round" stroke-linejoin="round"/></svg> Attach</label>'
-        +'<input type="file" id="file-input" style="display:none"/>'
-        +'<button class="send-btn" id="send-btn">SEND</button>'
-      +'</div>'
-      +'<div class="draft-row"><label class="draft-lbl"><input type="checkbox" id="draft-check"/> Save as draft</label></div>'
-      +'<div class="draft-wrap" id="draft-wrap"><div id="draft-list"></div></div>'
-      +'<div class="sst" id="sst"></div>'
-    +'</div>'
-    
-    +'<div class="inp-panel" id="panel-add" style="padding:8px 14px 0;">'
-      
-      +'<div class="add-type-sect">'
-        +'<button class="add-type-tab sel" id="abt-ev" onclick="selAddType2(\'ev\')">'
-          +'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event'
-        +'</button>'
-        +'<button class="add-type-tab" id="abt-tk" onclick="selAddType2(\'tk\')">'
-          +'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task'
-        +'</button>'
-        +'<button class="add-type-tab" id="abt-fin" onclick="selAddType2(\'fin\')">'
-          +'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance'
-        +'</button>'
-        +'<button class="add-type-tab" id="abt-hl" onclick="selAddType2(\'hl\')">'
-          +'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health'
-        +'</button>'
-        +'<button class="add-type-tab" id="abt-pr" onclick="selAddType2(\'pr\')">'
-          +'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project'
-        +'</button>'
-      +'</div>'
-      
-      +'<div class="add-form-b vis" id="afb-ev">'
-        +'<div class="add-form-scroll">'
-          +'<input class="afi" type="text" placeholder="Event title" id="ae2-title" style="margin-top:6px;"/>'
-          +'<div class="af-row">'
-            +'<input class="afi-sm" type="date" id="ae2-date"/>'
-            +'<input class="afi-sm" type="time" id="ae2-start"/>'
-            +'<input class="afi-sm" type="time" id="ae2-end"/>'
-          +'</div>'
-          +'<button class="add-more-toggle" onclick="toggleAddExtra(\'aex-ev\',this,\'Invite / Location / Notes\')">＋ Invite / Location / Notes</button>'
-          +'<div class="add-extra-b" id="aex-ev">'
-            +'<div class="invite-row"><input class="invite-in" type="email" id="ae2-invite" placeholder="Invite people (email)"/><button class="invite-add-btn" onclick="addInvite2()">+</button></div>'
-            +'<div class="invite-chips" id="ae2-chips"></div>'
-            +'<input class="afi-sm" type="text" placeholder="Location (optional)" id="ae2-loc"/>'
-            +'<textarea class="afi-sm" rows="2" placeholder="Notes (optional)" style="resize:none;" id="ae2-notes"></textarea>'
-          +'</div>'
-        +'</div>'
-        +'<div class="add-form-footer">'
-          +'<button class="add-sub-full" onclick="submitAdd2(\'ev\')">Add Event</button>'
-          +'<div class="add-form-st" id="ast-ev"></div>'
-        +'</div>'
-      +'</div>'
-      
-      +'<div class="add-form-b" id="afb-tk">'
-        +'<div class="add-form-scroll">'
-          +'<input class="afi" type="text" placeholder="Task title" id="at2-title" style="margin-top:6px;"/>'
-          +'<div class="af-row">'
-            +'<select class="afi-sm" id="at2-list"><option value="@default">My Tasks</option></select>'
-            +'<input class="afi-sm" type="date" id="at2-due"/>'
-          +'</div>'
-          +'<button class="add-more-toggle" onclick="toggleAddExtra(\'aex-tk\',this,\'Notes / Priority\')">＋ Notes / Priority</button>'
-          +'<div class="add-extra-b" id="aex-tk">'
-            +'<input class="afi-sm" type="text" placeholder="Notes (optional)"/>'
-            +'<select class="afi-sm"><option>High</option><option selected>Medium</option><option>Low</option></select>'
-          +'</div>'
-        +'</div>'
-        +'<div class="add-form-footer">'
-          +'<button class="add-sub-full" onclick="submitAdd2(\'tk\')">Add Task</button>'
-          +'<div class="add-form-st" id="ast-tk"></div>'
-        +'</div>'
-      +'</div>'
-      
-      +'<div class="add-form-b" id="afb-fin">'
-        +'<div class="add-form-scroll">'
-          +'<div class="af-row" style="margin-top:6px;">'
-            +'<input class="afi-sm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/>'
-            +'<input class="afi-sm" type="date" id="afin-date"/>'
-          +'</div>'
-          +'<select class="afi-sm" id="afin-cat">'
-            +'<option value="">Category ▾</option>'
-            +'<optgroup label="Needs"><option>Housing</option><option>Utilities</option><option>Groceries</option><option>Transportation</option><option>Insurance</option><option>Healthcare</option><option>Phone</option><option>Internet</option><option>Subscriptions</option></optgroup>'
-            +'<optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Travel</option><option>Personal Care</option><option>Other</option></optgroup>'
-            +'<optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>'
-            +'<optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>'
-          +'</select>'
-          +'<input class="afi-sm" type="text" placeholder="Sublabel (optional)" id="afin-sublabel"/>'
-          +'<input class="afi-sm" type="text" placeholder="Description (optional)" id="afin-desc"/>'
-        +'</div>'
-        +'<div class="add-form-footer">'
-          +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">'
-            +'<input type="checkbox" id="afin-add-to-calendar"/> 📅 Add to Calendar'
-          +'</label>'
-          +'<button class="add-sub-full" onclick="submitAdd2(\'fin\')">Add Entry</button>'
-          +'<div class="add-form-st" id="ast-fin"></div>'
-        +'</div>'
-      +'</div>'
-      
-      +'<div class="add-form-b" id="afb-hl">'
-        +'<div class="add-form-scroll">'
-          +'<div class="af-row" style="margin-top:6px;flex-wrap:wrap;">'
-            +'<select class="afi-sm" id="ahl-type" onchange="updateHealthFieldsDash()">'
-              +'<option value="">Type ▾</option>'
-              +'<option value="weight">⚖️ Weight</option>'
-              +'<option value="bp">🩺 Blood Pressure</option>'
-              +'<option value="hr">❤️ Heart Rate</option>'
-              +'<option value="glucose">🩸 Glucose</option>'
-              +'<option value="steps">👟 Steps</option>'
-              +'<option value="distance">🏃 Distance</option>'
-              +'<option value="water">💧 Water</option>'
-              +'<option value="sleep">😴 Sleep</option>'
-              +'<option value="mood">😊 Mood</option>'
-            +'</select>'
-            +'<input class="afi-sm" type="date" id="ahl-date"/>'
-            +'<select class="afi-sm" id="ahl-unit" onchange="setUnitPref(this.value);updateHealthFieldsDash();">'
-              +'<option value="metric"'+(getUnitPref()!=='us'?' selected':'')+'>Metric (kg/km/ml)</option>'
-              +'<option value="us"'+(getUnitPref()==='us'?' selected':'')+'>US (lb/mi/fl oz)</option>'
-            +'</select>'
-          +'</div>'
-          +'<div id="ahl-value-wrap"><input class="afi-sm" type="number" placeholder="Value" step="0.1"/></div>'
-          +'<input class="afi-sm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>'
-        +'</div>'
-        +'<div class="add-form-footer">'
-          +'<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">'
-            +'<input type="checkbox" id="ahl-add-to-calendar"/> 📅 Add to Calendar'
-          +'</label>'
-          +'<button class="add-sub-full" onclick="submitAdd2(\'hl\')">Add Record</button>'
-          +'<div class="add-form-st" id="ast-hl"></div>'
-        +'</div>'
-      +'</div>'
-      
-      +'<div class="add-form-b" id="afb-pr">'
-        +'<div class="add-form-scroll">'
-          +'<input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:6px;"/>'
-          +'<div class="af-row">'
-            +'<input class="afi-sm" type="date" id="apr-due"/>'
-            +'<select class="afi-sm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select>'
-          +'</div>'
-          +'<button class="add-more-toggle" onclick="toggleAddExtra(\'aex-pr\',this,\'Description / Members\')">＋ Description / Members</button>'
-          +'<div class="add-extra-b" id="aex-pr">'
-            +'<textarea class="afi-sm" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>'
-            +'<input class="afi-sm" type="text" placeholder="Member emails (comma separated)"/>'
-          +'</div>'
-        +'</div>'
-        +'<div class="add-form-footer">'
-          +'<button class="add-sub-full" onclick="submitAdd2(\'pr\')">Create Project</button>'
-          +'<div class="add-form-st" id="ast-pr"></div>'
-        +'</div>'
-      +'</div>'
-    +'</div>'
-  +'</div>';
+function loadCalendarList(cb){
+  fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      var items=data?(Array.isArray(data.calendars)?data.calendars:(Array.isArray(data.items)?data.items:[])):[];
+      var pi=items.find(function(c){return c.primary;});
+      classifyCalendars(items,pi?pi.id:'primary');
+      buildCalLegend();if(cb)cb();
+    })
+    .catch(function(){classifyCalendars([],'primary');buildCalLegend();if(cb)cb();});
 }
 
-
-/* ── State rendering ── */
-var inputOpen=true; // Input 패널 열림/닫힘 상태
-
-function renderGrid(){
-  var g=document.getElementById('main-grid');
-  g.innerHTML='';
-  g.style.transition='grid-template-columns .22s ease';
-  g.style.gridTemplateColumns=inputOpen?'4fr 3fr 3fr':'4fr 3fr 56px';
-  var L=document.createElement('div');L.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';L.innerHTML=calCardHTML();
-  var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
-  var R=document.createElement('div');R.id='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';
-  R.innerHTML=inputStripHTML()+inputCardHTML();
-  g.appendChild(L);g.appendChild(M);g.appendChild(R);
-  applyInputOpenState();
-  bindAll();
+/* ══ 이벤트 필터 (visibility + calendarId 기반) ══ */
+function filterEvents(events){
+  var defEntry=primaryCals.find(function(c){return c.summary==='Default';});
+  var privEntry=primaryCals.find(function(c){return c.summary==='Private';});
+  var enabledIds=calendarMeta.filter(function(c){return c.enabled&&!c.isPrimary;}).map(function(c){return c.id;});
+  return events.filter(function(ev){
+    var cid=ev.extendedProps.calId,vis=ev.extendedProps.vis;
+    if(cid===primaryId){
+      return vis==='private'?(privEntry&&privEntry.enabled):(defEntry&&defEntry.enabled);
+    }
+    return enabledIds.indexOf(cid)!==-1;
+  });
 }
 
-function inputStripHTML(){
-  return '<div class="input-strip" id="input-strip">'
-    +'<button class="input-toggle-btn" id="input-open-btn" title="Open message panel" aria-label="Open message panel">‹</button>'
-  +'</div>';
+function applyFilter(){
+  if(!cal)return;
+  eventsByDate={};
+  var filtered=filterEvents(allEvents);
+  filtered.forEach(function(ev){
+    if(!ev.start)return;
+    var k=ev.allDay?ev.start:ev.start.split('T')[0];
+    if(!eventsByDate[k])eventsByDate[k]=[];
+    eventsByDate[k].push(ev);
+  });
+  cal.removeAllEventSources();
+  cal.addEventSource(function(fi,ok){ok(filtered);});
+  setTimeout(rebuildPills,120);
+  renderTodayEvents(selectedDateStr);
 }
 
-// Input 패널 DOM은 항상 마운트해두고, 열림/닫힘은 CSS class로만 토글한다.
-// (매번 innerHTML을 다시 그리면 send-btn/switchTab 등 리스너를 재바인딩해야 해서 깨지기 쉬움)
-function applyInputOpenState(){
-  var strip=document.getElementById('input-strip');
-  var card=document.querySelector('.input-card');
-  if(strip)strip.style.display=inputOpen?'none':'flex';
-  if(card)card.style.display=inputOpen?'flex':'none';
+/* ══ FullCalendar 초기화 ══ */
+function calcCalHeight(){
+  var wrap=document.getElementById('cal-wrap');
+  if(!wrap||!cal)return;
+  requestAnimationFrame(function(){
+    var h=wrap.getBoundingClientRect().height;
+    if(h>80)cal.setOption('height',h);
+  });
 }
 
-function toggleInputPanel(open){
-  inputOpen=open;
-  var g=document.getElementById('main-grid');
-  // 닫힘 상태는 항상 56px 고정폭 — 화면 크기와 무관하게 얇은 아이콘 스트립 유지
-  if(g)g.style.gridTemplateColumns=inputOpen?'4fr 3fr 3fr':'4fr 3fr 56px';
-  applyInputOpenState();
+function syncTitle(){
+  if(!cal)return;
+  var el=document.getElementById('cal-title');
+  if(el)el.textContent=cal.view.title||'';
 }
 
-function initApp(){
-  renderGrid();
-  buildCalGrid();
-  buildCalLegend();
-  renderTodayEvents();
-  renderTasks();
-  renderDraftList();
-}
-
-/* ── Month/Year Picker ── */
+/* ══ Month/Year Picker (cal-title 클릭 시 팝업) ══ */
 var mpYear=new Date().getFullYear();
 var MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -777,32 +877,33 @@ function buildMPGrid(){
   if(!grid||!yrEl)return;
   yrEl.textContent=mpYear;
   grid.innerHTML='';
+  var curDate=cal?cal.getDate():new Date();
   MNAMES.forEach(function(m,i){
     var btn=document.createElement('button');
     btn.className='mpy-m';
     btn.textContent=m;
-    if(calYear===mpYear&&calMonth===i)btn.classList.add('cur');
+    if(curDate.getFullYear()===mpYear&&curDate.getMonth()===i)btn.classList.add('cur');
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      calYear=mpYear;calMonth=i;
-      buildCalGrid();
-      loadEvents();
-      loadFinance();
-      loadHealth();
+      if(cal.view.type!=='dayGridMonth')cal.changeView('dayGridMonth');
+      cal.gotoDate(new Date(mpYear,i,1));
+      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='dayGridMonth';
+      syncTitle();
       document.getElementById('mo-picker').classList.remove('open');
+      setTimeout(calcCalHeight,60);
     });
     grid.appendChild(btn);
   });
 }
 
 function initMoPicker(){
-  var title=document.getElementById('cal-mo'),picker=document.getElementById('mo-picker');
+  var title=document.getElementById('cal-title'),picker=document.getElementById('mo-picker');
   var prevBtn=document.getElementById('mpy-prev'),nextBtn=document.getElementById('mpy-next');
   if(!title||!picker)return;
   title.addEventListener('click',function(e){
     e.stopPropagation();
     if(!picker.classList.contains('open')){
-      mpYear=calYear;
+      mpYear=cal?cal.getDate().getFullYear():new Date().getFullYear();
       buildMPGrid();
     }
     picker.classList.toggle('open');
@@ -814,313 +915,172 @@ function initMoPicker(){
   });
 }
 
-function bindAll(){
-  // Calendar
-  var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
-  var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
-  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();loadEvents();loadFinance();loadHealth();});
-  // Month/Year picker
-  initMoPicker();
-  // Calendars popup
-  var cb=document.getElementById('cals-btn'),cp=document.getElementById('cal-popup');
-  if(cb&&cp){
-    cb.addEventListener('click',function(e){e.stopPropagation();cp.classList.toggle('open');});
-    document.addEventListener('click',function(e){if(cp&&!cp.contains(e.target)&&e.target!==cb)cp.classList.remove('open');},{once:false});
-  }
-  // Send
-  var mi=document.getElementById('msg-input');
-  var sb=document.getElementById('send-btn');
-  var fi=document.getElementById('file-input');
-  var fr=document.getElementById('fname-row');
-  var fn=document.getElementById('fname');
-  var rb=document.getElementById('rm-file');
-  if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
-  if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
-  if(sb)sb.addEventListener('click',doSend);
-  // Input panel collapse/expand
-  var openBtn=document.getElementById('input-open-btn');
-  var closeBtn=document.getElementById('input-close-btn');
-  if(openBtn)openBtn.addEventListener('click',function(){toggleInputPanel(true);});
-  if(closeBtn)closeBtn.addEventListener('click',function(){toggleInputPanel(false);});
-}
-
-/* ── Calendar legend & popup ── */
-function isoD(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
-
-// PRIMARY 달력 식별 키워드 (summary 기반)
-var PRIMARY_CAL_KEYWORDS=['Default','Private','KLAIVE','Women\'s Health'];
-// 색상 매핑 — mieCalendarColor 또는 summary 기반
-var PRIMARY_CAL_COLORS={
-  'Default':'#378ADD',
-  'Private':'#534AB7',
-  'KLAIVE':'#1D9E75',
-  'Women\'s Health':'#E24B4A'
-};
-
-// API 달력 목록을 두 그룹으로 분류
-// primaryCals: 사용자 Primary 달력 그룹 (Default/Private/KLAIVE/Women's Health)
-// otherCals: 구독/공유 달력 (Holidays, 타인 달력 등)
-var primaryCals=[];   // {id, summary, color, enabled}
-var otherCals=[];     // {id, summary, color, enabled}
-// 실제 KLAIVE / Women's Health 달력이 존재하는지 여부 (없으면 Legend에서 제외)
-var hasKlaiveCal=false, hasWomensCal=false;
-
-function classifyCalendars(items, primaryId){
-  primaryCals=[];
-  otherCals=[];
-  hasKlaiveCal=false;
-  hasWomensCal=false;
-
-  // Default / Private 는 같은 primaryId 달력의 이벤트를 visibility 필드로 구분
-  // 두 항목 모두 id=primaryId, 마커 색상만 다름
-  primaryCals.push({id:primaryId, summary:'Default', color:PRIMARY_CAL_COLORS['Default'], enabled:true, isPrimary:true, visibilityFilter:'default'});
-  primaryCals.push({id:primaryId, summary:'Private', color:PRIMARY_CAL_COLORS['Private'], enabled:true, isPrimary:true, visibilityFilter:'private'});
-
-  // KLAIVE / Women's Health — summary 키워드로 items에서 찾기
-  items.forEach(function(c){
-    var s=c.summary||'';
-    if(s==='KLAIVE'||s.toLowerCase().indexOf('klaive')!==-1){
-      hasKlaiveCal=true;
-      primaryCals.push({id:c.id, summary:'KLAIVE', color:c.backgroundColor||PRIMARY_CAL_COLORS['KLAIVE'], enabled:true});
-    } else if(s==="Women's Health"||s.toLowerCase().indexOf("women")!==-1){
-      hasWomensCal=true;
-      primaryCals.push({id:c.id, summary:"Women's Health", color:c.backgroundColor||PRIMARY_CAL_COLORS["Women's Health"], enabled:true});
-    } else if(!c.primary){
-      otherCals.push({id:c.id, summary:c.summary||c.id, color:c.backgroundColor||'#9AA0A6', enabled:false});
-    }
-  });
-
-  calendarMeta=primaryCals.concat(otherCals);
-}
-
-function buildCalLegend(){
-  var leg=document.getElementById('cal-leg');
-  var popPrimary=document.getElementById('cal-pop-primary');
-  var popOther=document.getElementById('cal-pop-other');
-  var popOtherHdr=document.getElementById('cal-pop-other-hdr');
-  if(!leg)return;
-
-  // Legend: Primary 달력 (Default / Private / KLAIVE / Women's Health, 있는 것만)
-  // Default와 Private는 같은 primaryId지만 별도 Legend 항목으로 표시
-  leg.innerHTML='';
-  var seenSummaries={};
-  primaryCals.forEach(function(c){
-    if(seenSummaries[c.summary])return; // 중복 방지
-    seenSummaries[c.summary]=true;
-    var item=document.createElement('div');item.className='leg-item';
-    var dot=document.createElement('div');dot.className='leg-dot';dot.style.background=c.enabled?c.color:'#ccc';
-    var txt=document.createElement('span');txt.className='leg-txt';txt.textContent=c.summary;
-    txt.style.opacity=c.enabled?'1':'0.4';
-    item.appendChild(dot);item.appendChild(txt);
-    leg.appendChild(item);
-  });
-  // KLAIDE 범례 (Finance/Health/Docs teal 마커 통합, 항상 표시)
-  var finLeg=document.createElement('div');finLeg.className='leg-item';
-  var finDot=document.createElement('div');finDot.className='leg-dot';finDot.style.background='var(--teal)';
-  var finTxt=document.createElement('span');finTxt.className='leg-txt';finTxt.textContent='KLAIDE';
-  finLeg.appendChild(finDot);finLeg.appendChild(finTxt);
-  leg.appendChild(finLeg);
-
-  // Popup Primary 섹션 — Default/Private 중복 방지 (같은 id지만 별도 항목)
-  if(popPrimary){
-    popPrimary.innerHTML='';
-    var seenPop={};
-    primaryCals.forEach(function(c){
-      if(seenPop[c.summary])return;
-      seenPop[c.summary]=true;
-      var row=document.createElement('div');row.className='cal-row';
-      var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
-      var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
-      var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
-      (function(cm,ck,ldot){
-        ck.addEventListener('change',function(){
-          // 같은 summary의 모든 primaryCal 항목 동기화
-          primaryCals.forEach(function(pc){if(pc.summary===cm.summary)pc.enabled=ck.checked;});
-          ldot.style.background=ck.checked?cm.color:'#ccc';
-          // Legend 업데이트
-          document.querySelectorAll('.leg-txt').forEach(function(t){
-            if(t.textContent===cm.summary){
-              var dot=t.previousElementSibling;
-              if(dot)dot.style.background=ck.checked?cm.color:'#ccc';
-              t.style.opacity=ck.checked?'1':'0.4';
-            }
-          });
-          buildCalGridFromEvents();
-        });
-      })(c,chk,rdot);
-      row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
-      popPrimary.appendChild(row);
+function attachDayClicks(){
+  document.querySelectorAll('.fc-daygrid-day-number').forEach(function(el){
+    if(el._dcb)return;el._dcb=true;
+    el.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      var cell=el.closest('.fc-daygrid-day');if(!cell)return;
+      var ds=cell.getAttribute('data-date');if(!ds)return;
+      renderDayView(ds);
     });
-  }
+  });
+}
 
-  // Popup Other 섹션
-  if(popOther&&popOtherHdr){
-    popOther.innerHTML='';
-    if(otherCals.length){
-      popOtherHdr.style.display='';
-      otherCals.forEach(function(c){
-        var row=document.createElement('div');row.className='cal-row';
-        var chk=document.createElement('input');chk.type='checkbox';chk.checked=c.enabled!==false;
-        var rdot=document.createElement('div');rdot.className='cal-row-dot';rdot.style.background=c.color;
-        var rn=document.createElement('span');rn.className='cal-row-name';rn.textContent=c.summary;
-        (function(cm,ck){
-          ck.addEventListener('change',function(){
-            cm.enabled=ck.checked;
-            // 달력 그리드 마커 갱신 (예전엔 하단 Event List도 갱신했으나 그 UI는 삭제됨)
-            buildCalGridFromEvents();
-          });
-        })(c,chk);
-        row.appendChild(chk);row.appendChild(rdot);row.appendChild(rn);
-        popOther.appendChild(row);
+function rebuildPills(){
+  if(!cal||cal.view.type!=='dayGridMonth')return;
+  document.querySelectorAll('.mie-more').forEach(function(el){el.remove();});
+  document.querySelectorAll('.fc-daygrid-day').forEach(function(cell){
+    var ds=cell.getAttribute('data-date');if(!ds)return;
+    var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VIS)return;
+    var pill=document.createElement('div');pill.className='mie-more';
+    pill.textContent='+ '+(evs.length-MAX_VIS)+' more';
+    pill.addEventListener('click',function(e){e.stopPropagation();renderDayView(ds);});
+    var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');
+    if(bot)bot.appendChild(pill);
+  });
+}
+
+/* fetchEvents: FullCalendar events 콜백 (index_14_.html 방식) */
+function fetchEvents(fi,ok,fail){
+  var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});
+  fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}})
+    .then(function(r){
+      checkReauthStatus(r.status);
+      if(!r.ok){fail(new Error('HTTP '+r.status));return null;}
+      return r.json();
+    })
+    .then(function(data){
+      if(!data)return;
+      var items=Array.isArray(data.events)?data.events:[];
+      allEvents=[];eventsByDate={};
+      var mapped=items.map(function(e){
+        var start=(e.start&&(e.start.dateTime||e.start.date))||null;
+        var end=(e.end&&(e.end.dateTime||e.end.date))||null;
+        var allDay=!!(e.start&&e.start.date&&!e.start.dateTime);
+        return{
+          id:e.id,title:e.summary||'No Title',start:start,end:end,allDay:allDay,
+          extendedProps:{desc:e.description||'',loc:e.location||'',cc:e.mieCalendarColor||null,calId:e.calendarId||'primary',vis:e.visibility||'default'}
+        };
       });
-    } else {
-      popOtherHdr.style.display='none';
+      allEvents=mapped;
+      var filtered=filterEvents(mapped);
+      filtered.forEach(function(ev){
+        if(!ev.start)return;
+        var k=ev.allDay?ev.start:ev.start.split('T')[0];
+        if(!eventsByDate[k])eventsByDate[k]=[];
+        eventsByDate[k].push(ev);
+      });
+      ok(filtered);
+      setTimeout(renderTodayEvents,100);
+    })
+    .catch(function(err){fail(err);});
+}
+
+function initCal(){
+  if(cal)cal.destroy();
+  cal=new FullCalendar.Calendar(document.getElementById('calendar'),{
+    initialView:'dayGridMonth',
+    fixedWeekCount:false,
+    showNonCurrentDates:false,
+    height:600,
+    headerToolbar:false,
+    dayMaxEvents:false,
+    firstDay:0,
+    events:fetchEvents,
+    datesSet:function(){
+      document.querySelectorAll('.fc-daygrid-day').forEach(function(c){c._mc=0;});
+      syncTitle();
+      setTimeout(rebuildPills,80);
+      setTimeout(attachDayClicks,100);
+      setTimeout(calcCalHeight,50);
+      loadFinance();
+      loadHealth();
+    },
+    eventsSet:function(){
+      setTimeout(rebuildPills,100);
+      setTimeout(attachDayClicks,120);
+    },
+    eventDidMount:function(info){
+      if(cal.view.type!=='dayGridMonth')return;
+      var cell=info.el.closest('.fc-daygrid-day');if(!cell)return;
+      if(!cell._mc)cell._mc=0;
+      if(cell._mc>=MAX_VIS)info.el.style.display='none';
+      cell._mc++;
+    },
+    eventContent:function(arg){
+      var ext=arg.event.extendedProps||{};
+      var p=pastelForCalId(ext.cc||null,ext.calId||'primary',ext.vis||'default');
+      var vt=arg.view.type;
+      var w=document.createElement('div');w.style.width='100%';w.style.overflow='hidden';
+      if(arg.event.allDay){
+        w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;border-radius:3px;padding:1px 5px;background:'+p.bg+';';
+        var tx=document.createElement('span');
+        tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;color:'+p.text+';line-height:1.4;';
+        tx.textContent=arg.event.title||'';w.appendChild(tx);
+      }else if(vt==='dayGridMonth'){
+        w.style.cssText='width:100%;overflow:hidden;display:flex;align-items:center;gap:4px;padding:1px 3px;background:transparent;';
+        var dot=document.createElement('span');
+        dot.style.cssText='width:6px;height:6px;min-width:6px;border-radius:50%;background:'+p.text+';display:inline-block;flex-shrink:0;';
+        var tx=document.createElement('span');
+        tx.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:var(--txt);line-height:1.4;flex:1;';
+        var s=arg.event.start,tStr='';
+        if(s){var h=s.getHours(),m=s.getMinutes(),ap=h>=12?'p':'a';h=h%12||12;tStr=h+(m?':'+String(m).padStart(2,'0'):'')+ap+' ';}
+        tx.textContent=tStr+(arg.event.title||'');
+        w.appendChild(dot);w.appendChild(tx);
+      }else{
+        w.style.cssText='width:100%;height:100%;overflow:hidden;display:flex;flex-direction:column;border-radius:3px;padding:2px 5px;background:'+p.bg+';';
+        if(arg.timeText){var tt=document.createElement('span');tt.style.cssText='font-size:9px;color:'+p.text+';opacity:.85;white-space:nowrap;';tt.textContent=arg.timeText;w.appendChild(tt);}
+        var ttl=document.createElement('span');ttl.style.cssText='font-size:11px;font-weight:600;color:'+p.text+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        ttl.textContent=arg.event.title||'';w.appendChild(ttl);
+      }
+      return{domNodes:[w]};
+    },
+    eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);},
+    dateClick:function(info){
+      renderDayView(info.dateStr);
     }
-  }
-}
-
-// 이벤트 기반으로 캘린더 그리드 마커 재빌드
-function buildCalGridFromEvents(){
-  var g=document.getElementById('cal-grid');if(!g)return;
-  // 기존 마커 전부 지우고 실제 이벤트로 재생성
-  g.querySelectorAll('.cal-mks').forEach(function(mw){mw.remove();});
-
-  // primaryCals에서 enabled 체크
-  var primaryId=primaryCals.length?primaryCals[0].id:null;
-  var defaultEntry=primaryCals.find(function(c){return c.summary==='Default';});
-  var privateEntry=primaryCals.find(function(c){return c.summary==='Private';});
-  var klaiveCal=primaryCals.find(function(c){return c.summary==='KLAIVE';});
-  var womensCal=primaryCals.find(function(c){return c.summary==="Women's Health";});
-
-  // 날짜별 이벤트 색상 수집
-  var dateColors={};
-  allEvents.forEach(function(ev){
-    if(!ev.start)return;
-    var ds=ev.allDay?ev.start:ev.start.slice(0,10);
-    var color=resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal);
-    if(!color)return;
-    if(!dateColors[ds])dateColors[ds]=[];
-    if(dateColors[ds].indexOf(color)===-1)dateColors[ds].push(color);
   });
+  cal.render();
+  syncTitle();
+  initMoPicker();
 
-  // 현재 달 셀에만 마커 추가 (other-mo 셀 제외)
-  g.querySelectorAll('.cal-day').forEach(function(cell){
-    if(cell.classList.contains('other-mo'))return;
-    var dateStr=cell.getAttribute('data-date');
-    if(!dateStr)return;
-    var colors=dateColors[dateStr]?dateColors[dateStr].slice():[];
-    // Finance 거래가 있는 날짜에 teal 마커 추가 (중복 방지)
-    if(_finDateSet[dateStr]&&colors.indexOf('var(--teal)')===-1){
-      colors.push('var(--teal)');
-    }
-    if(!colors.length)return;
-    var mw=document.createElement('div');mw.className='cal-mks';
-    colors.slice(0,3).forEach(function(c){
-      var m=document.createElement('div');m.className='cal-mk';m.style.background=c;mw.appendChild(m);
-    });
-    cell.appendChild(mw);
-  });
+  /* 컨트롤 바인딩 */
+  document.getElementById('cal-prev').addEventListener('click',function(){cal.prev();syncTitle();});
+  document.getElementById('cal-next').addEventListener('click',function(){cal.next();syncTitle();});
+  document.getElementById('cal-today-btn').addEventListener('click',function(){cal.today();syncTitle();});
+  document.getElementById('cal-view-sel').addEventListener('change',function(e){cal.changeView(e.target.value);syncTitle();setTimeout(calcCalHeight,60);});
+  /* + Add btn removed from header */
+
+  /* 캘린더 팝업 */
+  var cb=document.getElementById('cals-btn'),cp=document.getElementById('cal-popup');
+  cb.addEventListener('click',function(e){e.stopPropagation();cp.classList.toggle('open');});
+  document.addEventListener('click',function(e){if(cp&&!cp.contains(e.target)&&e.target!==cb)cp.classList.remove('open');});
+
+  /* 리사이즈 */
+  var _rt=null;
+  window.addEventListener('resize',function(){if(_rt)clearTimeout(_rt);_rt=setTimeout(function(){if(cal){cal.updateSize();calcCalHeight();}},150);});
+
+  /* ResizeObserver로 정확한 높이 계산 */
+  var wrap=document.getElementById('cal-wrap');
+  if(wrap&&window.ResizeObserver){new ResizeObserver(function(){calcCalHeight();}).observe(wrap);}
+  else setTimeout(calcCalHeight,300);
 }
 
-// 이벤트 색상 결정 로직
-// Private: ev.visibility === "private" 로 구분 (mieCalendarColor와 무관)
-function resolveEventColor(ev, primaryId, defaultEntry, privateEntry, klaiveCal, womensCal){
-  var calId=ev.calId;
-  var cc=ev.calColor; // mieCalendarColor
-
-  // Other 달력 이벤트
-  var otherC=otherCals.find(function(c){return c.id===calId&&!c.isPrimary;});
-  if(otherC){return otherC.enabled?otherC.color:null;}
-
-  // KLAIVE 달력
-  if(klaiveCal&&calId===klaiveCal.id){return klaiveCal.enabled?klaiveCal.color:null;}
-  // Women's Health 달력
-  if(womensCal&&calId===womensCal.id){return womensCal.enabled?womensCal.color:null;}
-
-  // Primary 달력 이벤트 — visibility 필드로 Default/Private 구분
-  if(calId===primaryId||(!calId)){
-    var vis=ev.visibility||'default';
-    if(vis==='private'){
-      return (privateEntry&&privateEntry.enabled)?PRIMARY_CAL_COLORS['Private']:null;
-    }
-    return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
-  }
-
-  // fallback
-  return (defaultEntry&&defaultEntry.enabled)?PRIMARY_CAL_COLORS['Default']:null;
+/* ══ Today 패널 ══ */
+function renderTodayDate(){
+  var d=new Date(),ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var el=document.getElementById('dayview-date');
+  if(el)el.textContent=ms[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
 }
 
-/* Build calendar grid — data-date 속성 포함하여 재빌드 */
-function buildCalGrid(){
-  var g=document.getElementById('cal-grid');if(!g)return;
-  g.innerHTML='';
-  var fd=new Date(calYear,calMonth,1).getDay();
-  var dim=new Date(calYear,calMonth+1,0).getDate();
-  var dip=new Date(calYear,calMonth,0).getDate();
-  var total=Math.ceil((fd+dim)/7)*7;
-  var mo=document.getElementById('cal-mo');if(mo)mo.textContent=new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  for(var i=0;i<total;i++){
-    var cell=document.createElement('div');cell.className='cal-day';
-    var dn,ds,other=false;
-    if(i<fd){dn=dip-fd+i+1;var pm=calMonth===0?11:calMonth-1;var py=calMonth===0?calYear-1:calYear;ds=isoD(py,pm,dn);other=true;}
-    else if(i>=fd+dim){dn=i-fd-dim+1;var nm=calMonth===11?0:calMonth+1;var ny=calMonth===11?calYear+1:calYear;ds=isoD(ny,nm,dn);other=true;}
-    else{dn=i-fd+1;ds=isoD(calYear,calMonth,dn);}
-    var _td=new Date();var _todayStr=isoD(_td.getFullYear(),_td.getMonth(),_td.getDate());var isToday=ds===_todayStr;
-    if(other)cell.classList.add('other-mo');
-    if(isToday)cell.classList.add('today');
-    // data-date 속성 저장 (마커 재빌드에 사용)
-    cell.setAttribute('data-date',ds);
-    var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
-    (function(dstr,isOther){cell.addEventListener('click',function(){
-      selectedDateStr=dstr;
-      // selected-day 하이라이트 이동
-      document.querySelectorAll('.cal-day.selected-day').forEach(function(c){c.classList.remove('selected-day');});
-      cell.classList.add('selected-day');
-      renderDayView(dstr);
-    });;})(ds,other);
-    g.appendChild(cell);
-  }
-  // 이벤트 데이터로 마커 빌드
-  buildCalGridFromEvents();
-}
-
-/* ── Calendar Event List (클릭한 날짜 기준) ── */
-/* ── Day View render ── */
-function renderDayView(ds){
-  // 날짜 헤더 업데이트
-  var dtEl=document.getElementById('dayview-date');
-  if(dtEl){
-    var d=new Date(ds+'T12:00:00');
-    dtEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  }
-  renderTodayEvents(ds);
-  renderDayViewTasks(ds);
-}
-
-function renderDayViewTasks(ds){
-  var c=document.getElementById('today-task-list');if(!c)return;c.innerHTML='';
-  var tasks=(allTasks.length?allTasks:DEMO_TASKS).filter(function(t){
-    if(t.status==='completed')return false;
-    if(!t.due)return false;
-    var due=t.due.slice(0,10); // YYYY-MM-DD
-    return due===ds;
-  });
-  if(!tasks.length){
-    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No tasks due.';c.appendChild(em);return;
-  }
-  tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});
-}
-
-/* ── Today events ── */
 function renderTodayEvents(dateStr){
-  var c=document.getElementById('today-ev-list');if(!c)return;c.innerHTML='';
+  var list=document.getElementById('today-ev-list');if(!list)return;
+  list.innerHTML='';
   var today=new Date();
   var ds=dateStr||(today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0'));
 
-  // Google Calendar 이벤트
   var evs=eventsByDate[ds]||[];
-
-  // Finance 거래 → 이벤트 형식으로 변환
   var TYPE_LABEL={income:'💰 Income',expense:'💸 Expense',saving:'🏦 Saving'};
   var TYPE_COLOR={income:'var(--teal)',expense:'var(--red)',saving:'var(--blue)'};
   function fmtAmt(v){return(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -1130,59 +1090,54 @@ function renderTodayEvents(dateStr){
   var projects=allProjects.length?allProjects:[];
 
   if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!projects.length){
-    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">No events</div>';return;
   }
 
-  // Calendar 이벤트 렌더링
-  evs.forEach(function(ev){
-    var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
-    var item=document.createElement('div');item.className='ev-item';
-    var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
-    var td=document.createElement('div');td.className='ev-time';
-    if(ev.allDay)td.textContent='All day';
-    else{var s=new Date(ev.start),e=ev.end?new Date(ev.end):null;td.innerHTML=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e?'<br>'+e.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
-    var bd=document.createElement('div');bd.className='ev-body';
-    var nm=document.createElement('div');nm.className='ev-name';
-    if(ev.isLink){var a=document.createElement('a');a.href='#';a.onclick=function(e){e.preventDefault();};a.textContent=ev.title;nm.appendChild(a);}else nm.textContent=ev.title;
-    if(ev.loc){var sub=document.createElement('div');sub.className='ev-sub';sub.textContent='📍 '+ev.loc;nm.appendChild(sub);}
-    bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
-    item.addEventListener('click',function(){openEvView(ev);});
-    c.appendChild(item);
-  });
+  // Google Calendar 이벤트
+  evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);})
+    .forEach(function(ev){
+      var p=pastelForCalId(ev.extendedProps.cc,ev.extendedProps.calId,ev.extendedProps.vis);
+      var item=document.createElement('div');item.className='ev-item';
+      item.addEventListener('click',function(){openEventView(ev);});
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=p.text;
+      var tDiv=document.createElement('div');tDiv.className='ev-time';
+      if(ev.allDay){tDiv.textContent='All day';}
+      else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;tDiv.innerHTML=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?'<br>'+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=ev.title||'No Title';
+      body.appendChild(nm);
+      if(ev.extendedProps&&ev.extendedProps.loc){var sub=document.createElement('div');sub.className='ev-sub';sub.textContent='📍 '+ev.extendedProps.loc;body.appendChild(sub);}
+      item.appendChild(bar);item.appendChild(tDiv);item.appendChild(body);
+      list.appendChild(item);
+    });
 
-  // Finance 거래 렌더링 (teal 구분선)
+  // Finance 거래 (teal 구분선)
   if(finRows.length){
     var divider=document.createElement('div');
     divider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);padding:8px 2px 4px;';
     divider.textContent='Finance';
-    c.appendChild(divider);
-
+    list.appendChild(divider);
     finRows.forEach(function(r){
       var color=TYPE_COLOR[r.type]||'var(--teal)';
-      var item=document.createElement('div');item.className='ev-item';item.style.cursor='pointer';
+      var item=document.createElement('div');item.className='ev-item';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
-      var td=document.createElement('div');td.className='ev-time';
-      td.textContent=TYPE_LABEL[r.type]||r.type;
-      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
-      var bd=document.createElement('div');bd.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-name';
-      nm.textContent=r.category+(r.sublabel?' · '+r.sublabel:'');
-      var sub=document.createElement('div');sub.className='ev-sub';
-      sub.textContent=fmtAmt(r.amount)+(r.notes?' · '+r.notes:'');
-      nm.appendChild(sub);
-      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      var td=document.createElement('div');td.className='ev-time';td.textContent=TYPE_LABEL[r.type]||r.type;
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=r.category+(r.sublabel?' · '+r.sublabel:'');
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=fmtAmt(r.amount)+(r.notes?' · '+r.notes:'');
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
       item.addEventListener('click',function(){openFinEdit(r);});
-      c.appendChild(item);
+      list.appendChild(item);
     });
   }
 
-  // Health 기록 렌더링 (amber 구분선) — 선택한 날짜(ds) 기준, _healthByDate에서 조회
+  // Health 기록 (amber 구분선)
   if(healthRows.length){
     var hDivider=document.createElement('div');
     hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
     hDivider.textContent='Health';
-    c.appendChild(hDivider);
-
+    list.appendChild(hDivider);
     var hMetrics=[];
     healthRows.forEach(function(row){
       if(row.weight_kg){
@@ -1194,27 +1149,25 @@ function renderTodayEvents(dateStr){
       if(row.glucose_mgdl)hMetrics.push({label:'Glucose',val:row.glucose_mgdl+' mg/dL',metricType:'glucose',row:row});
     });
     hMetrics.forEach(function(m){
-      var item=document.createElement('div');item.className='ev-item';item.style.cursor='pointer';
+      var item=document.createElement('div');item.className='ev-item';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
       var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
-      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
-      var bd=document.createElement('div');bd.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=m.label;
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
       var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
-      nm.appendChild(sub);
-      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
       item.addEventListener('click',function(){openHealthEdit(m.metricType,m.row);});
-      c.appendChild(item);
+      list.appendChild(item);
     });
   }
 
-  // Activity 기록 렌더링 (purple 구분선) — 선택한 날짜(ds)의 steps/distance 합산, _activityByDate에서 조회
+  // Activity 기록 (purple 구분선)
   if(activityRows.length){
     var acDivider=document.createElement('div');
     acDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);padding:8px 2px 4px;';
     acDivider.textContent='Activity';
-    c.appendChild(acDivider);
-
+    list.appendChild(acDivider);
     var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
     var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
     var acMetrics=[];
@@ -1224,71 +1177,101 @@ function renderTodayEvents(dateStr){
       var item=document.createElement('div');item.className='ev-item';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--purple)';
       var td=document.createElement('div');td.className='ev-time';td.textContent='🏃 Activity';
-      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
-      var bd=document.createElement('div');bd.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=m.label;
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
       var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
-      nm.appendChild(sub);
-      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
-      c.appendChild(item);
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      list.appendChild(item);
     });
   }
 
-  // Project 진행률 렌더링 (blue 구분선) — 날짜 개념이 없어 항상 표시
+  // Project 진행률 (blue 구분선) — 날짜 개념 없이 항상 표시
   if(projects.length){
     var pDivider=document.createElement('div');
     pDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--cblue);padding:8px 2px 4px;';
     pDivider.textContent='Project';
-    c.appendChild(pDivider);
-
+    list.appendChild(pDivider);
     projects.forEach(function(p){
       var pct=Math.round((p.completed||0)/(p.total||1)*100);
       var item=document.createElement('div');item.className='ev-item';
       var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--cblue)';
       var td=document.createElement('div');td.className='ev-time';td.textContent=pct+'%';
-      td.style.cssText='font-size:10px;color:var(--txt3);width:76px;flex-shrink:0;padding-top:1px;line-height:1.5;';
-      var bd=document.createElement('div');bd.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-name';nm.textContent=p.name||p.title||'Untitled';
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=p.name||p.title||'Untitled';
       var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=(p.completed||0)+' of '+(p.total||0)+' tasks'+(p.due?' · Due '+p.due:'');
-      nm.appendChild(sub);
-      bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
-      c.appendChild(item);
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      list.appendChild(item);
     });
   }
 }
 
-/* ── Tasks ── */
-function makeTaskEl(t){
-  var isDone=t.status==='completed';
-  var item=document.createElement('div');item.className='task-item';
-  var cb=document.createElement('div');cb.className='task-cb'+(isDone?' done':'');
-  cb.addEventListener('click',function(e){e.stopPropagation();toggleTask(t,cb,item);});
-  var nm=document.createElement('div');nm.className='task-nm'+(isDone?' s':'');nm.textContent=t.title||'Untitled';
-  var tag=document.createElement('span');
-  if(isDone){tag.className='task-tag done';tag.textContent='done';}
-  else if(t.due){var n=new Date();n.setHours(0,0,0,0);var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));if(Math.round((dt-n)/86400000)<=0){tag.className='task-tag today';tag.textContent='today';}}
-  item.appendChild(cb);item.appendChild(nm);if(tag.textContent)item.appendChild(tag);
-  return item;
-}
-function toggleTask(t,cb,row){
-  var wasDone=t.status==='completed';t.status=wasDone?'needsAction':'completed';
-  cb.classList.toggle('done',!wasDone);var nm=row.querySelector('.task-nm');if(nm)nm.classList.toggle('s',!wasDone);
-  var tag=row.querySelector('.task-tag');if(tag){tag.className='task-tag '+(t.status==='completed'?'done':'today');tag.textContent=t.status==='completed'?'done':'today';}
-  fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:t.listId||'@default',status:t.status,title:t.title||'',notes:t.notes||''})}).catch(function(){});
-}
-function renderTasks(){
-  // Day View task list — 선택한 날짜(없으면 오늘) due date 기준
-  var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
-  renderDayViewTasks(selectedDateStr||todayStr);
+function renderDayView(ds){
+  selectedDateStr=ds;
+  var dtEl=document.getElementById('dayview-date');
+  if(dtEl){
+    var d=new Date(ds+'T12:00:00');
+    dtEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  }
+  renderTodayEvents(ds);
 }
 
-/* ── Projects ── */
-// allProjects는 Today List의 Project 서브디바이더(renderTodayEvents 안)에서 사용한다.
-// 날짜 개념이 없는 데이터라 항상 전체 표시하며, 별도 proj-card는 더 이상 없다.
-var allProjects=[];
+/* ── Finance API (Day View 통합용) ── */
+function loadFinance(){
+  var curDate=cal?cal.getDate():new Date();
+  var ym=curDate.getFullYear()+'-'+String(curDate.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _finDateSet={};_finByDate={};
+      if(!data||!data.summary){renderTodayEvents(selectedDateStr);return;}
+      function _addFinRow(type,r){
+        if(!r.date)return;
+        _finDateSet[r.date]=true;
+        if(!_finByDate[r.date])_finByDate[r.date]=[];
+        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||'',date:r.date,_sheet_row:r._sheet_row,event_id:r.event_id||''});
+      }
+      (data.income||[]).forEach(function(r){_addFinRow('income',r);});
+      (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
+      (data.savings||[]).forEach(function(r){_addFinRow('saving',r);});
+      renderTodayEvents(selectedDateStr);
+    })
+    .catch(function(){renderTodayEvents(selectedDateStr);});
+}
+
+/* ── Health API (Day View 통합용) ── */
+function loadHealth(){
+  var curDate=cal?cal.getDate():new Date();
+  var ym=curDate.getFullYear()+'-'+String(curDate.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _healthByDate={};_activityByDate={};
+      if(!data){renderTodayEvents(selectedDateStr);return;}
+      var arr=Array.isArray(data.health)?data.health:[];
+      arr.forEach(function(rec){
+        var ds=(rec.stamp_date||'').slice(0,10);
+        if(!ds)return;
+        if(!_healthByDate[ds])_healthByDate[ds]=[];
+        _healthByDate[ds].push(rec);
+      });
+      var actArr=Array.isArray(data.activity)?data.activity:[];
+      actArr.forEach(function(rec){
+        var ds=(rec.stamp_date||'').slice(0,10);
+        if(!ds)return;
+        if(!_activityByDate[ds])_activityByDate[ds]=[];
+        _activityByDate[ds].push(rec);
+      });
+      renderTodayEvents(selectedDateStr);
+    })
+    .catch(function(){_healthByDate={};_activityByDate={};renderTodayEvents(selectedDateStr);});
+}
+
+/* ── Projects API (Day View 통합용) ── */
 function loadProjects(){
   fetch(BACKEND+'/api/me/projects',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data){allProjects=[];renderTodayEvents(selectedDateStr);return;}
       var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
@@ -1298,201 +1281,15 @@ function loadProjects(){
     .catch(function(){allProjects=[];renderTodayEvents(selectedDateStr);});
 }
 
-/* ── Input tab ── */
-function switchTab(tab){
-  var ts=document.getElementById('tab-send'),ta=document.getElementById('tab-add');
-  var ps=document.getElementById('panel-send'),pa=document.getElementById('panel-add');
-  if(!ts||!ta)return;
-  ts.classList.toggle('on',tab==='send');ta.classList.toggle('on',tab==='add');
-  if(ps)ps.classList.toggle('on',tab==='send');
-  if(pa)pa.classList.toggle('on',tab==='add');
-}
-function selAddType(type){
-  var eb=document.getElementById('add-ev-btn'),tb=document.getElementById('add-tk-btn');
-  var ef=document.getElementById('add-ev-form'),tf=document.getElementById('add-tk-form');
-  if(!eb||!tb)return;
-  eb.classList.toggle('sel',type==='event');tb.classList.toggle('sel',type==='task');
-  if(ef)ef.classList.toggle('vis',type==='event');
-  if(tf)tf.classList.toggle('vis',type==='task');
-  var today=new Date().toISOString().slice(0,10);
-  if(type==='event'){var d1=document.getElementById('ae-date'),d2=document.getElementById('ae-edate');if(d1)d1.value=today;if(d2)d2.value=today;}
-  if(type==='task'){var d3=document.getElementById('at-due');if(d3)d3.value=today;}
-}
-function submitEv(){
-  var title=(document.getElementById('ae-title')||{}).value||'';
-  var st=document.getElementById('ae-st');if(!st)return;
-  if(!title.trim()){st.style.color='var(--red)';st.textContent='Title required.';return;}
-  var d=document.getElementById('ae-date').value,t=document.getElementById('ae-time').value;
-  var ed=document.getElementById('ae-edate').value,et=document.getElementById('ae-etime').value;
-  var loc=document.getElementById('ae-loc').value.trim();
-  st.style.color='var(--txt3)';st.textContent='Saving…';
-  fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,start:t?d+'T'+t+':00':d,end:ed?(et?ed+'T'+et+':00':ed):null,location:loc,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Event added!';document.getElementById('ae-title').value='';setTimeout(function(){st.textContent='';},2500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
-    .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';});
-}
-function submitTask(){
-  var title=(document.getElementById('at-title')||{}).value||'';
-  var st=document.getElementById('at-st');if(!st)return;
-  if(!title.trim()){st.style.color='var(--red)';st.textContent='Title required.';return;}
-  var notes=document.getElementById('at-notes').value.trim();
-  var due=document.getElementById('at-due').value;
-  var prio=document.getElementById('at-prio').value;
-  var listId=document.getElementById('at-list').value||'@default';
-  st.style.color='var(--txt3)';st.textContent='Saving…';
-  fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title,notes:notes,due:due,priority:prio,listId:listId})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){st.style.color='var(--teal)';st.textContent='✅ Task added!';document.getElementById('at-title').value='';setTimeout(function(){st.textContent='';loadTasks();},1500);}else{st.style.color='var(--red)';st.textContent='❌ Failed.';}})
-    .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';});
-}
-
-/* ── Send message ── */
-function doSend(){
-  var mi=document.getElementById('msg-input');
-  var sb=document.getElementById('send-btn');
-  var ss=document.getElementById('sst');
-  var dc=document.getElementById('draft-check');
-  if(!mi||!sb)return;
-  var txt=mi.value.trim();
-  if(!txt&&!selFile)return;
-  if(dc&&dc.checked){
-    if(txt){var arr=getDrafts();arr.unshift({id:Date.now(),text:txt});saveDrafts(arr);}
-    if(ss){ss.style.color='var(--blue)';ss.textContent='📝 Saved as draft';}
-    mi.value='';selFile=null;var fi=document.getElementById('file-input');if(fi)fi.value='';
-    var fr=document.getElementById('fname-row');if(fr)fr.style.display='none';
-    if(dc)dc.checked=false;renderDraftList();
-    setTimeout(function(){if(ss)ss.textContent='';},2500);return;
-  }
-  sb.disabled=true;
-  var _sendTs=Date.now();
-  fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
-    .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}mi.value='';selFile=null;var fi=document.getElementById('file-input');if(fi)fi.value='';var fr=document.getElementById('fname-row');if(fr)fr.style.display='none';_pollSyncStatusAfterSend(_sendTs);}else{if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';}}})
-    .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
-    .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
-}
-
-/* ── Drafts ── */
-function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
-function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
-
-/* ── Unit preference (metric/us) — Health +Add에서 weight/water/distance에 사용 ── */
-var UNIT_PREF_KEY='klaive_unit_pref';
-function getUnitPref(){try{return localStorage.getItem(UNIT_PREF_KEY)||'metric';}catch(e){return'metric';}}
-function setUnitPref(v){try{localStorage.setItem(UNIT_PREF_KEY,v==='us'?'us':'metric');}catch(e){}}
-function renderDraftList(){
-  var drafts=getDrafts();
-  var wrap=document.getElementById('draft-wrap');
-  var list=document.getElementById('draft-list');
-  if(!wrap||!list)return;
-  if(!drafts.length){wrap.style.display='none';return;}
-  wrap.style.display='block';list.innerHTML='';
-  drafts.forEach(function(d,i){
-    var item=document.createElement('div');item.className='d-item';
-    var txt=document.createElement('span');txt.className='d-item-t';txt.textContent=d.text.length>40?d.text.slice(0,40)+'…':d.text;txt.title=d.text;
-    var del=document.createElement('button');del.className='d-del';del.textContent='✕';
-    del.addEventListener('click',function(e){e.stopPropagation();var arr=getDrafts();arr.splice(i,1);saveDrafts(arr);renderDraftList();});
-    item.addEventListener('click',function(){var mi=document.getElementById('msg-input');if(mi)mi.value=d.text;});
-    item.appendChild(txt);item.appendChild(del);list.appendChild(item);
-  });
-}
-
-/* ── Sign out ── */
-document.getElementById('signout-btn').addEventListener('click',function(){
-  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){window.location.replace('/');});
-});
-
-/* ── Event view modal ── */
-function escH(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function fmtEvTime(ev){
-  if(!ev.start)return'';
-  if(ev.allDay){return new Date(ev.start.slice(0,10)+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · All day';}
-  var sd=new Date(ev.start);
-  return sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(ev.end?' – '+new Date(ev.end).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');
-}
-function openEvView(ev){
-  curViewEv=ev;
-  document.getElementById('ev-dc').style.display='none';
-  document.getElementById('ev-dc-st').textContent='';
-  document.getElementById('ev-dc-ok').disabled=false;
-  var c=ev.calColor||'#378ADD';
-  document.getElementById('ev-cbar').style.background=c;
-  document.getElementById('ev-ttl').textContent=ev.title||'(No title)';
-  document.getElementById('ev-time').textContent=fmtEvTime(ev);
-  var loc=ev.loc||ev.location||'';
-  if(loc){document.getElementById('ev-loc').innerHTML='<a href="https://maps.google.com/?q='+encodeURIComponent(loc)+'" target="_blank">'+escH(loc)+'</a>';document.getElementById('ev-loc-row').style.display='flex';}else{document.getElementById('ev-loc-row').style.display='none';}
-  var desc=ev.desc||ev.description||'';
-  if(desc){document.getElementById('ev-desc').textContent=desc;document.getElementById('ev-desc-row').style.display='flex';}else{document.getElementById('ev-desc-row').style.display='none';}
-  var m=(calendarMeta.length?calendarMeta:DEMO_CAL).find(function(x){return x.id===ev.calId;});
-  document.getElementById('ev-cald').style.background=c;
-  document.getElementById('ev-caln').textContent=m?m.summary:(ev.calId||'Calendar');
-  document.getElementById('ev-modal').classList.remove('h');
-}
-function closeEvView(){document.getElementById('ev-modal').classList.add('h');curViewEv=null;}
-document.getElementById('ev-close-btn').addEventListener('click',closeEvView);
-document.getElementById('ev-modal').addEventListener('click',function(e){if(e.target===this)closeEvView();});
-document.getElementById('ev-edit-btn').addEventListener('click',function(){if(!curViewEv)return;var ev=curViewEv;closeEvView();openEditModal(ev);});
-document.getElementById('ev-del-btn').addEventListener('click',function(){document.getElementById('ev-dc').style.display='block';});
-document.getElementById('ev-dc-cancel').addEventListener('click',function(){document.getElementById('ev-dc').style.display='none';});
-document.getElementById('ev-dc-ok').addEventListener('click',function(){
-  if(!curViewEv)return;var btn=this,st=document.getElementById('ev-dc-st');
-  btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
-  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();}else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}})
-    .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
-});
-
-/* ── Edit modal ── */
-function openEditModal(ev){
-  curEditEv=ev;document.getElementById('ed-st').textContent='';
-  document.getElementById('ed-title').value=ev.title||'';
-  var ss=ev.start||'';
-  document.getElementById('ed-date').value=ss?ss.slice(0,10):'';
-  var st='';if(!ev.allDay&&ss&&ss.includes('T')){var so=new Date(ss);st=String(so.getHours()).padStart(2,'0')+':'+String(so.getMinutes()).padStart(2,'0');}
-  document.getElementById('ed-time').value=st;
-  var es=ev.end||'';
-  document.getElementById('ed-edate').value=es?es.slice(0,10):'';
-  var et='';if(!ev.allDay&&es&&es.includes('T')){var eo=new Date(es);et=String(eo.getHours()).padStart(2,'0')+':'+String(eo.getMinutes()).padStart(2,'0');}
-  document.getElementById('ed-etime').value=et;
-  document.getElementById('ed-loc').value=ev.loc||ev.location||'';
-  document.getElementById('ed-desc').value=ev.desc||ev.description||'';
-  document.getElementById('edit-modal').classList.remove('h');
-}
-document.getElementById('edit-close').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
-document.getElementById('ed-cancel').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
-document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditEv=null;}});
-document.getElementById('ed-save').addEventListener('click',function(){
-  if(!curEditEv)return;
-  var s=document.getElementById('ed-st');
-  var nt=document.getElementById('ed-title').value.trim(),nd=document.getElementById('ed-date').value;
-  if(!nt){s.style.color='var(--red)';s.textContent='Title required.';return;}
-  var nti=document.getElementById('ed-time').value,ned=document.getElementById('ed-edate').value,neti=document.getElementById('ed-etime').value;
-  var nl=document.getElementById('ed-loc').value.trim(),nde=document.getElementById('ed-desc').value.trim();
-  var ns=nti?nd+'T'+nti+':00':nd,ne=ned?(neti?ned+'T'+neti+':00':ned):null;
-  this.disabled=true;s.style.color='var(--txt3)';s.textContent='Saving…';
-  var self=this;
-  fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary',title:nt,start:ns,end:ne,location:nl,description:nde})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
-    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
-});
-document.getElementById('ed-delete').addEventListener('click',function(){
-  if(!curEditEv||!confirm('Delete "'+( curEditEv.title||'this event')+'"?'))return;
-  var s=document.getElementById('ed-st');this.disabled=true;s.style.color='var(--txt3)';s.textContent='Deleting…';
-  var self=this;
-  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary'})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';}})
-    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
-});
-
 /* ── Finance 편집/삭제 모달 ──
    주의: /api/me/finance/transaction/edit·delete가 요구하는 rowIdx는 "이 탭 시트 전체에서
    빈 줄/금액 0 제외 몇 번째 데이터 행인가"를 백엔드가 다시 세어 계산한 값이라, Day View에
-   표시된 (월 단위로 필터링된) 목록 안에서의 순번과 다를 수 있다. 그래서 편집/삭제 직전에
+   표시된(월 단위로 필터링된) 목록 안에서의 순번과 다를 수 있다. 그래서 편집/삭제 직전에
    ?ytd=true(필터 없이 탭 전체 반환)로 한 번 더 조회해서 _sheet_row가 일치하는 위치를 찾아
    그 위치를 rowIdx로 사용한다. */
-var curEditFin=null; // {type,category,amount,notes,sublabel,date,_sheet_row,event_id}
-var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
-
 function findFinRowIdx_(tabName,sheetRow){
   return fetch(BACKEND+'/api/me/finance?ytd=true',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data)return null;
       var key=(tabName==='income')?'income':(tabName==='expenses'?'expenses':'savings');
@@ -1529,7 +1326,7 @@ document.getElementById('fined-save').addEventListener('click',function(){
       notes:document.getElementById('fined-notes').value.trim(),
       eventId:curEditFin.event_id||''};
     fetch(BACKEND+'/api/me/finance/transaction/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-      .then(function(r){return r.ok?r.json():null;})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
       .then(function(res){
         if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
@@ -1544,7 +1341,7 @@ document.getElementById('fined-delete').addEventListener('click',function(){
   findFinRowIdx_(tabName,curEditFin._sheet_row).then(function(idx){
     if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
     fetch(BACKEND+'/api/me/finance/transaction/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tabName:tabName,rowIdx:idx,eventId:curEditFin.event_id||''})})
-      .then(function(r){return r.ok?r.json():null;})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
       .then(function(res){
         if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
@@ -1556,13 +1353,10 @@ document.getElementById('fined-delete').addEventListener('click',function(){
    주의: /api/me/health/log/edit·delete가 요구하는 row_idx도 Finance와 동일한 문제가 있어
    (Day View는 기간 필터링된 목록), ?period=all(필터 없이 탭 전체 반환)로 한 번 더 조회해서
    _sheet_row가 일치하는 위치를 row_idx로 사용한다. */
-var curEditHealth=null; // {metricType, row}
-var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose'};
-
 function findHealthRowIdx_(sheetRow){
   var anyDate=new Date().toISOString().slice(0,10);
   return fetch(BACKEND+'/api/me/health?date='+anyDate+'&period=all&tab=health',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data)return null;
       var arr=Array.isArray(data.health)?data.health:[];
@@ -1628,7 +1422,7 @@ document.getElementById('healthed-save').addEventListener('click',function(){
     else if(mt==='hr'){data.heart_rate_bpm=parseFloat(document.getElementById('healthed-hr').value)||0;}
     else if(mt==='glucose'){data.glucose_mgdl=parseFloat(document.getElementById('healthed-glucose').value)||0;}
     fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx,data:data})})
-      .then(function(r){return r.ok?r.json():null;})
+      .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
       .then(function(res){
         if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
@@ -1642,7 +1436,7 @@ document.getElementById('healthed-delete').addEventListener('click',function(){
   findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
     if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
     fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx})})
-      .then(function(r){return r.ok?r.json():null;})
+      .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
       .then(function(res){
         if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
@@ -1650,218 +1444,205 @@ document.getElementById('healthed-delete').addEventListener('click',function(){
   }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
 });
 
-
-/* ── Day modal ── */
-function openDayModal(ds,evs){
-  var d=new Date(ds+'T12:00:00');
-  document.getElementById('dm-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var list=document.getElementById('dm-list');list.innerHTML='';
-  if(!evs||!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px;font-size:12px;color:var(--txt3);';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('h');return;}
-  evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);}).forEach(function(ev){
-    var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
-    var item=document.createElement('div');item.className='dei';
-    var dot=document.createElement('div');dot.className='ded';dot.style.background=color;
-    var info=document.createElement('div');info.className='dei-info';
-    var td=document.createElement('div');td.className='det';
-    var tt=document.createElement('div');tt.className='dett';
-    if(ev.allDay)td.textContent='All-day';else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;td.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'')}
-    tt.textContent=ev.title||'No Title';info.appendChild(td);info.appendChild(tt);
-    if(ev.loc){var lv=document.createElement('div');lv.className='del';lv.textContent='📍 '+ev.loc;info.appendChild(lv);}
-    item.appendChild(dot);item.appendChild(info);
-    item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');openEvView(ev);});
+function renderTodayTasks(){
+  var fEl=document.getElementById('task-filter'),filterVal=fEl?fEl.value:'all';
+  if(fEl){
+    var cur=fEl.value;fEl.innerHTML='<option value="all">All List ▾</option>';
+    taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;fEl.appendChild(o);});
+    fEl.value=(cur&&taskLists.find(function(l){return l.id===cur;}))?cur:'all';
+    filterVal=fEl.value;
+  }
+  var list=document.getElementById('today-task-list');if(!list)return;
+  var now=new Date();now.setHours(0,0,0,0);
+  var tasks=allTasks.filter(function(t){
+    if(t.status==='completed')return false;
+    if(filterVal!=='all'&&t.listId!==filterVal)return false;
+    return true;
+  });
+  tasks.sort(function(a,b){
+    function sc(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var d=Math.round((dt-now)/86400000);return d<0?0:d===0?1:2;}
+    var sa=sc(a),sb=sc(b);if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;
+  });
+  list.innerHTML='';
+  if(!tasks.length){list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">All caught up!</div>';return;}
+  tasks.forEach(function(t){
+    var n2=new Date();n2.setHours(0,0,0,0);
+    var isLate=false,isToday=false;
+    if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-n2)/86400000);isLate=diff<0;isToday=diff===0;}
+    var item=document.createElement('div');item.className='task-item';
+    var cb=document.createElement('div');cb.className='task-cb';
+    (function(task,cbEl){
+      cbEl.addEventListener('click',function(e){
+        e.stopPropagation();if(task._p)return;task._p=true;
+        cbEl.classList.add('chk');
+        setTimeout(function(){
+          task.status='completed';
+          function attempt(lid){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:task.id,listId:lid,status:'completed',title:task.title||'',notes:task.notes||''})});}
+          attempt(task.listId||'@default').then(function(r){checkReauthStatus(r.status);if(r.status===404&&task.listId!=='@default')return attempt('@default');return r;})
+            .then(function(){setTimeout(renderTodayTasks,200);}).catch(function(){task.status='needsAction';renderTodayTasks();})
+            .finally(function(){task._p=false;});
+        },150);
+      });
+    })(t,cb);
+    var nm=document.createElement('div');nm.className='task-nm';nm.textContent=t.title||'Untitled';
+    item.appendChild(cb);item.appendChild(nm);
+    if(isLate){var tg=document.createElement('span');tg.className='task-tag late';tg.textContent='Late';item.appendChild(tg);}
+    else if(isToday){var tg=document.createElement('span');tg.className='task-tag';tg.textContent='today';item.appendChild(tg);}
     list.appendChild(item);
   });
-  document.getElementById('day-modal').classList.remove('h');
-}
-document.getElementById('dm-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');});
-document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('h');});
-
-/* ── Nav ── */
-var NAV_META={
-  'Overview':  {icon:'<rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>'},
-  'Calendar':  {icon:'<rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/>'},
-  'Finance':   {icon:'<circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11" stroke-linecap="round"/>'},
-  'Health':    {icon:'<path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/>'},
-  'Tasks':     {icon:'<polyline points="2,8 6,12 14,4" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="3" x2="8" y2="3" stroke-linecap="round"/><line x1="2" y1="6" x2="8" y2="6" stroke-linecap="round"/>'},
-  'Documents': {icon:'<rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="9" y2="11" stroke-linecap="round"/>'},
-  'Settings':  {icon:'<circle cx="8" cy="8" r="2.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M11.9 3.4l-.7.7M3.4 11.9l-.7.7" stroke-linecap="round"/>'},
-};
-function showEmptyState(name){
-  var g=document.getElementById('main-grid');
-  var m=NAV_META[name]||{icon:''};
-  g.innerHTML='';
-  g.style.gridTemplateColumns='';
-  var wrap=document.createElement('div');
-  wrap.style.cssText='display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg2);';
-  var inner=document.createElement('div');
-  inner.style.cssText='display:flex;flex-direction:column;align-items:center;text-align:center;';
-  inner.innerHTML=
-    '<svg width="32" height="32" viewBox="0 0 16 16" fill="none" stroke="#999896" stroke-width="1.4">'+m.icon+'</svg>'+
-    '<div style="font-size:14px;font-weight:500;color:#111111;margin-top:12px;">'+name+'</div>'+
-    '<div style="font-size:13px;color:#999896;margin-top:6px;">Nothing here yet.</div>'+
-    '<div style="font-size:13px;color:#999896;">Send a message to begin.</div>';
-  wrap.appendChild(inner);
-  g.appendChild(wrap);
-}
-function navClick(btn){
-  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('on');});
-  btn.classList.add('on');
-  var href=btn.getAttribute('data-href');
-  if(href){window.location.href=href;return;}
-  var lbl=btn.querySelector('.nav-lbl');
-  var name=lbl?lbl.textContent.trim():'';
-  if(name==='Overview'){
-    renderGrid();
-    buildCalGrid();
-    buildCalLegend();
-    renderTodayEvents();
-    renderTasks();
-  } else if(name==='Calendar'){
-    showEmptyState('Calendar');
-  } else {
-    showEmptyState(name);
-  }
 }
 
-/* ── API loaders ── */
-function loadUserInfo(){
-  fetch(BACKEND+'/api/me/status',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){if(!d||!d.connected)return;var u=d.user||{};var name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'Mie';var email=u.email||'';var ul=document.getElementById('tb-userline');if(ul){ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');}var av=document.getElementById('tb-av');if(av)av.textContent=name.charAt(0).toUpperCase();})
-    .catch(function(){});
-}
-function loadCalendarList(){
-  fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
-    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data){
-        // fallback: Demo 데이터로 classify
-        var primaryItem=DEMO_CAL.find(function(c){return c.primary;});
-        var pid=primaryItem?primaryItem.id:'default';
-        classifyCalendars(DEMO_CAL.filter(function(c){return !c.primary;}),pid);
-        buildCalLegend();return;
-      }
-      var items=(Array.isArray(data.calendars))?data.calendars:(Array.isArray(data.items))?data.items:[];
-      var primaryItem=items.find(function(c){return c.primary;});
-      var primaryId=primaryItem?primaryItem.id:'primary';
-      classifyCalendars(items,primaryId);
-      buildCalLegend();
-    })
-    .catch(function(){
-      var pid=DEMO_CAL[0]?DEMO_CAL[0].id:'default';
-      classifyCalendars([],pid);
-      buildCalLegend();
-    });
-}
-function loadEvents(){
-  // 달력 그리드에 보이는 전체 날짜 범위 계산 (이전달 overflow + 다음달 overflow 포함)
-  var fd=new Date(calYear,calMonth,1).getDay();        // 이번달 1일의 요일
-  var dim=new Date(calYear,calMonth+1,0).getDate();    // 이번달 마지막 날
-  var total=Math.ceil((fd+dim)/7)*7;
-  // 그리드 시작: 이번달 1일 - fd일 (이전달 overflow)
-  var rangeStart=new Date(calYear,calMonth,1-fd);
-  // 그리드 끝: 마지막 셀 다음날 자정 (+1 하여 마지막 날 이벤트 포함)
-  var rangeEnd=new Date(rangeStart.getTime()+(total+1)*24*60*60*1000);
-  // 달 이동 시 이전 데이터 초기화 (stale 마커 방지)
-  allEvents=[];
-  eventsByDate={};
-  buildCalGridFromEvents(); // 즉시 마커 초기화
-  fetch(BACKEND+'/api/me/events?'+new URLSearchParams({timeMin:rangeStart.toISOString(),timeMax:rangeEnd.toISOString()}),{credentials:'include'})
-    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data)return;
-      var items=Array.isArray(data.events)?data.events:[];
-      allEvents=items.map(function(e){
-        return{
-          id:e.id,
-          title:e.summary||'No Title',
-          start:(e.start&&(e.start.dateTime||e.start.date))||null,
-          end:(e.end&&(e.end.dateTime||e.end.date))||null,
-          allDay:!!(e.start&&e.start.date&&!e.start.dateTime),
-          calColor:e.mieCalendarColor||null,
-          loc:e.location||'',
-          desc:e.description||'',
-          calId:e.calendarId||'primary',
-          visibility:e.visibility||'default'
-        };
-      });
-      eventsByDate={};
-      allEvents.forEach(function(e){
-        if(!e.start)return;
-        var k=e.allDay?e.start:e.start.slice(0,10);
-        if(!eventsByDate[k])eventsByDate[k]=[];
-        eventsByDate[k].push(e);
-      });
-      // 마커 재빌드 및 Today events 렌더링
-      buildCalGridFromEvents();
-      var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
-      renderDayView(selectedDateStr||todayStr);
-    })
-    .catch(function(){});
-}
+/* ══ 태스크 로드 ══ */
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){if(!data){allTasks=DEMO_TASKS.slice();taskLists=[];renderTasks();return;}taskLists=Array.isArray(data.lists)?data.lists:[];var rawTasks=Array.isArray(data.tasks)?data.tasks:[];if(!rawTasks.length&&Array.isArray(data.taskLists)){taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});rawTasks=[];data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){rawTasks.push(Object.assign({},t,{listId:l.id}));});});}allTasks=rawTasks.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});if(!allTasks.length)allTasks=DEMO_TASKS.slice();renderTasks();})
-    .catch(function(){allTasks=DEMO_TASKS.slice();renderTasks();});
-}
-
-
-/* ── Finance API ── */
-function loadFinance(){
-  var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
-  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      _finDateSet={};
-      _finByDate={};
-      if(!data||!data.summary){renderTodayEvents(selectedDateStr);return;}
-      // Finance 거래 날짜 추출 → _finDateSet + _finByDate 갱신
-      function _addFinRow(type,r){
-        if(!r.date)return;
-        _finDateSet[r.date]=true;
-        if(!_finByDate[r.date])_finByDate[r.date]=[];
-        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||'',date:r.date,_sheet_row:r._sheet_row,event_id:r.event_id||''});
+      if(!data){allTasks=[];taskLists=[];renderTodayTasks();return;}
+      taskLists=Array.isArray(data.lists)?data.lists:[];
+      var raw=Array.isArray(data.tasks)?data.tasks:[];
+      if(!raw.length&&Array.isArray(data.taskLists)){
+        taskLists=data.taskLists.map(function(l){return{id:l.id,title:l.title||'My Tasks'};});
+        data.taskLists.forEach(function(l){(l.tasks||[]).forEach(function(t){raw.push(Object.assign({},t,{listId:l.id}));});});
       }
-      (data.income||[]).forEach(function(r){_addFinRow('income',r);});
-      (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
-      (data.savings||[]).forEach(function(r){_addFinRow('saving',r);});
-      // 달력 마커 재빌드 (Finance teal 마커 반영) + Today List 재렌더링
-      buildCalGridFromEvents();
-      renderTodayEvents(selectedDateStr);
+      allTasks=raw.map(function(t){var lid=t.listId||t.taskListId||null;if(!lid&&taskLists.length===1)lid=taskLists[0].id;return Object.assign({},t,{listId:lid||'@default'});});
+      renderTodayTasks();
+      /* +Add 태스크 폼 드롭다운 채우기 */
+      var sel=document.getElementById('at-list');
+      if(sel&&taskLists.length){sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});}
     })
-    .catch(function(){renderTodayEvents(selectedDateStr);});
-}
-/* ── Health API ── */
-function loadHealth(){
-  var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
-  fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(data){
-      _healthByDate={};_activityByDate={};
-      if(!data){renderTodayEvents(selectedDateStr);return;}
-      var arr=Array.isArray(data.health)?data.health:[];
-      arr.forEach(function(rec){
-        var ds=(rec.stamp_date||'').slice(0,10);
-        if(!ds)return;
-        if(!_healthByDate[ds])_healthByDate[ds]=[];
-        _healthByDate[ds].push(rec);
-      });
-      var actArr=Array.isArray(data.activity)?data.activity:[];
-      actArr.forEach(function(rec){
-        var ds=(rec.stamp_date||'').slice(0,10);
-        if(!ds)return;
-        if(!_activityByDate[ds])_activityByDate[ds]=[];
-        _activityByDate[ds].push(rec);
-      });
-      renderTodayEvents(selectedDateStr);
-    })
-    .catch(function(){_healthByDate={};_activityByDate={};renderTodayEvents(selectedDateStr);});
+    .catch(function(){allTasks=[];taskLists=[];renderTodayTasks();});
 }
 
-/* ── Add panel 2 (5-tab B-plan) ── */
+/* ══ 유저 정보 ══ */
+function loadUserInfo(statusData){
+  function populate(d){
+    if(!d)return;
+    var u=d.user||d;
+    /* 이름 필드 폭넓게 시도 → 최후 fallback: 이메일 앞부분 */
+    var name=u.given_name||u.givenName||u.first_name||u.firstName
+            ||u.displayName||u.display_name
+            ||(u.name?u.name.split(' ')[0]:'')
+            ||(u.email?u.email.split('@')[0]:'')
+            ||'—';
+    name=name.charAt(0).toUpperCase()+name.slice(1);
+    var email=u.email||'';
+    var ul=document.getElementById('tb-userline');
+    if(ul)ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');
+    var av=document.getElementById('tb-av');
+    if(av)av.textContent=name.charAt(0).toUpperCase();
+  }
+  if(statusData){populate(statusData);return;}
+  /* statusData 없으면 직접 fetch */
+  fetch(BACKEND+'/api/me/status',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(populate).catch(function(){});
+}
+
+/* ══ 이벤트 뷰 모달 ══ */
+function escH(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function fmtEvTime(ev){
+  var start=ev.start,end=ev.end,allDay=ev.allDay;
+  if(start instanceof Date)start=start.toISOString();
+  if(end instanceof Date)end=end.toISOString();
+  if(!start)return'';
+  if(allDay){var d=new Date(start.slice(0,10)+'T12:00:00');return d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · All day';}
+  var sd=new Date(start);
+  var str=sd.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sd.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  if(end)str+=' – '+new Date(end).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  return str;
+}
+
+function openEventView(ev){
+  var ext=ev.extendedProps||{};
+  var rawColor=ext.cc||null,calId=ext.calId||'primary',vis=ext.vis||'default';
+  var p=pastelForCalId(rawColor,calId,vis);
+  var start=ev.start,end=ev.end,allDay=ev.allDay;
+  if(start instanceof Date)start=start.toISOString();
+  if(end instanceof Date)end=end.toISOString();
+  curViewEv={id:ev.id,title:ev.title||'',start:start||'',end:end||'',allDay:allDay,calId:calId,loc:ext.loc||'',desc:ext.desc||'',cc:rawColor};
+  document.getElementById('ev-cbar').style.background=p.text;
+  document.getElementById('ev-ttl').textContent=ev.title||'(No title)';
+  document.getElementById('ev-time').textContent=fmtEvTime({start:start,end:end,allDay:allDay});
+  var loc=ext.loc||'';
+  if(loc){document.getElementById('ev-loc').innerHTML='<a href="https://maps.google.com/?q='+encodeURIComponent(loc)+'" target="_blank" rel="noopener">'+escH(loc)+'</a>';document.getElementById('ev-loc-row').style.display='flex';}
+  else document.getElementById('ev-loc-row').style.display='none';
+  var desc=ext.desc||'';
+  if(desc){document.getElementById('ev-desc').textContent=desc;document.getElementById('ev-desc-row').style.display='flex';}
+  else document.getElementById('ev-desc-row').style.display='none';
+  var meta=calendarMeta.find(function(m){return m.id===calId;});
+  document.getElementById('ev-cald').style.background=p.text;
+  document.getElementById('ev-caln').textContent=meta?meta.summary:(calId||'Calendar');
+  document.getElementById('ev-dc').style.display='none';
+  document.getElementById('ev-dc-st').textContent='';
+  document.getElementById('ev-modal').classList.remove('h');
+}
+function closeEvView(){document.getElementById('ev-modal').classList.add('h');curViewEv=null;}
+document.getElementById('ev-close-btn').addEventListener('click',closeEvView);
+document.getElementById('ev-modal').addEventListener('click',function(e){if(e.target===this)closeEvView();});
+document.getElementById('ev-edit-btn').addEventListener('click',function(){if(!curViewEv)return;var ev=curViewEv;closeEvView();openEditModal(ev);});
+document.getElementById('ev-del-btn').addEventListener('click',function(){document.getElementById('ev-dc').style.display='block';});
+document.getElementById('ev-dc-no').addEventListener('click',function(){document.getElementById('ev-dc').style.display='none';});
+document.getElementById('ev-dc-yes').addEventListener('click',function(){
+  if(!curViewEv)return;
+  var btn=this,st=document.getElementById('ev-dc-st');
+  btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
+    .then(function(r){
+      checkReauthStatus(r.status);
+      if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderTodayEvents(selectedDateStr);if(cal)cal.refetchEvents();}
+      else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}
+    }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
+});
+
+/* ══ Edit 모달 ══ */
+function openEditModal(ev){
+  curEditEv=ev;document.getElementById('ed-st').textContent='';
+  document.getElementById('ed-title').value=ev.title||'';
+  var ss=ev.start||'';document.getElementById('ed-date').value=ss?ss.slice(0,10):'';
+  var st='';if(!ev.allDay&&ss&&ss.includes('T')){var so=new Date(ss);st=String(so.getHours()).padStart(2,'0')+':'+String(so.getMinutes()).padStart(2,'0');}
+  document.getElementById('ed-time').value=st;
+  var es=ev.end||'';document.getElementById('ed-edate').value=es?es.slice(0,10):'';
+  var et='';if(!ev.allDay&&es&&es.includes('T')){var eo=new Date(es);et=String(eo.getHours()).padStart(2,'0')+':'+String(eo.getMinutes()).padStart(2,'0');}
+  document.getElementById('ed-etime').value=et;
+  document.getElementById('ed-loc').value=ev.loc||'';
+  document.getElementById('ed-desc').value=ev.desc||'';
+  document.getElementById('edit-modal').classList.remove('h');
+}
+document.getElementById('edit-close').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
+document.getElementById('ed-cancel').addEventListener('click',function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;});
+document.getElementById('edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditEv=null;}});
+document.getElementById('ed-save').addEventListener('click',function(){
+  if(!curEditEv)return;var s=document.getElementById('ed-st');
+  var nt=document.getElementById('ed-title').value.trim(),nd=document.getElementById('ed-date').value;
+  if(!nt){s.style.color='var(--red)';s.textContent='Title required.';return;}
+  var nti=document.getElementById('ed-time').value,ned=document.getElementById('ed-edate').value,neti=document.getElementById('ed-etime').value;
+  var nl=document.getElementById('ed-loc').value.trim(),nde=document.getElementById('ed-desc').value.trim();
+  var ns=nti?nd+'T'+nti+':00':nd,ne=ned?(neti?ned+'T'+neti+':00':ned):null;
+  this.disabled=true;s.style.color='var(--txt3)';s.textContent='Saving…';var self=this;
+  fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary',title:nt,start:ns,end:ne,location:nl,description:nde})})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();},600);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('ed-del').addEventListener('click',function(){
+  if(!curEditEv||!confirm('Delete "'+( curEditEv.title||'this event')+'"?'))return;
+  var s=document.getElementById('ed-st');this.disabled=true;s.style.color='var(--txt3)';s.textContent='Deleting…';var self=this;
+  fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary'})})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curEditEv.id;});});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();renderTodayEvents(selectedDateStr);},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
+});
+
+/* ══ Input 탭 ══ */
+function switchTab(tab){
+  ['send','add'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('on',t===tab);
+    document.getElementById('panel-'+t).classList.toggle('on',t===tab);
+  });
+}
+var UNIT_PREF_KEY='klaive_unit_pref';
+function getUnitPref(){try{return localStorage.getItem(UNIT_PREF_KEY)||'metric';}catch(e){return'metric';}}
+function setUnitPref(v){try{localStorage.setItem(UNIT_PREF_KEY,v==='us'?'us':'metric');}catch(e){}}
 var ADD2_TYPES=['ev','tk','fin','hl','pr'];
-var add2Invitees=[];
 function selAddType2(type){
   ADD2_TYPES.forEach(function(t){
     var btn=document.getElementById('abt-'+t);
@@ -1872,7 +1653,6 @@ function selAddType2(type){
   var nd=new Date().toISOString().slice(0,10);
   var mp={'ev':'ae2-date','tk':'at2-due','fin':'afin-date','hl':'ahl-date'};
   if(mp[type]){var el=document.getElementById(mp[type]);if(el&&!el.value)el.value=nd;}
-  // Populate task list dropdown
   if(type==='tk'){
     var sel=document.getElementById('at2-list');
     if(sel&&sel.options.length<=1&&taskLists.length){
@@ -1908,7 +1688,7 @@ function renderInviteChips2(){
 function updateHealthFieldsDash(){
   var type=document.getElementById('ahl-type');if(!type)return;
   var wrap=document.getElementById('ahl-value-wrap');if(!wrap)return;
-  var unit=getUnitPref(); // 'metric' | 'us'
+  var unit=getUnitPref();
   var t={
     weight:'<input class="afi-sm" type="number" id="ahl-val-weight" placeholder="'+(unit==='us'?'Weight (lb)':'Weight (kg)')+'" step="0.1" min="0"/>',
     bp:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sys" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afi-sm" type="number" id="ahl-val-dia" placeholder="Diastolic" min="0"/></div>',
@@ -1936,7 +1716,7 @@ function submitAdd2(type){
     var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;
     var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;
     fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
-      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();if(cal)cal.refetchEvents();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('ev','❌ Error.','var(--red)');});
   } else if(type==='tk'){
     var t=document.getElementById('at2-title');if(!t||!t.value.trim()){showAddSt('tk','Title required.','var(--red)');return;}
@@ -1953,12 +1733,12 @@ function submitAdd2(type){
     var grp=(cat.selectedOptions&&cat.selectedOptions[0]&&cat.selectedOptions[0].parentElement&&cat.selectedOptions[0].parentElement.label)||'';
     var finType=(grp==='Needs'||grp==='Wants')?'Expenses':(grp==='Income'?'Income':(grp==='Savings'?'Savings':'Expenses'));
     fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd,createCalendarEvent:!!(finAtc&&finAtc.checked)})})
-      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);loadFinance();}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
       .catch(function(){showAddSt('fin','❌ Error.','var(--red)');});
   } else if(type==='hl'){
     var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAddSt('hl','Select a metric.','var(--red)');return;}
     var notes=document.getElementById('ahl-notes');var hdate=document.getElementById('ahl-date');
-    var unit=getUnitPref(); // 'metric' | 'us'
+    var unit=getUnitPref();
     var now=new Date();
     var hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0');
     var stampDate=(hdate&&hdate.value?hdate.value:nd)+' '+hh+':'+mi+':'+ss;
@@ -2016,75 +1796,71 @@ function submitAdd2(type){
     var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAddSt('pr','Name required.','var(--red)');return;}
     var due=document.getElementById('apr-due');var status=document.getElementById('apr-status');
     fetch(BACKEND+'/api/me/projects/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),due:due?due.value:'',status:status?status.value:'Planning'})})
-      .then(function(r){if(r.ok){showAddSt('pr','✅ Project created!','var(--teal)');n.value='';}else{showAddSt('pr','❌ Failed.','var(--red)');}})
+      .then(function(r){if(r.ok){showAddSt('pr','✅ Project created!','var(--teal)');n.value='';loadProjects();}else{showAddSt('pr','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('pr','❌ Error.','var(--red)');});
   }
 }
 
+/* ══ Send Message ══ */
+(function(){
+  var mi=document.getElementById('msg-input'),sb=document.getElementById('send-btn');
+  var fi=document.getElementById('file-input'),fr=document.getElementById('fname-row'),fn=document.getElementById('fname'),rb=document.getElementById('rm-file'),ss=document.getElementById('sst');
+  if(fi)fi.addEventListener('change',function(){selFile=fi.files[0]||null;if(selFile&&fn&&fr){fn.textContent=selFile.name;fr.style.display='flex';}else if(fr)fr.style.display='none';});
+  if(rb)rb.addEventListener('click',function(){selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';});
+  if(sb)sb.addEventListener('click',function(){
+    var txt=mi?mi.value.trim():'';if(!txt&&!selFile)return;
+    var dc=document.getElementById('draft-check');
+    if(dc&&dc.checked){if(txt){var arr=getDrafts();arr.unshift({id:Date.now(),text:txt});saveDrafts(arr);}if(ss){ss.style.color='var(--blue)';ss.textContent='📝 Saved as draft';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';if(dc)dc.checked=false;renderDraftList();setTimeout(function(){if(ss)ss.textContent='';},2500);return;}
+    sb.disabled=true;
+    fetch(BACKEND+'/api/me/message',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt+(selFile?'\n\n[Attachment: '+selFile.name+']':'')})})
+      .then(function(r){if(r.ok){if(ss){ss.style.color='var(--teal)';ss.textContent='✅ Sent!';}if(mi)mi.value='';selFile=null;if(fi)fi.value='';if(fr)fr.style.display='none';}else if(ss){ss.style.color='var(--red)';ss.textContent='❌ Failed.';}})
+      .catch(function(){if(ss){ss.style.color='var(--red)';ss.textContent='❌ Error.';}})
+      .finally(function(){setTimeout(function(){if(ss)ss.textContent='';sb.disabled=false;},3000);});
+  });
+})();
 
-/* ── 메시지 전송으로 데이터가 바뀔 수 있는 경우 재계산 ──
-   어떤 카테고리(이벤트/태스크/재무/헬스/프로젝트)로 파싱될지 미리 알 수 없으므로
-   5개 전부 재요청한다. (_pollSyncStatusAfterSend에서 호출) */
-function _resetAllDataState(){
-  loadEvents();loadTasks();loadFinance();loadHealth();loadProjects();
+function getDrafts(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||'[]');}catch(e){return[];}}
+function saveDrafts(arr){try{localStorage.setItem(DRAFT_KEY,JSON.stringify(arr));}catch(e){}}
+function renderDraftList(){
+  var drafts=getDrafts(),wrap=document.getElementById('dw'),list=document.getElementById('dl');
+  if(!wrap||!list)return;
+  if(!drafts.length){wrap.style.display='none';return;}
+  wrap.style.display='block';list.innerHTML='';
+  drafts.forEach(function(d,i){
+    var item=document.createElement('div');item.className='di';
+    var tx=document.createElement('span');tx.className='di-t';tx.textContent=d.text.length>40?d.text.slice(0,40)+'…':d.text;tx.title=d.text;
+    var del=document.createElement('button');del.className='di-d';del.textContent='✕';
+    del.addEventListener('click',function(e){e.stopPropagation();var arr=getDrafts();arr.splice(i,1);saveDrafts(arr);renderDraftList();});
+    item.addEventListener('click',function(){var mi=document.getElementById('msg-input');if(mi)mi.value=d.text;});
+    item.appendChild(tx);item.appendChild(del);list.appendChild(item);
+  });
 }
 
-/* ── /api/me/sync-status 폴링 ──
-   메시지 전송(r.ok) 시점은 "Gmail 전송 성공"일 뿐 "시트 반영 완료"가 아니다.
-   실제 반영은 Gmail push → Pub/Sub → Apps Script processAll() 이라는 별도
-   비동기 체인을 거치므로, 백엔드가 기록한 lastSyncAt이 전송 시점보다 뒤로
-   갱신될 때까지 폴링한다. 정확한 "이 메시지의 파싱 완료" 신호는 아니고
-   "그 계정에 대한 gmail-push 처리가 마지막으로 언제 성공했는가"에 대한
-   힌트이므로, 오탐(다른 메일로 인한 갱신)이 섞일 수 있다 — 재조회 자체는
-   무해하므로 그대로 둔다. Apps Script 실패 시엔 lastSyncAt이 안 바뀌므로
-   타임아웃 후 포기한다(사용자에게 실패를 알리진 않음 — 범위 밖). */
-var _syncPollTimer=null;
-function _pollSyncStatusAfterSend(sendTs){
-  if(_syncPollTimer)clearInterval(_syncPollTimer);
-  var attempts=0, MAX_ATTEMPTS=20, INTERVAL_MS=3000; // 최대 약 60초
-  _syncPollTimer=setInterval(function(){
-    attempts++;
-    fetch(BACKEND+'/api/me/sync-status',{credentials:'include'})
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(data){
-        var lastSyncMs=(data&&data.lastSyncAt)?new Date(data.lastSyncAt).getTime():0;
-        if(lastSyncMs>sendTs){
-          clearInterval(_syncPollTimer);_syncPollTimer=null;
-          _resetAllDataState();
-          return;
-        }
-        if(attempts>=MAX_ATTEMPTS){clearInterval(_syncPollTimer);_syncPollTimer=null;}
-      })
-      .catch(function(){ if(attempts>=MAX_ATTEMPTS){clearInterval(_syncPollTimer);_syncPollTimer=null;} });
-  },INTERVAL_MS);
-}
+/* ══ Sign out ══ */
+document.getElementById('signout-btn').addEventListener('click',function(){
+  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});
+});
 
-/* ── Init ── */
+/* ══ Init ══ */
 function init(){
-  startClock();loadWeather();
-  initApp(); // 고정 레이아웃 1회 렌더 (Calendar | Day View | Input)
-  loadUserInfo();
-  loadCalendarList();
-  loadEvents();
-  loadTasks();
-  loadFinance();
-  loadHealth();
-  loadProjects();
-}
-// 인증 가드: 콘텐츠를 그리기 전에 로그인 여부부터 확인. 이 사이트는 정적 호스팅이라
-// 서버가 리다이렉트를 못 해주므로, 클라이언트에서 직접 체크하고 안 되어 있으면 /login으로 보낸다.
-function guardAndInit(){
+  show(loadWrap);
   fetch(BACKEND+'/api/me/status',{credentials:'include'})
-    .then(function(r){return r.json().catch(function(){return null;});})
-    .then(function(data){
-      if(!data||!data.connected){location.href='/login';return;}
-      var appEl=document.getElementById('app-root');
-      if(appEl)appEl.style.visibility='visible';
-      init();
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(!d||!d.connected){show(authWrap);return;}
+      show(appEl);
+      loadUserInfo(d);
+      startClock();
+      loadWeather();
+      renderTodayDate();
+      renderDraftList();
+      loadCalendarList(function(){initCal();});
+      loadTasks();
+      loadProjects();
     })
-    .catch(function(){location.href='/login';});
+    .catch(function(){show(authWrap);});
 }
-guardAndInit();
+init();
 </script>
 </body>
 </html>
