@@ -195,6 +195,36 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .icp{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
 .icx{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
 
+/* ── 1test 이식(+Add, Day View) 전용 클래스 — 위 구버전(.att/.afb 등)과 별개로 공존 ── */
+.add-type-tab{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding:7px 1px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:9.5px;font-weight:500;color:var(--txt3);cursor:pointer;transition:color .12s;white-space:nowrap;margin-bottom:-1px;}
+.add-type-tab:hover{color:var(--txt2);}
+.add-type-tab.sel{color:var(--blue);border-bottom-color:var(--blue);}
+.add-type-tab svg{width:10px;height:10px;flex-shrink:0;}
+.add-form-b{display:none;flex-direction:column;flex:1;min-height:0;}
+.add-form-b.vis{display:flex;}
+.add-form-scroll{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding-bottom:4px;}
+.add-form-scroll::-webkit-scrollbar{display:none;}
+.add-form-scroll{-ms-overflow-style:none;scrollbar-width:none;}
+.add-form-scroll>.afi-sm,.add-form-scroll>select.afi-sm{flex:0 0 auto;}
+.add-form-footer{flex-shrink:0;padding-top:6px;border-top:.5px solid var(--b1);}
+.add-sub-full{width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.add-sub-full:hover{opacity:.9;}
+.add-form-st{font-size:10px;min-height:13px;text-align:center;}
+.invite-row{display:flex;gap:5px;align-items:center;}
+.invite-in{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.invite-in::placeholder{color:var(--txt3);}
+.invite-in:focus{border-color:var(--blue);}
+.invite-add-btn{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+.invite-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.invite-chip{display:flex;align-items:center;gap:3px;background:rgba(28,126,214,.1);border:.5px solid rgba(28,126,214,.25);border-radius:10px;padding:2px 7px;font-size:10px;color:var(--blue);}
+.invite-chip-x{background:none;border:none;cursor:pointer;color:var(--blue);font-size:11px;line-height:1;padding:0;opacity:.7;}
+.afi-sm{flex:1;border:.5px solid var(--b1);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;min-width:0;}
+.afi-sm:focus{border-color:var(--blue);}
+.af-row{display:flex;gap:5px;flex-shrink:0;}
+.add-more-toggle{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;font-family:'Inter',sans-serif;text-align:left;flex-shrink:0;}
+.add-extra-b{display:none;flex-direction:column;gap:5px;flex-shrink:0;}
+.add-extra-b.vis{display:flex;}
+
 /* ══ Bottom Nav — 0626dash-prod.html 완전 동일 ══ */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;color:var(--txt3);padding:0;transition:color .12s;text-decoration:none;}
@@ -324,7 +354,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <select class="cal-view-sel" id="cal-view-sel">
         <option value="dayGridMonth">Month</option>
         <option value="timeGridWeek">Week</option>
-        <option value="timeGridDay">Day</option>
       </select>
     </div>
     <div id="cal-wrap"><div id="calendar"></div></div>
@@ -345,11 +374,11 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
   <!-- Right panel -->
   <div class="right-panel">
-    <!-- Today card -->
+    <!-- Day View card -->
     <div class="today-card">
       <div class="today-hd">
-        <span class="today-title">Today</span>
-        <span class="today-dt" id="today-dt"></span>
+        <span class="today-title">Day View</span>
+        <span class="today-dt" id="dayview-date"></span>
       </div>
       <div class="today-inner">
         <div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>
@@ -357,7 +386,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <div class="sec-row">
           <span class="sec-lbl">Tasks</span>
           <div class="sec-line"></div>
-          <select class="all-list-sel" id="task-filter" onchange="renderTodayTasks()"><option value="all">All List ▾</option></select>
+          <select class="all-list-sel" id="task-filter" onchange="renderTodayTasks()"><option value="all">All List</option></select>
         </div>
         <div id="today-task-list"></div>
       </div>
@@ -384,67 +413,143 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <div class="dw" id="dw"><div id="dl"></div></div>
         <div class="sst" id="sst"></div>
       </div>
-      <!-- Add panel -->
-      <div class="inp-panel" id="panel-add" style="padding:6px 12px 8px;">
+      <!-- Add panel (1test 코드 그대로 이식) -->
+      <div class="inp-panel" id="panel-add" style="padding:8px 14px 0;">
+
         <div class="add-type-sect">
-          <button class="att sel" id="abt-ev" onclick="selAT('ev')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event</button>
-          <button class="att" id="abt-tk" onclick="selAT('tk')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task</button>
-          <button class="att" id="abt-fin" onclick="selAT('fin')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance</button>
-          <button class="att" id="abt-hl" onclick="selAT('hl')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health</button>
-          <button class="att" id="abt-pr" onclick="selAT('pr')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project</button>
+          <button class="add-type-tab sel" id="abt-ev" onclick="selAddType2('ev')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2" width="14" height="13" rx="1"/><line x1="1" y1="6" x2="15" y2="6"/><line x1="5" y1="1" x2="5" y2="3"/><line x1="11" y1="1" x2="11" y2="3"/></svg>Event
+          </button>
+          <button class="add-type-tab" id="abt-tk" onclick="selAddType2('tk')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/><line x1="2" y1="3" x2="8" y2="3"/><line x1="2" y1="6" x2="8" y2="6"/></svg>Task
+          </button>
+          <button class="add-type-tab" id="abt-fin" onclick="selAddType2('fin')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v1.5M8 9.5V11"/></svg>Finance
+          </button>
+          <button class="add-type-tab" id="abt-hl" onclick="selAddType2('hl')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 14s-6-4.5-6-8a4 4 0 0 1 6-3.46A4 4 0 0 1 14 6c0 3.5-6 8-6 8z"/></svg>Health
+          </button>
+          <button class="add-type-tab" id="abt-pr" onclick="selAddType2('pr')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="3" width="14" height="10" rx="1"/><line x1="1" y1="7" x2="15" y2="7"/></svg>Project
+          </button>
         </div>
-        <!-- Event form -->
-        <div class="afb vis" id="afb-ev">
-          <div class="afs">
-            <input class="afi" type="text" placeholder="Event title" id="ae-title" style="margin-top:4px;"/>
-            <div class="afr"><input class="afsm" type="date" id="ae-date"/><input class="afsm" type="time" id="ae-start"/><input class="afsm" type="time" id="ae-end"/></div>
-            <button class="amt" onclick="toggleEx('aex-ev',this,'Invite / Location / Notes')">＋ Invite / Location / Notes</button>
-            <div class="aex" id="aex-ev">
-              <div style="display:flex;gap:5px;align-items:center;"><input class="afsm" type="email" id="ae-invite" placeholder="Invite (email)"/><button style="width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onclick="addInvitee()">+</button></div>
-              <div class="ich" id="ae-chips"></div>
-              <input class="afsm" type="text" placeholder="Location" id="ae-loc"/>
-              <textarea class="afsm" rows="2" style="resize:none;" placeholder="Notes" id="ae-notes"></textarea>
+
+        <div class="add-form-b vis" id="afb-ev">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Event title" id="ae2-title" style="margin-top:6px;"/>
+            <div class="af-row">
+              <input class="afi-sm" type="date" id="ae2-date"/>
+              <input class="afi-sm" type="time" id="ae2-start"/>
+              <input class="afi-sm" type="time" id="ae2-end"/>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-ev',this,'Invite / Location / Notes')">＋ Invite / Location / Notes</button>
+            <div class="add-extra-b" id="aex-ev">
+              <div class="invite-row"><input class="invite-in" type="email" id="ae2-invite" placeholder="Invite people (email)"/><button class="invite-add-btn" onclick="addInvite2()">+</button></div>
+              <div class="invite-chips" id="ae2-chips"></div>
+              <input class="afi-sm" type="text" placeholder="Location (optional)" id="ae2-loc"/>
+              <textarea class="afi-sm" rows="2" placeholder="Notes (optional)" style="resize:none;" id="ae2-notes"></textarea>
             </div>
           </div>
-          <div class="aff"><button class="asf" onclick="submitAdd('ev')">Add Event</button><div class="ast" id="ast-ev"></div></div>
-        </div>
-        <!-- Task form -->
-        <div class="afb" id="afb-tk">
-          <div class="afs">
-            <input class="afi" type="text" placeholder="Task title" id="at-title" style="margin-top:4px;"/>
-            <div class="afr"><select class="afsm" id="at-list"><option value="@default">My Tasks</option></select><input class="afsm" type="date" id="at-due"/></div>
-            <button class="amt" onclick="toggleEx('aex-tk',this,'Notes / Priority')">＋ Notes / Priority</button>
-            <div class="aex" id="aex-tk"><input class="afsm" type="text" placeholder="Notes" id="at-notes"/><select class="afsm" id="at-prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('ev')">Add Event</button>
+            <div class="add-form-st" id="ast-ev"></div>
           </div>
-          <div class="aff"><button class="asf" onclick="submitAdd('tk')">Add Task</button><div class="ast" id="ast-tk"></div></div>
         </div>
-        <!-- Finance form -->
-        <div class="afb" id="afb-fin">
-          <div class="afs">
-            <div class="afr" style="margin-top:4px;"><input class="afsm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/><input class="afsm" type="date" id="afin-date"/></div>
-            <select class="afsm" id="afin-cat"><option value="">Category ▾</option><optgroup label="Needs"><option>Housing</option><option>Utilities</option><option>Groceries</option><option>Transportation</option><option>Insurance</option><option>Healthcare</option><option>Phone</option><option>Internet</option><option>Subscriptions</option></optgroup><optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Travel</option><option>Personal Care</option><option>Other</option></optgroup><optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup><optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup></select>
-            <input class="afsm" type="text" placeholder="Description (optional)" id="afin-desc"/>
+
+        <div class="add-form-b" id="afb-tk">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Task title" id="at2-title" style="margin-top:6px;"/>
+            <div class="af-row">
+              <select class="afi-sm" id="at2-list"><option value="@default">My Tasks</option></select>
+              <input class="afi-sm" type="date" id="at2-due"/>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-tk',this,'Notes / Priority')">＋ Notes / Priority</button>
+            <div class="add-extra-b" id="aex-tk">
+              <input class="afi-sm" type="text" placeholder="Notes (optional)"/>
+              <select class="afi-sm"><option>High</option><option selected>Medium</option><option>Low</option></select>
+            </div>
           </div>
-          <div class="aff"><button class="asf" onclick="submitAdd('fin')">Add Entry</button><div class="ast" id="ast-fin"></div></div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('tk')">Add Task</button>
+            <div class="add-form-st" id="ast-tk"></div>
+          </div>
         </div>
-        <!-- Health form -->
-        <div class="afb" id="afb-hl">
-          <div class="afs">
-            <div class="afr" style="margin-top:4px;"><select class="afsm" id="ahl-type" onchange="updateHlFields()"><option value="">Metric ▾</option><option value="weight">⚖️ Weight</option><option value="bp">🩺 Blood Pressure</option><option value="hr">❤️ Heart Rate</option><option value="glucose">🩸 Glucose</option><option value="steps">👟 Steps</option><option value="water">💧 Water</option><option value="sleep">😴 Sleep</option><option value="mood">😊 Mood</option></select><input class="afsm" type="date" id="ahl-date"/></div>
-            <div id="ahl-val"><input class="afsm" type="number" placeholder="Value" step="0.1"/></div>
-            <input class="afsm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>
+
+        <div class="add-form-b" id="afb-fin">
+          <div class="add-form-scroll">
+            <div class="af-row" style="margin-top:6px;">
+              <input class="afi-sm" type="number" placeholder="Amount ($)" id="afin-amt" min="0" step="0.01"/>
+              <input class="afi-sm" type="date" id="afin-date"/>
+            </div>
+            <select class="afi-sm" id="afin-cat">
+              <option value="">Category ▾</option>
+              <optgroup label="Needs"><option>Housing</option><option>Utilities</option><option>Groceries</option><option>Transportation</option><option>Insurance</option><option>Healthcare</option><option>Phone</option><option>Internet</option><option>Subscriptions</option></optgroup>
+              <optgroup label="Wants"><option>Dining Out</option><option>Entertainment</option><option>Shopping</option><option>Travel</option><option>Personal Care</option><option>Other</option></optgroup>
+              <optgroup label="Income"><option>Salary</option><option>Freelance</option><option>Other Income</option></optgroup>
+              <optgroup label="Savings"><option>Savings Transfer</option><option>Investment</option></optgroup>
+            </select>
+            <input class="afi-sm" type="text" placeholder="Sublabel (optional)" id="afin-sublabel"/>
+            <input class="afi-sm" type="text" placeholder="Description (optional)" id="afin-desc"/>
           </div>
-          <div class="aff"><button class="asf" onclick="submitAdd('hl')">Add Record</button><div class="ast" id="ast-hl"></div></div>
+          <div class="add-form-footer">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">
+              <input type="checkbox" id="afin-add-to-calendar"/> 📅 Add to Calendar
+            </label>
+            <button class="add-sub-full" onclick="submitAdd2('fin')">Add Entry</button>
+            <div class="add-form-st" id="ast-fin"></div>
+          </div>
         </div>
-        <!-- Project form -->
-        <div class="afb" id="afb-pr">
-          <div class="afs">
-            <input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:4px;"/>
-            <div class="afr"><input class="afsm" type="date" id="apr-due"/><select class="afsm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select></div>
-            <button class="amt" onclick="toggleEx('aex-pr',this,'Description / Members')">＋ Description / Members</button>
-            <div class="aex" id="aex-pr"><textarea class="afsm" rows="2" style="resize:none;" placeholder="Description" id="apr-desc"></textarea><input class="afsm" type="text" placeholder="Member emails (comma sep)" id="apr-members"/></div>
+
+        <div class="add-form-b" id="afb-hl">
+          <div class="add-form-scroll">
+            <div class="af-row" style="margin-top:6px;flex-wrap:wrap;">
+              <select class="afi-sm" id="ahl-type" onchange="updateHealthFieldsDash()">
+                <option value="">Type ▾</option>
+                <option value="weight">⚖️ Weight</option>
+                <option value="bp">🩺 Blood Pressure</option>
+                <option value="hr">❤️ Heart Rate</option>
+                <option value="glucose">🩸 Glucose</option>
+                <option value="steps">👟 Steps</option>
+                <option value="distance">🏃 Distance</option>
+                <option value="water">💧 Water</option>
+                <option value="sleep">😴 Sleep</option>
+                <option value="mood">😊 Mood</option>
+              </select>
+              <input class="afi-sm" type="date" id="ahl-date"/>
+              <select class="afi-sm" id="ahl-unit" onchange="setUnitPref(this.value);updateHealthFieldsDash();">
+                <option value="metric">Metric (kg/km/ml)</option>
+                <option value="us">US (lb/mi/fl oz)</option>
+              </select>
+            </div>
+            <div id="ahl-value-wrap"><input class="afi-sm" type="number" placeholder="Value" step="0.1"/></div>
+            <input class="afi-sm" type="text" placeholder="Notes (optional)" id="ahl-notes"/>
           </div>
-          <div class="aff"><button class="asf" onclick="submitAdd('pr')">Create Project</button><div class="ast" id="ast-pr"></div></div>
+          <div class="add-form-footer">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:2px 0 6px;">
+              <input type="checkbox" id="ahl-add-to-calendar"/> 📅 Add to Calendar
+            </label>
+            <button class="add-sub-full" onclick="submitAdd2('hl')">Add Record</button>
+            <div class="add-form-st" id="ast-hl"></div>
+          </div>
+        </div>
+
+        <div class="add-form-b" id="afb-pr">
+          <div class="add-form-scroll">
+            <input class="afi" type="text" placeholder="Project name" id="apr-name" style="margin-top:6px;"/>
+            <div class="af-row">
+              <input class="afi-sm" type="date" id="apr-due"/>
+              <select class="afi-sm" id="apr-status"><option>Planning</option><option>In Progress</option><option>On Hold</option></select>
+            </div>
+            <button class="add-more-toggle" onclick="toggleAddExtra('aex-pr',this,'Description / Members')">＋ Description / Members</button>
+            <div class="add-extra-b" id="aex-pr">
+              <textarea class="afi-sm" rows="2" placeholder="Description (optional)" style="resize:none;"></textarea>
+              <input class="afi-sm" type="text" placeholder="Member emails (comma separated)"/>
+            </div>
+          </div>
+          <div class="add-form-footer">
+            <button class="add-sub-full" onclick="submitAdd2('pr')">Create Project</button>
+            <div class="add-form-st" id="ast-pr"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -486,11 +591,30 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
-<!-- DAY MODAL -->
-<div class="modal-bg h" id="day-modal">
-  <div class="dmb">
-    <div class="mhd"><div class="mt" id="dm-title"></div><button class="mx" id="dm-close">×</button></div>
-    <div id="dm-list"></div>
+<!-- FIN EDIT MODAL -->
+<div class="modal-bg h" id="fin-edit-modal">
+  <div class="mb" style="max-width:380px;">
+    <div class="mhd"><div class="mt">Edit Transaction</div><button class="mx" id="fin-edit-close">×</button></div>
+    <div class="fr2">
+      <div class="ff"><label class="fl">Amount</label><input class="fi" type="number" step="0.01" id="fined-amount"/></div>
+      <div class="ff"><label class="fl">Date</label><input class="fi" type="date" id="fined-date"/></div>
+    </div>
+    <div class="ff"><label class="fl">Category</label><input class="fi" type="text" id="fined-category"/></div>
+    <div class="ff"><label class="fl">Sublabel</label><input class="fi" type="text" id="fined-sublabel"/></div>
+    <div class="ff"><label class="fl">Notes</label><input class="fi" type="text" id="fined-notes"/></div>
+    <div class="mac"><button class="bc" id="fined-cancel">Cancel</button><button class="bs" id="fined-save">Save Changes</button><button class="bd" id="fined-delete">🗑</button></div>
+    <div class="mst" id="fined-st"></div>
+  </div>
+</div>
+
+<!-- HEALTH EDIT MODAL -->
+<div class="modal-bg h" id="health-edit-modal">
+  <div class="mb" style="max-width:380px;">
+    <div class="mhd"><div class="mt" id="healthed-title">Edit Record</div><button class="mx" id="healthed-close">×</button></div>
+    <div id="healthed-fields"></div>
+    <div class="ff"><label class="fl">Notes</label><input class="fi" type="text" id="healthed-notes"/></div>
+    <div class="mac"><button class="bc" id="healthed-cancel">Cancel</button><button class="bs" id="healthed-save">Save Changes</button><button class="bd" id="healthed-delete">🗑</button></div>
+    <div class="mst" id="healthed-st"></div>
   </div>
 </div>
 
@@ -508,9 +632,46 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<div class="modal-bg h" id="reauth-modal-full">
+  <div class="mb" style="max-width:340px;text-align:center;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Reconnect your Google account</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">We need you to reconnect to keep<br/>showing your calendar, events, and tasks</div>
+    <a href="https://api.mie.today/auth/google?return_to=%2Fcalendar" class="bs" id="reauth-full-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+  </div>
+</div>
+
+<div class="modal-bg h" id="reauth-modal-partial">
+  <div class="mb" style="max-width:340px;text-align:center;position:relative;">
+    <button class="mx" id="reauth-partial-close" style="position:absolute;top:8px;right:12px;">×</button>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Saved, but not added to your calendar</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:16px;">Your entry was saved. Reconnect Google<br/>to also sync it to your calendar</div>
+    <a href="https://api.mie.today/auth/google?return_to=%2Fcalendar" class="bs" id="reauth-partial-btn" style="display:block;width:100%;background:var(--teal);text-decoration:none;text-align:center;box-sizing:border-box;">Reconnect</a>
+  </div>
+</div>
+
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
+
+/* ── Reauth (Google 재연결) 감지 ── */
+var reauthModalShown=false;
+function showReauthModal(kind){
+  if(reauthModalShown)return;
+  reauthModalShown=true;
+  var el=document.getElementById(kind==='full'?'reauth-modal-full':'reauth-modal-partial');
+  if(el)el.classList.remove('h');
+}
+function checkReauthStatus(status){
+  if(status===401){showReauthModal('full');return true;}
+  return false;
+}
+function checkReauthBody(body){
+  if(body&&body.calendar_reauth_required===true){showReauthModal('partial');return true;}
+  return false;
+}
+document.getElementById('reauth-partial-close').addEventListener('click',function(){document.getElementById('reauth-modal-partial').classList.add('h');reauthModalShown=false;});
+(function(){var au=document.getElementById('ahl-unit');if(au)au.value=getUnitPref();})();
+
 /* [auth-wrap 추가] Health/Finance와 동일한 인증 상태 전환 헬퍼 */
 var authWrap=document.getElementById('auth-wrap');
 var loadWrap=document.getElementById('loading-wrap');
@@ -525,7 +686,14 @@ var cal=null;
 var calendarMeta=[], primaryCals=[], otherCals=[], primaryId='primary';
 var allEvents=[], eventsByDate={};
 var allTasks=[], taskLists=[];
-var curViewEv=null, curEditEv=null, selFile=null, invitees=[];
+var curViewEv=null, curEditEv=null, selFile=null, add2Invitees=[];
+/* ── Day View 통합에 필요한 전역 상태 (1test 이식) ── */
+var selectedDateStr=null;
+var _finDateSet={}; var _finByDate={};
+var _healthByDate={}; var _activityByDate={};
+var allProjects=[];
+var curEditFin=null; var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
+var curEditHealth=null; var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose'};
 
 var CAL_COLORS={'Default':'#378ADD','Private':'#534AB7','KLAIVE':'#1D9E75',"Women's Health":'#E24B4A'};
 
@@ -644,7 +812,7 @@ function buildCalLegend(){
 
 function loadCalendarList(cb){
   fetch(BACKEND+'/api/me/calendars',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       var items=data?(Array.isArray(data.calendars)?data.calendars:(Array.isArray(data.items)?data.items:[])):[];
       var pi=items.find(function(c){return c.primary;});
@@ -681,7 +849,7 @@ function applyFilter(){
   cal.removeAllEventSources();
   cal.addEventSource(function(fi,ok){ok(filtered);});
   setTimeout(rebuildPills,120);
-  renderTodayEvents();
+  renderTodayEvents(selectedDateStr);
 }
 
 /* ══ FullCalendar 초기화 ══ */
@@ -754,10 +922,7 @@ function attachDayClicks(){
       e.preventDefault();e.stopPropagation();
       var cell=el.closest('.fc-daygrid-day');if(!cell)return;
       var ds=cell.getAttribute('data-date');if(!ds)return;
-      /* Day view로 전환 (요청 #5) */
-      cal.changeView('timeGridDay',ds);
-      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';
-      syncTitle();setTimeout(calcCalHeight,60);
+      renderDayView(ds);
     });
   });
 }
@@ -770,7 +935,7 @@ function rebuildPills(){
     var evs=eventsByDate[ds];if(!evs||evs.length<=MAX_VIS)return;
     var pill=document.createElement('div');pill.className='mie-more';
     pill.textContent='+ '+(evs.length-MAX_VIS)+' more';
-    pill.addEventListener('click',function(e){e.stopPropagation();cal.changeView('timeGridDay',ds);var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';syncTitle();setTimeout(calcCalHeight,60);});
+    pill.addEventListener('click',function(e){e.stopPropagation();renderDayView(ds);});
     var bot=cell.querySelector('.fc-daygrid-day-bottom')||cell.querySelector('.fc-daygrid-day-events');
     if(bot)bot.appendChild(pill);
   });
@@ -781,7 +946,7 @@ function fetchEvents(fi,ok,fail){
   var params=new URLSearchParams({timeMin:fi.startStr,timeMax:fi.endStr,_cb:Date.now()});
   fetch(BACKEND+'/api/me/events?'+params.toString(),{credentials:'include',headers:{'Cache-Control':'no-cache'}})
     .then(function(r){
-      if(r.status===401){window.location.replace('/');fail(new Error('401'));return null;}
+      checkReauthStatus(r.status);
       if(!r.ok){fail(new Error('HTTP '+r.status));return null;}
       return r.json();
     })
@@ -829,6 +994,8 @@ function initCal(){
       setTimeout(rebuildPills,80);
       setTimeout(attachDayClicks,100);
       setTimeout(calcCalHeight,50);
+      loadFinance();
+      loadHealth();
     },
     eventsSet:function(){
       setTimeout(rebuildPills,100);
@@ -871,9 +1038,7 @@ function initCal(){
     },
     eventClick:function(info){info.jsEvent.preventDefault();info.jsEvent.stopPropagation();openEventView(info.event);},
     dateClick:function(info){
-      cal.changeView('timeGridDay',info.dateStr);
-      var sel=document.getElementById('cal-view-sel');if(sel)sel.value='timeGridDay';
-      syncTitle();setTimeout(calcCalHeight,60);
+      renderDayView(info.dateStr);
     }
   });
   cal.render();
@@ -905,17 +1070,30 @@ function initCal(){
 /* ══ Today 패널 ══ */
 function renderTodayDate(){
   var d=new Date(),ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var el=document.getElementById('today-dt');
+  var el=document.getElementById('dayview-date');
   if(el)el.textContent=ms[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
 }
 
-function renderTodayEvents(){
-  var today=new Date();
-  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+function renderTodayEvents(dateStr){
   var list=document.getElementById('today-ev-list');if(!list)return;
   list.innerHTML='';
+  var today=new Date();
+  var ds=dateStr||(today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0'));
+
   var evs=eventsByDate[ds]||[];
-  if(!evs.length){list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">No events today</div>';return;}
+  var TYPE_LABEL={income:'💰 Income',expense:'💸 Expense',saving:'🏦 Saving'};
+  var TYPE_COLOR={income:'var(--teal)',expense:'var(--red)',saving:'var(--blue)'};
+  function fmtAmt(v){return(v<0?'-$':'$')+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+  var finRows=_finByDate[ds]||[];
+  var healthRows=_healthByDate[ds]||[];
+  var activityRows=_activityByDate[ds]||[];
+  var projects=allProjects.length?allProjects:[];
+
+  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!projects.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">No events</div>';return;
+  }
+
+  // Google Calendar 이벤트
   evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);})
     .forEach(function(ev){
       var p=pastelForCalId(ev.extendedProps.cc,ev.extendedProps.calId,ev.extendedProps.vis);
@@ -932,12 +1110,344 @@ function renderTodayEvents(){
       item.appendChild(bar);item.appendChild(tDiv);item.appendChild(body);
       list.appendChild(item);
     });
+
+  // Finance 거래 (teal 구분선)
+  if(finRows.length){
+    var divider=document.createElement('div');
+    divider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);padding:8px 2px 4px;';
+    divider.textContent='Finance';
+    list.appendChild(divider);
+    finRows.forEach(function(r){
+      var color=TYPE_COLOR[r.type]||'var(--teal)';
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background=color;
+      var td=document.createElement('div');td.className='ev-time';td.textContent=TYPE_LABEL[r.type]||r.type;
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=r.category+(r.sublabel?' · '+r.sublabel:'');
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=fmtAmt(r.amount)+(r.notes?' · '+r.notes:'');
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      item.addEventListener('click',function(){openFinEdit(r);});
+      list.appendChild(item);
+    });
+  }
+
+  // Health 기록 (amber 구분선)
+  if(healthRows.length){
+    var hDivider=document.createElement('div');
+    hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
+    hDivider.textContent='Health';
+    list.appendChild(hDivider);
+    var hMetrics=[];
+    healthRows.forEach(function(row){
+      if(row.weight_kg){
+        var wlb=(row.weight_lb!=null&&row.weight_lb!=='')?row.weight_lb:(row.weight_kg*2.20462);
+        hMetrics.push({label:'Weight',val:row.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb',metricType:'weight',row:row});
+      }
+      if(row.blood_pressure_sys&&row.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:row.blood_pressure_sys+'/'+row.blood_pressure_dia,metricType:'bp',row:row});
+      if(row.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:row.heart_rate_bpm+' bpm',metricType:'hr',row:row});
+      if(row.glucose_mgdl)hMetrics.push({label:'Glucose',val:row.glucose_mgdl+' mg/dL',metricType:'glucose',row:row});
+    });
+    hMetrics.forEach(function(m){
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      item.addEventListener('click',function(){openHealthEdit(m.metricType,m.row);});
+      list.appendChild(item);
+    });
+  }
+
+  // Activity 기록 (purple 구분선)
+  if(activityRows.length){
+    var acDivider=document.createElement('div');
+    acDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);padding:8px 2px 4px;';
+    acDivider.textContent='Activity';
+    list.appendChild(acDivider);
+    var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
+    var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
+    var acMetrics=[];
+    if(totalSteps)acMetrics.push({label:'Steps',val:totalSteps.toLocaleString()+' steps'});
+    if(totalDistKm)acMetrics.push({label:'Distance',val:totalDistKm+' km'});
+    acMetrics.forEach(function(m){
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--purple)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent='🏃 Activity';
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      list.appendChild(item);
+    });
+  }
+
+  // Project 진행률 (blue 구분선) — 날짜 개념 없이 항상 표시
+  if(projects.length){
+    var pDivider=document.createElement('div');
+    pDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--cblue);padding:8px 2px 4px;';
+    pDivider.textContent='Project';
+    list.appendChild(pDivider);
+    projects.forEach(function(p){
+      var pct=Math.round((p.completed||0)/(p.total||1)*100);
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--cblue)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent=pct+'%';
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=p.name||p.title||'Untitled';
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=(p.completed||0)+' of '+(p.total||0)+' tasks'+(p.due?' · Due '+p.due:'');
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      list.appendChild(item);
+    });
+  }
 }
+
+function renderDayView(ds){
+  selectedDateStr=ds;
+  var dtEl=document.getElementById('dayview-date');
+  if(dtEl){
+    var d=new Date(ds+'T12:00:00');
+    dtEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  }
+  renderTodayEvents(ds);
+}
+
+/* ── Finance API (Day View 통합용) ── */
+function loadFinance(){
+  var curDate=cal?cal.getDate():new Date();
+  var ym=curDate.getFullYear()+'-'+String(curDate.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _finDateSet={};_finByDate={};
+      if(!data||!data.summary){renderTodayEvents(selectedDateStr);return;}
+      function _addFinRow(type,r){
+        if(!r.date)return;
+        _finDateSet[r.date]=true;
+        if(!_finByDate[r.date])_finByDate[r.date]=[];
+        _finByDate[r.date].push({type:type,category:r.category||'',amount:r.amount||0,notes:r.notes||'',sublabel:r.sublabel||'',date:r.date,_sheet_row:r._sheet_row,event_id:r.event_id||''});
+      }
+      (data.income||[]).forEach(function(r){_addFinRow('income',r);});
+      (data.expenses||[]).forEach(function(r){_addFinRow('expense',r);});
+      (data.savings||[]).forEach(function(r){_addFinRow('saving',r);});
+      renderTodayEvents(selectedDateStr);
+    })
+    .catch(function(){renderTodayEvents(selectedDateStr);});
+}
+
+/* ── Health API (Day View 통합용) ── */
+function loadHealth(){
+  var curDate=cal?cal.getDate():new Date();
+  var ym=curDate.getFullYear()+'-'+String(curDate.getMonth()+1).padStart(2,'0');
+  fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _healthByDate={};_activityByDate={};
+      if(!data){renderTodayEvents(selectedDateStr);return;}
+      var arr=Array.isArray(data.health)?data.health:[];
+      arr.forEach(function(rec){
+        var ds=(rec.stamp_date||'').slice(0,10);
+        if(!ds)return;
+        if(!_healthByDate[ds])_healthByDate[ds]=[];
+        _healthByDate[ds].push(rec);
+      });
+      var actArr=Array.isArray(data.activity)?data.activity:[];
+      actArr.forEach(function(rec){
+        var ds=(rec.stamp_date||'').slice(0,10);
+        if(!ds)return;
+        if(!_activityByDate[ds])_activityByDate[ds]=[];
+        _activityByDate[ds].push(rec);
+      });
+      renderTodayEvents(selectedDateStr);
+    })
+    .catch(function(){_healthByDate={};_activityByDate={};renderTodayEvents(selectedDateStr);});
+}
+
+/* ── Projects API (Day View 통합용) ── */
+function loadProjects(){
+  fetch(BACKEND+'/api/me/projects',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data){allProjects=[];renderTodayEvents(selectedDateStr);return;}
+      var items=Array.isArray(data.projects)?data.projects:(Array.isArray(data)?data:[]);
+      allProjects=items;
+      renderTodayEvents(selectedDateStr);
+    })
+    .catch(function(){allProjects=[];renderTodayEvents(selectedDateStr);});
+}
+
+/* ── Finance 편집/삭제 모달 ──
+   주의: /api/me/finance/transaction/edit·delete가 요구하는 rowIdx는 "이 탭 시트 전체에서
+   빈 줄/금액 0 제외 몇 번째 데이터 행인가"를 백엔드가 다시 세어 계산한 값이라, Day View에
+   표시된(월 단위로 필터링된) 목록 안에서의 순번과 다를 수 있다. 그래서 편집/삭제 직전에
+   ?ytd=true(필터 없이 탭 전체 반환)로 한 번 더 조회해서 _sheet_row가 일치하는 위치를 찾아
+   그 위치를 rowIdx로 사용한다. */
+function findFinRowIdx_(tabName,sheetRow){
+  return fetch(BACKEND+'/api/me/finance?ytd=true',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data)return null;
+      var key=(tabName==='income')?'income':(tabName==='expenses'?'expenses':'savings');
+      var arr=Array.isArray(data[key])?data[key]:[];
+      for(var i=0;i<arr.length;i++){if(arr[i]._sheet_row===sheetRow)return i;}
+      return null;
+    });
+}
+function openFinEdit(r){
+  curEditFin=r;
+  document.getElementById('fined-amount').value=r.amount;
+  document.getElementById('fined-date').value=r.date;
+  document.getElementById('fined-category').value=r.category;
+  document.getElementById('fined-sublabel').value=r.sublabel||'';
+  document.getElementById('fined-notes').value=r.notes||'';
+  document.getElementById('fined-st').textContent='';
+  document.getElementById('fin-edit-modal').classList.remove('h');
+}
+document.getElementById('fin-edit-close').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
+document.getElementById('fined-cancel').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
+document.getElementById('fin-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditFin=null;}});
+document.getElementById('fined-save').addEventListener('click',function(){
+  if(!curEditFin)return;
+  var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
+  var self=this;
+  var tabName=FIN_TABNAME_MAP[curEditFin.type]||curEditFin.type;
+  findFinRowIdx_(tabName,curEditFin._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    var body={tabName:tabName,rowIdx:idx,
+      amount:parseFloat(document.getElementById('fined-amount').value)||0,
+      date:document.getElementById('fined-date').value,
+      category:document.getElementById('fined-category').value.trim(),
+      sublabel:document.getElementById('fined-sublabel').value.trim(),
+      notes:document.getElementById('fined-notes').value.trim(),
+      eventId:curEditFin.event_id||''};
+    fetch(BACKEND+'/api/me/finance/transaction/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('fined-delete').addEventListener('click',function(){
+  if(!curEditFin||!confirm('Delete this transaction?'))return;
+  var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  var self=this;
+  var tabName=FIN_TABNAME_MAP[curEditFin.type]||curEditFin.type;
+  findFinRowIdx_(tabName,curEditFin._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    fetch(BACKEND+'/api/me/finance/transaction/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tabName:tabName,rowIdx:idx,eventId:curEditFin.event_id||''})})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+
+/* ── Health 편집/삭제 모달 (weight/bp/hr/glucose — tab:'health')
+   주의: /api/me/health/log/edit·delete가 요구하는 row_idx도 Finance와 동일한 문제가 있어
+   (Day View는 기간 필터링된 목록), ?period=all(필터 없이 탭 전체 반환)로 한 번 더 조회해서
+   _sheet_row가 일치하는 위치를 row_idx로 사용한다. */
+function findHealthRowIdx_(sheetRow){
+  var anyDate=new Date().toISOString().slice(0,10);
+  return fetch(BACKEND+'/api/me/health?date='+anyDate+'&period=all&tab=health',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      if(!data)return null;
+      var arr=Array.isArray(data.health)?data.health:[];
+      for(var i=0;i<arr.length;i++){if(arr[i]._sheet_row===sheetRow)return i;}
+      return null;
+    });
+}
+function openHealthEdit(metricType,row){
+  curEditHealth={metricType:metricType,row:row};
+  document.getElementById('healthed-title').textContent=HEALTH_ED_TITLES[metricType]||'Edit Record';
+  var fw=document.getElementById('healthed-fields');
+  if(metricType==='weight'){
+    var storedUnit=getUnitPref();
+    var kgVal=row.weight_kg;
+    var lbVal=(row.weight_lb!=null&&row.weight_lb!=='')?row.weight_lb:(row.weight_kg*2.20462);
+    fw.innerHTML='<div class="fr2">'
+      +'<div class="ff"><label class="fl" id="healthed-weight-label">'+(storedUnit==='us'?'Weight (lb)':'Weight (kg)')+'</label><input class="fi" type="number" step="0.1" id="healthed-weight" value="'+(storedUnit==='us'?(+lbVal).toFixed(1):(+kgVal).toFixed(1))+'"/></div>'
+      +'<div class="ff"><label class="fl">Unit</label><select class="fi" id="healthed-weight-unit">'
+        +'<option value="metric"'+(storedUnit!=='us'?' selected':'')+'>Metric (kg)</option>'
+        +'<option value="us"'+(storedUnit==='us'?' selected':'')+'>US (lb)</option>'
+      +'</select></div>'
+    +'</div>';
+    document.getElementById('healthed-weight-unit').addEventListener('change',function(){
+      var nu=this.value;setUnitPref(nu);
+      var wi=document.getElementById('healthed-weight'),lbl=document.getElementById('healthed-weight-label');
+      var cur=parseFloat(wi.value)||0,wasUs=lbl.textContent.indexOf('lb')!==-1;
+      var newVal=cur;
+      if(nu==='us'&&!wasUs)newVal=cur*2.20462;
+      else if(nu==='metric'&&wasUs)newVal=cur/2.20462;
+      wi.value=newVal.toFixed(1);
+      lbl.textContent=(nu==='us'?'Weight (lb)':'Weight (kg)');
+    });
+  } else if(metricType==='bp'){
+    fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl">Systolic</label><input class="fi" type="number" id="healthed-sys" value="'+row.blood_pressure_sys+'"/></div><div class="ff"><label class="fl">Diastolic</label><input class="fi" type="number" id="healthed-dia" value="'+row.blood_pressure_dia+'"/></div></div>';
+  } else if(metricType==='hr'){
+    fw.innerHTML='<div class="ff"><label class="fl">Heart Rate (bpm)</label><input class="fi" type="number" id="healthed-hr" value="'+row.heart_rate_bpm+'"/></div>';
+  } else if(metricType==='glucose'){
+    fw.innerHTML='<div class="ff"><label class="fl">Glucose (mg/dL)</label><input class="fi" type="number" id="healthed-glucose" value="'+row.glucose_mgdl+'"/></div>';
+  } else {
+    fw.innerHTML='';
+  }
+  document.getElementById('healthed-notes').value=row.notes||'';
+  document.getElementById('healthed-st').textContent='';
+  document.getElementById('health-edit-modal').classList.remove('h');
+}
+document.getElementById('healthed-close').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
+document.getElementById('healthed-cancel').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
+document.getElementById('health-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditHealth=null;}});
+document.getElementById('healthed-save').addEventListener('click',function(){
+  if(!curEditHealth)return;
+  var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
+  var self=this;
+  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    var mt=curEditHealth.metricType;
+    var data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
+    if(mt==='weight'){
+      var wUnit=document.getElementById('healthed-weight-unit').value;
+      var wVal=parseFloat(document.getElementById('healthed-weight').value)||0;
+      if(wUnit==='us'){data.weight_lb=wVal;}else{data.weight_kg=wVal;}
+    }
+    else if(mt==='bp'){data.blood_pressure_sys=parseFloat(document.getElementById('healthed-sys').value)||0;data.blood_pressure_dia=parseFloat(document.getElementById('healthed-dia').value)||0;}
+    else if(mt==='hr'){data.heart_rate_bpm=parseFloat(document.getElementById('healthed-hr').value)||0;}
+    else if(mt==='glucose'){data.glucose_mgdl=parseFloat(document.getElementById('healthed-glucose').value)||0;}
+    fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx,data:data})})
+      .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
+document.getElementById('healthed-delete').addEventListener('click',function(){
+  if(!curEditHealth||!confirm('Delete this record?'))return;
+  var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+  var self=this;
+  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
+    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
+    fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx})})
+      .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+      .then(function(res){
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
+  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+});
 
 function renderTodayTasks(){
   var fEl=document.getElementById('task-filter'),filterVal=fEl?fEl.value:'all';
   if(fEl){
-    var cur=fEl.value;fEl.innerHTML='<option value="all">All List ▾</option>';
+    var cur=fEl.value;fEl.innerHTML='<option value="all">All List</option>';
     taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;fEl.appendChild(o);});
     fEl.value=(cur&&taskLists.find(function(l){return l.id===cur;}))?cur:'all';
     filterVal=fEl.value;
@@ -969,7 +1479,7 @@ function renderTodayTasks(){
         setTimeout(function(){
           task.status='completed';
           function attempt(lid){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:task.id,listId:lid,status:'completed',title:task.title||'',notes:task.notes||''})});}
-          attempt(task.listId||'@default').then(function(r){if(r.status===404&&task.listId!=='@default')return attempt('@default');return r;})
+          attempt(task.listId||'@default').then(function(r){checkReauthStatus(r.status);if(r.status===404&&task.listId!=='@default')return attempt('@default');return r;})
             .then(function(){setTimeout(renderTodayTasks,200);}).catch(function(){task.status='needsAction';renderTodayTasks();})
             .finally(function(){task._p=false;});
         },150);
@@ -986,7 +1496,7 @@ function renderTodayTasks(){
 /* ══ 태스크 로드 ══ */
 function loadTasks(){
   fetch(BACKEND+'/api/me/tasks',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       if(!data){allTasks=[];taskLists=[];renderTodayTasks();return;}
       taskLists=Array.isArray(data.lists)?data.lists:[];
@@ -1079,37 +1589,11 @@ document.getElementById('ev-dc-yes').addEventListener('click',function(){
   btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
     .then(function(r){
-      if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderTodayEvents();if(cal)cal.refetchEvents();}
+      checkReauthStatus(r.status);
+      if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderTodayEvents(selectedDateStr);if(cal)cal.refetchEvents();}
       else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}
     }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
 });
-
-/* ══ Day 모달 ══ */
-function openDayModal(ds,evs){
-  var d=new Date(ds+'T12:00:00');
-  document.getElementById('dm-title').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var list=document.getElementById('dm-list');list.innerHTML='';
-  if(!evs||!evs.length){var e=document.createElement('div');e.style.cssText='text-align:center;padding:20px;font-size:12px;color:var(--txt3);';e.textContent='No events';list.appendChild(e);document.getElementById('day-modal').classList.remove('h');return;}
-  evs.slice().sort(function(a,b){if(a.allDay&&!b.allDay)return -1;if(!a.allDay&&b.allDay)return 1;return new Date(a.start)-new Date(b.start);})
-    .forEach(function(ev){
-      var p=pastelForCalId((ev.extendedProps&&ev.extendedProps.cc)||null,(ev.extendedProps&&ev.extendedProps.calId)||'primary',(ev.extendedProps&&ev.extendedProps.vis)||'default');
-      var item=document.createElement('div');item.className='dei';
-      var dot=document.createElement('div');dot.className='ded';dot.style.background=p.text;
-      var info=document.createElement('div');info.className='dei-info';
-      var td=document.createElement('div');td.className='det';var tt=document.createElement('div');tt.className='dett';
-      if(ev.allDay)td.textContent='All day';
-      else{var s=new Date(ev.start),e2=ev.end?new Date(ev.end):null;td.textContent=s.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+(e2?' – '+e2.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
-      tt.textContent=ev.title||'No Title';
-      info.appendChild(td);info.appendChild(tt);
-      if(ev.extendedProps&&ev.extendedProps.loc){var lv=document.createElement('div');lv.style.cssText='font-size:9px;color:var(--txt3);margin-top:1px;';lv.textContent='📍 '+ev.extendedProps.loc;info.appendChild(lv);}
-      item.appendChild(dot);item.appendChild(info);
-      item.addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');openEventView(ev);});
-      list.appendChild(item);
-    });
-  document.getElementById('day-modal').classList.remove('h');
-}
-document.getElementById('dm-close').addEventListener('click',function(){document.getElementById('day-modal').classList.add('h');});
-document.getElementById('day-modal').addEventListener('click',function(e){if(e.target===this)this.classList.add('h');});
 
 /* ══ Edit 모달 ══ */
 function openEditModal(ev){
@@ -1137,14 +1621,14 @@ document.getElementById('ed-save').addEventListener('click',function(){
   var ns=nti?nd+'T'+nti+':00':nd,ne=ned?(neti?ned+'T'+neti+':00':ned):null;
   this.disabled=true;s.style.color='var(--txt3)';s.textContent='Saving…';var self=this;
   fetch(BACKEND+'/api/me/events/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary',title:nt,start:ns,end:ne,location:nl,description:nde})})
-    .then(function(r){if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();},600);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){s.style.color='var(--teal)';s.textContent='✅ Saved!';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();},600);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
     .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
 });
 document.getElementById('ed-del').addEventListener('click',function(){
   if(!curEditEv||!confirm('Delete "'+( curEditEv.title||'this event')+'"?'))return;
   var s=document.getElementById('ed-st');this.disabled=true;s.style.color='var(--txt3)';s.textContent='Deleting…';var self=this;
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curEditEv.id,calendarId:curEditEv.calId||'primary'})})
-    .then(function(r){if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curEditEv.id;});});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();renderTodayEvents();},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curEditEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curEditEv.id;});});s.style.color='var(--teal)';s.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('edit-modal').classList.add('h');curEditEv=null;s.textContent='';if(cal)cal.refetchEvents();renderTodayEvents(selectedDateStr);},400);}else{s.style.color='var(--red)';s.textContent='❌ Failed.';self.disabled=false;}})
     .catch(function(){s.style.color='var(--red)';s.textContent='❌ Error.';self.disabled=false;});
 });
 
@@ -1155,29 +1639,166 @@ function switchTab(tab){
     document.getElementById('panel-'+t).classList.toggle('on',t===tab);
   });
 }
-function selAT(type){
-  ['ev','tk','fin','hl','pr'].forEach(function(t){
-    var btn=document.getElementById('abt-'+t),form=document.getElementById('afb-'+t);
+var UNIT_PREF_KEY='klaive_unit_pref';
+function getUnitPref(){try{return localStorage.getItem(UNIT_PREF_KEY)||'metric';}catch(e){return'metric';}}
+function setUnitPref(v){try{localStorage.setItem(UNIT_PREF_KEY,v==='us'?'us':'metric');}catch(e){}}
+var ADD2_TYPES=['ev','tk','fin','hl','pr'];
+function selAddType2(type){
+  ADD2_TYPES.forEach(function(t){
+    var btn=document.getElementById('abt-'+t);
+    var form=document.getElementById('afb-'+t);
     if(btn)btn.classList.toggle('sel',t===type);
     if(form)form.classList.toggle('vis',t===type);
   });
   var nd=new Date().toISOString().slice(0,10);
-  var mp={ev:'ae-date',tk:'at-due',fin:'afin-date',hl:'ahl-date'};
+  var mp={'ev':'ae2-date','tk':'at2-due','fin':'afin-date','hl':'ahl-date'};
   if(mp[type]){var el=document.getElementById(mp[type]);if(el&&!el.value)el.value=nd;}
-  if(type==='tk'){var sel=document.getElementById('at-list');if(sel&&sel.options.length<=1&&taskLists.length){sel.innerHTML='';taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});}}
+  if(type==='tk'){
+    var sel=document.getElementById('at2-list');
+    if(sel&&sel.options.length<=1&&taskLists.length){
+      taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;sel.appendChild(o);});
+    }
+  }
 }
-function toggleEx(id,btn,label){var el=document.getElementById(id);if(!el)return;el.classList.toggle('vis');btn.textContent=(el.classList.contains('vis')?'− ':'＋ ')+label;}
-function addInvitee(){var inp=document.getElementById('ae-invite');if(!inp)return;var em=inp.value.trim();if(!em||!em.includes('@')){inp.style.borderColor='var(--red)';return;}inp.style.borderColor='';if(invitees.indexOf(em)===-1)invitees.push(em);renderChips();inp.value='';inp.focus();}
-function renderChips(){var w=document.getElementById('ae-chips');if(!w)return;w.innerHTML='';invitees.forEach(function(e){var c=document.createElement('div');c.className='icp';var n=document.createElement('span');n.textContent=e;var x=document.createElement('button');x.className='icx';x.textContent='×';x.onclick=(function(em){return function(){invitees=invitees.filter(function(v){return v!==em;});renderChips();};})(e);c.appendChild(n);c.appendChild(x);w.appendChild(c);});}
-function updateHlFields(){var type=document.getElementById('ahl-type');if(!type)return;var w=document.getElementById('ahl-val');if(!w)return;var t={weight:'<input class="afsm" type="number" placeholder="Weight (kg or lb)" step="0.1" min="0"/>',bp:'<div class="afr"><input class="afsm" type="number" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afsm" type="number" placeholder="Diastolic" min="0"/></div>',hr:'<input class="afsm" type="number" placeholder="BPM" min="0"/>',glucose:'<input class="afsm" type="number" placeholder="mg/dL" min="0" step="1"/>',steps:'<input class="afsm" type="number" placeholder="Steps" min="0" step="1"/>',water:'<input class="afsm" type="number" placeholder="ml or fl oz" min="0" step="10"/>',sleep:'<div class="afr"><input class="afsm" type="number" placeholder="Hours" min="0" max="24" step="0.5"/><select class="afsm"><option>Q5/5</option><option>Q4/5</option><option selected>Q3/5</option><option>Q2/5</option><option>Q1/5</option></select></div>',mood:'<select class="afsm"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'};w.innerHTML=t[type.value]||'<input class="afsm" type="number" placeholder="Value" step="0.1"/>';}
-function showAST(type,msg,col){var el=document.getElementById('ast-'+type);if(!el)return;el.style.color=col;el.textContent=msg;setTimeout(function(){el.textContent='';},2500);}
-function submitAdd(type){
+function toggleAddExtra(id,btn,label){
+  var el=document.getElementById(id);if(!el)return;
+  el.classList.toggle('vis');
+  var open=el.classList.contains('vis');
+  btn.textContent=(open?'− ':'＋ ')+label;
+}
+function addInvite2(){
+  var inp=document.getElementById('ae2-invite');if(!inp)return;
+  var email=inp.value.trim();
+  if(!email||!email.includes('@')){inp.style.borderColor='var(--red)';return;}
+  inp.style.borderColor='';
+  if(add2Invitees.indexOf(email)===-1)add2Invitees.push(email);
+  renderInviteChips2();inp.value='';inp.focus();
+}
+function removeInvite2(email){add2Invitees=add2Invitees.filter(function(e){return e!==email;});renderInviteChips2();}
+function renderInviteChips2(){
+  var wrap=document.getElementById('ae2-chips');if(!wrap)return;wrap.innerHTML='';
+  add2Invitees.forEach(function(e){
+    var chip=document.createElement('div');chip.className='invite-chip';
+    var nm=document.createElement('span');nm.textContent=e;
+    var x=document.createElement('button');x.className='invite-chip-x';x.textContent='×';
+    x.onclick=(function(em){return function(){removeInvite2(em);};})(e);
+    chip.appendChild(nm);chip.appendChild(x);wrap.appendChild(chip);
+  });
+}
+function updateHealthFieldsDash(){
+  var type=document.getElementById('ahl-type');if(!type)return;
+  var wrap=document.getElementById('ahl-value-wrap');if(!wrap)return;
+  var unit=getUnitPref();
+  var t={
+    weight:'<input class="afi-sm" type="number" id="ahl-val-weight" placeholder="'+(unit==='us'?'Weight (lb)':'Weight (kg)')+'" step="0.1" min="0"/>',
+    bp:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sys" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afi-sm" type="number" id="ahl-val-dia" placeholder="Diastolic" min="0"/></div>',
+    hr:'<input class="afi-sm" type="number" id="ahl-val-hr" placeholder="BPM" min="0"/>',
+    glucose:'<input class="afi-sm" type="number" id="ahl-val-glucose" placeholder="mg/dL" min="0" step="1"/>',
+    steps:'<input class="afi-sm" type="number" id="ahl-val-steps" placeholder="Steps" min="0" step="1"/>',
+    distance:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-distance" placeholder="'+(unit==='us'?'Distance (mi)':'Distance (km)')+'" min="0" step="0.01"/><select class="afi-sm" id="ahl-val-distance-type"><option value="Run">🏃 Run</option><option value="Walk">🚶 Walk</option><option value="Bike">🚴 Bike</option></select></div>',
+    water:'<input class="afi-sm" type="number" id="ahl-val-water" placeholder="'+(unit==='us'?'Water (fl oz)':'Water (ml)')+'" min="0" step="10"/>',
+    sleep:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sleep-hours" placeholder="Hours" min="0" max="24" step="0.5"/><select class="afi-sm" id="ahl-val-sleep-quality"><option>Q5/5</option><option>Q4/5</option><option selected>Q3/5</option><option>Q2/5</option><option>Q1/5</option></select></div>',
+    mood:'<select class="afi-sm" id="ahl-val-mood"><option>😊 Happy</option><option>😌 Calm</option><option>😐 Neutral</option><option>😔 Sad</option><option>😰 Anxious</option><option>😤 Frustrated</option><option>😴 Tired</option></select>'
+  };
+  wrap.innerHTML=t[type.value]||'<input class="afi-sm" type="number" placeholder="Value" step="0.1"/>';
+}
+function showAddSt(type,msg,col){
+  var el=document.getElementById('ast-'+type);if(!el)return;
+  el.style.color=col;el.textContent=msg;
+  setTimeout(function(){el.textContent='';},2500);
+}
+function submitAdd2(type){
   var nd=new Date().toISOString().slice(0,10);
-  if(type==='ev'){var t=document.getElementById('ae-title');if(!t||!t.value.trim()){showAST('ev','Title required.','var(--red)');return;}var d=document.getElementById('ae-date'),s=document.getElementById('ae-start'),e=document.getElementById('ae-end'),loc=document.getElementById('ae-loc'),notes=document.getElementById('ae-notes');var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:invitees})}).then(function(r){if(r.ok){showAST('ev','✅ Event added!','var(--teal)');t.value='';invitees=[];renderChips();if(cal)cal.refetchEvents();}else showAST('ev','❌ Failed.','var(--red)');}).catch(function(){showAST('ev','❌ Error.','var(--red)');});}
-  else if(type==='tk'){var t=document.getElementById('at-title');if(!t||!t.value.trim()){showAST('tk','Title required.','var(--red)');return;}var due=document.getElementById('at-due'),list=document.getElementById('at-list');fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:list?list.value:'@default'})}).then(function(r){if(r.ok){showAST('tk','✅ Task added!','var(--teal)');t.value='';setTimeout(function(){loadTasks();},1000);}else showAST('tk','❌ Failed.','var(--red)');}).catch(function(){showAST('tk','❌ Error.','var(--red)');});}
-  else if(type==='fin'){var a=document.getElementById('afin-amt'),cat=document.getElementById('afin-cat');if(!a||!a.value||!cat||!cat.value){showAST('fin','Amount & category required.','var(--red)');return;}var desc=document.getElementById('afin-desc'),date=document.getElementById('afin-date');fetch(BACKEND+'/api/me/finance/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:parseFloat(a.value),category:cat.value,description:desc?desc.value:'',date:date?date.value:nd})}).then(function(r){if(r.ok){showAST('fin','✅ Recorded!','var(--teal)');a.value='';if(desc)desc.value='';}else showAST('fin','❌ Failed.','var(--red)');}).catch(function(){showAST('fin','❌ Error.','var(--red)');});}
-  else if(type==='hl'){var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAST('hl','Select a metric.','var(--red)');return;}var notes=document.getElementById('ahl-notes'),hdate=document.getElementById('ahl-date');fetch(BACKEND+'/api/me/health/add',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:ht.value,date:hdate?hdate.value:nd,notes:notes?notes.value:''})}).then(function(r){if(r.ok){showAST('hl','✅ Saved!','var(--teal)');if(notes)notes.value='';}else showAST('hl','❌ Failed.','var(--red)');}).catch(function(){showAST('hl','❌ Error.','var(--red)');});}
-  else if(type==='pr'){var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAST('pr','Name required.','var(--red)');return;}var due=document.getElementById('apr-due'),status=document.getElementById('apr-status');fetch(BACKEND+'/api/me/projects/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),due:due?due.value:'',status:status?status.value:'Planning'})}).then(function(r){if(r.ok){showAST('pr','✅ Created!','var(--teal)');n.value='';}else showAST('pr','❌ Failed.','var(--red)');}).catch(function(){showAST('pr','❌ Error.','var(--red)');});}
+  if(type==='ev'){
+    var t=document.getElementById('ae2-title');if(!t||!t.value.trim()){showAddSt('ev','Title required.','var(--red)');return;}
+    var d=document.getElementById('ae2-date');var s=document.getElementById('ae2-start');var e=document.getElementById('ae2-end');
+    var loc=document.getElementById('ae2-loc');var notes=document.getElementById('ae2-notes');
+    var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;
+    var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;
+    fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();if(cal)cal.refetchEvents();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
+      .catch(function(){showAddSt('ev','❌ Error.','var(--red)');});
+  } else if(type==='tk'){
+    var t=document.getElementById('at2-title');if(!t||!t.value.trim()){showAddSt('tk','Title required.','var(--red)');return;}
+    var due=document.getElementById('at2-due');var list=document.getElementById('at2-list');
+    fetch(BACKEND+'/api/me/tasks/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),due:due?due.value:'',listId:list?list.value:'@default'})})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('tk','✅ Task added!','var(--teal)');t.value='';setTimeout(function(){loadTasks();},1000);}else{showAddSt('tk','❌ Failed.','var(--red)');}})
+      .catch(function(){showAddSt('tk','❌ Error.','var(--red)');});
+  } else if(type==='fin'){
+    var a=document.getElementById('afin-amt');var cat=document.getElementById('afin-cat');
+    if(!a||!a.value||!cat||!cat.value){showAddSt('fin','Amount & category required.','var(--red)');return;}
+    var desc=document.getElementById('afin-desc');var date=document.getElementById('afin-date');
+    var sublabel=document.getElementById('afin-sublabel');
+    var finAtc=document.getElementById('afin-add-to-calendar');
+    var grp=(cat.selectedOptions&&cat.selectedOptions[0]&&cat.selectedOptions[0].parentElement&&cat.selectedOptions[0].parentElement.label)||'';
+    var finType=(grp==='Needs'||grp==='Wants')?'Expenses':(grp==='Income'?'Income':(grp==='Savings'?'Savings':'Expenses'));
+    fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd,createCalendarEvent:!!(finAtc&&finAtc.checked)})})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);loadFinance();}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
+      .catch(function(){showAddSt('fin','❌ Error.','var(--red)');});
+  } else if(type==='hl'){
+    var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAddSt('hl','Select a metric.','var(--red)');return;}
+    var notes=document.getElementById('ahl-notes');var hdate=document.getElementById('ahl-date');
+    var unit=getUnitPref();
+    var now=new Date();
+    var hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0');
+    var stampDate=(hdate&&hdate.value?hdate.value:nd)+' '+hh+':'+mi+':'+ss;
+    var mtype=ht.value,tab=null,data=null;
+    if(mtype==='weight'){
+      var w=document.getElementById('ahl-val-weight');
+      if(!w||!w.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data=(unit==='us')?{weight_lb:parseFloat(w.value)}:{weight_kg:parseFloat(w.value)};
+    } else if(mtype==='bp'){
+      var sys=document.getElementById('ahl-val-sys'),dia=document.getElementById('ahl-val-dia');
+      if(!sys||!sys.value||!dia||!dia.value){showAddSt('hl','Systolic & diastolic required.','var(--red)');return;}
+      tab='health';data={blood_pressure_sys:parseFloat(sys.value),blood_pressure_dia:parseFloat(dia.value)};
+    } else if(mtype==='hr'){
+      var hr=document.getElementById('ahl-val-hr');
+      if(!hr||!hr.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data={heart_rate_bpm:parseFloat(hr.value)};
+    } else if(mtype==='glucose'){
+      var gl=document.getElementById('ahl-val-glucose');
+      if(!gl||!gl.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data={glucose_mgdl:parseFloat(gl.value)};
+    } else if(mtype==='sleep'){
+      var hrs=document.getElementById('ahl-val-sleep-hours'),q=document.getElementById('ahl-val-sleep-quality');
+      if(!hrs||!hrs.value){showAddSt('hl','Hours required.','var(--red)');return;}
+      var qm=q&&q.value?q.value.match(/(\d+)\//):null;
+      tab='sleep';data={duration_min:Math.round(parseFloat(hrs.value)*60),quality_1to5:qm?parseInt(qm[1],10):null};
+    } else if(mtype==='mood'){
+      var md=document.getElementById('ahl-val-mood');
+      if(!md||!md.value){showAddSt('hl','Select a mood.','var(--red)');return;}
+      tab='mood';data={mood:md.value};
+    } else if(mtype==='water'){
+      var wt=document.getElementById('ahl-val-water');
+      if(!wt||!wt.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='water';data=(unit==='us')?{amount_floz:parseFloat(wt.value)}:{amount_ml:parseFloat(wt.value)};
+    } else if(mtype==='steps'){
+      var stp=document.getElementById('ahl-val-steps');
+      if(!stp||!stp.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='activity';data={category:'Cardio',type:'Steps',steps:parseInt(stp.value,10)};
+    } else if(mtype==='distance'){
+      var dist=document.getElementById('ahl-val-distance'),dtype=document.getElementById('ahl-val-distance-type');
+      if(!dist||!dist.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='activity';
+      data={category:'Cardio',type:(dtype?dtype.value:'Run')};
+      if(unit==='us'){data.distance_mi=parseFloat(dist.value);}else{data.distance_km=parseFloat(dist.value);}
+    } else {
+      showAddSt('hl','Unsupported metric.','var(--red)');return;
+    }
+    data.stamp_date=stampDate;
+    data.notes=notes?notes.value:'';
+    var atc=document.getElementById('ahl-add-to-calendar');
+    data.add_to_calendar=(atc&&atc.checked)?'Y':'';
+    fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:tab,data:data,unit_pref:unit})})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('hl','✅ Record saved!','var(--teal)');notes&&(notes.value='');loadHealth();}else{showAddSt('hl','❌ Failed.','var(--red)');}});})
+      .catch(function(){showAddSt('hl','❌ Error.','var(--red)');});
+  } else if(type==='pr'){
+    var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAddSt('pr','Name required.','var(--red)');return;}
+    var due=document.getElementById('apr-due');var status=document.getElementById('apr-status');
+    fetch(BACKEND+'/api/me/projects/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),due:due?due.value:'',status:status?status.value:'Planning'})})
+      .then(function(r){if(r.ok){showAddSt('pr','✅ Project created!','var(--teal)');n.value='';loadProjects();}else{showAddSt('pr','❌ Failed.','var(--red)');}})
+      .catch(function(){showAddSt('pr','❌ Error.','var(--red)');});
+  }
 }
 
 /* ══ Send Message ══ */
@@ -1235,6 +1856,7 @@ function init(){
       renderDraftList();
       loadCalendarList(function(){initCal();});
       loadTasks();
+      loadProjects();
     })
     .catch(function(){show(authWrap);});
 }
