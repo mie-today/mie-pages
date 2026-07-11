@@ -523,7 +523,7 @@ function calCardHTML(){
       +'</div>'
       +'</div>'
       +'<button class="cal-today-btn" id="cal-today">Today</button>'
-      +'<select class="cal-view-sel"><option>Month ▾</option></select>'
+      +'<select class="cal-view-sel"><option>Month</option></select>'
     +'</div>'
     +'<div class="cal-wrap">'
       +'<div class="cal-dow-row"><div class="cal-dow">SUN</div><div class="cal-dow">MON</div><div class="cal-dow">TUES</div><div class="cal-dow">WEDS</div><div class="cal-dow">THURS</div><div class="cal-dow">FRI</div><div class="cal-dow">SAT</div></div>'
@@ -550,7 +550,7 @@ function todayCardHTML(){
     +'<div class="today-inner">'
       +'<div class="sec-row"><span class="sec-lbl">Events</span><div class="sec-line"></div></div>'
       +'<div id="today-ev-list"></div>'
-      +'<div class="sec-row"><span class="sec-lbl">Tasks</span><div class="sec-line"></div></div>'
+      +'<div class="sec-row"><span class="sec-lbl">Tasks</span><div class="sec-line"></div><select class="all-list-sel" id="task-filter" onchange="renderTasks()"><option value="all">All List</option></select></div>'
       +'<div id="today-task-list"></div>'
     +'</div>'
   +'</div>';
@@ -1098,12 +1098,21 @@ function renderDayView(ds){
 }
 
 function renderDayViewTasks(ds){
+  var fEl=document.getElementById('task-filter'),filterVal=fEl?fEl.value:'all';
+  if(fEl){
+    var cur=fEl.value;fEl.innerHTML='<option value="all">All List</option>';
+    taskLists.forEach(function(l){var o=document.createElement('option');o.value=l.id;o.textContent=l.title||l.id;fEl.appendChild(o);});
+    fEl.value=(cur&&taskLists.find(function(l){return l.id===cur;}))?cur:'all';
+    filterVal=fEl.value;
+  }
   var c=document.getElementById('today-task-list');if(!c)return;c.innerHTML='';
   var tasks=(allTasks.length?allTasks:DEMO_TASKS).filter(function(t){
     if(t.status==='completed')return false;
     if(!t.due)return false;
     var due=t.due.slice(0,10); // YYYY-MM-DD
-    return due===ds;
+    if(due!==ds)return false;
+    if(filterVal!=='all'&&t.listId!==filterVal)return false;
+    return true;
   });
   if(!tasks.length){
     var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No tasks due.';c.appendChild(em);return;
