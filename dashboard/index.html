@@ -139,6 +139,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .task-nm.s{text-decoration:line-through;color:var(--txt3);}
 .task-tag{font-size:11px;border-radius:6px;padding:2px 6px;flex-shrink:0;}
 .task-tag.today{background:rgba(28,126,214,.1);color:var(--blue);}
+.task-tag.late{background:rgba(226,75,74,.1);color:var(--red);}
 .task-tag.done{background:var(--bg3);color:var(--txt3);}
 
 /* ── Input strip (collapsed state) — 화면 크기와 무관하게 항상 56px 고정폭 ── */
@@ -1104,17 +1105,21 @@ function renderDayViewTasks(ds){
     fEl.value=(cur&&taskLists.find(function(l){return l.id===cur;}))?cur:'all';
     filterVal=fEl.value;
   }
-  var c=document.getElementById('today-task-list');if(!c)return;c.innerHTML='';
+  var c=document.getElementById('today-task-list');if(!c)return;
+  var now=new Date();now.setHours(0,0,0,0);
   var tasks=(allTasks.length?allTasks:DEMO_TASKS).filter(function(t){
     if(t.status==='completed')return false;
-    if(!t.due)return false;
-    var due=t.due.slice(0,10); // YYYY-MM-DD
-    if(due!==ds)return false;
     if(filterVal!=='all'&&t.listId!==filterVal)return false;
     return true;
   });
+  tasks.sort(function(a,b){
+    function sc(t){if(!t.due)return 2;var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var d=Math.round((dt-now)/86400000);return d<0?0:d===0?1:2;}
+    var sa=sc(a),sb=sc(b);if(sa!==sb)return sa-sb;
+    if(a.due&&b.due)return new Date(a.due)-new Date(b.due);return 0;
+  });
+  c.innerHTML='';
   if(!tasks.length){
-    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No tasks due.';c.appendChild(em);return;
+    var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;text-align:center;';em.textContent='All caught up!';c.appendChild(em);return;
   }
   tasks.forEach(function(t){c.appendChild(makeTaskEl(t));});
 }
@@ -1267,25 +1272,30 @@ function renderTodayEvents(dateStr){
 
 /* ── Tasks ── */
 function makeTaskEl(t){
-  var isDone=t.status==='completed';
+  var n2=new Date();n2.setHours(0,0,0,0);
+  var isLate=false,isToday=false;
+  if(t.due){var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));var diff=Math.round((dt-n2)/86400000);isLate=diff<0;isToday=diff===0;}
   var item=document.createElement('div');item.className='task-item';
-  var cb=document.createElement('div');cb.className='task-cb'+(isDone?' done':'');
-  cb.addEventListener('click',function(e){e.stopPropagation();toggleTask(t,cb,item);});
-  var nm=document.createElement('div');nm.className='task-nm'+(isDone?' s':'');nm.textContent=t.title||'Untitled';
-  var tag=document.createElement('span');
-  if(isDone){tag.className='task-tag done';tag.textContent='done';}
-  else if(t.due){var n=new Date();n.setHours(0,0,0,0);var dt=new Date(t.due+(t.due.includes('T')?'':'T12:00:00'));if(Math.round((dt-n)/86400000)<=0){tag.className='task-tag today';tag.textContent='today';}}
-  item.appendChild(cb);item.appendChild(nm);if(tag.textContent)item.appendChild(tag);
+  var cb=document.createElement('div');cb.className='task-cb';
+  cb.addEventListener('click',function(e){
+    e.stopPropagation();if(t._p)return;t._p=true;
+    cb.classList.add('done');
+    setTimeout(function(){
+      t.status='completed';
+      function attempt(lid){return fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:lid,status:'completed',title:t.title||'',notes:t.notes||''})});}
+      attempt(t.listId||'@default').then(function(r){checkReauthStatus(r.status);if(r.status===404&&t.listId!=='@default')return attempt('@default');return r;})
+        .then(function(){setTimeout(renderTasks,200);}).catch(function(){t.status='needsAction';renderTasks();})
+        .finally(function(){t._p=false;});
+    },150);
+  });
+  var nm=document.createElement('div');nm.className='task-nm';nm.textContent=t.title||'Untitled';
+  item.appendChild(cb);item.appendChild(nm);
+  if(isLate){var tg=document.createElement('span');tg.className='task-tag late';tg.textContent='Late';item.appendChild(tg);}
+  else if(isToday){var tg=document.createElement('span');tg.className='task-tag';tg.textContent='today';item.appendChild(tg);}
   return item;
 }
-function toggleTask(t,cb,row){
-  var wasDone=t.status==='completed';t.status=wasDone?'needsAction':'completed';
-  cb.classList.toggle('done',!wasDone);var nm=row.querySelector('.task-nm');if(nm)nm.classList.toggle('s',!wasDone);
-  var tag=row.querySelector('.task-tag');if(tag){tag.className='task-tag '+(t.status==='completed'?'done':'today');tag.textContent=t.status==='completed'?'done':'today';}
-  fetch(BACKEND+'/api/me/tasks/update',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:t.id,listId:t.listId||'@default',status:t.status,title:t.title||'',notes:t.notes||''})}).catch(function(){});
-}
 function renderTasks(){
-  // Day View task list — 선택한 날짜(없으면 오늘) due date 기준
+  // Day View task list — 날짜 무관, 완료 여부 + 리스트 필터만 적용(calendar_0709와 동일 방식)
   var todayStr=(function(){var n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');})();
   renderDayViewTasks(selectedDateStr||todayStr);
 }
