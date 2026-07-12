@@ -509,6 +509,9 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
                 <option value="bp">🩺 Blood Pressure</option>
                 <option value="hr">❤️ Heart Rate</option>
                 <option value="glucose">🩸 Glucose</option>
+                <option value="spo2">🫁 SpO2</option>
+                <option value="temperature">🌡️ Temperature</option>
+                <option value="cholesterol">🧪 Cholesterol</option>
                 <option value="steps">👟 Steps</option>
                 <option value="distance">🏃 Distance</option>
                 <option value="water">💧 Water</option>
@@ -691,9 +694,10 @@ var curViewEv=null, curEditEv=null, selFile=null, add2Invitees=[];
 var selectedDateStr=null;
 var _finDateSet={}; var _finByDate={};
 var _healthByDate={}; var _activityByDate={};
+var _waterByDate={}; var _sleepByDate={}; var _moodByDate={};
 var allProjects=[];
 var curEditFin=null; var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
-var curEditHealth=null; var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose'};
+var curEditHealth=null; var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose',spo2:'Edit SpO2',temperature:'Edit Temperature',cholesterol:'Edit Cholesterol'};
 
 var CAL_COLORS={'Default':'#378ADD','Private':'#534AB7','KLAIVE':'#1D9E75',"Women's Health":'#E24B4A'};
 
@@ -1087,9 +1091,14 @@ function renderTodayEvents(dateStr){
   var finRows=_finByDate[ds]||[];
   var healthRows=_healthByDate[ds]||[];
   var activityRows=_activityByDate[ds]||[];
+  var waterRows=_waterByDate[ds]||[];
+  var sleepRows=_sleepByDate[ds]||[];
+  var moodRows=_moodByDate[ds]||[];
+  var womensRaw=null;
+  try{womensRaw=JSON.parse(localStorage.getItem('mie_womens_'+ds)||'null');}catch(e){}
   var projects=allProjects.length?allProjects:[];
 
-  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!projects.length){
+  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!waterRows.length&&!sleepRows.length&&!moodRows.length&&!womensRaw&&!projects.length){
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;text-align:center;">No events</div>';return;
   }
 
@@ -1132,58 +1141,58 @@ function renderTodayEvents(dateStr){
     });
   }
 
-  // Health 기록 (amber 구분선)
-  if(healthRows.length){
+  // Health 계열 통합 섹션 (amber 구분선 하나 — 체중/혈압/…/Water/Sleep/Mood/Women's/Activity)
+  var hasHealthSection=healthRows.length||activityRows.length||waterRows.length||sleepRows.length||moodRows.length||womensRaw;
+  if(hasHealthSection){
     var hDivider=document.createElement('div');
     hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
     hDivider.textContent='Health';
     list.appendChild(hDivider);
-    var hMetrics=[];
+    function addHealthRow(icon,label,val,onClick){
+      var item=document.createElement('div');item.className='ev-item';
+      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
+      var td=document.createElement('div');td.className='ev-time';td.textContent=icon;
+      var body=document.createElement('div');body.className='ev-body';
+      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=label;
+      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=val;
+      body.appendChild(nm);body.appendChild(sub);
+      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
+      if(onClick)item.addEventListener('click',onClick);
+      list.appendChild(item);
+    }
     healthRows.forEach(function(row){
       if(row.weight_kg){
         var wlb=(row.weight_lb!=null&&row.weight_lb!=='')?row.weight_lb:(row.weight_kg*2.20462);
-        hMetrics.push({label:'Weight',val:row.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb',metricType:'weight',row:row});
+        addHealthRow('⚖️','Weight',row.weight_kg.toFixed(1)+' kg / '+(+wlb).toFixed(1)+' lb',function(){openHealthEdit('weight',row);});
       }
-      if(row.blood_pressure_sys&&row.blood_pressure_dia)hMetrics.push({label:'Blood pressure',val:row.blood_pressure_sys+'/'+row.blood_pressure_dia,metricType:'bp',row:row});
-      if(row.heart_rate_bpm)hMetrics.push({label:'Heart rate',val:row.heart_rate_bpm+' bpm',metricType:'hr',row:row});
-      if(row.glucose_mgdl)hMetrics.push({label:'Glucose',val:row.glucose_mgdl+' mg/dL',metricType:'glucose',row:row});
+      if(row.blood_pressure_sys&&row.blood_pressure_dia)addHealthRow('🩺','Blood pressure',row.blood_pressure_sys+'/'+row.blood_pressure_dia,function(){openHealthEdit('bp',row);});
+      if(row.heart_rate_bpm)addHealthRow('❤️','Heart rate',row.heart_rate_bpm+' bpm',function(){openHealthEdit('hr',row);});
+      if(row.glucose_mgdl)addHealthRow('🩸','Glucose',row.glucose_mgdl+' mg/dL',function(){openHealthEdit('glucose',row);});
+      if(row.spo2_pct)addHealthRow('🫁','SpO2',row.spo2_pct+'%',function(){openHealthEdit('spo2',row);});
+      if(row.temperature_c)addHealthRow('🌡️','Temperature',row.temperature_c+'°C / '+row.temperature_f+'°F',function(){openHealthEdit('temperature',row);});
+      if(row.cholesterol_mgdl)addHealthRow('🧪','Cholesterol',row.cholesterol_mgdl+' mg/dL',function(){openHealthEdit('cholesterol',row);});
     });
-    hMetrics.forEach(function(m){
-      var item=document.createElement('div');item.className='ev-item';
-      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--amber)';
-      var td=document.createElement('div');td.className='ev-time';td.textContent='🩺 Health';
-      var body=document.createElement('div');body.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
-      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
-      body.appendChild(nm);body.appendChild(sub);
-      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
-      item.addEventListener('click',function(){openHealthEdit(m.metricType,m.row);});
-      list.appendChild(item);
+    if(waterRows.length){
+      var totalMl=waterRows.reduce(function(s,r){return s+(r.amount_ml||0);},0);
+      addHealthRow('💧','Water',totalMl+' ml');
+    }
+    sleepRows.forEach(function(row){
+      if(row.duration_min)addHealthRow('😴','Sleep',(row.duration_min/60).toFixed(1)+' hr'+(row.quality_1to5?' · Q'+row.quality_1to5+'/5':''));
     });
-  }
-
-  // Activity 기록 (purple 구분선)
-  if(activityRows.length){
-    var acDivider=document.createElement('div');
-    acDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--purple);padding:8px 2px 4px;';
-    acDivider.textContent='Activity';
-    list.appendChild(acDivider);
-    var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
-    var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
-    var acMetrics=[];
-    if(totalSteps)acMetrics.push({label:'Steps',val:totalSteps.toLocaleString()+' steps'});
-    if(totalDistKm)acMetrics.push({label:'Distance',val:totalDistKm+' km'});
-    acMetrics.forEach(function(m){
-      var item=document.createElement('div');item.className='ev-item';
-      var bar=document.createElement('div');bar.className='ev-bar';bar.style.background='var(--purple)';
-      var td=document.createElement('div');td.className='ev-time';td.textContent='🏃 Activity';
-      var body=document.createElement('div');body.className='ev-body';
-      var nm=document.createElement('div');nm.className='ev-nm';nm.textContent=m.label;
-      var sub=document.createElement('div');sub.className='ev-sub';sub.textContent=m.val;
-      body.appendChild(nm);body.appendChild(sub);
-      item.appendChild(bar);item.appendChild(td);item.appendChild(body);
-      list.appendChild(item);
+    moodRows.forEach(function(row){
+      if(row.mood)addHealthRow('😊','Mood',row.mood);
     });
+    if(womensRaw){
+      if(womensRaw.period_start)addHealthRow('🌸',"Women's",'Period Start');
+      if(womensRaw.period_end)addHealthRow('🌸',"Women's",'Period End');
+      if(!womensRaw.period_start&&!womensRaw.period_end)addHealthRow('🌸',"Women's",womensRaw.note||'Period day');
+    }
+    if(activityRows.length){
+      var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
+      var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
+      if(totalSteps)addHealthRow('🏃','Steps',totalSteps.toLocaleString()+' steps');
+      if(totalDistKm)addHealthRow('🏃','Distance',totalDistKm+' km');
+    }
   }
 
   // Project 진행률 (blue 구분선) — 날짜 개념 없이 항상 표시
@@ -1247,25 +1256,22 @@ function loadHealth(){
   fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
-      _healthByDate={};_activityByDate={};
+      _healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};
       if(!data){renderTodayEvents(selectedDateStr);return;}
-      var arr=Array.isArray(data.health)?data.health:[];
-      arr.forEach(function(rec){
-        var ds=(rec.stamp_date||'').slice(0,10);
-        if(!ds)return;
-        if(!_healthByDate[ds])_healthByDate[ds]=[];
-        _healthByDate[ds].push(rec);
-      });
-      var actArr=Array.isArray(data.activity)?data.activity:[];
-      actArr.forEach(function(rec){
-        var ds=(rec.stamp_date||'').slice(0,10);
-        if(!ds)return;
-        if(!_activityByDate[ds])_activityByDate[ds]=[];
-        _activityByDate[ds].push(rec);
-      });
+      function _byDate(arr,store){
+        (Array.isArray(arr)?arr:[]).forEach(function(rec){
+          var ds=(rec.stamp_date||'').slice(0,10);if(!ds)return;
+          if(!store[ds])store[ds]=[];store[ds].push(rec);
+        });
+      }
+      _byDate(data.health,_healthByDate);
+      _byDate(data.activity,_activityByDate);
+      _byDate(data.water,_waterByDate);
+      _byDate(data.sleep,_sleepByDate);
+      _byDate(data.mood,_moodByDate);
       renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){_healthByDate={};_activityByDate={};renderTodayEvents(selectedDateStr);});
+    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Projects API (Day View 통합용) ── */
@@ -1395,6 +1401,12 @@ function openHealthEdit(metricType,row){
     fw.innerHTML='<div class="ff"><label class="fl">Heart Rate (bpm)</label><input class="fi" type="number" id="healthed-hr" value="'+row.heart_rate_bpm+'"/></div>';
   } else if(metricType==='glucose'){
     fw.innerHTML='<div class="ff"><label class="fl">Glucose (mg/dL)</label><input class="fi" type="number" id="healthed-glucose" value="'+row.glucose_mgdl+'"/></div>';
+  } else if(metricType==='spo2'){
+    fw.innerHTML='<div class="ff"><label class="fl">SpO2 (%)</label><input class="fi" type="number" id="healthed-spo2" value="'+row.spo2_pct+'"/></div>';
+  } else if(metricType==='temperature'){
+    fw.innerHTML='<div class="ff"><label class="fl">Temperature (°C)</label><input class="fi" type="number" step="0.1" id="healthed-temp" value="'+row.temperature_c+'"/></div>';
+  } else if(metricType==='cholesterol'){
+    fw.innerHTML='<div class="ff"><label class="fl">Cholesterol (mg/dL)</label><input class="fi" type="number" id="healthed-chol" value="'+row.cholesterol_mgdl+'"/></div>';
   } else {
     fw.innerHTML='';
   }
@@ -1421,6 +1433,9 @@ document.getElementById('healthed-save').addEventListener('click',function(){
     else if(mt==='bp'){data.blood_pressure_sys=parseFloat(document.getElementById('healthed-sys').value)||0;data.blood_pressure_dia=parseFloat(document.getElementById('healthed-dia').value)||0;}
     else if(mt==='hr'){data.heart_rate_bpm=parseFloat(document.getElementById('healthed-hr').value)||0;}
     else if(mt==='glucose'){data.glucose_mgdl=parseFloat(document.getElementById('healthed-glucose').value)||0;}
+    else if(mt==='spo2'){data.spo2_pct=parseFloat(document.getElementById('healthed-spo2').value)||0;}
+    else if(mt==='temperature'){data.temperature_c=parseFloat(document.getElementById('healthed-temp').value)||0;}
+    else if(mt==='cholesterol'){data.cholesterol_mgdl=parseFloat(document.getElementById('healthed-chol').value)||0;}
     fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx,data:data})})
       .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
       .then(function(res){
@@ -1694,6 +1709,9 @@ function updateHealthFieldsDash(){
     bp:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-sys" placeholder="Systolic" min="0"/><span style="align-self:center;color:var(--txt3);padding:0 2px;">/</span><input class="afi-sm" type="number" id="ahl-val-dia" placeholder="Diastolic" min="0"/></div>',
     hr:'<input class="afi-sm" type="number" id="ahl-val-hr" placeholder="BPM" min="0"/>',
     glucose:'<input class="afi-sm" type="number" id="ahl-val-glucose" placeholder="mg/dL" min="0" step="1"/>',
+    spo2:'<input class="afi-sm" type="number" id="ahl-val-spo2" placeholder="SpO2 (%)" min="0" max="100" step="1"/>',
+    temperature:'<input class="afi-sm" type="number" id="ahl-val-temperature" placeholder="'+(unit==='us'?'Temperature (°F)':'Temperature (°C)')+'" step="0.1"/>',
+    cholesterol:'<input class="afi-sm" type="number" id="ahl-val-cholesterol" placeholder="'+(unit==='us'?'Cholesterol (mg/dL)':'Cholesterol (mmol/L)')+'" step="0.1" min="0"/>',
     steps:'<input class="afi-sm" type="number" id="ahl-val-steps" placeholder="Steps" min="0" step="1"/>',
     distance:'<div class="af-row"><input class="afi-sm" type="number" id="ahl-val-distance" placeholder="'+(unit==='us'?'Distance (mi)':'Distance (km)')+'" min="0" step="0.01"/><select class="afi-sm" id="ahl-val-distance-type"><option value="Run">🏃 Run</option><option value="Walk">🚶 Walk</option><option value="Bike">🚴 Bike</option></select></div>',
     water:'<input class="afi-sm" type="number" id="ahl-val-water" placeholder="'+(unit==='us'?'Water (fl oz)':'Water (ml)')+'" min="0" step="10"/>',
@@ -1759,6 +1777,18 @@ function submitAdd2(type){
       var gl=document.getElementById('ahl-val-glucose');
       if(!gl||!gl.value){showAddSt('hl','Value required.','var(--red)');return;}
       tab='health';data={glucose_mgdl:parseFloat(gl.value)};
+    } else if(mtype==='spo2'){
+      var sp=document.getElementById('ahl-val-spo2');
+      if(!sp||!sp.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data={spo2_pct:parseFloat(sp.value)};
+    } else if(mtype==='temperature'){
+      var tp=document.getElementById('ahl-val-temperature');
+      if(!tp||!tp.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data=(unit==='us')?{temperature_f:parseFloat(tp.value)}:{temperature_c:parseFloat(tp.value)};
+    } else if(mtype==='cholesterol'){
+      var ch=document.getElementById('ahl-val-cholesterol');
+      if(!ch||!ch.value){showAddSt('hl','Value required.','var(--red)');return;}
+      tab='health';data=(unit==='us')?{cholesterol_mgdl:parseFloat(ch.value)}:{cholesterol_mmol:parseFloat(ch.value)};
     } else if(mtype==='sleep'){
       var hrs=document.getElementById('ahl-val-sleep-hours'),q=document.getElementById('ahl-val-sleep-quality');
       if(!hrs||!hrs.value){showAddSt('hl','Hours required.','var(--red)');return;}
