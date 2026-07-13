@@ -680,7 +680,7 @@ var authWrap=document.getElementById('auth-wrap');
 var loadWrap=document.getElementById('loading-wrap');
 var appEl=document.getElementById('app');
 function show(el){[authWrap,loadWrap,appEl].forEach(function(e){if(e)e.style.display='none';});if(el)el.style.display='';}
-document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google';});
+document.getElementById('connect-btn').addEventListener('click',function(){window.location.href=BACKEND+'/auth/google?return_to=%2Fcalendar';});
 var DRAFT_KEY='klaive_cal_drafts';
 var MAX_VIS=4;
 
@@ -1868,7 +1868,7 @@ function renderDraftList(){
 
 /* ══ Sign out ══ */
 document.getElementById('signout-btn').addEventListener('click',function(){
-  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){show(authWrap);});
+  fetch(BACKEND+'/auth/logout',{method:'POST',credentials:'include'}).catch(function(){}).finally(function(){window.location.replace('/');});
 });
 
 /* ══ Init ══ */
