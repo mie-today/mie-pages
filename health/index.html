@@ -1823,17 +1823,32 @@ function syncWomensFromBackend(){
     .then(function(data){
       var rows=(data&&Array.isArray(data.womens))?data.womens:[];
       var toBool=function(v){return v===true||v==='TRUE'||v==='true';};
+      // [v1.4] 날짜별로 먼저 메모리에서 병합한 뒤 한 번에 localStorage에 씀.
+      // period_start/period_end: 값이 있는 행에서만 갱신(빈 칸이면 이전 값 유지) — 같은 날짜에
+      // symptom 전용 행(SMS로 "Cramps 3"만 보낸 경우 등)이 섞여도 period 상태가 안 지워짐.
+      // symptoms: 그날의 모든 행에서 이름:점수를 누적(마지막 행 채택이 아니라 합침).
+      var merged={};
       rows.forEach(function(entry){
         var dateKey=(entry.stamp_date||'').toString().slice(0,10);
         if(!dateKey)return;
-        try{
-          localStorage.setItem('mie_womens_'+dateKey, JSON.stringify({
-            date: dateKey,
-            mode: entry.mode || 'period',
-            period_start: toBool(entry.period_start),
-            period_end: toBool(entry.period_end)
-          }));
-        }catch(e){}
+        if(!merged[dateKey]) merged[dateKey]={date:dateKey, mode:'', period_start:false, period_end:false, symptoms:{}};
+        var m=merged[dateKey];
+        if(entry.mode) m.mode=entry.mode;
+        if(toBool(entry.period_start)) m.period_start=true;
+        if(toBool(entry.period_end))   m.period_end=true;
+        if(entry.symptom_severity){
+          (entry.symptom_severity+'').split(',').forEach(function(pair){
+            var parts=pair.split(':');
+            var name=(parts[0]||'').trim();
+            var sev=parseInt(parts[1]);
+            if(name) m.symptoms[name]=isNaN(sev)?3:sev;
+          });
+        }
+      });
+      Object.keys(merged).forEach(function(dateKey){
+        var m=merged[dateKey];
+        m.mode=m.mode||'period';
+        try{ localStorage.setItem('mie_womens_'+dateKey, JSON.stringify(m)); }catch(e){}
       });
     })
     .catch(function(){})
