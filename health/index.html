@@ -1806,8 +1806,38 @@ function loadTodayOverview(){
       })
       .catch(function(){pending--;if(pending===0)renderOverviewCards();});
   });
-  // Women's panel uses localStorage — read directly
-  loadWomensFromLocalStorage();
+  // [v4.1] Women's panel — 페이지를 열 때마다 백엔드(Women 시트)에서 전체 이력을 받아와
+  // localStorage 캐시를 최신 상태로 덮어쓴 다음, 기존 렌더링 로직(loadWomensFromLocalStorage)을
+  // 그대로 재사용. SMS/다른 기기에서 들어온 데이터도 이 화면에 반영되게 하기 위함.
+  syncWomensFromBackend();
+}
+
+// [v4.1] 백엔드 Women 시트 → localStorage 캐시 동기화.
+// period=all: matchesPeriod_()에서 daily/weekly/monthly가 아닌 값은 전부 통과되므로 전체 이력이 옴.
+// 같은 날짜에 행이 여러 개 있으면(append-only 특성) 배열에 나중에 오는 행(=시트에서 나중 행=최신 기록)이
+// 이전 값을 덮어쓰도록 그대로 순서대로 반영 — 별도 타임스탬프 비교 없이 "가장 최신"이 자동으로 채택됨.
+function syncWomensFromBackend(){
+  var d=todayIso();
+  fetch(BACKEND+'/api/me/health?date='+d+'&period=all&tab=womens',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      var rows=(data&&Array.isArray(data.womens))?data.womens:[];
+      var toBool=function(v){return v===true||v==='TRUE'||v==='true';};
+      rows.forEach(function(entry){
+        var dateKey=(entry.stamp_date||'').toString().slice(0,10);
+        if(!dateKey)return;
+        try{
+          localStorage.setItem('mie_womens_'+dateKey, JSON.stringify({
+            date: dateKey,
+            mode: entry.mode || 'period',
+            period_start: toBool(entry.period_start),
+            period_end: toBool(entry.period_end)
+          }));
+        }catch(e){}
+      });
+    })
+    .catch(function(){})
+    .finally(function(){ loadWomensFromLocalStorage(); }); // 실패해도 기존 캐시로 렌더링은 계속됨
 }
 
 function renderOverviewCards(){
@@ -2156,17 +2186,30 @@ function renderHlDayDetailCorrect(ds){
 
 // renderOverviewCards defined above in loadTodayOverview section
 
-// logPeriodEvent: Women's panel uses localStorage — write directly + rebuild calendar
+// [v4.1] logPeriodEvent: localStorage는 즉시 반영용 캐시(낙관적 업데이트) + 백엔드(Women 시트)에도 기록.
+// append-only — 같은 날짜에 여러 번 눌러도 매 클릭마다 새 행이 시트에 추가됨(의도된 동작, 읽기 쪽에서
+// 같은 날짜의 여러 행 중 가장 나중(=최신) 행을 채택해서 병합함).
 function logPeriodEvent(eventType){
   var d=todayIso();
   var key='mie_womens_'+d;
   var existing={};
   try{existing=JSON.parse(localStorage.getItem(key)||'{}');}catch(e){}
+  existing.mode = existing.mode || 'period';
   if(eventType==='start'){existing.period_start=true;existing.date=d;}
   if(eventType==='end'){existing.period_end=true;existing.date=d;}
   try{localStorage.setItem(key,JSON.stringify(existing));}catch(e){}
   toast('Period '+eventType+' logged!','success');
-  loadWomensFromLocalStorage(); // rebuilds calendar dots immediately
+  loadWomensFromLocalStorage(); // rebuilds calendar dots immediately (낙관적 업데이트)
+
+  fetch(BACKEND+'/api/me/health/log',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tab:'womens',data:{
+      stamp_date: d,
+      mode: existing.mode,
+      period_start: !!existing.period_start,
+      period_end: !!existing.period_end
+    }})})
+    .then(function(r){checkReauthStatus(r.status);})
+    .catch(function(){}); // 실패해도 로컬 캐시는 이미 반영됨 — 다음 syncWomensFromBackend() 때 다시 시도
 }
 
 // ── Hook into init flow — called when show(appEl) fires after auth ──
