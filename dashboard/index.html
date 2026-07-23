@@ -451,6 +451,7 @@ var calendarMeta=[], allEvents=[], eventsByDate={}, allTasks=[], taskLists=[];
 var _finDateSet={}; // Finance 거래가 있는 날짜 집합 {YYYY-MM-DD: true}
 var _finByDate={};  // 날짜별 Finance 거래 목록 {YYYY-MM-DD: [{type,category,amount,notes}]}
 var _healthByDate={}; // 날짜별 Health 기록 {YYYY-MM-DD: {...record}}
+var _womensByDate={}; // [v1.9] 날짜별 Women 기록(낱개 행) — tab=all 응답에 이미 포함돼 있어 재사용
 var _activityByDate={}; // 날짜별 Activity 기록 (steps/distance 등) {YYYY-MM-DD: [{...record}]}
 var _waterByDate={}; var _sleepByDate={}; var _moodByDate={};
 // 가정: /api/me/health?month=YYYY-MM&period=monthly 가 그 달 전체 기록을
@@ -1154,11 +1155,10 @@ function renderTodayEvents(dateStr){
   var waterRows=_waterByDate[ds]||[];
   var sleepRows=_sleepByDate[ds]||[];
   var moodRows=_moodByDate[ds]||[];
-  var womensRaw=null;
-  try{womensRaw=JSON.parse(localStorage.getItem('mie_womens_'+ds)||'null');}catch(e){}
+  var womensRows=_womensByDate[ds]||[]; // [v1.9] localStorage 캐시 대신 실제 개별 행(각자 _sheet_row 보유)
   var projects=allProjects.length?allProjects:[];
 
-  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!waterRows.length&&!sleepRows.length&&!moodRows.length&&!womensRaw&&!projects.length){
+  if(!evs.length&&!finRows.length&&!healthRows.length&&!activityRows.length&&!waterRows.length&&!sleepRows.length&&!moodRows.length&&!womensRows.length&&!projects.length){
     var em=document.createElement('div');em.style.cssText='font-size:12px;color:var(--txt3);padding:6px 2px;';em.textContent='No events.';c.appendChild(em);return;
   }
 
@@ -1206,7 +1206,7 @@ function renderTodayEvents(dateStr){
   }
 
   // Health 계열 통합 섹션 (amber 구분선 하나 — 체중/혈압/…/Water/Sleep/Mood/Women's/Activity)
-  var hasHealthSection=healthRows.length||activityRows.length||waterRows.length||sleepRows.length||moodRows.length||womensRaw;
+  var hasHealthSection=healthRows.length||activityRows.length||waterRows.length||sleepRows.length||moodRows.length||womensRows.length;
   if(hasHealthSection){
     var hDivider=document.createElement('div');
     hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
@@ -1248,11 +1248,11 @@ function renderTodayEvents(dateStr){
     moodRows.forEach(function(row){
       if(row.mood)addHealthRow('😊','Mood',row.mood);
     });
-    if(womensRaw){
-      // [v1.7] period/symptoms뿐 아니라 ovulation/test_result/sex/morning_sickness까지
-      // women-sync.js의 describeWomensCache()로 전부 표시(공유 파일 — health 페이지와 동일 로직).
-      describeWomensCache(womensRaw).forEach(function(r){ addHealthRow('🌸', r.label, r.val); });
-    }
+    womensRows.forEach(function(row){
+      // [v1.9] localStorage 요약 대신 실제 낱개 행을 그대로 표시. 각 행은 자기 _sheet_row를
+      // 갖고 있어 클릭하면 그 행 하나만 수정/삭제할 수 있음(women-sync.js의 함수 재사용).
+      addHealthRow('🌸',"Women's",describeWomensRawEntry(row),function(){openHealthEdit('womens',row);});
+    });
     if(activityRows.length){
       var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
       var totalDistKm=+activityRows.reduce(function(s,r){return s+(r.distance_km||0);},0).toFixed(2);
@@ -1584,12 +1584,12 @@ document.getElementById('fined-delete').addEventListener('click',function(){
   }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
 });
 
-/* ── Health 편집/삭제 모달 (weight/bp/hr/glucose — tab:'health')
-   주의: /api/me/health/log/edit·delete가 요구하는 row_idx도 Finance와 동일한 문제가 있어
-   (Day View는 기간 필터링된 목록), ?period=all(필터 없이 탭 전체 반환)로 한 번 더 조회해서
-   _sheet_row가 일치하는 위치를 row_idx로 사용한다. */
-var curEditHealth=null; // {metricType, row}
-var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose',spo2:'Edit SpO2',temperature:'Edit Temperature',cholesterol:'Edit Cholesterol'};
+/* ── Health 편집/삭제 모달 (weight/bp/hr/glucose 등 tab:'health', 그리고 신규 tab:'womens')
+   [v1.9] row_idx 재조회 방식(findHealthRowIdx_) 대신, GET 응답에 이미 있는 _sheet_row를
+   그대로 백엔드에 넘김(index.js edit/delete가 sheet_row 파라미터를 직접 지원하도록 수정됨).
+   findHealthRowIdx_는 더 이상 안 쓰지만, 다른 곳에서 참조할 수도 있어 일단 남겨둠(무해한 미사용 함수). */
+var curEditHealth=null; // {metricType, row, tab}
+var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose',spo2:'Edit SpO2',temperature:'Edit Temperature',cholesterol:'Edit Cholesterol',womens:"Edit Women's Entry"};
 
 function findHealthRowIdx_(sheetRow){
   var anyDate=new Date().toISOString().slice(0,10);
@@ -1603,7 +1603,7 @@ function findHealthRowIdx_(sheetRow){
     });
 }
 function openHealthEdit(metricType,row){
-  curEditHealth={metricType:metricType,row:row};
+  curEditHealth={metricType:metricType,row:row,tab:(metricType==='womens'?'womens':'health')};
   document.getElementById('healthed-title').textContent=HEALTH_ED_TITLES[metricType]||'Edit Record';
   var fw=document.getElementById('healthed-fields');
   if(metricType==='weight'){
@@ -1639,10 +1639,23 @@ function openHealthEdit(metricType,row){
     fw.innerHTML='<div class="ff"><label class="fl">Temperature (°C)</label><input class="fi" type="number" step="0.1" id="healthed-temp" value="'+row.temperature_c+'"/></div>';
   } else if(metricType==='cholesterol'){
     fw.innerHTML='<div class="ff"><label class="fl">Cholesterol (mg/dL)</label><input class="fi" type="number" id="healthed-chol" value="'+row.cholesterol_mgdl+'"/></div>';
+  } else if(metricType==='womens'){
+    // [v1.9] Women 항목은 종류(period/증상/테스트결과/성관계/입덧)마다 채워진 컬럼이 달라서
+    // 고정 폼 대신, 실제 값이 있는 필드를 전부 나열하는 제네릭 폼으로 처리(women-sync.js의
+    // womensEntryToEditPayload()가 저장 시 필요한 형태로 되돌려줌).
+    var skip=['_sheet_row','stamp_date','notes'];
+    var html='';
+    Object.keys(row).forEach(function(key){
+      if(skip.indexOf(key)!==-1)return;
+      var val=row[key];if(val===null||val===undefined)val='';
+      html+='<div class="ff"><label class="fl">'+key+'</label><input class="fi womens-fi" type="text" data-key="'+key+'" value="'+val+'"/></div>';
+    });
+    fw.innerHTML=html;
   } else {
     fw.innerHTML='';
   }
   document.getElementById('healthed-notes').value=row.notes||'';
+  document.getElementById('healthed-notes').closest('.ff').style.display=(metricType==='womens')?'none':''; // womens는 별도 notes 필드 안 씀
   document.getElementById('healthed-st').textContent='';
   document.getElementById('health-edit-modal').classList.remove('h');
 }
@@ -1653,10 +1666,20 @@ document.getElementById('healthed-save').addEventListener('click',function(){
   if(!curEditHealth)return;
   var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
   var self=this;
-  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
-    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
-    var mt=curEditHealth.metricType;
-    var data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
+  // [v1.9] row_idx를 다시 세는 findHealthRowIdx_ 우회 로직 제거 — 백엔드가 이제 _sheet_row를
+  // 직접 받으므로(index.js edit/delete 라우트 수정) 재조회 없이 바로 그 행을 수정한다.
+  var mt=curEditHealth.metricType;
+  var data;
+  if(mt==='womens'){
+    // [v1.9] 제네릭 폼에서 편집한 값들을 원본 행 위에 덮어써 flat 객체를 만든 뒤,
+    // buildHealthRow_('womens')가 기대하는 중첩 구조로 변환(women-sync.js 공용 함수).
+    var edited=Object.assign({},curEditHealth.row);
+    document.querySelectorAll('#healthed-fields .womens-fi').forEach(function(inp){
+      edited[inp.dataset.key]=inp.value;
+    });
+    data=womensEntryToEditPayload(edited);
+  } else {
+    data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
     if(mt==='weight'){
       var wUnit=document.getElementById('healthed-weight-unit').value;
       var wVal=parseFloat(document.getElementById('healthed-weight').value)||0;
@@ -1668,27 +1691,24 @@ document.getElementById('healthed-save').addEventListener('click',function(){
     else if(mt==='spo2'){data.spo2_pct=parseFloat(document.getElementById('healthed-spo2').value)||0;}
     else if(mt==='temperature'){data.temperature_c=parseFloat(document.getElementById('healthed-temp').value)||0;}
     else if(mt==='cholesterol'){data.cholesterol_mgdl=parseFloat(document.getElementById('healthed-chol').value)||0;}
-    fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx,data:data})})
-      .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-      .then(function(res){
-        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
-        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
-      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
-  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+  }
+  fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:curEditHealth.tab,sheet_row:curEditHealth.row._sheet_row,data:data})})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(res){
+      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+      else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+    }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 document.getElementById('healthed-delete').addEventListener('click',function(){
   if(!curEditHealth||!confirm('Delete this record?'))return;
   var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
   var self=this;
-  findHealthRowIdx_(curEditHealth.row._sheet_row).then(function(idx){
-    if(idx===null){st.style.color='var(--red)';st.textContent='❌ Record not found.';self.disabled=false;return;}
-    fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:'health',row_idx:idx})})
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(res){
-        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
-        else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
-      }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
-  }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
+  fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:curEditHealth.tab,sheet_row:curEditHealth.row._sheet_row})})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(res){
+      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+      else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
+    }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 
 
@@ -1879,7 +1899,7 @@ function loadHealth(){
   fetch(BACKEND+'/api/me/health?date='+ym+'-01&period=monthly&tab=all',{credentials:'include'})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
-      _healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};
+      _healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};
       if(!data){renderTodayEvents(selectedDateStr);return;}
       function _byDate(arr,store){
         (Array.isArray(arr)?arr:[]).forEach(function(rec){
@@ -1892,9 +1912,10 @@ function loadHealth(){
       _byDate(data.water,_waterByDate);
       _byDate(data.sleep,_sleepByDate);
       _byDate(data.mood,_moodByDate);
+      _byDate(data.womens,_womensByDate); // [v1.9] tab=all 응답에 이미 포함됨 — 별도 호출 불필요
       renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};renderTodayEvents(selectedDateStr);});
+    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
