@@ -3,8 +3,9 @@
 // [B안] health_index0722.html / index_25_.html(dashboard) 공용 Women 동기화 로직.
 // 두 페이지 모두 <script src="/women-sync.js"></script>로 이 파일을 먼저 불러온 뒤 사용한다.
 //
-// 전제(각 페이지에 이미 정의돼 있어야 함): 전역 변수 BACKEND, 전역 함수 checkReauthStatus(status),
-// 전역 함수 todayIso(). 이 파일은 그 세 가지를 정의하지 않는다 — 페이지마다 이미 있는 걸 재사용한다.
+// 전제(각 페이지에 이미 정의돼 있어야 함): 전역 변수 BACKEND, 전역 함수 checkReauthStatus(status).
+// [수정] todayIso()는 페이지마다 있을 수도 없을 수도 있어 이 파일 자체에서 계산하도록 바꿈
+// (index_25_.html에는 이 함수가 없어서 실제로 문제가 발생했었음).
 //
 // 사용법:
 //   syncWomensFromBackend(function(){ /* 동기화 끝난 뒤 화면을 다시 그리는 코드 */ });
@@ -24,7 +25,10 @@
 // ============================================================================
 
 function syncWomensFromBackend(onDone) {
-  var d = todayIso();
+  // [수정] todayIso()에 의존하지 않고 이 파일 안에서 직접 계산(health_index0722.html의
+  // todayIso()와 동일한 형식 — YYYY-MM-DD, 로컬 타임존).
+  var n = new Date();
+  var d = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
   fetch(BACKEND + '/api/me/health?date=' + d + '&period=all&tab=womens', { credentials: 'include' })
     .then(function (r) { checkReauthStatus(r.status); return r.ok ? r.json() : null; })
     .then(function (data) {
