@@ -1087,6 +1087,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/women-sync.js"></script>
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
@@ -1806,53 +1807,10 @@ function loadTodayOverview(){
       })
       .catch(function(){pending--;if(pending===0)renderOverviewCards();});
   });
-  // [v4.1] Women's panel — 페이지를 열 때마다 백엔드(Women 시트)에서 전체 이력을 받아와
-  // localStorage 캐시를 최신 상태로 덮어쓴 다음, 기존 렌더링 로직(loadWomensFromLocalStorage)을
-  // 그대로 재사용. SMS/다른 기기에서 들어온 데이터도 이 화면에 반영되게 하기 위함.
-  syncWomensFromBackend();
-}
-
-// [v4.1] 백엔드 Women 시트 → localStorage 캐시 동기화.
-// period=all: matchesPeriod_()에서 daily/weekly/monthly가 아닌 값은 전부 통과되므로 전체 이력이 옴.
-// 같은 날짜에 행이 여러 개 있으면(append-only 특성) 배열에 나중에 오는 행(=시트에서 나중 행=최신 기록)이
-// 이전 값을 덮어쓰도록 그대로 순서대로 반영 — 별도 타임스탬프 비교 없이 "가장 최신"이 자동으로 채택됨.
-function syncWomensFromBackend(){
-  var d=todayIso();
-  fetch(BACKEND+'/api/me/health?date='+d+'&period=all&tab=womens',{credentials:'include'})
-    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){
-      var rows=(data&&Array.isArray(data.womens))?data.womens:[];
-      var toBool=function(v){return v===true||v==='TRUE'||v==='true';};
-      // [v1.4] 날짜별로 먼저 메모리에서 병합한 뒤 한 번에 localStorage에 씀.
-      // period_start/period_end: 값이 있는 행에서만 갱신(빈 칸이면 이전 값 유지) — 같은 날짜에
-      // symptom 전용 행(SMS로 "Cramps 3"만 보낸 경우 등)이 섞여도 period 상태가 안 지워짐.
-      // symptoms: 그날의 모든 행에서 이름:점수를 누적(마지막 행 채택이 아니라 합침).
-      var merged={};
-      rows.forEach(function(entry){
-        var dateKey=(entry.stamp_date||'').toString().slice(0,10);
-        if(!dateKey)return;
-        if(!merged[dateKey]) merged[dateKey]={date:dateKey, mode:'', period_start:false, period_end:false, symptoms:{}};
-        var m=merged[dateKey];
-        if(entry.mode) m.mode=entry.mode;
-        if(toBool(entry.period_start)) m.period_start=true;
-        if(toBool(entry.period_end))   m.period_end=true;
-        if(entry.symptom_severity){
-          (entry.symptom_severity+'').split(',').forEach(function(pair){
-            var parts=pair.split(':');
-            var name=(parts[0]||'').trim();
-            var sev=parseInt(parts[1]);
-            if(name) m.symptoms[name]=isNaN(sev)?3:sev;
-          });
-        }
-      });
-      Object.keys(merged).forEach(function(dateKey){
-        var m=merged[dateKey];
-        m.mode=m.mode||'period';
-        try{ localStorage.setItem('mie_womens_'+dateKey, JSON.stringify(m)); }catch(e){}
-      });
-    })
-    .catch(function(){})
-    .finally(function(){ loadWomensFromLocalStorage(); }); // 실패해도 기존 캐시로 렌더링은 계속됨
+  // [v1.7] Women's panel — 페이지를 열 때마다 공유 파일(women-sync.js)의 syncWomensFromBackend()로
+  // 백엔드(Women 시트) 전체 이력을 localStorage 캐시에 반영한 뒤, 기존 렌더링 로직을 재사용.
+  // (B안: 이 병합 로직은 index_25_.html과 함께 women-sync.js 한 곳에서만 관리함 — 중복 유지보수 방지)
+  syncWomensFromBackend(loadWomensFromLocalStorage);
 }
 
 function renderOverviewCards(){
