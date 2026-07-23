@@ -773,7 +773,10 @@ function initApp(){
   renderDraftList();
   // [v1.7] 페이지 로드 시 한 번, Women 시트 전체 이력을 백엔드에서 받아와 localStorage 캐시에 반영.
   // 날짜 이동(캘린더 클릭)은 이 캐시만 읽으므로 클릭할 때마다 다시 호출하지 않음(women-sync.js 참고).
-  syncWomensFromBackend(function(){ renderTodayEvents(selectedDateStr); });
+  // try/catch로 감싸서, 여기서 에러가 나도 뒤에 이어지는 init()의 나머지 단계(세션 체크 등)가
+  // 멈추지 않도록 함 — 예전에 이 한 줄 때문에 전체가 멈춘 적이 있어서 재발 방지 차원.
+  try { syncWomensFromBackend(function(){ renderTodayEvents(selectedDateStr); }); }
+  catch (e) { console.error('syncWomensFromBackend error:', e); }
 }
 
 /* ── Month/Year Picker ── */
