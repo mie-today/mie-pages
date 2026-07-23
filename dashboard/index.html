@@ -1179,12 +1179,24 @@ function renderTodayEvents(dateStr){
     c.appendChild(item);
   });
 
+  // [v2.2] Finance/Health 섹션을 접기/펼치기 가능하게(기본 접힘, 클릭하면 펼침).
+  // 상태는 날짜를 바꿔도 유지되도록 전역 변수에 저장.
+  if(typeof _dayViewSectionOpen==='undefined')window._dayViewSectionOpen={finance:false,health:false};
+
   // Finance 거래 렌더링 (teal 구분선)
   if(finRows.length){
     var divider=document.createElement('div');
-    divider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);padding:8px 2px 4px;';
-    divider.textContent='Finance';
+    divider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--teal);padding:8px 2px 4px;cursor:pointer;user-select:none;';
+    divider.textContent=(_dayViewSectionOpen.finance?'▾ ':'▸ ')+'Finance ('+finRows.length+')';
+    divider.addEventListener('click',function(){
+      _dayViewSectionOpen.finance=!_dayViewSectionOpen.finance;
+      renderTodayEvents(dateStr);
+    });
     c.appendChild(divider);
+
+    var financeWrap=document.createElement('div');
+    financeWrap.style.display=_dayViewSectionOpen.finance?'':'none';
+    c.appendChild(financeWrap);
 
     finRows.forEach(function(r){
       var color=TYPE_COLOR[r.type]||'var(--teal)';
@@ -1201,7 +1213,7 @@ function renderTodayEvents(dateStr){
       nm.appendChild(sub);
       bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
       item.addEventListener('click',function(){openFinEdit(r);});
-      c.appendChild(item);
+      financeWrap.appendChild(item);
     });
   }
 
@@ -1209,9 +1221,17 @@ function renderTodayEvents(dateStr){
   var hasHealthSection=healthRows.length||activityRows.length||waterRows.length||sleepRows.length||moodRows.length||womensRows.length;
   if(hasHealthSection){
     var hDivider=document.createElement('div');
-    hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;';
-    hDivider.textContent='Health';
+    hDivider.style.cssText='font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);padding:8px 2px 4px;cursor:pointer;user-select:none;';
+    hDivider.textContent=(_dayViewSectionOpen.health?'▾ ':'▸ ')+'Health';
+    hDivider.addEventListener('click',function(){
+      _dayViewSectionOpen.health=!_dayViewSectionOpen.health;
+      renderTodayEvents(dateStr);
+    });
     c.appendChild(hDivider);
+
+    var healthWrap=document.createElement('div');
+    healthWrap.style.display=_dayViewSectionOpen.health?'':'none';
+    c.appendChild(healthWrap);
 
     function addHealthRow(icon,label,val,onClick){
       var item=document.createElement('div');item.className='ev-item';item.style.cursor=onClick?'pointer':'default';
@@ -1224,7 +1244,7 @@ function renderTodayEvents(dateStr){
       nm.appendChild(sub);
       bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
       if(onClick)item.addEventListener('click',onClick);
-      c.appendChild(item);
+      healthWrap.appendChild(item);
     }
     healthRows.forEach(function(row){
       if(row.weight_kg){
@@ -1640,27 +1660,17 @@ function openHealthEdit(metricType,row){
   } else if(metricType==='cholesterol'){
     fw.innerHTML='<div class="ff"><label class="fl">Cholesterol (mg/dL)</label><input class="fi" type="number" id="healthed-chol" value="'+row.cholesterol_mgdl+'"/></div>';
   } else if(metricType==='womens'){
-    // [v1.9→v2.0] Women 항목은 종류(period/증상/테스트결과/성관계/입덧)마다 채워진 컬럼이 달라서
-    // 고정 폼 대신 제네릭 폼으로 처리하되, 실제 값이 있는 필드만 보여줌(빈 칸까지 다 나열하면
-    // 스크롤이 긴 목록이 돼서 BP처럼 짧고 명확한 폼이 되도록 필터링).
-    // 화면에 안 보이는 빈 필드도 저장 시 원래 값(빈 문자열) 그대로 유지되니 데이터 손실 없음.
-    var skip=['_sheet_row','stamp_date','notes'];
-    var html='';
-    var shown=0;
-    Object.keys(row).forEach(function(key){
-      if(skip.indexOf(key)!==-1)return;
-      var val=row[key];
-      if(val===null||val===undefined||val==='')return; // 값 없는 필드는 폼에서 숨김
-      html+='<div class="ff"><label class="fl">'+key+'</label><input class="fi womens-fi" type="text" data-key="'+key+'" value="'+val+'"/></div>';
-      shown++;
-    });
-    if(!shown)html='<div class="ff" style="color:var(--txt3);font-size:13px;">No editable fields for this entry.</div>';
-    fw.innerHTML=html;
+    // [v2.2] Women 항목은 "삭제만" 지원하기로 확정 — 수정 폼(입력창) 대신 읽기 전용 요약만 보여줌.
+    // 이유: Women 행은 SMS 메시지 하나가 그 순간의 정보 하나만 담고 있어서, 필드를 손으로
+    // 고치는 것보다 지우고 다시 정확하게 보내는 편이 더 안전하고 명확함.
+    fw.innerHTML='<div class="ff" style="color:var(--txt2);font-size:13px;line-height:1.6;">'
+      +(typeof describeWomensRawEntry==='function'?describeWomensRawEntry(row):'')+'</div>';
   } else {
     fw.innerHTML='';
   }
   document.getElementById('healthed-notes').value=row.notes||'';
   document.getElementById('healthed-notes').closest('.ff').style.display=(metricType==='womens')?'none':''; // womens는 별도 notes 필드 안 씀
+  document.getElementById('healthed-save').style.display=(metricType==='womens')?'none':''; // [v2.2] womens는 삭제만
   document.getElementById('healthed-st').textContent='';
   document.getElementById('health-edit-modal').classList.remove('h');
 }
