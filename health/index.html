@@ -2019,6 +2019,26 @@ function loadWomensFromLocalStorage(){
     if(_hlDotCache[dateStr].indexOf('period')===-1)_hlDotCache[dateStr].push('period');
   });
 
+  // [v2.3] Step 3.5: period_start/period_end 외의 Women's 데이터(ovulation/증상/테스트결과/
+  // 성관계/입덧)가 있는 날에도 'womens' 점(핑크, HL_DOT_COLORS.womens)을 찍음.
+  // 지금까지 이 색상은 정의만 돼 있고 실제로 쓰이는 곳이 없었음 — 이번에 실제로 연결함.
+  // 색상 체계 자체(weight=청록, bp=빨강 등)는 그대로 유지, period와 같은 핑크를 그대로 재사용.
+  allKeys.forEach(function(dateStr){
+    var raw=null;
+    try{raw=JSON.parse(localStorage.getItem('mie_womens_'+dateStr)||'null');}catch(e){}
+    if(!raw)return;
+    var hasOtherWomensData = !!(
+      raw.ovulation ||
+      (raw.symptoms && Object.keys(raw.symptoms).length) ||
+      raw.ov_test_result || raw.preg_test_result ||
+      raw.sex_count || raw.orgasm_count || raw.masturbation_count ||
+      raw.morning_sickness_count || raw.morning_sickness_severity
+    );
+    if(!hasOtherWomensData)return;
+    if(!_hlDotCache[dateStr])_hlDotCache[dateStr]=[];
+    if(_hlDotCache[dateStr].indexOf('womens')===-1)_hlDotCache[dateStr].push('womens');
+  });
+
   // Step 4: predicted next period (mirrors panel's getPredictedPeriodDates())
   var starts=allKeys.filter(function(k){
     try{var d=JSON.parse(localStorage.getItem('mie_womens_'+k)||'null');return d&&d.period_start;}
