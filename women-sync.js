@@ -127,3 +127,91 @@ function describeWomensCache(womensRaw) {
   if (!rows.length) rows.push({ label: "Women's", val: womensRaw.note || 'Period day' });
   return rows;
 }
+
+/**
+ * [v1.8] GET /api/me/health?tab=womens 가 돌려주는 "낱개 행 하나"(entry)를 사람이 읽을 표시로 변환.
+ * describeWomensCache()는 여러 행을 하루 단위로 합친 요약(캐시)용이고, 이건 화면에서
+ * "행 하나를 클릭 → 수정/삭제"를 만들기 위해 각 행을 있는 그대로 보여주는 용도.
+ * entry의 필드는 index.js의 parseHealthRows_(tabName==='womens')가 만드는 것과 정확히 같은 이름/형태.
+ */
+function describeWomensRawEntry(entry) {
+  var toBool = function (v) { return v === true || v === 'TRUE' || v === 'true'; };
+  var parts = [];
+  if (toBool(entry.period_start)) parts.push('Period Start');
+  if (toBool(entry.period_end))   parts.push('Period End');
+  if (toBool(entry.ovulation))     parts.push('Ovulation');
+  if (entry.symptoms)             parts.push(entry.symptoms);
+  if (entry.ov_test_result)       parts.push('Ovulation Test: ' + entry.ov_test_result);
+  if (entry.preg_test_result)     parts.push('Pregnancy Test: ' + entry.preg_test_result);
+  if (entry.sex_count) {
+    var sexBits = ['Sex x' + entry.sex_count];
+    if (entry.condom) sexBits.push('Condom: ' + entry.condom);
+    if (entry.orgasm_count) sexBits.push('Orgasm x' + entry.orgasm_count);
+    if (entry.masturbation_count) sexBits.push('Masturbation x' + entry.masturbation_count);
+    parts.push(sexBits.join(', '));
+  }
+  if (entry.morning_sickness_count || entry.morning_sickness_severity) {
+    var msBits = [];
+    if (entry.morning_sickness_count) msBits.push('x' + entry.morning_sickness_count);
+    if (entry.morning_sickness_severity) msBits.push(entry.morning_sickness_severity);
+    parts.push('Morning Sickness ' + msBits.join(' · '));
+  }
+  if (!parts.length) parts.push(entry.note || 'Entry');
+  return parts.join(' · ');
+}
+
+/**
+ * [v1.8] Women 항목 "수정" 저장 시 사용. GET에서 온 flat entry(예: entry.ov_test_result,
+ * entry.cervical_mucus_feeling, entry.sex_count …)를 index.js buildHealthRow_('womens')가
+ * 기대하는 중첩 객체 형태(entry.ovulation_test.result, entry.cervical_mucus.feeling,
+ * entry.sex.count …)로 되돌려 변환한다. 이 변환 없이 flat 필드를 그대로 보내면
+ * buildHealthRow_가 못 알아봐서 해당 컬럼들이 전부 빈 칸으로 저장돼버림 — 반드시 거쳐야 함.
+ */
+function womensEntryToEditPayload(entry) {
+  var toBool = function (v) { return v === true || v === 'TRUE' || v === 'true'; };
+  var toNumOrEmpty = function (v) { return (v === undefined || v === null || v === '') ? '' : Number(v); };
+
+  // symptoms/symptom_severity("Cramps:3, Headache:2")를 [{name,severity}]로 되돌림
+  var symptoms = [];
+  if (entry.symptom_severity) {
+    (entry.symptom_severity + '').split(',').forEach(function (pair) {
+      var p = pair.split(':');
+      var name = (p[0] || '').trim();
+      var sev = parseInt(p[1]);
+      if (name) symptoms.push({ name: name, severity: isNaN(sev) ? 3 : sev });
+    });
+  }
+
+  return {
+    stamp_date: entry.stamp_date,
+    mode: entry.mode || '',
+    period_start: toBool(entry.period_start),
+    period_end: toBool(entry.period_end),
+    ovulation: toBool(entry.ovulation),
+    ovulation_test: { result: entry.ov_test_result || '', time: entry.ov_test_time || '' },
+    pregnancy_test: { result: entry.preg_test_result || '', time: entry.preg_test_time || '' },
+    cervical_mucus: {
+      feeling: entry.cervical_mucus_feeling || '',
+      color: entry.cervical_mucus_color || '',
+      type: entry.cervical_mucus_type || ''
+    },
+    symptoms: symptoms,
+    medications: [], // 이 화면에선 medications 재구성 대상 밖(위젯 전용 유지)
+    sex: {
+      count: toNumOrEmpty(entry.sex_count),
+      condom: entry.condom === 'Yes' ? true : (entry.condom === 'No' ? false : null),
+      orgasm_count: toNumOrEmpty(entry.orgasm_count),
+      masturbation_count: toNumOrEmpty(entry.masturbation_count),
+      time: entry.sex_time || ''
+    },
+    morning_sickness: {
+      count: toNumOrEmpty(entry.morning_sickness_count),
+      severity: entry.morning_sickness_severity || '',
+      note: ''
+    },
+    clinic_visit: { type: '', note: '', next_appointment: '' }, // 이번 범위 밖(계속 빈 값 유지)
+    add_to_calendar: entry.add_to_calendar || '',
+    note: entry.note || '',
+    unit_pref: entry.unit_pref || 'metric'
+  };
+}
