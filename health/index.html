@@ -1085,6 +1085,17 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="modal-actions"><button class="btn-cancel" onclick="closeSecAddModal()">Cancel</button><button class="btn-save" onclick="saveSecAdd()">Add</button></div>
   </div>
 </div>
+<!-- [v1.9] Day View 항목 클릭 시 수정/삭제 팝업 -->
+<div class="modal-bg hidden" id="entry-edit-modal">
+  <div class="modal-box" style="max-width:340px;max-height:80vh;overflow-y:auto;">
+    <div class="modal-hd"><div class="modal-title" id="entry-edit-title">Edit Entry</div><button class="modal-x" onclick="closeEntryEditModal()">&times;</button></div>
+    <div id="entry-edit-fields"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" style="color:#d93025;" onclick="deleteHealthEntry()">Delete</button>
+      <button class="btn-save" onclick="saveHealthEntry()">Save</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="/women-sync.js"></script>
@@ -1412,6 +1423,7 @@ function openSecAddModal(section){_secAddTarget=section;var titles={logs:'Add to
 function closeSecAddModal(){document.getElementById('sec-add-modal').classList.add('hidden');}
 function saveSecAdd(){var name=document.getElementById('sec-add-name').value.trim();if(!name)return;var key=name.toLowerCase().replace(/\s+/g,'-'),container=document.getElementById(_secAddTarget+'-items');if(!container){closeSecAddModal();return;}var btn=document.createElement('button');btn.className='tl-item';btn.id='nav-'+key;var icons={logs:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/></svg>',trackers:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/></svg>',records:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="5" x2="12" y2="5"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="4" y1="11" x2="9" y2="11"/></svg>'};btn.innerHTML=(icons[_secAddTarget]||'')+name+'<button class="tl-hide-btn" onclick="hideItem(event,\''+key+'\')" title="Hide">–</button>';btn.onclick=function(){setView(key,btn);};container.appendChild(btn);closeSecAddModal();toast(name+' added');}
 document.getElementById('sec-add-modal').addEventListener('click',function(e){if(e.target===this)closeSecAddModal();});
+document.getElementById('entry-edit-modal').addEventListener('click',function(e){if(e.target===this)closeEntryEditModal();});
 
 function addNote(){var list=document.getElementById('notes-list'),item=document.createElement('div');item.className='note-item';item.innerHTML='<span class="note-bullet">•</span><span class="note-text" contenteditable="true"></span><button class="note-del" onclick="delNote(this)">×</button>';list.appendChild(item);item.querySelector('.note-text').focus();}
 function delNote(btn){var item=btn.parentElement;item.style.transition='opacity .15s';item.style.opacity='0';setTimeout(function(){item.remove();},150);}
@@ -2055,10 +2067,13 @@ function loadWomensFromLocalStorage(){
 
 // ── Right-col day detail: use correct tab per date ──
 // Replaces the generic /api/me/health?date= with proper tab calls
+var _hlLastDs = null; // [v1.9] 마지막으로 그린 날짜 — 수정/삭제 후 같은 날짜를 다시 그리기 위함
+
 function renderHlDayDetailCorrect(ds){
   var list=document.getElementById('health-day-list');
   var dateEl=document.getElementById('health-day-date');
   if(!list)return;
+  _hlLastDs=ds;
   if(dateEl){
     var d=new Date(ds+'T12:00:00');
     dateEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
@@ -2068,25 +2083,16 @@ function renderHlDayDetailCorrect(ds){
   var B='https://api.mie.today';
   var rows=[];
 
-  // ── Always read Women's data from localStorage first (synchronous, reliable) ──
-  var wRaw=null;
-  try{wRaw=JSON.parse(localStorage.getItem('mie_womens_'+ds)||'null');}catch(e){}
-  if(wRaw){
-    if(wRaw.period_start)rows.push({col:'#e91e63',label:'Period Start',val:'🌸'});
-    if(wRaw.period_end)  rows.push({col:'#e91e63',label:'Period End',  val:'🌸'});
-    // Also check if this date is within a period span (not just start/end day)
-    if(!wRaw.period_start&&!wRaw.period_end&&_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
-      rows.push({col:'#e91e63',label:'Period day',val:'🌸'});
-    }
-    if(wRaw.note)rows.push({col:'#e91e63',label:'Note',val:wRaw.note});
-  } else if(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
-    // Date is within a period span but has no specific localStorage entry
-    rows.push({col:'#e91e63',label:'Period day',val:'🌸'});
+  // [v1.9] period 연속 구간(시작/끝 날짜 사이, 그날 자체엔 명시적 행이 없는 날) 표시만 남김 —
+  // 실제 Period Start/End/증상/배란 등의 "행"은 전부 아래 Women's API 호출에서 가져와서
+  // 클릭 가능하게(수정/삭제) 만듦. localStorage 캐시는 이제 이 목록에서 안 씀(TRACKER 위젯 전용으로 유지).
+  if(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
+    rows.push({col:'#e91e63',label:"Women's",val:'Period (continuing)'});
   }
 
-  // ── API calls — 4 tabs in parallel ──
+  // ── API calls — 5 tabs in parallel ──
   // API returns 500 for dates with no data — treat same as empty
-  var pending=4;
+  var pending=5;
   function done(){
     pending--;
     if(pending>0)return;
@@ -2102,17 +2108,25 @@ function renderHlDayDetailCorrect(ds){
       var cat=document.createElement('span');cat.className='health-day-cat';cat.textContent=r.label;
       var amt=document.createElement('span');amt.className='health-day-val';amt.style.color=r.col;amt.textContent=r.val;
       row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);
+      // [v1.9] tab/sheetRow/raw이 있는 행(=실제 시트 행 하나에 대응)만 클릭 가능하게.
+      if(r.tab&&r.sheetRow){
+        row.style.cursor='pointer';
+        row.onclick=function(){ openHealthEntryModal(r); };
+      }
       list.appendChild(row);
     });
   }
 
-  // Food
+  // Food — [v1.9] 예전엔 하루치를 하나로 합쳐 보여줬는데, 그러면 어떤 행을 편집해야 할지
+  // 알 수 없어서 항목별로 나눔(각자 자기 _sheet_row를 가짐).
   fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=food',{credentials:'include'})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       var food=(data&&data.food)||[];
-      var total=food.reduce(function(s,f){return s+(f.calories_kcal||0);},0);
-      if(food.length)rows.push({col:'var(--blue)',label:'Food ('+food.length+')',val:Math.round(total)+' cal'});
+      food.forEach(function(e){
+        rows.push({col:'var(--blue)',label:'Food: '+(e.food_name||'Item'),
+          val:Math.round(e.calories_kcal||0)+' cal', tab:'food', sheetRow:e._sheet_row, raw:e});
+      });
       done();
     }).catch(function(){done();});
 
@@ -2122,24 +2136,26 @@ function renderHlDayDetailCorrect(ds){
     .then(function(data){
       var h=(data&&data.health)||[];
       h.forEach(function(e){
-        if(e.weight_kg)          rows.push({col:'var(--teal)',  label:'Weight',         val:e.weight_kg+' kg'});
-        if(e.blood_pressure_sys) rows.push({col:'var(--red)',   label:'Blood Pressure', val:e.blood_pressure_sys+'/'+e.blood_pressure_dia});
-        if(e.heart_rate_bpm)     rows.push({col:'var(--red)',   label:'Heart Rate',     val:e.heart_rate_bpm+' bpm'});
-        if(e.spo2_pct)           rows.push({col:'var(--cblue)',  label:'SpO2',          val:e.spo2_pct+'%'});
-        if(e.glucose_mgdl)       rows.push({col:'var(--purple)','label':'Glucose',      val:e.glucose_mgdl+' mg/dL'});
+        var meta={tab:'health', sheetRow:e._sheet_row, raw:e};
+        if(e.weight_kg)          rows.push(Object.assign({col:'var(--teal)',  label:'Weight',         val:e.weight_kg+' kg'},meta));
+        if(e.blood_pressure_sys) rows.push(Object.assign({col:'var(--red)',   label:'Blood Pressure', val:e.blood_pressure_sys+'/'+e.blood_pressure_dia},meta));
+        if(e.heart_rate_bpm)     rows.push(Object.assign({col:'var(--red)',   label:'Heart Rate',     val:e.heart_rate_bpm+' bpm'},meta));
+        if(e.spo2_pct)           rows.push(Object.assign({col:'var(--cblue)', label:'SpO2',           val:e.spo2_pct+'%'},meta));
+        if(e.glucose_mgdl)       rows.push(Object.assign({col:'var(--purple)',label:'Glucose',        val:e.glucose_mgdl+' mg/dL'},meta));
       });
       done();
     }).catch(function(){done();});
 
-  // Activity
+  // Activity — [v1.9] Food와 동일한 이유로 항목별로 나눔.
   fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=activity',{credentials:'include'})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       var acts=(data&&data.activity)||[];
-      var totalCal=acts.reduce(function(s,a){return s+(a.calories_burned_kcal||0);},0);
-      var totalSteps=acts.reduce(function(s,a){return s+(a.steps||0);},0);
-      if(acts.length)rows.push({col:'var(--amber)',label:'Activity',
-        val:totalSteps?totalSteps.toLocaleString()+' steps':Math.round(totalCal)+' kcal'});
+      acts.forEach(function(a){
+        var val=a.steps?a.steps.toLocaleString()+' steps':Math.round(a.calories_burned_kcal||0)+' kcal';
+        rows.push({col:'var(--amber)',label:'Activity: '+(a.type||a.category||'Item'),val:val,
+          tab:'activity', sheetRow:a._sheet_row, raw:a});
+      });
       done();
     }).catch(function(){done();});
 
@@ -2150,10 +2166,98 @@ function renderHlDayDetailCorrect(ds){
       var sleep=(data&&data.sleep)||[];
       sleep.forEach(function(s){
         if(s.duration_hr)rows.push({col:'var(--cblue)',label:'Sleep',
-          val:Math.floor(s.duration_hr)+'h'+(s.quality_1to5?' · Q'+s.quality_1to5+'/5':'')});
+          val:Math.floor(s.duration_hr)+'h'+(s.quality_1to5?' · Q'+s.quality_1to5+'/5':''),
+          tab:'sleep', sheetRow:s._sheet_row, raw:s});
       });
       done();
     }).catch(function(){done();});
+
+  // Women's — [v1.9] 신규. localStorage 캐시(합쳐진 요약) 대신 그날의 실제 개별 행을 그대로 받아와서,
+  // 각 행을 describeWomensRawEntry()로 표시하고 클릭 시 그 행 하나를 수정/삭제할 수 있게 함.
+  fetch(B+'/api/me/health?date='+ds+'&period=daily&tab=womens',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      var womens=(data&&data.womens)||[];
+      womens.forEach(function(e){
+        rows.push({col:'#e91e63',label:"Women's",val:describeWomensRawEntry(e),
+          tab:'womens', sheetRow:e._sheet_row, raw:e});
+      });
+      done();
+    }).catch(function(){done();});
+}
+
+// [v1.9] Day View 항목 클릭 → 수정/삭제 팝업
+var _entryEditState=null;
+
+function tabDisplayName_(tab){
+  var map={food:'Food',health:'Health',activity:'Activity',sleep:'Sleep',womens:"Women's"};
+  return map[tab]||tab;
+}
+
+function openHealthEntryModal(rowInfo){
+  _entryEditState={tab:rowInfo.tab, sheetRow:rowInfo.sheetRow, raw:Object.assign({},rowInfo.raw)};
+  var titleEl=document.getElementById('entry-edit-title');
+  if(titleEl)titleEl.textContent=tabDisplayName_(rowInfo.tab)+' Entry';
+  var wrap=document.getElementById('entry-edit-fields');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  var skip=['_sheet_row','stamp_date'];
+  Object.keys(_entryEditState.raw).forEach(function(key){
+    if(skip.indexOf(key)!==-1)return;
+    var val=_entryEditState.raw[key];
+    if(val===null||val===undefined)val='';
+    var field=document.createElement('div');field.className='f-field';
+    var lbl=document.createElement('label');lbl.className='f-lbl';lbl.textContent=key;
+    var inp=document.createElement('input');inp.className='f-input';inp.dataset.key=key;
+    inp.type=(typeof val==='number')?'number':'text';
+    inp.value=val;
+    field.appendChild(lbl);field.appendChild(inp);
+    wrap.appendChild(field);
+  });
+  var modal=document.getElementById('entry-edit-modal');
+  if(modal)modal.classList.remove('hidden');
+}
+
+function closeEntryEditModal(){
+  var modal=document.getElementById('entry-edit-modal');
+  if(modal)modal.classList.add('hidden');
+  _entryEditState=null;
+}
+
+function saveHealthEntry(){
+  if(!_entryEditState)return;
+  var wrap=document.getElementById('entry-edit-fields');
+  var inputs=wrap?wrap.querySelectorAll('input[data-key]'):[];
+  var edited=Object.assign({},_entryEditState.raw);
+  inputs.forEach(function(inp){
+    var key=inp.dataset.key,v=inp.value;
+    edited[key]=(inp.type==='number'&&v!=='')?parseFloat(v):v;
+  });
+  // [v1.9] Women 탭만 flat→nested 변환 필요(buildHealthRow_가 기대하는 형태) — women-sync.js 참고.
+  var payload=(_entryEditState.tab==='womens')?womensEntryToEditPayload(edited):edited;
+  fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tab:_entryEditState.tab, sheet_row:_entryEditState.sheetRow, data:payload})})
+    .then(function(r){checkReauthStatus(r.status);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(){
+      toast('Updated','success');
+      closeEntryEditModal();
+      if(_hlLastDs)renderHlDayDetailCorrect(_hlLastDs);
+    })
+    .catch(function(err){toast('Update failed: '+err.message,'error');});
+}
+
+function deleteHealthEntry(){
+  if(!_entryEditState)return;
+  if(!confirm('Delete this entry? This cannot be undone.'))return;
+  fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({tab:_entryEditState.tab, sheet_row:_entryEditState.sheetRow})})
+    .then(function(r){checkReauthStatus(r.status);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(){
+      toast('Deleted','success');
+      closeEntryEditModal();
+      if(_hlLastDs)renderHlDayDetailCorrect(_hlLastDs);
+    })
+    .catch(function(err){toast('Delete failed: '+err.message,'error');});
 }
 
 // Remove old fetch interceptor - womens uses localStorage, not API
