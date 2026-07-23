@@ -2202,10 +2202,13 @@ function openHealthEntryModal(rowInfo){
   if(!wrap)return;
   wrap.innerHTML='';
   var skip=['_sheet_row','stamp_date'];
+  var shown=0;
   Object.keys(_entryEditState.raw).forEach(function(key){
     if(skip.indexOf(key)!==-1)return;
     var val=_entryEditState.raw[key];
-    if(val===null||val===undefined)val='';
+    // [v2.0] 값이 없는 필드는 폼에서 숨김(특히 Women 행은 종류마다 대부분 빈 칸이라
+    // 전부 보여주면 스크롤이 매우 길어짐). 화면에 없어도 저장 시 원래 값 그대로 유지됨.
+    if(val===null||val===undefined||val==='')return;
     var field=document.createElement('div');field.className='f-field';
     var lbl=document.createElement('label');lbl.className='f-lbl';lbl.textContent=key;
     var inp=document.createElement('input');inp.className='f-input';inp.dataset.key=key;
@@ -2213,7 +2216,13 @@ function openHealthEntryModal(rowInfo){
     inp.value=val;
     field.appendChild(lbl);field.appendChild(inp);
     wrap.appendChild(field);
+    shown++;
   });
+  if(!shown){
+    var em=document.createElement('div');em.className='f-field';em.style.color='var(--txt3)';em.style.fontSize='13px';
+    em.textContent='No editable fields for this entry.';
+    wrap.appendChild(em);
+  }
   var modal=document.getElementById('entry-edit-modal');
   if(modal)modal.classList.remove('hidden');
 }
