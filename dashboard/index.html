@@ -419,6 +419,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<script src="/women-sync.js"></script>
 <script>
 'use strict';
 var BACKEND='https://api.mie.today';
@@ -770,6 +771,9 @@ function initApp(){
   renderTodayEvents();
   renderTasks();
   renderDraftList();
+  // [v1.7] 페이지 로드 시 한 번, Women 시트 전체 이력을 백엔드에서 받아와 localStorage 캐시에 반영.
+  // 날짜 이동(캘린더 클릭)은 이 캐시만 읽으므로 클릭할 때마다 다시 호출하지 않음(women-sync.js 참고).
+  syncWomensFromBackend(function(){ renderTodayEvents(selectedDateStr); });
 }
 
 /* ── Month/Year Picker ── */
@@ -1242,9 +1246,9 @@ function renderTodayEvents(dateStr){
       if(row.mood)addHealthRow('😊','Mood',row.mood);
     });
     if(womensRaw){
-      if(womensRaw.period_start)addHealthRow('🌸',"Women's",'Period Start');
-      if(womensRaw.period_end)addHealthRow('🌸',"Women's",'Period End');
-      if(!womensRaw.period_start&&!womensRaw.period_end)addHealthRow('🌸',"Women's",womensRaw.note||'Period day');
+      // [v1.7] period/symptoms뿐 아니라 ovulation/test_result/sex/morning_sickness까지
+      // women-sync.js의 describeWomensCache()로 전부 표시(공유 파일 — health 페이지와 동일 로직).
+      describeWomensCache(womensRaw).forEach(function(r){ addHealthRow('🌸', r.label, r.val); });
     }
     if(activityRows.length){
       var totalSteps=activityRows.reduce(function(s,r){return s+(r.steps||0);},0);
