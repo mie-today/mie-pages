@@ -1640,16 +1640,21 @@ function openHealthEdit(metricType,row){
   } else if(metricType==='cholesterol'){
     fw.innerHTML='<div class="ff"><label class="fl">Cholesterol (mg/dL)</label><input class="fi" type="number" id="healthed-chol" value="'+row.cholesterol_mgdl+'"/></div>';
   } else if(metricType==='womens'){
-    // [v1.9] Women 항목은 종류(period/증상/테스트결과/성관계/입덧)마다 채워진 컬럼이 달라서
-    // 고정 폼 대신, 실제 값이 있는 필드를 전부 나열하는 제네릭 폼으로 처리(women-sync.js의
-    // womensEntryToEditPayload()가 저장 시 필요한 형태로 되돌려줌).
+    // [v1.9→v2.0] Women 항목은 종류(period/증상/테스트결과/성관계/입덧)마다 채워진 컬럼이 달라서
+    // 고정 폼 대신 제네릭 폼으로 처리하되, 실제 값이 있는 필드만 보여줌(빈 칸까지 다 나열하면
+    // 스크롤이 긴 목록이 돼서 BP처럼 짧고 명확한 폼이 되도록 필터링).
+    // 화면에 안 보이는 빈 필드도 저장 시 원래 값(빈 문자열) 그대로 유지되니 데이터 손실 없음.
     var skip=['_sheet_row','stamp_date','notes'];
     var html='';
+    var shown=0;
     Object.keys(row).forEach(function(key){
       if(skip.indexOf(key)!==-1)return;
-      var val=row[key];if(val===null||val===undefined)val='';
+      var val=row[key];
+      if(val===null||val===undefined||val==='')return; // 값 없는 필드는 폼에서 숨김
       html+='<div class="ff"><label class="fl">'+key+'</label><input class="fi womens-fi" type="text" data-key="'+key+'" value="'+val+'"/></div>';
+      shown++;
     });
+    if(!shown)html='<div class="ff" style="color:var(--txt3);font-size:13px;">No editable fields for this entry.</div>';
     fw.innerHTML=html;
   } else {
     fw.innerHTML='';
