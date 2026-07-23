@@ -2083,12 +2083,11 @@ function renderHlDayDetailCorrect(ds){
   var B='https://api.mie.today';
   var rows=[];
 
-  // [v1.9] period 연속 구간(시작/끝 날짜 사이, 그날 자체엔 명시적 행이 없는 날) 표시만 남김 —
-  // 실제 Period Start/End/증상/배란 등의 "행"은 전부 아래 Women's API 호출에서 가져와서
-  // 클릭 가능하게(수정/삭제) 만듦. localStorage 캐시는 이제 이 목록에서 안 씀(TRACKER 위젯 전용으로 유지).
-  if(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0){
-    rows.push({col:'#e91e63',label:"Women's",val:'Period (continuing)'});
-  }
+  // [v2.1] period 연속 구간(시작/끝 날짜 사이, 그날 자체엔 명시적 행이 없는 날) 표시는
+  // "실제 Women's 행이 하나도 없을 때만" 보여줘야 함 — 예전엔 무조건 먼저 넣어서, Period Start
+  // 같은 진짜 행이 있는 날에도 "Period (continuing)"이 같이 뜨는 중복 버그가 있었음.
+  // 그래서 판단을 done() 안, 실제 데이터가 다 도착한 뒤로 미룸.
+  var isPeriodSpanDay=!!(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0);
 
   // ── API calls — 5 tabs in parallel ──
   // API returns 500 for dates with no data — treat same as empty
@@ -2096,6 +2095,11 @@ function renderHlDayDetailCorrect(ds){
   function done(){
     pending--;
     if(pending>0)return;
+    // [v2.1] 실제 Women's 행(tab==='womens')이 하나도 없을 때만 "연속 구간" 표시를 추가.
+    var hasRealWomensRow=rows.some(function(r){return r.tab==='womens';});
+    if(isPeriodSpanDay&&!hasRealWomensRow){
+      rows.push({col:'#e91e63',label:"Women's",val:'Period (continuing)'});
+    }
     // Render all collected rows
     if(!rows.length){
       list.innerHTML='<div class="health-day-empty">No entries for this date.</div>';
