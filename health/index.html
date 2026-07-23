@@ -1810,7 +1810,9 @@ function loadTodayOverview(){
   // [v1.7] Women's panel — 페이지를 열 때마다 공유 파일(women-sync.js)의 syncWomensFromBackend()로
   // 백엔드(Women 시트) 전체 이력을 localStorage 캐시에 반영한 뒤, 기존 렌더링 로직을 재사용.
   // (B안: 이 병합 로직은 index_25_.html과 함께 women-sync.js 한 곳에서만 관리함 — 중복 유지보수 방지)
-  syncWomensFromBackend(loadWomensFromLocalStorage);
+  // try/catch로 감싸서, 여기서 에러가 나도 뒤에 이어지는 초기화가 멈추지 않도록 방어.
+  try { syncWomensFromBackend(loadWomensFromLocalStorage); }
+  catch (e) { console.error('syncWomensFromBackend error:', e); }
 }
 
 function renderOverviewCards(){
