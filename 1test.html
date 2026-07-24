@@ -234,13 +234,23 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-pop-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px;padding-top:8px;border-top:.5px solid var(--b1);}
 .cal-pop-sec:first-child{border-top:none;margin-top:0;padding-top:0;}
 
-/* ── Right column: Finance mini / Health mini / Input (25% / 25% / 50%) ── */
+/* ── Right column: Finance mini / Health mini / Input ──
+   요청 반영: 상단 50% 안에서 Finance 60% : Health 40% → 전체 기준 Finance 30% : Health 20% : Input 50%
+   (flex 비율 3 : 2 : 5) */
 .col-right-inner{display:flex;flex-direction:column;gap:10px;min-height:0;height:100%;overflow:hidden;}
-.mini-card{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-.mini-card .card-hd{padding:8px 12px;}
+.mini-card{min-height:0;display:flex;flex-direction:column;overflow:hidden;}
+#finance-mini-card{flex:3;}
+#health-mini-card{flex:2;}
+.mini-card .card-hd{padding:8px 12px;flex-shrink:0;}
 .mini-card .card-hd-title{font-size:9.5px;}
 .mini-card .card-body{padding:8px 12px 10px;overflow-y:auto;}
-.input-col-wrap{flex:2;min-height:0;display:flex;flex-direction:column;gap:0;}
+.input-col-wrap{flex:5;min-height:0;display:flex;flex-direction:column;gap:0;}
+/* 오른쪽 › 로 패널을 접으면 Finance/Health까지 함께 숨기고 얇은 아이콘 스트립만 남긴다 */
+.col-right-inner.rp-collapsed .mini-card{display:none;}
+.col-right-inner.rp-collapsed .input-col-wrap{flex:1;}
+
+/* Health mini 카드 헤더의 기간 선택(Daily/Weekly/Monthly) */
+.hm-period-sel{font-size:9px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 16px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
 
 /* Finance mini card */
 .fm-title{font-size:11px;font-weight:600;color:var(--txt);margin-bottom:6px;}
@@ -263,20 +273,12 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .fm-cell-note.ok{color:var(--teal);}
 .fm-cell-note.over{color:var(--red);}
 
-/* Health mini card */
-.hm-row{display:flex;align-items:stretch;gap:6px;}
-.hm-row+.hm-row{margin-top:8px;}
-.hm-icons{flex:1;display:flex;justify-content:space-between;gap:2px;min-width:0;}
-.hm-item{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;flex:1;}
+/* Health mini card — 12개 아이콘, 6열 × 2행 그리드 (Skeleton Muscle Mass / Body Fat 제외) */
+.hm-grid{display:grid;grid-template-columns:repeat(6,1fr);row-gap:10px;column-gap:2px;}
+.hm-item{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;}
 .hm-ic{font-size:13px;line-height:1;}
-.hm-lbl-top{font-size:8px;color:var(--txt3);text-align:center;line-height:1.15;height:18px;display:flex;align-items:center;justify-content:center;}
-.hm-val{font-size:11px;font-weight:600;color:var(--txt);}
-.hm-lbl{font-size:8px;color:var(--txt3);text-align:center;}
-.hm-vitals-mini{display:flex;flex-direction:column;gap:5px;justify-content:center;flex-shrink:0;padding-left:6px;border-left:.5px solid var(--b1);}
-.hm-vmini{display:flex;align-items:center;gap:4px;font-size:9px;white-space:nowrap;}
-.hm-vmini-ic{font-size:11px;}
-.hm-vmini-val{font-weight:600;color:var(--txt);font-size:10px;}
-.hm-vmini-lbl{color:var(--txt3);font-size:8px;}
+.hm-val{font-size:10.5px;font-weight:600;color:var(--txt);white-space:nowrap;}
+.hm-lbl{font-size:7.5px;color:var(--txt3);text-align:center;line-height:1.1;}
 
 /* ── Bottom nav ── */
 .bot-nav{flex-shrink:0;height:48px;background:var(--bg);border-top:.5px solid var(--b1);display:flex;align-items:stretch;}
@@ -635,33 +637,28 @@ function financeMiniHTML(){
    달력에서 날짜를 클릭(selectedDateStr)하면 그 날짜 기준으로 갱신된다(renderHealthMini 참고). */
 function healthMiniHTML(){
   return '<div class="card mini-card" id="health-mini-card">'
-    +'<div class="card-hd"><span class="card-hd-title">💪 Health</span></div>'
+    +'<div class="card-hd">'
+      +'<span class="card-hd-title">💪 Health</span>'
+      +'<select class="hm-period-sel" id="hm-period-sel" onchange="onHealthMiniPeriodChange(this.value)">'
+        +'<option value="daily" selected>Daily</option>'
+        +'<option value="weekly">Weekly</option>'
+        +'<option value="monthly">Monthly</option>'
+      +'</select>'
+    +'</div>'
     +'<div class="card-body">'
-      +'<div class="hm-row">'
-        +'<div class="hm-icons">'
-          +'<div class="hm-item"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'
-          +'<div class="hm-item"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'
-          +'<div class="hm-item"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'
-          +'<div class="hm-item"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'
-          +'<div class="hm-item"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'
-        +'</div>'
-        +'<div class="hm-vitals-mini">'
-          +'<div class="hm-vmini"><span class="hm-vmini-ic">🩺</span><span class="hm-vmini-val" id="hm-bp">—</span><span class="hm-vmini-lbl">Blood Pressure</span></div>'
-          +'<div class="hm-vmini"><span class="hm-vmini-ic">❤️</span><span class="hm-vmini-val" id="hm-hr">—</span><span class="hm-vmini-lbl">Heart Rate</span></div>'
-        +'</div>'
-      +'</div>'
-      +'<div class="hm-row">'
-        +'<div class="hm-icons">'
-          +'<div class="hm-item"><div class="hm-lbl-top">Weight</div><div class="hm-val" id="hm-weight">—</div></div>'
-          +'<div class="hm-item"><div class="hm-lbl-top">Skeleton<br>Muscle Mass</div><div class="hm-val" id="hm-muscle">—</div></div>'
-          +'<div class="hm-item"><div class="hm-lbl-top">Body Fat</div><div class="hm-val" id="hm-fat">—</div></div>'
-          +'<div class="hm-item"><div class="hm-lbl-top">SLEEP</div><div class="hm-val" id="hm-sleep">—</div></div>'
-          +'<div class="hm-item"><div class="hm-lbl-top">MOOD</div><div class="hm-val" id="hm-mood">—</div></div>'
-        +'</div>'
-        +'<div class="hm-vitals-mini">'
-          +'<div class="hm-vmini"><span class="hm-vmini-ic">🫁</span><span class="hm-vmini-val" id="hm-spo2">—</span><span class="hm-vmini-lbl">SpO2</span></div>'
-          +'<div class="hm-vmini"><span class="hm-vmini-ic">🩸</span><span class="hm-vmini-val" id="hm-glucose">—</span><span class="hm-vmini-lbl">Glucose</span></div>'
-        +'</div>'
+      +'<div class="hm-grid">'
+        +'<div class="hm-item"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">⚖️</div><div class="hm-val" id="hm-weight">—</div><div class="hm-lbl">Weight</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">🩺</div><div class="hm-val" id="hm-bp">—</div><div class="hm-lbl">Blood Pressure</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">❤️</div><div class="hm-val" id="hm-hr">—</div><div class="hm-lbl">Heart Rate</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">🫁</div><div class="hm-val" id="hm-spo2">—</div><div class="hm-lbl">SpO2</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">🩸</div><div class="hm-val" id="hm-glucose">—</div><div class="hm-lbl">Glucose</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'
+        +'<div class="hm-item"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'
       +'</div>'
     +'</div>'
   +'</div>';
@@ -867,6 +864,9 @@ function applyInputOpenState(){
   var card=document.querySelector('.input-card');
   if(strip)strip.style.display=inputOpen?'none':'flex';
   if(card)card.style.display=inputOpen?'flex':'none';
+  // '›'로 접으면 Finance/Health 미니 카드까지 함께 숨기고 얇은 아이콘 스트립만 남긴다
+  var innerWrap=document.querySelector('.col-right-inner');
+  if(innerWrap)innerWrap.classList.toggle('rp-collapsed',!inputOpen);
 }
 
 function toggleInputPanel(open){
@@ -2131,68 +2131,127 @@ function loadHealth(){
 
 /* ── Health mini 카드 렌더링 (health_index_28_.html의 renderOverviewCards()를 축소 이식) ──
    food(칼로리) 항목은 이미지 목업에 없어 제외했고, activity/health/water/sleep/mood만 사용.
-   달력에서 선택된 날짜(selectedDateStr) 기준 — 아직 아무 날짜도 클릭 안 했으면 오늘 날짜. */
+   Skeleton Muscle Mass / Body Fat은 요청에 따라 제거 — 총 12개 아이콘, 6열×2행.
+   기간 선택(Daily/Weekly/Monthly)은 health_index_28_.html과 같은 방식의 드롭다운이지만,
+   그 파일은 기간과 무관하게 항상 합계(Total)를 보여준다 — 이번 요청은 그것과 달리
+   "Weekly/Monthly에서는 합계가 아니라 평균을 보여달라"는 것이므로, 여기서는 원본에
+   없는 평균 계산 로직을 새로 작성했다.
+   주간 범위: 월요일~일요일(원본 renderDate()의 주 정의와 동일).
+   월간 범위: 현재 달력에 표시 중인 달 전체(이 대시보드가 로드한 데이터 범위와 동일 —
+   달을 넘어가는 주간 계산은 로드되지 않은 날짜라 데이터가 없는 것으로 처리됨). */
+var healthMiniPeriod='daily';
+function onHealthMiniPeriodChange(v){healthMiniPeriod=v;renderHealthMini(_healthMiniDate());}
+
 function _healthMiniDate(){
   if(selectedDateStr)return selectedDateStr;
   var n=new Date();return isoD(n.getFullYear(),n.getMonth(),n.getDate());
 }
+
+// 기준 날짜(ds)를 포함하는 기간의 날짜 문자열 배열을 반환
+function _healthMiniDateRange(period,ds){
+  if(period==='daily')return [ds];
+  var d=new Date(ds+'T12:00:00');
+  if(period==='weekly'){
+    var dow=d.getDay();
+    var diffToMon=(dow===0)?-6:(1-dow);
+    var mon=new Date(d);mon.setDate(d.getDate()+diffToMon);
+    var out=[];
+    for(var i=0;i<7;i++){var dd=new Date(mon);dd.setDate(mon.getDate()+i);out.push(isoD(dd.getFullYear(),dd.getMonth(),dd.getDate()));}
+    return out;
+  }
+  // monthly — 현재 그 날짜가 속한 달 전체
+  var y=d.getFullYear(),m=d.getMonth(),dim=new Date(y,m+1,0).getDate();
+  var out2=[];for(var j=1;j<=dim;j++)out2.push(isoD(y,m,j));
+  return out2;
+}
+
 function renderHealthMini(ds){
   ds=ds||_healthMiniDate();
+  var period=healthMiniPeriod;
+  var dates=_healthMiniDateRange(period,ds);
+  var isAvg=(period!=='daily'); // Weekly/Monthly는 Total 대신 Average
   var unit=getUnitPref?getUnitPref():'metric';
-  var acts=_activityByDate[ds]||[];
-  var burned=0,steps=0,distKm=0;
-  acts.forEach(function(a){
-    burned+=(a.calories_burned_kcal||a.calories_burned||0);
-    steps+=(a.steps||0);
-    distKm+=(a.distance_km||0);
-  });
   function setTxt(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
+
+  // ── Activity(steps/거리/활동칼로리) — 기록이 있는 날짜 수로 나눠 평균 ──
+  var burnedSum=0,stepsSum=0,distSum=0,actDays=0;
+  dates.forEach(function(d){
+    var rows=_activityByDate[d]||[];
+    if(!rows.length)return;
+    actDays++;
+    rows.forEach(function(a){burnedSum+=(a.calories_burned_kcal||a.calories_burned||0);stepsSum+=(a.steps||0);distSum+=(a.distance_km||0);});
+  });
+  var burned=isAvg?(actDays?burnedSum/actDays:0):burnedSum;
+  var steps=isAvg?(actDays?stepsSum/actDays:0):stepsSum;
+  var distKm=isAvg?(actDays?distSum/actDays:0):distSum;
   setTxt('hm-cals',burned?Math.round(burned).toLocaleString():'—');
-  setTxt('hm-steps',steps?steps.toLocaleString():'—');
+  setTxt('hm-steps',steps?Math.round(steps).toLocaleString():'—');
   setTxt('hm-activecal',burned?Math.round(burned).toLocaleString():'—');
   var distLblEl=document.getElementById('hm-dist-lbl');
-  if(unit==='us'){
-    if(distLblEl)distLblEl.textContent='mi';
-    setTxt('hm-dist',distKm?(distKm*0.621371).toFixed(2):'—');
-  }else{
-    if(distLblEl)distLblEl.textContent='km';
-    setTxt('hm-dist',distKm?distKm.toFixed(2):'—');
-  }
+  if(unit==='us'){if(distLblEl)distLblEl.textContent='mi';setTxt('hm-dist',distKm?(distKm*0.621371).toFixed(2):'—');}
+  else{if(distLblEl)distLblEl.textContent='km';setTxt('hm-dist',distKm?distKm.toFixed(2):'—');}
 
-  var waterRows=_waterByDate[ds]||[];
-  var waterMl=0;waterRows.forEach(function(w){waterMl+=(w.amount_ml||w.value||0);});
+  // ── Water — 기록이 있는 날짜 수로 나눠 평균 ──
+  var waterSum=0,waterDays=0;
+  dates.forEach(function(d){
+    var rows=_waterByDate[d]||[];
+    if(!rows.length)return;
+    waterDays++;
+    rows.forEach(function(w){waterSum+=(w.amount_ml||w.value||0);});
+  });
+  var waterMl=isAvg?(waterDays?waterSum/waterDays:0):waterSum;
   var waterLblEl=document.getElementById('hm-water-lbl');
-  if(unit==='us'){
-    if(waterLblEl)waterLblEl.textContent='fl oz';
-    setTxt('hm-water',waterMl?Math.round(waterMl/29.5735).toLocaleString():'—');
-  }else{
-    if(waterLblEl)waterLblEl.textContent='ml';
-    setTxt('hm-water',waterMl?Math.round(waterMl).toLocaleString():'—');
-  }
+  if(unit==='us'){if(waterLblEl)waterLblEl.textContent='fl oz';setTxt('hm-water',waterMl?Math.round(waterMl/29.5735).toLocaleString():'—');}
+  else{if(waterLblEl)waterLblEl.textContent='ml';setTxt('hm-water',waterMl?Math.round(waterMl).toLocaleString():'—');}
 
-  var healthArr=_healthByDate[ds]||[];
-  var lH=healthArr.length?healthArr[healthArr.length-1]:null;
-  setTxt('hm-weight',(lH&&lH.weight_kg)?(unit==='us'?(lH.weight_kg*2.20462).toFixed(1)+' lb':lH.weight_kg+' kg'):'—');
-  setTxt('hm-muscle','—'); // 백엔드 응답에 골격근량 필드 없음 — 추가되면 여기만 수정
-  setTxt('hm-fat','—');    // 백엔드 응답에 체지방률 필드 없음 — 추가되면 여기만 수정
-  setTxt('hm-bp',(lH&&lH.blood_pressure_sys&&lH.blood_pressure_dia)?(lH.blood_pressure_sys+'/'+lH.blood_pressure_dia):'—');
-  setTxt('hm-hr',(lH&&lH.heart_rate_bpm)?(lH.heart_rate_bpm+' bpm'):'—');
-  setTxt('hm-spo2',(lH&&lH.spo2_pct)?(lH.spo2_pct+'%'):'—');
-  setTxt('hm-glucose',(lH&&lH.glucose_mgdl)?(lH.glucose_mgdl+' mg/dL'):'—');
+  // ── Weight/BP/HR/SpO2/Glucose — 기록된 값들의 평균(daily는 그날의 마지막 값) ──
+  var wSum=0,wN=0,sysSum=0,diaSum=0,bpN=0,hrSum=0,hrN=0,spSum=0,spN=0,gluSum=0,gluN=0;
+  dates.forEach(function(d){
+    var rows=_healthByDate[d]||[];
+    if(!rows.length)return;
+    var use=isAvg?rows:[rows[rows.length-1]]; // daily는 그날의 마지막 기록만 사용(기존 방식 유지)
+    use.forEach(function(r){
+      if(r.weight_kg){wSum+=r.weight_kg;wN++;}
+      if(r.blood_pressure_sys&&r.blood_pressure_dia){sysSum+=r.blood_pressure_sys;diaSum+=r.blood_pressure_dia;bpN++;}
+      if(r.heart_rate_bpm){hrSum+=r.heart_rate_bpm;hrN++;}
+      if(r.spo2_pct){spSum+=r.spo2_pct;spN++;}
+      if(r.glucose_mgdl){gluSum+=r.glucose_mgdl;gluN++;}
+    });
+  });
+  setTxt('hm-weight',wN?(unit==='us'?((wSum/wN)*2.20462).toFixed(1)+' lb':(wSum/wN).toFixed(1)+' kg'):'—');
+  setTxt('hm-bp',bpN?(Math.round(sysSum/bpN)+'/'+Math.round(diaSum/bpN)):'—');
+  setTxt('hm-hr',hrN?(Math.round(hrSum/hrN)+' bpm'):'—');
+  setTxt('hm-spo2',spN?(Math.round(spSum/spN)+'%'):'—');
+  setTxt('hm-glucose',gluN?(Math.round(gluSum/gluN)+' mg/dL'):'—');
 
-  var slArr=_sleepByDate[ds]||[];
-  var lSl=slArr.length?slArr[slArr.length-1]:null;
-  if(lSl){
-    var hr=parseFloat(lSl.duration_hr)||(lSl.duration_min?lSl.duration_min/60:null);
-    if(hr){var hh=Math.floor(hr),mm=Math.round((hr-hh)*60);setTxt('hm-sleep',hh+'h'+(mm?' '+mm+'m':''));}
-    else setTxt('hm-sleep','—');
-  }else setTxt('hm-sleep','—');
+  // ── Sleep — 평균 시간 ──
+  var slSum=0,slN=0;
+  dates.forEach(function(d){
+    var rows=_sleepByDate[d]||[];
+    if(!rows.length)return;
+    var use=isAvg?rows:[rows[rows.length-1]];
+    use.forEach(function(r){
+      var hr=parseFloat(r.duration_hr)||(r.duration_min?r.duration_min/60:null);
+      if(hr){slSum+=hr;slN++;}
+    });
+  });
+  if(slN){var avgHr=slSum/slN,hh=Math.floor(avgHr),mm=Math.round((avgHr-hh)*60);setTxt('hm-sleep',hh+'h'+(mm?' '+mm+'m':''));}
+  else setTxt('hm-sleep','—');
 
-  var moArr=_moodByDate[ds]||[];
-  var lMo=moArr.length?moArr[moArr.length-1]:null;
+  // ── Mood — 숫자가 아니라 범주형이라 "평균"이 성립하지 않음.
+  // Daily는 그날의 마지막 기록, Weekly/Monthly는 기간 내 가장 많이 기록된 mood(최빈값)로 표시. ──
   var MOOD_EMOJI={Amazing:'🤩',Happy:'😊',Calm:'😌',Neutral:'😐',Tired:'😴',Anxious:'😰',Sad:'😢',Angry:'😠',Stressed:'😫',Grateful:'🙏'};
-  if(lMo&&lMo.mood){setTxt('hm-mood',(MOOD_EMOJI[lMo.mood]?MOOD_EMOJI[lMo.mood]+' ':'')+lMo.mood);}
-  else setTxt('hm-mood','—');
+  if(!isAvg){
+    var moArr=_moodByDate[ds]||[];
+    var lMo=moArr.length?moArr[moArr.length-1]:null;
+    setTxt('hm-mood',(lMo&&lMo.mood)?((MOOD_EMOJI[lMo.mood]?MOOD_EMOJI[lMo.mood]+' ':'')+lMo.mood):'—');
+  }else{
+    var counts={};
+    dates.forEach(function(d){(_moodByDate[d]||[]).forEach(function(r){if(r.mood)counts[r.mood]=(counts[r.mood]||0)+1;});});
+    var top=null,topN=0;
+    Object.keys(counts).forEach(function(k){if(counts[k]>topN){topN=counts[k];top=k;}});
+    setTxt('hm-mood',top?((MOOD_EMOJI[top]?MOOD_EMOJI[top]+' ':'')+top):'—');
+  }
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
