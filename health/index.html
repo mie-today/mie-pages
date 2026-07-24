@@ -523,7 +523,7 @@ html,body{height:100%;overflow:hidden;font-family:'Poppins',sans-serif;backgroun
 <div id="auth-wrap" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-logo">M</div>
-    <div class="auth-title">MIARVO</div>
+    <div class="auth-title">MIARVO Health</div>
     <div class="auth-sub">Sign in to view and manage your health data.</div>
     <button class="connect-btn" id="connect-btn">Connect Google</button>
   </div>
@@ -1217,6 +1217,7 @@ function onPeriodChange(period){
     var label=PERIOD_LABELS[period]||period.charAt(0).toUpperCase()+period.slice(1);
     window.plSetPeriod(period, label);
   }
+  loadPeriodOverview(); // [추가] 실제 기간 합계 데이터 재조회
 }
 function toggleYTD(){
   ytdActive=!ytdActive;
@@ -1870,6 +1871,31 @@ function loadDayData(dateStr){
     });
 }
 
+// [신규] Weekly/Monthly/Yearly 선택 시 그 기간 합계를 다시 불러옴. daily는 loadDayData의
+// 캐시를 그대로 쓰면 되므로 여기서 재사용. 오른쪽 "HEALTH" 리스트(하루 단위)는 이 함수가
+// 안 건드림 — Weekly/Monthly를 선택해도 오른쪽 리스트는 그대로 그 날 하루만 보여줌(의도적).
+var _periodReqId=0;
+function loadPeriodOverview(){
+  if(currentPeriod==='daily'){ loadDayData(selectedIso()); return; }
+  var reqId=++_periodReqId;
+  var ds=selectedIso();
+  fetch(BACKEND+'/api/me/health?date='+ds+'&period='+currentPeriod,{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      if(reqId!==_periodReqId)return;
+      _todayData={
+        food:    (data&&data.food)    || [],
+        activity:(data&&data.activity)|| [],
+        health:  (data&&data.health)  || [],
+        sleep:   (data&&data.sleep)   || [],
+        mood:    (data&&data.mood)    || [],
+        water:   (data&&data.water)   || []
+      };
+      renderOverviewCards();
+    })
+    .catch(function(){});
+}
+
 function loadTodayOverview(){
   // [수정] 예전엔 이 함수가 6개 tab을 직접 fetch했는데, 이제 fetch는 loadDayData() 하나가
   // 전담하고 센터/오른쪽 패널이 그 결과를 같이 씀. 이 함수는 페이지 최초 로드 시 1번만
@@ -1880,6 +1906,30 @@ function loadTodayOverview(){
   // 백엔드(Women 시트) 전체 이력을 localStorage 캐시에 반영한 뒤, 기존 렌더링 로직을 재사용.
   try { syncWomensFromBackend(loadWomensFromLocalStorage); }
   catch (e) { console.error('syncWomensFromBackend error:', e); }
+}
+
+// [신규] Baseline 탭의 기초대사량(BMR) 캐시 — 페이지 열 때 1번만 조회.
+var _baselineBmrKcal=null;
+function loadBaselineBmr(){
+  fetch(BACKEND+'/api/me/health/profile',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      _baselineBmrKcal=(data&&data.baseline&&data.baseline.bmr_kcal)||null;
+      renderOverviewCards(); // BMR 도착 후 Burned를 다시 계산해서 반영
+    })
+    .catch(function(){});
+}
+
+// [신규] 이 기간 안에 "뭐든 하나라도 기록된 날짜" 개수 세기 — Burned = BMR×이 값 + 활동칼로리.
+function countDaysWithRecords(d){
+  var days={};
+  ['food','activity','health','sleep','mood','water'].forEach(function(tab){
+    (d[tab]||[]).forEach(function(e){
+      var ds=(e.stamp_date||'').toString().slice(0,10);
+      if(ds)days[ds]=true;
+    });
+  });
+  return Object.keys(days).length;
 }
 
 function renderOverviewCards(){
@@ -1922,11 +1972,13 @@ function renderOverviewCards(){
     distKm  += (a.distance_km||0);
   });
   function setEl(id,v){var el=document.getElementById(id);if(el)el.textContent=v;}
-  setEl('act-cals',    burned?Math.round(burned).toLocaleString():'—');
+  var daysWithRecords=countDaysWithRecords(d);
+  var totalBurned=(_baselineBmrKcal?_baselineBmrKcal*daysWithRecords:0)+burned;
+  setEl('act-cals',    burned?Math.round(burned).toLocaleString():'—');       // [변경 없음] 활동 칼로리만
   setEl('act-steps',   steps ?steps.toLocaleString():'—');
-  setEl('act-active-cal',burned?Math.round(burned).toLocaleString():'—');
-  setEl('cal-burned',  burned?Math.round(burned).toLocaleString():'—');
-  setEl('cal-net',     (burned||totalCal)?((totalCal-burned)>0?'+':'')+(Math.round(totalCal-burned)).toLocaleString():'—');
+  setEl('act-active-cal',burned?Math.round(burned).toLocaleString():'—');     // [변경 없음] 활동 칼로리만
+  setEl('cal-burned',  totalBurned?Math.round(totalBurned).toLocaleString():'—');   // [수정] 기초대사량+활동
+  setEl('cal-net',     (totalBurned||totalCal)?((totalCal-totalBurned)>0?'+':'')+(Math.round(totalCal-totalBurned)).toLocaleString():'—'); // [수정] Net도 새 Burned 기준
   var distEl=document.getElementById('dist-display');
   if(distEl)distEl.textContent=distKm?distKm.toFixed(2):'—';
 
@@ -2347,7 +2399,7 @@ var _origShow=window.show;
 window.show=function(el){
   if(_origShow)_origShow(el);
   if(el===document.getElementById('app')){
-    setTimeout(function(){initHlCal();loadTodayOverview();},50);
+    setTimeout(function(){initHlCal();loadTodayOverview();loadBaselineBmr();},50);
   }
 };
 
