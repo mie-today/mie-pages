@@ -1025,6 +1025,20 @@ function buildCalGridFromEvents(){
     if(_finDateSet[dateStr]&&colors.indexOf('var(--teal)')===-1){
       colors.push('var(--teal)');
     }
+    // [v2.4] Health 계열(Weight/BP/Activity/Water/Sleep/Mood/Women's) 데이터가 있는 날짜에도
+    // amber 마커 추가 — Finance와 같은 패턴인데 이 부분만 빠져 있었음(Day View의 "Health" 구분선과
+    // 같은 색으로 통일).
+    var hasHealthData = !!(
+      (_healthByDate[dateStr]&&_healthByDate[dateStr].length) ||
+      (_activityByDate[dateStr]&&_activityByDate[dateStr].length) ||
+      (_waterByDate[dateStr]&&_waterByDate[dateStr].length) ||
+      (_sleepByDate[dateStr]&&_sleepByDate[dateStr].length) ||
+      (_moodByDate[dateStr]&&_moodByDate[dateStr].length) ||
+      (_womensByDate[dateStr]&&_womensByDate[dateStr].length)
+    );
+    if(hasHealthData&&colors.indexOf('var(--teal)')===-1){
+      colors.push('var(--teal)');
+    }
     if(!colors.length)return;
     var mw=document.createElement('div');mw.className='cal-mks';
     colors.slice(0,3).forEach(function(c){
@@ -1928,9 +1942,10 @@ function loadHealth(){
       _byDate(data.sleep,_sleepByDate);
       _byDate(data.mood,_moodByDate);
       _byDate(data.womens,_womensByDate); // [v1.9] tab=all 응답에 이미 포함됨 — 별도 호출 불필요
+      buildCalGridFromEvents(); // [v2.4] Health 마커 반영을 위해 재빌드 — Finance와 동일 패턴
       renderTodayEvents(selectedDateStr);
     })
-    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};renderTodayEvents(selectedDateStr);});
+    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};buildCalGridFromEvents();renderTodayEvents(selectedDateStr);});
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
