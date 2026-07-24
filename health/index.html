@@ -1189,11 +1189,8 @@ function renderDate(){
 
 // [추가] 날짜 이동(‹ › 버튼, 미니 캘린더)이 빠르게 연타될 때마다 매번 fetch가 나가는 걸
 // 막기 위한 디바운스. 최초 페이지 로드 시 호출은 디바운스 없이 즉시 실행(아래서 그대로 둠).
-var _loadOverviewTimer=null;
-function loadTodayOverviewDebounced(){
-  clearTimeout(_loadOverviewTimer);
-  _loadOverviewTimer=setTimeout(loadTodayOverview,150);
-}
+// [정리] loadTodayOverviewDebounced()는 selectDate()가 자체 디바운스(_dayLoadTimer)를
+// 갖게 되면서 더 이상 쓰이지 않아 제거함(이번 통합 리팩터로 대체됨).
 
 function changeDate(dir){
   if(ytdActive)return;
@@ -1205,9 +1202,7 @@ function changeDate(dir){
   var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate());
   if(d<oneYearAgo)d=new Date(oneYearAgo);
   if(d>today)d=new Date(today);
-  currentYear=d.getFullYear();currentMonth=d.getMonth();currentDay=d.getDate();
-  renderDate();
-  loadTodayOverviewDebounced(); // [수정] 디바운스 적용 — 연타 시 여분의 fetch 방지
+  selectDate(d.getFullYear(),d.getMonth(),d.getDate()); // [수정] 센터/오른쪽 달력을 하나로 통일해서 이동
 }
 
 function onPeriodChange(period){
@@ -1278,7 +1273,7 @@ function toggleUnit(){
 }
 
 var pickerNavYear=currentYear,pickerNavMonth=currentMonth;
-function buildCalendar(){var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate()),sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay(),startOffset=(firstDay===0)?6:firstDay-1,daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate(),daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate(),day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td'),btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate()),isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');var btnDate=new Date(actualYear,actualMonth,actualDay);if(btnDate<oneYearAgo||btnDate>today){btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';}}(function(d,m,y){if(!btn.classList.contains('other-month')&&!btn.disabled){btn.onclick=function(e){e.stopPropagation();currentDay=d;currentMonth=m;currentYear=y;ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');renderDate();loadTodayOverviewDebounced();closePicker();};};})(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
+function buildCalendar(){var today=new Date(),oneYearAgo=new Date(today.getFullYear()-1,today.getMonth(),today.getDate()),sel=document.getElementById('cal-month-sel');sel.innerHTML='';MONTHS.forEach(function(m,i){var opt=document.createElement('option');opt.value=i;opt.textContent=m;if(i===pickerNavMonth)opt.selected=true;sel.appendChild(opt);});document.getElementById('cal-year-val').textContent=pickerNavYear;var tbody=document.getElementById('cal-body');tbody.innerHTML='';var firstDay=new Date(pickerNavYear,pickerNavMonth,1).getDay(),startOffset=(firstDay===0)?6:firstDay-1,daysInMonth=new Date(pickerNavYear,pickerNavMonth+1,0).getDate(),daysInPrev=new Date(pickerNavYear,pickerNavMonth,0).getDate(),day=1-startOffset;for(var week=0;week<6;week++){if(day>daysInMonth)break;var tr=document.createElement('tr');for(var col=0;col<7;col++){var td=document.createElement('td'),btn=document.createElement('button');btn.className='cal-day-btn';var actualDay,actualMonth,actualYear;if(day<=0){actualDay=daysInPrev+day;actualMonth=pickerNavMonth-1;actualYear=pickerNavYear;if(actualMonth<0){actualMonth=11;actualYear--;}btn.textContent=actualDay;btn.classList.add('other-month');}else if(day>daysInMonth){actualDay=day-daysInMonth;actualMonth=pickerNavMonth+1;actualYear=pickerNavYear;if(actualMonth>11){actualMonth=0;actualYear++;}btn.textContent=actualDay;btn.classList.add('other-month');}else{actualDay=day;actualMonth=pickerNavMonth;actualYear=pickerNavYear;btn.textContent=actualDay;var isToday=(actualYear===today.getFullYear()&&actualMonth===today.getMonth()&&actualDay===today.getDate()),isSel=(actualYear===currentYear&&actualMonth===currentMonth&&actualDay===currentDay);if(isToday)btn.classList.add('is-today');if(isSel)btn.classList.add('is-selected');var btnDate=new Date(actualYear,actualMonth,actualDay);if(btnDate<oneYearAgo||btnDate>today){btn.disabled=true;btn.style.color='#e0e0e0';btn.style.cursor='default';}}(function(d,m,y){if(!btn.classList.contains('other-month')&&!btn.disabled){btn.onclick=function(e){e.stopPropagation();ytdActive=false;document.getElementById('ytd-btn').classList.remove('active');selectDate(y,m,d);closePicker();};};})(actualDay,actualMonth,actualYear);td.appendChild(btn);tr.appendChild(td);day++;}tbody.appendChild(tr);}}
 function calStep(dir){pickerNavMonth+=dir;if(pickerNavMonth<0){pickerNavMonth=11;pickerNavYear--;}if(pickerNavMonth>11){pickerNavMonth=0;pickerNavYear++;}buildCalendar();}
 function calYearStep(dir){pickerNavYear+=dir;buildCalendar();}
 function calMonthChange(sel){pickerNavMonth=parseInt(sel.value);buildCalendar();}
@@ -1691,20 +1686,23 @@ function buildHlCal(){
       cell.appendChild(dotWrap);
     }
     (function(dstr){cell.addEventListener('click',function(){
-      hlSelDate=dstr;
-      document.querySelectorAll('.health-cal-day.selected-fin').forEach(function(el){el.classList.remove('selected-fin');});
-      cell.classList.add('selected-fin');
-      renderHlDayDetail(dstr);
+      var p=dstr.split('-');
+      selectDate(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10)); // [수정] 센터 패널도 같이 이동하도록 통일
     });})(ds);
     g.appendChild(cell);
   }
 }
 
-function renderHlDayDetail(ds){
-  renderHlDayDetailCorrect(ds);
-}
+// [정리] renderHlDayDetail() 래퍼는 유일한 호출부(오른쪽 달력 클릭)가 selectDate()로
+// 교체되면서 더 이상 안 쓰여 제거함. 저장/수정/삭제 후 강제 새로고침은
+// renderHlDayDetailCorrect()가 그대로 담당(이름 유지, 내부 구현만 loadDayData 위임).
 
+var _hlDotsLoading={}; // [추가] "년-월" 키로 이미 로딩 중인 달은 중복 요청 스킵
 function loadHlDots(){
+  var _key=hlCalYear+'-'+hlCalMonth;
+  if(_hlDotsLoading[_key])return; // 이미 이 달을 로딩 중이면 또 fetch 안 나감(중복 요청 방지)
+  _hlDotsLoading[_key]=true;
+
   // Step 1: Load womens data from localStorage IMMEDIATELY (synchronous, always works)
   loadWomensFromLocalStorage(); // this calls buildHlCal() right away with period dots
 
@@ -1721,6 +1719,7 @@ function loadHlDots(){
   function done(){
     pending--;
     if(pending===0){
+      delete _hlDotsLoading[_key];
       // [수정] gotAnyData가 false여도(이번 로드에서 새로 추가된 점이 없어도) 항상 한 번
       // 다시 그림 — 예전엔 새 데이터가 없으면 재호출을 스킵해서, 첫 동기 렌더 시점에
       // 아직 도착 안 한 API 점(혈압/걸음 등)이 화면에 영영 안 나타나는 경우가 있었음.
@@ -1814,32 +1813,71 @@ function selectedIso(){
   return currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(currentDay).padStart(2,'0');
 }
 
-function loadTodayOverview(){
-  var d=selectedIso();
+// [신규] 센터 패널과 오른쪽 달력이 공유하는 "지금 선택된 날짜"의 데이터 캐시 + 요청 관리.
+// 예전엔 센터(currentYear/Month/Day)와 오른쪽 달력(hlCalYear/Month/hlSelDate)이 완전히
+// 독립된 상태였어서, 같은 날짜를 두 번 따로 요청하고 서로 안 맞는 문제가 있었음.
+// 이제 selectDate() 하나만 거치도록 통일하고, loadDayData()가 그 날짜 데이터를 한 번만
+// 받아와서 캐시해 두 UI(OVERVIEW 카드 + 오른쪽 리스트)가 같이 사용하게 한다.
+var _dayDataCache={};
+var _dayReqId=0;
+var _dayLoadTimer=null;
+
+function selectDate(y,m,d){
+  currentYear=y;currentMonth=m;currentDay=d;
+  renderDate();
+  var ds=hlIsoD(y,m,d);
+  hlSelDate=ds;
+  if(hlCalYear!==y||hlCalMonth!==m){
+    hlCalYear=y;hlCalMonth=m;buildHlCal();loadHlDots();
+  } else {
+    buildHlCal();
+  }
+  clearTimeout(_dayLoadTimer);
+  _dayLoadTimer=setTimeout(function(){loadDayData(ds);},150);
+}
+
+function loadDayData(dateStr){
+  var reqId=++_dayReqId;
+  if(_dayDataCache[dateStr]){
+    _todayData=_dayDataCache[dateStr];
+    renderOverviewCards();
+    renderHlDayList(dateStr,_todayData);
+    return;
+  }
   var B='https://api.mie.today';
-  // [수정] 예전엔 food/activity/health/sleep/mood/water 6개 tab을 각각 따로 fetch했는데,
-  // 백엔드가 tab 파라미터 없이(=tab=all) 이 6개를 이미 한 번에 반환하므로 단일 호출로 교체함.
-  // reqId 가드로, 더 최근에 나간 요청이 있으면 이 응답은 화면에 반영하지 않음(레이스 방지).
-  var reqId=++_todayReqId;
-  fetch(B+'/api/me/health?date='+d+'&period=daily',{credentials:'include'})
-    .then(function(r){return r.ok?r.json():null;})
+  fetch(B+'/api/me/health?date='+dateStr+'&period=daily',{credentials:'include'})
+    .then(function(r){ if(typeof checkReauthStatus==='function')checkReauthStatus(r.status); if(!r.ok)throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(data){
-      if(reqId!==_todayReqId)return;
-      _todayData={
+      if(reqId!==_dayReqId)return;
+      var parsed={
         food:    (data&&data.food)    || [],
         activity:(data&&data.activity)|| [],
         health:  (data&&data.health)  || [],
         sleep:   (data&&data.sleep)   || [],
         mood:    (data&&data.mood)    || [],
-        water:   (data&&data.water)   || []
+        water:   (data&&data.water)   || [],
+        womens:  (data&&data.womens)  || []
       };
+      _dayDataCache[dateStr]=parsed;
+      if(dateStr!==selectedIso())return; // 그 사이 다른 날짜로 옮겨갔으면 지금 화면엔 안 그림
+      _todayData=parsed;
       renderOverviewCards();
+      renderHlDayList(dateStr,parsed);
     })
-    .catch(function(){ if(reqId===_todayReqId){_todayData={};renderOverviewCards();} });
+    .catch(function(){
+      if(reqId!==_dayReqId||dateStr!==selectedIso())return;
+      renderHlDayListError(dateStr);
+    });
+}
+
+function loadTodayOverview(){
+  // [수정] 예전엔 이 함수가 6개 tab을 직접 fetch했는데, 이제 fetch는 loadDayData() 하나가
+  // 전담하고 센터/오른쪽 패널이 그 결과를 같이 씀. 이 함수는 페이지 최초 로드 시 1번만
+  // 호출되는 진입점으로 남겨두고(다른 곳에서 이 이름을 그대로 호출하고 있어 이름은 유지),
+  // 실제 로직은 selectDate()에 위임한다.
+  selectDate(currentYear,currentMonth,currentDay);
   // [v1.7] Women's panel — 페이지를 열 때마다 공유 파일(women-sync.js)의 syncWomensFromBackend()로
   // 백엔드(Women 시트) 전체 이력을 localStorage 캐시에 반영한 뒤, 기존 렌더링 로직을 재사용.
-  // (B안: 이 병합 로직은 index_25_.html과 함께 women-sync.js 한 곳에서만 관리함 — 중복 유지보수 방지)
-  // try/catch로 감싸서, 여기서 에러가 나도 뒤에 이어지는 초기화가 멈추지 않도록 방어.
   try { syncWomensFromBackend(loadWomensFromLocalStorage); }
   catch (e) { console.error('syncWomensFromBackend error:', e); }
 }
@@ -2106,102 +2144,88 @@ function loadWomensFromLocalStorage(){
 // Replaces the generic /api/me/health?date= with proper tab calls
 var _hlLastDs = null; // [v1.9] 마지막으로 그린 날짜 — 수정/삭제 후 같은 날짜를 다시 그리기 위함
 
-function renderHlDayDetailCorrect(ds){
+// [수정] 이 함수는 더 이상 직접 fetch하지 않는다 — fetch는 loadDayData()가 전담하고,
+// 이 함수는 "이미 받아온 데이터를 화면에 그리기"만 담당(그리는 내용/디자인은 예전과 동일).
+function renderHlDayList(ds,data){
   var list=document.getElementById('health-day-list');
   var dateEl=document.getElementById('health-day-date');
   if(!list)return;
-  _hlLastDs=ds;
-  var reqId=++_hlDetailReqId; // [추가] stale-response 가드 — 두 번 클릭해야 반영되던 문제의 원인
   if(dateEl){
     var d=new Date(ds+'T12:00:00');
     dateEl.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   }
-  list.innerHTML='<div class="health-day-empty" style="font-style:italic;color:var(--txt3);">Loading…</div>';
-
-  var B='https://api.mie.today';
-
-  // [v2.1] period 연속 구간(시작/끝 날짜 사이, 그날 자체엔 명시적 행이 없는 날) 표시는
-  // "실제 Women's 행이 하나도 없을 때만" 보여줘야 함 — 예전엔 무조건 먼저 넣어서, Period Start
-  // 같은 진짜 행이 있는 날에도 "Period (continuing)"이 같이 뜨는 중복 버그가 있었음.
   var isPeriodSpanDay=!!(_hlDotCache[ds]&&_hlDotCache[ds].indexOf('period')>=0);
+  var rows=[];
 
-  // [수정] 예전엔 food/health/activity/sleep/womens 5개 tab을 각각 따로 fetch했는데,
-  // 백엔드가 tab 파라미터 없이(=tab=all) 이 5개를 이미 한 번에 반환하므로 단일 호출로 교체함.
-  // API 호출 수가 줄어 로딩이 빨라지고, reqId 가드로 뒤늦게 도착한 이전 클릭의 응답이
-  // 현재 화면을 덮어쓰는 레이스 컨디션도 함께 막는다.
-  fetch(B+'/api/me/health?date='+ds+'&period=daily',{credentials:'include'})
-    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){
-      if(reqId!==_hlDetailReqId)return;
-      var rows=[];
+  (data.food||[]).forEach(function(e){
+    rows.push({col:'var(--blue)',label:'Food: '+(e.food_name||'Item'),
+      val:Math.round(e.calories_kcal||0)+' cal', tab:'food', sheetRow:e._sheet_row, raw:e});
+  });
 
-      // Food — [v1.9] 예전엔 하루치를 하나로 합쳐 보여줬는데, 그러면 어떤 행을 편집해야 할지
-      // 알 수 없어서 항목별로 나눔(각자 자기 _sheet_row를 가짐).
-      (data&&data.food||[]).forEach(function(e){
-        rows.push({col:'var(--blue)',label:'Food: '+(e.food_name||'Item'),
-          val:Math.round(e.calories_kcal||0)+' cal', tab:'food', sheetRow:e._sheet_row, raw:e});
-      });
+  (data.health||[]).forEach(function(e){
+    var meta={tab:'health', sheetRow:e._sheet_row, raw:e};
+    if(e.weight_kg)          rows.push(Object.assign({col:'var(--teal)',  label:'Weight',         val:e.weight_kg+' kg'},meta));
+    if(e.blood_pressure_sys) rows.push(Object.assign({col:'var(--red)',   label:'Blood Pressure', val:e.blood_pressure_sys+'/'+e.blood_pressure_dia},meta));
+    if(e.heart_rate_bpm)     rows.push(Object.assign({col:'var(--red)',   label:'Heart Rate',     val:e.heart_rate_bpm+' bpm'},meta));
+    if(e.spo2_pct)           rows.push(Object.assign({col:'var(--cblue)', label:'SpO2',           val:e.spo2_pct+'%'},meta));
+    if(e.glucose_mgdl)       rows.push(Object.assign({col:'var(--purple)',label:'Glucose',        val:e.glucose_mgdl+' mg/dL'},meta));
+  });
 
-      // Health/vitals
-      (data&&data.health||[]).forEach(function(e){
-        var meta={tab:'health', sheetRow:e._sheet_row, raw:e};
-        if(e.weight_kg)          rows.push(Object.assign({col:'var(--teal)',  label:'Weight',         val:e.weight_kg+' kg'},meta));
-        if(e.blood_pressure_sys) rows.push(Object.assign({col:'var(--red)',   label:'Blood Pressure', val:e.blood_pressure_sys+'/'+e.blood_pressure_dia},meta));
-        if(e.heart_rate_bpm)     rows.push(Object.assign({col:'var(--red)',   label:'Heart Rate',     val:e.heart_rate_bpm+' bpm'},meta));
-        if(e.spo2_pct)           rows.push(Object.assign({col:'var(--cblue)', label:'SpO2',           val:e.spo2_pct+'%'},meta));
-        if(e.glucose_mgdl)       rows.push(Object.assign({col:'var(--purple)',label:'Glucose',        val:e.glucose_mgdl+' mg/dL'},meta));
-      });
+  (data.activity||[]).forEach(function(a){
+    var val=a.steps?a.steps.toLocaleString()+' steps':Math.round(a.calories_burned_kcal||0)+' kcal';
+    rows.push({col:'var(--amber)',label:'Activity: '+(a.type||a.category||'Item'),val:val,
+      tab:'activity', sheetRow:a._sheet_row, raw:a});
+  });
 
-      // Activity — [v1.9] Food와 동일한 이유로 항목별로 나눔.
-      (data&&data.activity||[]).forEach(function(a){
-        var val=a.steps?a.steps.toLocaleString()+' steps':Math.round(a.calories_burned_kcal||0)+' kcal';
-        rows.push({col:'var(--amber)',label:'Activity: '+(a.type||a.category||'Item'),val:val,
-          tab:'activity', sheetRow:a._sheet_row, raw:a});
-      });
+  (data.sleep||[]).forEach(function(s){
+    if(s.duration_hr)rows.push({col:'var(--cblue)',label:'Sleep',
+      val:Math.floor(s.duration_hr)+'h'+(s.quality_1to5?' · Q'+s.quality_1to5+'/5':''),
+      tab:'sleep', sheetRow:s._sheet_row, raw:s});
+  });
 
-      // Sleep
-      (data&&data.sleep||[]).forEach(function(s){
-        if(s.duration_hr)rows.push({col:'var(--cblue)',label:'Sleep',
-          val:Math.floor(s.duration_hr)+'h'+(s.quality_1to5?' · Q'+s.quality_1to5+'/5':''),
-          tab:'sleep', sheetRow:s._sheet_row, raw:s});
-      });
+  (data.womens||[]).forEach(function(e){
+    rows.push({col:'#e91e63',label:"Women's",val:describeWomensRawEntry(e),
+      tab:'womens', sheetRow:e._sheet_row, raw:e});
+  });
 
-      // Women's — [v1.9] localStorage 캐시(합쳐진 요약) 대신 그날의 실제 개별 행을 그대로 받아와서,
-      // 각 행을 describeWomensRawEntry()로 표시하고 클릭 시 그 행 하나를 수정/삭제할 수 있게 함.
-      (data&&data.womens||[]).forEach(function(e){
-        rows.push({col:'#e91e63',label:"Women's",val:describeWomensRawEntry(e),
-          tab:'womens', sheetRow:e._sheet_row, raw:e});
-      });
+  var hasRealWomensRow=rows.some(function(r){return r.tab==='womens';});
+  if(isPeriodSpanDay&&!hasRealWomensRow){
+    rows.push({col:'#e91e63',label:"Women's",val:'Period (continuing)'});
+  }
 
-      // [v2.1] 실제 Women's 행(tab==='womens')이 하나도 없을 때만 "연속 구간" 표시를 추가.
-      var hasRealWomensRow=rows.some(function(r){return r.tab==='womens';});
-      if(isPeriodSpanDay&&!hasRealWomensRow){
-        rows.push({col:'#e91e63',label:"Women's",val:'Period (continuing)'});
-      }
+  if(!rows.length){
+    list.innerHTML='<div class="health-day-empty">No entries for this date.</div>';
+    return;
+  }
+  list.innerHTML='';
+  rows.forEach(function(r){
+    var row=document.createElement('div');row.className='health-day-row';
+    var bar=document.createElement('div');bar.className='health-day-bar';bar.style.background=r.col;
+    var cat=document.createElement('span');cat.className='health-day-cat';cat.textContent=r.label;
+    var amt=document.createElement('span');amt.className='health-day-val';amt.style.color=r.col;amt.textContent=r.val;
+    row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);
+    if(r.tab&&r.sheetRow){
+      row.style.cursor='pointer';
+      row.onclick=function(){ openHealthEntryModal(r); };
+    }
+    list.appendChild(row);
+  });
+}
 
-      if(!rows.length){
-        list.innerHTML='<div class="health-day-empty">No entries for this date.</div>';
-        return;
-      }
-      list.innerHTML='';
-      rows.forEach(function(r){
-        var row=document.createElement('div');row.className='health-day-row';
-        var bar=document.createElement('div');bar.className='health-day-bar';bar.style.background=r.col;
-        var cat=document.createElement('span');cat.className='health-day-cat';cat.textContent=r.label;
-        var amt=document.createElement('span');amt.className='health-day-val';amt.style.color=r.col;amt.textContent=r.val;
-        row.appendChild(bar);row.appendChild(cat);row.appendChild(amt);
-        // [v1.9] tab/sheetRow/raw이 있는 행(=실제 시트 행 하나에 대응)만 클릭 가능하게.
-        if(r.tab&&r.sheetRow){
-          row.style.cursor='pointer';
-          row.onclick=function(){ openHealthEntryModal(r); };
-        }
-        list.appendChild(row);
-      });
-    })
-    .catch(function(){
-      if(reqId!==_hlDetailReqId)return;
-      list.innerHTML='<div class="health-day-empty">No entries for this date.</div>';
-    });
+// [신규] fetch 실패 시 "기록 없음"과 헷갈리지 않도록 별도 에러 표시 + 재시도 링크.
+function renderHlDayListError(ds){
+  var list=document.getElementById('health-day-list');
+  if(!list)return;
+  list.innerHTML='<div class="health-day-empty" style="color:var(--red);">불러오기 실패 — '
+    +'<a href="#" onclick="delete _dayDataCache[\''+ds+'\'];loadDayData(\''+ds+'\');return false;" style="color:var(--red);text-decoration:underline;">다시 시도</a></div>';
+}
+
+// [수정] 저장/수정/삭제 직후 "같은 날짜를 강제로 새로 불러오기" 위해 이름은 그대로 유지.
+// 예전엔 이 함수 자체가 fetch까지 했지만, 이제는 캐시를 버리고 loadDayData()에 위임한다.
+function renderHlDayDetailCorrect(ds){
+  _hlLastDs=ds;
+  delete _dayDataCache[ds];
+  loadDayData(ds);
 }
 
 // [v1.9] Day View 항목 클릭 → 수정/삭제 팝업
