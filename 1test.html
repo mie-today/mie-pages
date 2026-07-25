@@ -235,16 +235,16 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-pop-sec:first-child{border-top:none;margin-top:0;padding-top:0;}
 
 /* ── Right column: Finance mini / Health mini / Input ──
-   요청 반영: 상단 50% 안에서 Finance 60% : Health 40% → 전체 기준 Finance 30% : Health 20% : Input 50%
-   (flex 비율 3 : 2 : 5) */
+   요청 반영: 상단(Finance+Health) 55% : Input 45% — 상단 안에서는 기존 Finance 60%:Health 40% 비율 유지
+   → 전체 기준 Finance 33% : Health 22% : Input 45% (flex 33:22:45, 합계 100이라 %와 그대로 일치) */
 .col-right-inner{display:flex;flex-direction:column;gap:10px;min-height:0;height:100%;overflow:hidden;}
 .mini-card{min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-#finance-mini-card{flex:3;}
-#health-mini-card{flex:2;}
+#finance-mini-card{flex:33;}
+#health-mini-card{flex:22;}
 .mini-card .card-hd{padding:8px 12px;flex-shrink:0;}
 .mini-card .card-hd-title{font-size:9.5px;}
 .mini-card .card-body{padding:8px 12px 10px;overflow-y:auto;}
-.input-col-wrap{flex:5;min-height:0;display:flex;flex-direction:column;gap:0;}
+.input-col-wrap{flex:45;min-height:0;display:flex;flex-direction:column;gap:0;}
 /* 오른쪽 › 로 패널을 접으면 Finance/Health까지 함께 숨기고 얇은 아이콘 스트립만 남긴다 */
 .col-right-inner.rp-collapsed .mini-card{display:none;}
 .col-right-inner.rp-collapsed .input-col-wrap{flex:1;}
@@ -253,7 +253,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .hm-period-sel{font-size:9px;background:var(--bg);border:.5px solid var(--b1);border-radius:4px;padding:2px 16px 2px 6px;color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='4'%3E%3Cpath d='M0 0l3 4 3-4z' fill='%235F5E5A'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;}
 
 /* Finance mini card */
-.fm-title{font-size:11px;font-weight:600;color:var(--txt);margin-bottom:6px;}
+.fm-title{font-size:11px;font-weight:700;color:var(--blue);}
 .fm-rem-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
 .fm-rem-lbl{font-size:10px;color:var(--txt2);}
 .fm-rem-val{font-size:17px;font-weight:600;}
@@ -262,11 +262,11 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .fm-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
 .fm-legend-item{display:flex;align-items:center;gap:4px;font-size:9.5px;color:var(--txt2);}
 .fm-legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.fm-cell{background:var(--bg2);border-radius:8px;padding:7px 9px;min-width:0;}
-.fm-cell-lbl{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);}
-.fm-cell-sub{font-size:8.5px;color:var(--txt3);margin-bottom:2px;}
-.fm-cell-val{font-size:12px;font-weight:600;color:var(--txt);margin-top:2px;}
+.fm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.fm-cell{background:var(--bg2);border-radius:8px;padding:6px 6px;min-width:0;}
+.fm-cell-lbl{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-cell-sub{font-size:8px;color:var(--txt3);margin-bottom:2px;}
+.fm-cell-val{font-size:10.5px;font-weight:600;color:var(--txt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fm-cell-bar{height:3px;border-radius:2px;background:var(--b1);overflow:hidden;margin-top:4px;}
 .fm-cell-bar>div{height:100%;border-radius:2px;}
 .fm-cell-note{font-size:8.5px;margin-top:3px;}
@@ -611,9 +611,8 @@ function todayCardHTML(){
    월 단위 — Finance는 원본에서도 월 요약이라 이 편이 자연스럽다는 가정으로 설계). */
 function financeMiniHTML(){
   return '<div class="card mini-card" id="finance-mini-card">'
-    +'<div class="card-hd"><span class="card-hd-title">💰 Finance</span></div>'
+    +'<div class="card-hd"><span class="card-hd-title">💰 Finance</span><span class="fm-title" id="fm-title">Overview — —</span></div>'
     +'<div class="card-body">'
-      +'<div class="fm-title" id="fm-title">Overview — —</div>'
       +'<div class="fm-rem-row"><span class="fm-rem-lbl">Remaining</span><span class="fm-rem-val" id="fm-remaining">$—</span></div>'
       +'<div class="fm-bigbar"><div id="fm-bar-needs" style="background:var(--red);width:0%;"></div><div id="fm-bar-wants" style="background:var(--purple);width:0%;"></div><div id="fm-bar-sav" style="background:var(--blue);width:0%;"></div></div>'
       +'<div class="fm-legend">'
@@ -623,8 +622,8 @@ function financeMiniHTML(){
       +'<div class="fm-grid">'
         +'<div class="fm-cell"><div class="fm-cell-lbl">Income</div><div class="fm-cell-sub">All sources</div><div class="fm-cell-val" id="fm-income-val">$—</div></div>'
         +'<div class="fm-cell"><div class="fm-cell-lbl">Savings</div><div class="fm-cell-val" id="fm-savings-val">$— / $—</div><div class="fm-cell-bar"><div id="fm-sav-fill" style="width:0%;background:var(--blue);"></div></div></div>'
-        +'<div class="fm-cell"><div class="fm-cell-lbl">Expenses — Needs</div><div class="fm-cell-val" id="fm-needs-val">$— / $—</div><div class="fm-cell-bar"><div id="fm-needs-fill" style="width:0%;background:var(--red);"></div></div><div class="fm-cell-note" id="fm-needs-note"></div></div>'
-        +'<div class="fm-cell"><div class="fm-cell-lbl">Expenses — Wants</div><div class="fm-cell-val" id="fm-wants-val">$— / $—</div><div class="fm-cell-bar"><div id="fm-wants-fill" style="width:0%;background:var(--purple);"></div></div><div class="fm-cell-note" id="fm-wants-note"></div></div>'
+        +'<div class="fm-cell"><div class="fm-cell-lbl">Needs</div><div class="fm-cell-val" id="fm-needs-val">$— / $—</div><div class="fm-cell-bar"><div id="fm-needs-fill" style="width:0%;background:var(--red);"></div></div><div class="fm-cell-note" id="fm-needs-note"></div></div>'
+        +'<div class="fm-cell"><div class="fm-cell-lbl">Wants</div><div class="fm-cell-val" id="fm-wants-val">$— / $—</div><div class="fm-cell-bar"><div id="fm-wants-fill" style="width:0%;background:var(--purple);"></div></div><div class="fm-cell-note" id="fm-wants-note"></div></div>'
       +'</div>'
     +'</div>'
   +'</div>';
