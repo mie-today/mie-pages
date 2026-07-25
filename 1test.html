@@ -235,16 +235,21 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-pop-sec:first-child{border-top:none;margin-top:0;padding-top:0;}
 
 /* ── Right column: Finance mini / Health mini / Input ──
-   요청 반영: 상단(Finance+Health) 55% : Input 45% — 상단 안에서는 기존 Finance 60%:Health 40% 비율 유지
-   → 전체 기준 Finance 33% : Health 22% : Input 45% (flex 33:22:45, 합계 100이라 %와 그대로 일치) */
+   요청 반영: Finance는 더 이상 고정 비율이 아니라 "자기 콘텐츠 높이만큼만" 차지하도록
+   flex:0 0 auto로 바꿨다 — Finance가 실제로 안 쓰는 여백을 고정 비율로 떼어두는 대신,
+   렌더링된 실제 콘텐츠 높이에 맞춰 스스로 줄어들고, 남는 공간은 전부 Health/Input에
+   자동으로 재분배된다(브라우저 flexbox 계산 — 특정 달/특정 값 크기에 따라 남는 공간이
+   달라지므로 픽셀/퍼센트로 미리 확정할 수 없음, 상세 설명은 답변 본문 참고).
+   Health : Input = 35 : 65 — 남은 공간 안에서의 비율. Input 쪽을 더 크게 요청받아 상향. */
 .col-right-inner{display:flex;flex-direction:column;gap:10px;min-height:0;height:100%;overflow:hidden;}
 .mini-card{min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-#finance-mini-card{flex:33;}
-#health-mini-card{flex:22;}
+#finance-mini-card{flex:0 0 auto;}
+#finance-mini-card .card-body{flex:0 0 auto;overflow-y:visible;}
+#health-mini-card{flex:35;}
 .mini-card .card-hd{padding:8px 12px;flex-shrink:0;}
 .mini-card .card-hd-title{font-size:9.5px;}
 .mini-card .card-body{padding:8px 12px 10px;overflow-y:auto;}
-.input-col-wrap{flex:45;min-height:0;display:flex;flex-direction:column;gap:0;}
+.input-col-wrap{flex:65;min-height:0;display:flex;flex-direction:column;gap:0;}
 /* 오른쪽 › 로 패널을 접으면 Finance/Health까지 함께 숨기고 얇은 아이콘 스트립만 남긴다 */
 .col-right-inner.rp-collapsed .mini-card{display:none;}
 .col-right-inner.rp-collapsed .input-col-wrap{flex:1;}
