@@ -144,9 +144,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .task-tag.done{background:var(--bg3);color:var(--txt3);}
 
 /* ── Input 카드 헤더의 접기/펼치기 화살표(⌄) ── */
-.input-collapse-btn{width:22px;height:22px;border-radius:6px;border:none;background:none;color:var(--txt2);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;margin:0 6px 0 2px;transition:transform .15s;}
+.input-collapse-btn{width:22px;height:22px;border-radius:6px;border:none;background:none;color:var(--txt2);font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;margin:0 6px 0 2px;}
 .input-collapse-btn:hover{background:var(--bg2);}
-.input-collapse-btn.is-collapsed{transform:rotate(-90deg);}
 
 /* ── Input card ── */
 .input-card{flex:1;display:flex;flex-direction:column;}
@@ -674,7 +673,7 @@ function inputCardHTML(){
     +'<div class="inp-tabs">'
       +'<button class="inp-tab on" id="tab-send" onclick="switchTab(\'send\')">Send Message</button>'
       +'<button class="inp-tab" id="tab-add" onclick="switchTab(\'add\')">+ Add</button>'
-      +'<button class="input-collapse-btn" id="input-collapse-btn" title="Collapse" aria-label="Collapse">⌄</button>'
+      +'<button class="input-collapse-btn" id="input-collapse-btn" title="Collapse" aria-label="Collapse">⌃</button>'
     +'</div>'
     
     +'<div class="inp-panel on" id="panel-send">'
@@ -877,14 +876,14 @@ function applyInputBodyState(){
     if(health){health.style.flex='0 0 '+health.dataset.frozenH+'px';}
     wrap.style.flex='0 0 auto';
     card.classList.add('collapsed');
-    if(btn)btn.classList.add('is-collapsed');
+    if(btn){btn.textContent='⌄';btn.title='Expand';btn.setAttribute('aria-label','Expand');}
   } else {
     // 펼치기: 원래 flex 값으로 복원
     if(finance){finance.style.flex='';delete finance.dataset.frozenH;}
     if(health){health.style.flex='';delete health.dataset.frozenH;}
     wrap.style.flex='65';
     card.classList.remove('collapsed');
-    if(btn)btn.classList.remove('is-collapsed');
+    if(btn){btn.textContent='⌃';btn.title='Collapse';btn.setAttribute('aria-label','Collapse');}
   }
 }
 
