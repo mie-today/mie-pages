@@ -251,13 +251,38 @@ const PANEL_RENDERERS = {
   'finance-budget':    renderBudgetSettingsPanel,
 };
 
+let CURRENT_PANEL = null;
 function goPanel(key){
+  CURRENT_PANEL = key;
   document.querySelectorAll('.rail-item').forEach(b=>b.classList.toggle('active', b.dataset.panel===key));
   try{ localStorage.setItem('klaive_settings_last_panel', key); }catch(e){}
   const root = document.getElementById('panel-root');
   root.innerHTML = '<div class="empty-state">Loading…</div>';
   const fn = PANEL_RENDERERS[key];
   if(fn) fn(root);
+}
+
+/* Shared Metric/US toggle — writes the SAME klaive_unit_pref key that
+   Overview's Health card reads/writes (see getUnitPref/setUnitPref
+   above). This is not a second, independent preference: it's the one
+   global switch, just also reachable from Settings so you don't have
+   to leave the page to change it. */
+function unitTogglePillsHtml(){
+  const u = getUnitPref();
+  return `<div class="unit-pills" id="settings-unit-toggle">
+    <button class="unit-pill${u!=='us'?' active':''}" data-u="metric" type="button">Metric</button>
+    <button class="unit-pill${u==='us'?' active':''}" data-u="us" type="button">US</button>
+  </div>`;
+}
+function bindUnitToggle(){
+  const wrap = document.getElementById('settings-unit-toggle');
+  if(!wrap) return;
+  wrap.querySelectorAll('.unit-pill').forEach(btn=>{
+    btn.onclick = ()=>{
+      setUnitPref(btn.dataset.u);
+      if(CURRENT_PANEL) goPanel(CURRENT_PANEL);
+    };
+  });
 }
 
 (function init(){
@@ -437,6 +462,7 @@ function renderInsurancePanel(root){
         <span class="card-hd-title">🏥 Insurance Info</span>
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="status-msg" id="ins-status" style="margin:0;"></span>
+          <button class="btn btn-ghost btn-sm" id="ins-cf-add-persistent">+ Custom Field</button>
           <button class="btn btn-secondary btn-sm" id="ins-edit-btn">Edit</button>
         </div>
       </div>
@@ -554,7 +580,24 @@ function renderInsurancePanel(root){
 
   document.getElementById('ins-edit-btn').onclick = ()=>{
     editMode = !editMode;
-    render(editMode ? (record?record.data:{}) : (record?record.data:{}));
+    render(record ? record.data : {});
+  };
+
+  // Persistent "+ Custom Field" — works even before you've clicked Edit,
+  // so the custom-fields capability doesn't hide behind a click nobody
+  // knew to make.
+  document.getElementById('ins-cf-add-persistent').onclick = ()=>{
+    editMode = true;
+    const baseData = record ? Object.assign({}, record.data) : {};
+    const cf = Array.isArray(baseData.custom_fields) ? baseData.custom_fields.slice() : [];
+    cf.push({ key:'', value:'' });
+    baseData.custom_fields = cf;
+    render(baseData);
+    setTimeout(()=>{
+      const rows = document.querySelectorAll('.ins-cf-row');
+      const last = rows[rows.length-1];
+      if(last) last.querySelector('.ins-cf-key')?.focus();
+    }, 0);
   };
 
   recFetch('insurance').then(items=>{
@@ -582,12 +625,11 @@ function renderHistoryPanel(root){
         <span class="card-hd-title">📋 Events</span>
         <button class="btn btn-ghost btn-sm" id="hist-add-btn">+ Add Event</button>
       </div>
-      <div class="card-body" id="hist-body"><div class="empty-state">Loading…</div></div>
-    </div>
-    <div class="card">
-      <div class="card-hd"><span class="card-hd-title">Notes</span></div>
       <div class="card-body">
-        <textarea class="finput" id="hist-notes" style="min-height:100px;" placeholder="Add general health notes, family history, allergies, etc."></textarea>
+        <div id="hist-body"><div class="empty-state">Loading…</div></div>
+        <hr class="div">
+        <div class="section-title">Notes</div>
+        <textarea class="finput" id="hist-notes" style="min-height:100px;width:100%;" placeholder="Add general health notes, family history, allergies, etc."></textarea>
         <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
           <button class="btn btn-primary btn-sm" id="hist-notes-save">Save Notes</button>
           <span class="status-msg" id="hist-notes-status"></span>
@@ -756,11 +798,12 @@ function renderMyInfoPanel(root){
   const unit = getUnitPref(); // 'metric' | 'us'
   root.innerHTML = `
     <div class="panel-title">My Info</div>
-    <div class="panel-sub">Baseline profile used for BMR/TDEE calculations. Units follow your global Metric/US setting (change it from the Overview Health card).</div>
+    <div class="panel-sub">Baseline profile used for BMR/TDEE calculations.</div>
     <div class="card">
-      <div class="card-hd"><span class="card-hd-title">🧑 Profile</span></div>
+      <div class="card-hd"><span class="card-hd-title">🧑 Profile</span>${unitTogglePillsHtml()}</div>
       <div class="card-body" id="myinfo-body"><div class="empty-state">Loading…</div></div>
     </div>`;
+  bindUnitToggle();
 
   const body = document.getElementById('myinfo-body');
 
@@ -925,9 +968,10 @@ function renderGoalsPanel(root){
     <div class="panel-title">Goals</div>
     <div class="panel-sub">Weight goal, calorie targets, water and sleep goals.</div>
     <div class="card">
-      <div class="card-hd"><span class="card-hd-title">🎯 Goals</span></div>
+      <div class="card-hd"><span class="card-hd-title">🎯 Goals</span>${unitTogglePillsHtml()}</div>
       <div class="card-body" id="goals-body"><div class="empty-state">Loading…</div></div>
     </div>`;
+  bindUnitToggle();
   const body = document.getElementById('goals-body');
 
   function render(goal){
@@ -954,10 +998,10 @@ function renderGoalsPanel(root){
         </div>
         <div class="field"><label>Target Weight (${unit==='us'?'lb':'kg'})</label>${weightField}</div>
         <div class="field"><label>Duration (months)</label><input class="finput" id="pig-duration" type="number" min="1" max="36" value="${goal.duration_months||''}"></div>
-        <div class="field"><label>Daily Cal Intake (kcal)</label><input class="finput" id="pig-daily-cal" type="number" min="0" value="${goal.daily_cal_intake||''}"></div>
-        <div class="field"><label>Daily Exercise Cal (kcal)</label><input class="finput" id="pig-exercise-cal" type="number" min="0" value="${goal.daily_exercise_cal||''}"></div>
+        <div class="field"><label>Daily Cal Intake (kcal)</label><input class="finput" id="pig-daily-cal" type="number" min="0" value="${goal.daily_calorie_intake_kcal||''}"></div>
+        <div class="field"><label>Daily Exercise Cal (kcal)</label><input class="finput" id="pig-exercise-cal" type="number" min="0" value="${goal.daily_exercise_cal_kcal||''}"></div>
         <div class="field"><label>Water Goal (${unit==='us'?'fl oz':'ml'})</label>${waterField}</div>
-        <div class="field"><label>Sleep Goal (h)</label><input class="finput" id="pig-sleep" type="number" min="1" max="24" step="0.5" value="${goal.sleep_goal_h||''}"></div>
+        <div class="field"><label>Sleep Goal (h)</label><input class="finput" id="pig-sleep" type="number" min="1" max="24" step="0.5" value="${goal.sleep_goal_hr||''}"></div>
       </div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
         <button class="btn btn-primary btn-sm" id="pig-save-goals">Save</button>
@@ -983,10 +1027,10 @@ function renderGoalsPanel(root){
       goal_type: document.getElementById('pig-goal-type').value,
       target_weight_kg: targetWeightKg,
       duration_months: parseFloat(document.getElementById('pig-duration').value)||null,
-      daily_cal_intake: parseFloat(document.getElementById('pig-daily-cal').value)||null,
-      daily_exercise_cal: parseFloat(document.getElementById('pig-exercise-cal').value)||null,
+      daily_calorie_intake_kcal: parseFloat(document.getElementById('pig-daily-cal').value)||null,
+      daily_exercise_cal_kcal: parseFloat(document.getElementById('pig-exercise-cal').value)||null,
       water_goal_ml: waterMl,
-      sleep_goal_h: parseFloat(document.getElementById('pig-sleep').value)||null,
+      sleep_goal_hr: parseFloat(document.getElementById('pig-sleep').value)||null,
     };
     btn.disabled = true; btn.textContent='Saving…';
     try{
