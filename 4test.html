@@ -286,6 +286,16 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .findet-src{color:var(--txt3);cursor:pointer;}
 .findet-src:hover{color:var(--blue);}
 .findet-empty{text-align:center;color:var(--txt3);padding:24px;font-size:12px;}
+.hd-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+.hd-periods{display:flex;gap:4px;}
+.hd-pbtn{background:var(--bg2);border:.5px solid var(--b1);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.hd-pbtn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.hd-pbtn:hover:not(.active){background:var(--bg3);}
+.hd-nav{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);}
+.hd-chart-wrap{margin-bottom:14px;border:.5px solid var(--b1);border-radius:8px;padding:10px 12px;background:var(--bg2);}
+.hd-chart-footer{font-size:11px;color:var(--txt2);margin-top:6px;text-align:center;}
+.hm-item{cursor:pointer;transition:background .12s;border-radius:6px;}
+.hm-item:hover{background:var(--bg2);}
 .fm-cell-lbl{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fm-cell-sub{font-size:8px;color:var(--txt3);margin-bottom:2px;}
 .fm-cell-val{font-size:10.5px;font-weight:600;color:var(--txt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -479,6 +489,36 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <table class="findet-table">
         <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Notes</th><th>Source</th></tr></thead>
         <tbody id="findet-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg h" id="health-detail-modal">
+  <div class="mb" style="max-width:640px;">
+    <div class="mhd"><div class="mt" id="hd-title">Health detail</div><button class="mx" id="hd-close">×</button></div>
+    <div class="hd-toolbar">
+      <div class="hd-periods" id="hd-periods">
+        <button class="hd-pbtn" data-p="daily">Daily</button>
+        <button class="hd-pbtn" data-p="weekly">Weekly</button>
+        <button class="hd-pbtn" data-p="monthly">Monthly</button>
+        <button class="hd-pbtn" data-p="all">All</button>
+      </div>
+      <div class="hd-nav">
+        <button class="findet-nbtn" id="hd-prev">‹</button>
+        <span id="hd-date-label"></span>
+        <button class="findet-nbtn" id="hd-next">›</button>
+      </div>
+    </div>
+    <div id="hd-loading" style="display:none;" class="findet-empty">Loading…</div>
+    <div id="hd-chart-area" class="hd-chart-wrap" style="display:none;">
+      <div id="hd-chart"></div>
+      <div class="hd-chart-footer" id="hd-chart-footer"></div>
+    </div>
+    <div class="findet-table-wrap" id="hd-table-wrap">
+      <table class="findet-table">
+        <thead id="hd-thead"></thead>
+        <tbody id="hd-tbody"></tbody>
       </table>
     </div>
   </div>
@@ -693,18 +733,18 @@ function healthMiniHTML(){
     +'</div>'
     +'<div class="card-body">'
       +'<div class="hm-grid">'
-        +'<div class="hm-item"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">⚖️</div><div class="hm-val" id="hm-weight">—</div><div class="hm-lbl">Weight</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">🩺</div><div class="hm-val" id="hm-bp">—</div><div class="hm-lbl">Blood Pressure</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">❤️</div><div class="hm-val" id="hm-hr">—</div><div class="hm-lbl">Heart Rate</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">🫁</div><div class="hm-val" id="hm-spo2">—</div><div class="hm-lbl">SpO2</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">🩸</div><div class="hm-val" id="hm-glucose">—</div><div class="hm-lbl">Glucose</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'
-        +'<div class="hm-item"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'water\')"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'weight\')"><div class="hm-ic">⚖️</div><div class="hm-val" id="hm-weight">—</div><div class="hm-lbl">Weight</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'bp\')"><div class="hm-ic">🩺</div><div class="hm-val" id="hm-bp">—</div><div class="hm-lbl">Blood Pressure</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'hr\')"><div class="hm-ic">❤️</div><div class="hm-val" id="hm-hr">—</div><div class="hm-lbl">Heart Rate</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'spo2\')"><div class="hm-ic">🫁</div><div class="hm-val" id="hm-spo2">—</div><div class="hm-lbl">SpO2</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'glucose\')"><div class="hm-ic">🩸</div><div class="hm-val" id="hm-glucose">—</div><div class="hm-lbl">Glucose</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'sleep\')"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'
+        +'<div class="hm-item" onclick="openHealthDetail(\'mood\')"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'
       +'</div>'
     +'</div>'
   +'</div>';
@@ -1823,25 +1863,18 @@ document.getElementById('fined-delete').addEventListener('click',function(){
 });
 
 /* ── Health 편집/삭제 모달 (weight/bp/hr/glucose 등 tab:'health', 그리고 신규 tab:'womens')
-   [v1.9] row_idx 재조회 방식(findHealthRowIdx_) 대신, GET 응답에 이미 있는 _sheet_row를
-   그대로 백엔드에 넘김(index.js edit/delete가 sheet_row 파라미터를 직접 지원하도록 수정됨).
-   findHealthRowIdx_는 더 이상 안 쓰지만, 다른 곳에서 참조할 수도 있어 일단 남겨둠(무해한 미사용 함수). */
+   [v1.9] row_idx 재조회 방식 대신, GET 응답에 이미 있는 _sheet_row를 그대로 백엔드에 넘김
+   (index.js edit/delete가 sheet_row 파라미터를 직접 지원). 예전엔 이걸 위해 findHealthRowIdx_로
+   재조회했으나 완전히 대체돼 호출부가 없어져서 제거함(2026-07-27). */
 var curEditHealth=null; // {metricType, row, tab}
-var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose',spo2:'Edit SpO2',temperature:'Edit Temperature',cholesterol:'Edit Cholesterol',womens:"Edit Women's Entry"};
+var HEALTH_ED_TITLES={weight:'Edit Weight',bp:'Edit Blood Pressure',hr:'Edit Heart Rate',glucose:'Edit Glucose',spo2:'Edit SpO2',temperature:'Edit Temperature',cholesterol:'Edit Cholesterol',womens:"Edit Women's Entry",activity:'Edit Activity',sleep:'Edit Sleep',mood:'Edit Mood',water:'Edit Water'};
+// [Health 상세팝업 확장] metricType → 실제 시트 tab 매핑. 기존엔 womens만 예외 처리하고
+// 나머지는 전부 'health'로 하드코딩돼 있었는데, activity/sleep/mood/water는 각자 다른 탭이라
+// 별도 매핑이 필요해서 추가함.
+var METRIC_TAB_MAP={weight:'health',bp:'health',hr:'health',glucose:'health',spo2:'health',temperature:'health',cholesterol:'health',womens:'womens',activity:'activity',sleep:'sleep',mood:'mood',water:'water'};
 
-function findHealthRowIdx_(sheetRow){
-  var anyDate=new Date().toISOString().slice(0,10);
-  return fetch(BACKEND+'/api/me/health?date='+anyDate+'&period=all&tab=health',{credentials:'include'})
-    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
-    .then(function(data){
-      if(!data)return null;
-      var arr=Array.isArray(data.health)?data.health:[];
-      for(var i=0;i<arr.length;i++){if(arr[i]._sheet_row===sheetRow)return i;}
-      return null;
-    });
-}
 function openHealthEdit(metricType,row){
-  curEditHealth={metricType:metricType,row:row,tab:(metricType==='womens'?'womens':'health')};
+  curEditHealth={metricType:metricType,row:row,tab:METRIC_TAB_MAP[metricType]||'health'};
   document.getElementById('healthed-title').textContent=HEALTH_ED_TITLES[metricType]||'Edit Record';
   var fw=document.getElementById('healthed-fields');
   if(metricType==='weight'){
@@ -1877,6 +1910,28 @@ function openHealthEdit(metricType,row){
     fw.innerHTML='<div class="ff"><label class="fl">Temperature (°C)</label><input class="fi" type="number" step="0.1" id="healthed-temp" value="'+row.temperature_c+'"/></div>';
   } else if(metricType==='cholesterol'){
     fw.innerHTML='<div class="ff"><label class="fl">Cholesterol (mg/dL)</label><input class="fi" type="number" id="healthed-chol" value="'+row.cholesterol_mgdl+'"/></div>';
+  } else if(metricType==='activity'){
+    var distU=getUnitPref()==='us'?'mi':'km';
+    var distV=row.distance_km?(getUnitPref()==='us'?(row.distance_km*0.621371).toFixed(2):row.distance_km.toFixed(2)):'';
+    fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl">Type</label><input class="fi" type="text" id="healthed-act-type" value="'+escH(row.category||row.type||'')+'"/></div>'
+      +'<div class="ff"><label class="fl">Duration (min)</label><input class="fi" type="number" id="healthed-act-dur" value="'+(row.duration_min||'')+'"/></div></div>'
+      +'<div class="fr2"><div class="ff"><label class="fl">Steps</label><input class="fi" type="number" id="healthed-act-steps" value="'+(row.steps||'')+'"/></div>'
+      +'<div class="ff"><label class="fl">Distance ('+distU+')</label><input class="fi" type="number" step="0.01" id="healthed-act-dist" value="'+distV+'"/></div></div>'
+      +'<div class="ff"><label class="fl">Calories burned (kcal)</label><input class="fi" type="number" id="healthed-act-cal" value="'+(row.calories_burned_kcal||'')+'"/></div>';
+  } else if(metricType==='sleep'){
+    fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl">Bedtime</label><input class="fi" type="time" id="healthed-sleep-bed" value="'+escH(row.bedtime||'')+'"/></div>'
+      +'<div class="ff"><label class="fl">Wake time</label><input class="fi" type="time" id="healthed-sleep-wake" value="'+escH(row.wake_time||'')+'"/></div></div>'
+      +'<div class="fr2"><div class="ff"><label class="fl">Duration (hr)</label><input class="fi" type="number" step="0.1" id="healthed-sleep-dur" value="'+(row.duration_hr||(row.duration_min?(row.duration_min/60).toFixed(1):''))+'"/></div>'
+      +'<div class="ff"><label class="fl">Quality (1–5)</label><input class="fi" type="number" min="1" max="5" id="healthed-sleep-q" value="'+(row.quality_1to5||'')+'"/></div></div>';
+  } else if(metricType==='mood'){
+    var moodOpts=Object.keys(MOOD_EMOJI_MAP).map(function(k){return '<option value="'+k+'"'+(row.mood===k?' selected':'')+'>'+MOOD_EMOJI_MAP[k]+' '+k+'</option>';}).join('');
+    fw.innerHTML='<div class="ff"><label class="fl">Mood</label><select class="fi" id="healthed-mood-val">'+moodOpts+'</select></div>'
+      +'<div class="ff"><label class="fl">Energy (1–5)</label><input class="fi" type="number" min="1" max="5" id="healthed-mood-e" value="'+(row.energy_level_1to5||'')+'"/></div>';
+  } else if(metricType==='water'){
+    var wUnitPref=getUnitPref();
+    var amtV=wUnitPref==='us'?Math.round((row.amount_ml||0)/29.5735):Math.round(row.amount_ml||0);
+    fw.innerHTML='<div class="fr2"><div class="ff"><label class="fl" id="healthed-water-label">Amount ('+(wUnitPref==='us'?'fl oz':'ml')+')</label><input class="fi" type="number" id="healthed-water-amt" value="'+amtV+'"/></div>'
+      +'<div class="ff"><label class="fl">Drink type</label><input class="fi" type="text" id="healthed-water-type" value="'+escH(row.drink_type||'water')+'"/></div></div>';
   } else if(metricType==='womens'){
     // [v2.2] Women 항목은 "삭제만" 지원하기로 확정 — 수정 폼(입력창) 대신 읽기 전용 요약만 보여줌.
     // 이유: Women 행은 SMS 메시지 하나가 그 순간의 정보 하나만 담고 있어서, 필드를 손으로
@@ -1892,9 +1947,9 @@ function openHealthEdit(metricType,row){
   document.getElementById('healthed-st').textContent='';
   document.getElementById('health-edit-modal').classList.remove('h');
 }
-document.getElementById('healthed-close').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
-document.getElementById('healthed-cancel').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;});
-document.getElementById('health-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditHealth=null;}});
+document.getElementById('healthed-close').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;maybeReturnToHealthDetail();});
+document.getElementById('healthed-cancel').addEventListener('click',function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;maybeReturnToHealthDetail();});
+document.getElementById('health-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditHealth=null;maybeReturnToHealthDetail();}});
 document.getElementById('healthed-save').addEventListener('click',function(){
   if(!curEditHealth)return;
   var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
@@ -1911,6 +1966,37 @@ document.getElementById('healthed-save').addEventListener('click',function(){
       edited[inp.dataset.key]=inp.value;
     });
     data=womensEntryToEditPayload(edited);
+  } else if(mt==='activity'||mt==='sleep'||mt==='mood'||mt==='water'){
+    // [신규] Activity/Sleep/Mood/Water는 한 행에 여러 필드가 같이 들어있어서(예: activity는
+    // steps+거리+칼로리+시간이 한 행), vitals처럼 "수정한 필드 하나만" 보내면 buildHealthRow_가
+    // 나머지 필드를 빈 값으로 덮어써 버린다. 그래서 womens와 같은 방식으로 원본 row 전체를
+    // 복사한 뒤 수정한 필드만 덮어쓴다.
+    data=Object.assign({},curEditHealth.row);
+    data.notes=document.getElementById('healthed-notes').value.trim();
+    data.stamp_date=curEditHealth.row.stamp_date;
+    if(mt==='activity'){
+      data.category=document.getElementById('healthed-act-type').value.trim();
+      data.type=data.category;
+      data.duration_min=parseFloat(document.getElementById('healthed-act-dur').value)||null;
+      data.steps=parseInt(document.getElementById('healthed-act-steps').value)||null;
+      var distIn=parseFloat(document.getElementById('healthed-act-dist').value)||0;
+      data.distance_km=getUnitPref()==='us'?distIn/0.621371:distIn;
+      data.calories_burned_kcal=parseFloat(document.getElementById('healthed-act-cal').value)||null;
+    } else if(mt==='sleep'){
+      data.bedtime=document.getElementById('healthed-sleep-bed').value;
+      data.wake_time=document.getElementById('healthed-sleep-wake').value;
+      data.duration_hr=parseFloat(document.getElementById('healthed-sleep-dur').value)||null;
+      data.duration_min=data.duration_hr?Math.round(data.duration_hr*60):null;
+      data.quality_1to5=parseInt(document.getElementById('healthed-sleep-q').value)||null;
+    } else if(mt==='mood'){
+      data.mood=document.getElementById('healthed-mood-val').value;
+      data.energy_level_1to5=parseInt(document.getElementById('healthed-mood-e').value)||null;
+    } else if(mt==='water'){
+      var amtIn=parseFloat(document.getElementById('healthed-water-amt').value)||0;
+      data.amount_ml=getUnitPref()==='us'?Math.round(amtIn*29.5735):amtIn;
+      data.amount_floz=getUnitPref()==='us'?amtIn:Math.round(data.amount_ml/29.5735);
+      data.drink_type=document.getElementById('healthed-water-type').value.trim()||'water';
+    }
   } else {
     data={notes:document.getElementById('healthed-notes').value.trim(),stamp_date:curEditHealth.row.stamp_date};
     if(mt==='weight'){
@@ -1928,7 +2014,7 @@ document.getElementById('healthed-save').addEventListener('click',function(){
   fetch(BACKEND+'/api/me/health/log/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:curEditHealth.tab,sheet_row:curEditHealth.row._sheet_row,data:data})})
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(res){
-      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();maybeReturnToHealthDetail();},400);}
       else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
     }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
@@ -1939,7 +2025,7 @@ document.getElementById('healthed-delete').addEventListener('click',function(){
   fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:curEditHealth.tab,sheet_row:curEditHealth.row._sheet_row})})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(res){
-      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();},400);}
+      if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('health-edit-modal').classList.add('h');curEditHealth=null;st.textContent='';loadHealth();maybeReturnToHealthDetail();},400);}
       else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
     }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
@@ -2466,6 +2552,230 @@ function renderHealthMini(ds){
     Object.keys(counts).forEach(function(k){if(counts[k]>topN){topN=counts[k];top=k;}});
     setTxt('hm-mood',top?((MOOD_EMOJI[top]?MOOD_EMOJI[top]+' ':'')+top):'—');
   }
+}
+
+/* ── Health 상세 팝업 (미니카드 12칸 클릭 시) ──
+   Finance의 fin-detail-modal과 같은 큰 틀(리스트 팝업→행 클릭→기존 단일 편집 모달)을 따르되,
+   두 가지 확정 사항이 Finance와 다르다:
+   1) Activity(Cals/Steps/km/Active Cal 4칸 통합)와 Mood는 차트 없이 타임라인 목록만
+      (원본 panel-logs-ams.html에 이 두 항목의 차트가 애초에 없었음 — 사용자 확정).
+   2) 나머지(Weight/BP/HR/SpO2/Glucose/Sleep/Water)는 메인 캘린더 캐시를 재사용하지 않고
+      원본 panel-logs-body.html/panel-trackers.html처럼 팝업이 자체적으로
+      Daily/Weekly/Monthly/All 기간을 눌러 매번 새로 fetch한다(사용자 확정).
+      → 이 팝업은 calYear/calMonth와 무관하게 독립적으로 동작한다.
+   행 클릭 시 vitals(weight/bp/hr/spo2/glucose)는 기존 openHealthEdit을 그대로 재사용하고,
+   activity/sleep/mood/water는 이번에 openHealthEdit에 새로 추가한 분기를 탄다(아래 확장부 참고). */
+var HD_TYPES={
+  activity:{tab:'activity',title:'Activity',hasChart:false,arrKey:'activity'},
+  mood:    {tab:'mood',    title:'Mood',    hasChart:false,arrKey:'mood'},
+  weight:  {tab:'health',  title:'Weight',       hasChart:true,arrKey:'health',field:'weight_kg'},
+  bp:      {tab:'health',  title:'Blood Pressure',hasChart:true,arrKey:'health',field:'blood_pressure_sys'},
+  hr:      {tab:'health',  title:'Heart Rate',   hasChart:true,arrKey:'health',field:'heart_rate_bpm'},
+  spo2:    {tab:'health',  title:'SpO2',         hasChart:true,arrKey:'health',field:'spo2_pct'},
+  glucose: {tab:'health',  title:'Glucose',      hasChart:true,arrKey:'health',field:'glucose_mgdl'},
+  sleep:   {tab:'sleep',   title:'Sleep',        hasChart:true,arrKey:'sleep'},
+  water:   {tab:'water',   title:'Water',        hasChart:true,arrKey:'water'}
+};
+var MOOD_EMOJI_MAP={Amazing:'🤩',Happy:'😊',Calm:'😌',Neutral:'😐',Tired:'😴',Anxious:'😰',Sad:'😢',Angry:'😠',Stressed:'😫',Grateful:'🙏'};
+var hdOpen=false, hdType='weight', hdPeriod='daily', hdDate=null, hdRows=[];
+
+function _hdToday(){var n=new Date();return isoD(n.getFullYear(),n.getMonth(),n.getDate());}
+function hdApiPeriod(p){return p==='ytd'||p==='all'?'all':p;}
+
+function openHealthDetail(type){
+  hdType=type;hdOpen=true;
+  hdDate=selectedDateStr||_hdToday();
+  hdPeriod='daily';
+  document.getElementById('hd-title').textContent=(HD_TYPES[type]||{}).title||type;
+  document.querySelectorAll('#hd-periods .hd-pbtn').forEach(function(b){b.classList.toggle('active',b.dataset.p===hdPeriod);});
+  document.getElementById('hd-chart-area').style.display=HD_TYPES[type].hasChart?'':'none';
+  document.getElementById('health-detail-modal').classList.remove('h');
+  loadHealthDetailData();
+}
+function closeHealthDetail(){hdOpen=false;document.getElementById('health-detail-modal').classList.add('h');}
+document.getElementById('hd-close').addEventListener('click',closeHealthDetail);
+document.getElementById('health-detail-modal').addEventListener('click',function(e){if(e.target===this)closeHealthDetail();});
+document.querySelectorAll('#hd-periods .hd-pbtn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    hdPeriod=this.dataset.p;
+    document.querySelectorAll('#hd-periods .hd-pbtn').forEach(function(b){b.classList.toggle('active',b===btn);});
+    loadHealthDetailData();
+  });
+});
+function hdShiftDate(dir){
+  var d=new Date(hdDate+'T12:00:00');
+  if(hdPeriod==='daily')d.setDate(d.getDate()+dir);
+  else if(hdPeriod==='weekly')d.setDate(d.getDate()+dir*7);
+  else if(hdPeriod==='monthly')d.setMonth(d.getMonth()+dir);
+  else return; // All 기간은 날짜 이동 없음
+  hdDate=isoD(d.getFullYear(),d.getMonth(),d.getDate());
+  loadHealthDetailData();
+}
+document.getElementById('hd-prev').addEventListener('click',function(){hdShiftDate(-1);});
+document.getElementById('hd-next').addEventListener('click',function(){hdShiftDate(1);});
+
+function hdDateLabel(){
+  if(hdPeriod==='all')return'All time';
+  var d=new Date(hdDate+'T12:00:00');
+  if(hdPeriod==='monthly')return monthLabelFor(d.getFullYear(),d.getMonth());
+  if(hdPeriod==='weekly')return'7 days ending '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function loadHealthDetailData(){
+  var cfg=HD_TYPES[hdType];
+  var loading=document.getElementById('hd-loading'),wrap=document.getElementById('hd-table-wrap');
+  loading.style.display='';wrap.style.display='none';
+  document.getElementById('hd-next').disabled=(hdPeriod==='all');
+  document.getElementById('hd-prev').disabled=(hdPeriod==='all');
+  document.getElementById('hd-date-label').textContent=hdDateLabel();
+  fetch(BACKEND+'/api/me/health?date='+hdDate+'&period='+hdApiPeriod(hdPeriod)+'&tab='+cfg.tab,{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      var arr=(data&&data[cfg.arrKey])||[];
+      if(cfg.field)arr=arr.filter(function(r){return r[cfg.field]!=null&&r[cfg.field]!=='';});
+      hdRows=arr.slice().sort(function(a,b){return (b.stamp_date||'').localeCompare(a.stamp_date||'');});
+      loading.style.display='none';wrap.style.display='';
+      if(!hdOpen)return;
+      if(cfg.hasChart)renderHealthDetailChart(hdType,arr);
+      renderHealthDetailTable(hdType,hdRows);
+    })
+    .catch(function(){hdRows=[];loading.style.display='none';wrap.style.display='';renderHealthDetailTable(hdType,[]);
+      if(HD_TYPES[hdType].hasChart){document.getElementById('hd-chart').innerHTML='<div class="findet-empty">Failed to load.</div>';document.getElementById('hd-chart-footer').textContent='';}});
+}
+
+/* ── 테이블(타임라인) 렌더 — 타입별 컬럼 구성 ── */
+var HD_COLUMNS={
+  activity:['Date','Type','Steps','Distance','Calories','Duration'],
+  mood:['Date','Mood','Energy'],
+  weight:['Date','Weight'],
+  bp:['Date','Blood Pressure'],
+  hr:['Date','Heart Rate'],
+  spo2:['Date','SpO2'],
+  glucose:['Date','Glucose'],
+  sleep:['Date','Duration','Quality'],
+  water:['Date','Amount','Type']
+};
+function hdCellsFor(type,r){
+  var unit=getUnitPref?getUnitPref():'metric';
+  if(type==='activity'){
+    var distTxt=r.distance_km?(unit==='us'?(r.distance_km*0.621371).toFixed(2)+' mi':r.distance_km.toFixed(2)+' km'):'—';
+    return [ (r.category||r.type||'—'), (r.steps||'—'), distTxt, (r.calories_burned_kcal?Math.round(r.calories_burned_kcal)+' kcal':'—'), (r.duration_min?r.duration_min+' min':'—') ];
+  }
+  if(type==='mood')return [ (MOOD_EMOJI_MAP[r.mood]?MOOD_EMOJI_MAP[r.mood]+' ':'')+(r.mood||'—'), (r.energy_level_1to5?r.energy_level_1to5+'/5':'—') ];
+  if(type==='weight'){var wlb=(r.weight_lb!=null&&r.weight_lb!=='')?r.weight_lb:(r.weight_kg*2.20462);return [ unit==='us'?(+wlb).toFixed(1)+' lb':(+r.weight_kg).toFixed(1)+' kg' ];}
+  if(type==='bp')return [ r.blood_pressure_sys+'/'+r.blood_pressure_dia+' mmHg' ];
+  if(type==='hr')return [ r.heart_rate_bpm+' bpm' ];
+  if(type==='spo2')return [ r.spo2_pct+'%' ];
+  if(type==='glucose')return [ r.glucose_mgdl+' mg/dL' ];
+  if(type==='sleep')return [ (r.duration_min?(r.duration_min/60).toFixed(1)+' hr':'—'), (r.quality_1to5?r.quality_1to5+'/5':'—') ];
+  if(type==='water'){var ml=r.amount_ml||0;return [ unit==='us'?Math.round(ml/29.5735)+' fl oz':Math.round(ml)+' ml', (r.drink_type||'water') ];}
+  return [];
+}
+function renderHealthDetailTable(type,rows){
+  var thead=document.getElementById('hd-thead'),tbody=document.getElementById('hd-tbody');
+  var cols=HD_COLUMNS[type]||['Date'];
+  thead.innerHTML='<tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>';
+  tbody.innerHTML='';
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="'+cols.length+'" class="findet-empty">No entries for this period.</td></tr>';return;}
+  rows.forEach(function(r){
+    var cells=hdCellsFor(type,r);
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+escH((r.stamp_date||'').slice(0,10))+'</td>'+cells.map(function(c){return '<td>'+escH(String(c))+'</td>';}).join('');
+    tr.addEventListener('click',function(){
+      document.getElementById('health-detail-modal').classList.add('h'); // list→edit 겹침 방지: Finance와 동일 패턴(닫지만 hdOpen은 유지)
+      openHealthEdit(type,r);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+/* ── 트렌드 차트 — panel-logs-body.html의 pbLineChart를 컨테이너 참조 방식으로 이식 ── */
+function hdLineChart(chartEl,footerEl,opts){
+  if(!chartEl)return;
+  var allVals=[];
+  opts.series.forEach(function(s){s.values.forEach(function(p){allVals.push(p.val);});});
+  if(!allVals.length){chartEl.innerHTML='<div class="findet-empty">No data for this period.</div>';if(footerEl)footerEl.textContent='';return;}
+  var allDates={};
+  opts.series.forEach(function(s){s.values.forEach(function(p){allDates[p.date]=true;});});
+  var dates=Object.keys(allDates).sort();
+  var dataMin=Math.min.apply(null,allVals),dataMax=Math.max.apply(null,allVals);
+  var pad=(dataMax-dataMin)*0.15||1;
+  var yMin=opts.yMin!=null?opts.yMin:Math.floor(dataMin-pad);
+  var yMax=opts.yMax!=null?opts.yMax:Math.ceil(dataMax+pad);
+  var yRange=yMax-yMin||1;
+  var W=Math.max(dates.length*28,240),H=110,PL=32,PR=8,PT=8,PB=22;
+  var cW=W-PL-PR,cH=H-PT-PB;
+  function xPos(i){return PL+(dates.length<=1?cW/2:(i/(dates.length-1))*cW);}
+  function yPos(v){return PT+cH-((v-yMin)/yRange)*cH;}
+  var svg='<svg width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="font-family:Inter,sans-serif;">';
+  [0,0.5,1].forEach(function(t){
+    var y=PT+cH*t,v=Math.round(yMax-t*yRange);
+    svg+='<line x1="'+PL+'" y1="'+y+'" x2="'+(PL+cW)+'" y2="'+y+'" stroke="rgba(0,0,0,0.07)" stroke-width="1"/>';
+    svg+='<text x="'+(PL-4)+'" y="'+(y+3)+'" text-anchor="end" font-size="8" fill="#999896">'+v+'</text>';
+  });
+  if(opts.refBand){
+    var ryHi=Math.max(PT,yPos(Math.min(opts.refBand.hi,yMax))),ryLo=Math.min(PT+cH,yPos(Math.max(opts.refBand.lo,yMin)));
+    svg+='<rect x="'+PL+'" y="'+ryHi+'" width="'+cW+'" height="'+(ryLo-ryHi)+'" fill="'+(opts.refBand.color||'#1D9E75')+'" opacity="0.12"/>';
+  }
+  opts.series.forEach(function(s){
+    var map={};s.values.forEach(function(p){map[p.date]=p.val;});
+    var points=[];dates.forEach(function(d,i){if(map[d]!=null)points.push({i:i,v:map[d]});});
+    if(!points.length)return;
+    var pts=points.map(function(p){return xPos(p.i)+','+yPos(p.v);}).join(' ');
+    svg+='<polyline points="'+pts+'" fill="none" stroke="'+s.color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    points.forEach(function(p){
+      var cx=xPos(p.i),cy=yPos(p.v);
+      svg+='<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="'+s.color+'" stroke="#fff" stroke-width="1.5"/>';
+      if(dates.length<=20)svg+='<text x="'+cx+'" y="'+(cy-6)+'" text-anchor="middle" font-size="8.5" font-weight="600" fill="'+s.color+'">'+p.v+'</text>';
+    });
+  });
+  var labelEvery=Math.ceil(dates.length/10);
+  dates.forEach(function(d,i){
+    if(i%labelEvery!==0&&i!==dates.length-1)return;
+    svg+='<text x="'+xPos(i)+'" y="'+(H-4)+'" text-anchor="middle" font-size="8.5" fill="#999896">'+d.slice(5)+'</text>';
+  });
+  svg+='</svg>';
+  chartEl.innerHTML=svg;
+  if(footerEl){
+    var avg=(allVals.reduce(function(s,v){return s+v;},0)/allVals.length).toFixed(1);
+    var mn=Math.min.apply(null,allVals),mx=Math.max.apply(null,allVals);
+    var legend=opts.series.map(function(s){return '<span style="display:inline-flex;align-items:center;gap:3px;"><span style="display:inline-block;width:12px;height:3px;background:'+s.color+';border-radius:2px;"></span>'+s.label+'</span>';}).join(' ');
+    footerEl.innerHTML=legend+' &nbsp;·&nbsp; Avg: <b>'+avg+'</b> '+(opts.unit||'')+' · Min: <b>'+mn+'</b> · Max: <b>'+mx+'</b>';
+  }
+}
+function renderHealthDetailChart(type,rows){
+  var chartEl=document.getElementById('hd-chart'),footerEl=document.getElementById('hd-chart-footer');
+  var unit=getUnitPref?getUnitPref():'metric';
+  var sorted=rows.slice().sort(function(a,b){return (a.stamp_date||'').localeCompare(b.stamp_date||'');});
+  function nd(s){return (s||'').toString().slice(0,10);}
+  if(type==='weight'){
+    var wu=unit==='us'?'lb':'kg';
+    hdLineChart(chartEl,footerEl,{unit:wu,series:[{label:'Weight',color:'#1C7ED6',values:sorted.filter(function(r){return r.weight_kg;}).map(function(r){var v=unit==='us'?Math.round(r.weight_kg*2.20462*10)/10:r.weight_kg;return {date:nd(r.stamp_date),val:v};})}]});
+  } else if(type==='bp'){
+    hdLineChart(chartEl,footerEl,{unit:'mmHg',refBand:{lo:60,hi:80},series:[
+      {label:'Systolic',color:'#E24B4A',values:sorted.filter(function(r){return r.blood_pressure_sys;}).map(function(r){return {date:nd(r.stamp_date),val:r.blood_pressure_sys};})},
+      {label:'Diastolic',color:'#EF9F27',values:sorted.filter(function(r){return r.blood_pressure_dia;}).map(function(r){return {date:nd(r.stamp_date),val:r.blood_pressure_dia};})}
+    ]});
+  } else if(type==='hr'){
+    hdLineChart(chartEl,footerEl,{unit:'bpm',refBand:{lo:60,hi:100},series:[{label:'Heart Rate',color:'#E24B4A',values:sorted.filter(function(r){return r.heart_rate_bpm;}).map(function(r){return {date:nd(r.stamp_date),val:r.heart_rate_bpm};})}]});
+  } else if(type==='spo2'){
+    hdLineChart(chartEl,footerEl,{unit:'%',yMin:90,yMax:100,refBand:{lo:95,hi:100},series:[{label:'SpO2',color:'#1D9E75',values:sorted.filter(function(r){return r.spo2_pct;}).map(function(r){return {date:nd(r.stamp_date),val:r.spo2_pct};})}]});
+  } else if(type==='glucose'){
+    hdLineChart(chartEl,footerEl,{unit:'mg/dL',refBand:{lo:70,hi:100},series:[{label:'Glucose',color:'#EF9F27',values:sorted.filter(function(r){return r.glucose_mgdl;}).map(function(r){return {date:nd(r.stamp_date),val:r.glucose_mgdl};})}]});
+  } else if(type==='sleep'){
+    hdLineChart(chartEl,footerEl,{unit:'hr',series:[{label:'Sleep',color:'#534AB7',values:sorted.filter(function(r){return r.duration_min;}).map(function(r){return {date:nd(r.stamp_date),val:+(r.duration_min/60).toFixed(1)};})}]});
+  } else if(type==='water'){
+    var wlu=unit==='us'?'fl oz':'ml';
+    hdLineChart(chartEl,footerEl,{unit:wlu,series:[{label:'Water',color:'#378ADD',values:sorted.filter(function(r){return r.amount_ml;}).map(function(r){var v=unit==='us'?Math.round(r.amount_ml/29.5735):Math.round(r.amount_ml);return {date:nd(r.stamp_date),val:v};})}]});
+  }
+}
+
+/* ── Health 상세 팝업 ↔ 단일 편집 모달 z-index 왕복 (Finance의 maybeReturnToFinDetail과 동일 패턴) ── */
+function maybeReturnToHealthDetail(){
+  if(!hdOpen)return; // 상세 팝업을 거쳐 온 편집이 아니면(day-view에서 바로 연 경우) 아무것도 안 함
+  document.getElementById('health-detail-modal').classList.remove('h');
+  loadHealthDetailData(); // 저장/삭제 직후 최신 데이터로 다시 로드
 }
 
 /* ── Add panel 2 (5-tab B-plan) ── */
