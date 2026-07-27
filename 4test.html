@@ -2146,7 +2146,20 @@ var FIN_WANTS_SET=['Transportation - Rideshare','Gym / Fitness','Gift / Donation
 var FIN_INCOME_SET=['Salary','Freelance','Sales','Other Income'];
 var FIN_SAVINGS_SET=['Savings Transfer','Emergency Fund','Retirement','Investment'];
 var HYBRID_CATS=['Shopping - Clothing','Gym / Fitness'];
-function getHybridOverrideMini(cat){return null;} // TODO(setting/index.html): 서버에 저장된 override 값을 조회하도록 교체
+var _hybridOverrideCache={}; // {"Shopping - Clothing":"W","Gym / Fitness":"N"} 형태, loadHybridOverrides()가 채움
+function getHybridOverrideMini(cat){return _hybridOverrideCache[cat]||null;}
+function loadHybridOverrides(){
+  // 페이지 로드 시 한 번만 호출(override는 월별 데이터가 아니라 사용자 설정값이라 매 loadFinance()마다 다시 부를 필요 없음).
+  // setting/index.html에서 값을 바꾼 뒤에는 그쪽에서 이 함수를 다시 호출해 캐시를 갱신하면 됨.
+  fetch(BACKEND+'/api/me/finance/hybrid-overrides',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _hybridOverrideCache=(data&&data.overrides)?data.overrides:{};
+      renderFinanceMini(); // 이미 받아둔 _financeMonthData 기준으로 Needs/Wants 재계산해서 다시 그림
+      if(typeof refreshFinDetailAfterLoad==='function')refreshFinDetailAfterLoad();
+    })
+    .catch(function(){_hybridOverrideCache={};});
+}
 function isNeedsCategoryMini(cat){
   if(FIN_NEEDS_SET.indexOf(cat)!==-1)return true;
   if(HYBRID_CATS.indexOf(cat)!==-1)return getHybridOverrideMini(cat)==='N';
@@ -2682,6 +2695,7 @@ function init(){
   loadFinance();
   loadHealth();
   loadProjects();
+  loadHybridOverrides(); // hybrid N/W override 값(사용자 설정) — 페이지 로드 시 1회만
 }
 // 인증 가드: 콘텐츠를 그리기 전에 로그인 여부부터 확인. 이 사이트는 정적 호스팅이라
 // 서버가 리다이렉트를 못 해주므로, 클라이언트에서 직접 체크하고 안 되어 있으면 /login으로 보낸다.
