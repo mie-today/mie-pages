@@ -1723,6 +1723,11 @@ document.getElementById('ed-delete').addEventListener('click',function(){
    ?ytd=true(필터 없이 탭 전체 반환)로 한 번 더 조회해서 _sheet_row가 일치하는 위치를 찾아
    그 위치를 rowIdx로 사용한다. */
 var curEditFin=null; // {type,category,amount,notes,sublabel,date,_sheet_row,event_id}
+function maybeReturnToFinDetail(){
+  if(!finDetailOpen)return; // Finance 상세 팝업을 거쳐 온 편집이 아니면 아무것도 하지 않음
+  document.getElementById('fin-detail-modal').classList.remove('h');
+  renderFinDetailTable(); // 저장/삭제 직후엔 loadFinance()가 곧 최신 데이터로 한 번 더 갱신함(refreshFinDetailAfterLoad)
+}
 var FIN_TABNAME_MAP={income:'income',expense:'expenses',saving:'savings'};
 
 function findFinRowIdx_(tabName,sheetRow){
@@ -1746,9 +1751,9 @@ function openFinEdit(r){
   document.getElementById('fined-st').textContent='';
   document.getElementById('fin-edit-modal').classList.remove('h');
 }
-document.getElementById('fin-edit-close').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
-document.getElementById('fined-cancel').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;});
-document.getElementById('fin-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditFin=null;}});
+document.getElementById('fin-edit-close').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;maybeReturnToFinDetail();});
+document.getElementById('fined-cancel').addEventListener('click',function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;maybeReturnToFinDetail();});
+document.getElementById('fin-edit-modal').addEventListener('click',function(e){if(e.target===this){this.classList.add('h');curEditFin=null;maybeReturnToFinDetail();}});
 document.getElementById('fined-save').addEventListener('click',function(){
   if(!curEditFin)return;
   var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Saving…';
@@ -1766,7 +1771,7 @@ document.getElementById('fined-save').addEventListener('click',function(){
     fetch(BACKEND+'/api/me/finance/transaction/edit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
       .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
       .then(function(res){
-        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='✅ Saved!';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();maybeReturnToFinDetail();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
       }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
   }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
@@ -1781,7 +1786,7 @@ document.getElementById('fined-delete').addEventListener('click',function(){
     fetch(BACKEND+'/api/me/finance/transaction/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tabName:tabName,rowIdx:idx,eventId:curEditFin.event_id||''})})
       .then(function(r){return r.json().catch(function(){return null;}).then(function(res){checkReauthStatus(r.status);checkReauthBody(res);return res;});})
       .then(function(res){
-        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();},400);}
+        if(res&&res.ok){st.style.color='var(--teal)';st.textContent='🗑 Deleted';setTimeout(function(){document.getElementById('fin-edit-modal').classList.add('h');curEditFin=null;st.textContent='';loadFinance();maybeReturnToFinDetail();},400);}
         else{st.style.color='var(--red)';st.textContent='❌ Failed.';}
       }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
   }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
@@ -2250,6 +2255,7 @@ function renderFinDetailTable(){
       +'<td>'+findetSourceIcon(rowObj)+'</td>';
     tr.addEventListener('click',function(e){
       if(e.target&&e.target.classList&&e.target.classList.contains('findet-src'))return; // Source 아이콘 클릭은 별도 처리(아래)
+      document.getElementById('fin-detail-modal').classList.add('h'); // day-modal→ev-modal과 동일한 패턴: 뒤에 겹쳐 보이지 않도록 먼저 숨김(닫지는 않음 — finDetailOpen 유지)
       openFinEdit(rowObj);
     });
     var src=tr.querySelector('.findet-src');
