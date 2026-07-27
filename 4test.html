@@ -2566,7 +2566,7 @@ function submitAdd2(type){
     var grp=(cat.selectedOptions&&cat.selectedOptions[0]&&cat.selectedOptions[0].parentElement&&cat.selectedOptions[0].parentElement.label)||'';
     var finType=(grp==='Needs'||grp==='Wants')?'Expenses':(grp==='Income'?'Income':(grp==='Savings'?'Savings':'Expenses'));
     fetch(BACKEND+'/api/me/finance/transaction',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:finType,amount:parseFloat(a.value),category:cat.value,sublabel:sublabel?sublabel.value:'',notes:desc?desc.value:'',date:date?date.value:nd,createCalendarEvent:!!(finAtc&&finAtc.checked)})})
-      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
+      .then(function(r){return r.json().catch(function(){return null;}).then(function(body){checkReauthStatus(r.status);checkReauthBody(body);if(r.ok){showAddSt('fin','✅ Entry recorded!','var(--teal)');a.value='';desc&&(desc.value='');sublabel&&(sublabel.value='');finAtc&&(finAtc.checked=false);setTimeout(function(){loadFinance();},1000);}else{showAddSt('fin','❌ Failed.','var(--red)');}});})
       .catch(function(){showAddSt('fin','❌ Error.','var(--red)');});
   } else if(type==='hl'){
     var ht=document.getElementById('ahl-type');if(!ht||!ht.value){showAddSt('hl','Select a metric.','var(--red)');return;}
