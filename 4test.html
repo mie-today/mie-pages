@@ -1538,10 +1538,16 @@ function switchTab(tab){
   var ts=document.getElementById('tab-send'),ta=document.getElementById('tab-add');
   var ps=document.getElementById('panel-send'),pa=document.getElementById('panel-add');
   if(!ts||!ta)return;
+  var currentlyOn=ts.classList.contains('on')?'send':'add';
+  if(inputBodyOpen&&currentlyOn===tab){
+    // 이미 열려 있고, 지금 활성화된 탭을 또 눌렀다 → 전환하지 않고 그냥 접기만 한다
+    inputBodyOpen=false;applyInputBodyState();
+    return;
+  }
   ts.classList.toggle('on',tab==='send');ta.classList.toggle('on',tab==='add');
   if(ps)ps.classList.toggle('on',tab==='send');
   if(pa)pa.classList.toggle('on',tab==='add');
-  if(!inputBodyOpen){inputBodyOpen=true;applyInputBodyState();} // 탭 클릭 시 접혀 있으면 화살표 없이 자동으로 펼침
+  if(!inputBodyOpen){inputBodyOpen=true;applyInputBodyState();} // 접혀 있었다면(다른 탭이었든 아니든) 이 클릭으로 펼침
 }
 function selAddType(type){
   var eb=document.getElementById('add-ev-btn'),tb=document.getElementById('add-tk-btn');
