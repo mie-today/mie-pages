@@ -142,6 +142,8 @@ hr.div{border:none;border-top:.5px solid var(--b1);margin:16px 0;}
   <div class="topnav" id="topnav">
     <div class="topnav-row">
       <span class="topnav-cat">General</span>
+      <button class="topnav-btn" data-target="sec-general-account" onclick="scrollToSection('sec-general-account')">Account</button>
+      <button class="topnav-btn" data-target="sec-general-dashboard" onclick="scrollToSection('sec-general-dashboard')">Dashboard Layout</button>
       <button class="topnav-btn" data-target="sec-finance-budget" onclick="scrollToSection('sec-finance-budget')">Finance – Monthly Budget</button>
     </div>
     <div class="topnav-row">
@@ -158,6 +160,8 @@ hr.div{border:none;border-top:.5px solid var(--b1);margin:16px 0;}
   <div class="body">
     <div class="content" id="scrollContent">
       <div class="content-inner">
+        <section class="settings-section" id="sec-general-account"></section>
+        <section class="settings-section" id="sec-general-dashboard"></section>
         <section class="settings-section" id="sec-finance-budget"></section>
         <section class="settings-section" id="sec-health-myinfo"></section>
         <section class="settings-section" id="sec-health-insurance"></section>
@@ -168,6 +172,7 @@ hr.div{border:none;border-top:.5px solid var(--b1);margin:16px 0;}
     </div>
   </div>
 </div>
+
 
 <button class="fab-up" id="fab-up" title="Back to top">↑</button>
 
@@ -248,6 +253,8 @@ async function recDelete(id){
    swapping content in/out.
    ============================================================ */
 const SECTION_RENDERERS = {
+  'sec-general-account':   renderAccountPanel,
+  'sec-general-dashboard': renderDashboardLayoutPanel,
   'sec-finance-budget':    renderBudgetSettingsPanel,
   'sec-health-myinfo':     renderMyInfoPanel,
   'sec-health-insurance':  renderInsurancePanel,
@@ -318,6 +325,127 @@ initAllSections();
     if(el) observer.observe(el);
   });
 })();
+
+/* ============================================================
+   GENERAL — Account
+   Name/Email come from the already-connected Google account via
+   /api/me/status (no new backend needed for these two — read-only
+   display, matching "Google 계정(현재 로그인된 이메일 주소)").
+
+   Mobile Number was intentionally left out: index.js has no route
+   that reads or writes a phone number anywhere, and rather than
+   guess a Master Sheet column and risk overwriting unrelated data,
+   this field was dropped per your instruction. Add it back once
+   there's a real backend field to point it at.
+   ============================================================ */
+async function fetchAccountStatus(){
+  const r = await fetch(`${API_BASE}/api/me/status`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+function renderAccountPanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Account</div>
+    <div class="panel-sub">Your connected Google account.</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">👤 Account</span></div>
+      <div class="card-body" id="account-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+  const body = document.getElementById('account-body');
+
+  fetchAccountStatus().then(data=>{
+    if(!data || !data.connected){
+      body.innerHTML = '<div class="empty-state">Not connected. Sign in again from Overview.</div>';
+      return;
+    }
+    const u = data.user || {};
+    const name = u.name || data.given_name || '—';
+    const email = data.userEmail || u.email || '—';
+    body.innerHTML = `
+      <div class="field-grid">
+        <div class="field">
+          <label>Name</label>
+          <div class="finput" style="background:var(--bg2);color:var(--txt);">${esc(name)}</div>
+        </div>
+        <div class="field">
+          <label>Email (Google account)</label>
+          <div class="finput" style="background:var(--bg2);color:var(--txt);">${esc(email)}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:12px;">Name and email are read-only here — they come from your connected Google account. To change them, use a different Google account.</div>`;
+  }).catch(e=>{
+    body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>';
+  });
+}
+
+/* ============================================================
+   GENERAL — Dashboard Layout
+   Simple (default) / With Finance / With Health / All — controls
+   which mini-cards 4test.html's Overview shows in col-right.
+   Auto-saves on click (same pattern as the N/W hybrid toggle and
+   the Metric/US toggle elsewhere in this file) via
+   GET/POST /api/me/dashboard-prefs, stored in UserInfo!AC
+   ("Overview Type") in the Master Sheet.
+   ============================================================ */
+const DASHBOARD_LAYOUT_OPTIONS = [
+  { value:'simple',  label:'Simple',       desc:'Calendar, day view, and input only — no Finance or Health cards.' },
+  { value:'finance', label:'With Finance', desc:'Adds the Finance mini-card.' },
+  { value:'health',  label:'With Health',  desc:'Adds the Health mini-card.' },
+  { value:'all',     label:'All',          desc:'Both Finance and Health mini-cards.' },
+];
+
+async function fetchDashboardPref(){
+  const r = await fetch(`${API_BASE}/api/me/dashboard-prefs`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const data = await r.json();
+  return data.dashboard_pref || 'simple';
+}
+
+function renderDashboardLayoutPanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Dashboard Layout</div>
+    <div class="panel-sub">Choose what the Overview dashboard shows. Default is Simple.</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">🖥️ Overview Type</span><span class="status-msg" id="dash-status" style="margin:0;"></span></div>
+      <div class="card-body" id="dashboard-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+  const body = document.getElementById('dashboard-body');
+
+  function render(current){
+    body.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">` +
+      DASHBOARD_LAYOUT_OPTIONS.map(o=>{
+        const active = o.value===current;
+        return `<button class="btn btn-sm" data-value="${o.value}" onclick="setDashboardLayout('${o.value}')"
+          style="background:${active?'var(--blue)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};min-width:110px;">${o.label}</button>`;
+      }).join('') + `</div>
+      <div id="dash-desc" style="font-size:11.5px;color:var(--txt3);margin-top:10px;">
+        ${esc((DASHBOARD_LAYOUT_OPTIONS.find(o=>o.value===current)||{}).desc||'')}
+      </div>`;
+  }
+
+  window.setDashboardLayout = function(value){
+    const st = document.getElementById('dash-status');
+    render(value); // optimistic
+    st.textContent = 'Saving…'; st.className = 'status-msg';
+    fetch(`${API_BASE}/api/me/dashboard-prefs`, {
+      ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ dashboard_pref: value })
+    }).then(r=>{
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(()=>{
+      st.textContent = '✓ Saved'; st.className = 'status-msg ok';
+      toast('Dashboard layout: '+(DASHBOARD_LAYOUT_OPTIONS.find(o=>o.value===value)||{}).label);
+      setTimeout(()=>{ st.textContent=''; }, 2000);
+    }).catch(e=>{
+      st.textContent = '❌ '+e.message; st.className = 'status-msg err';
+    });
+  };
+
+  fetchDashboardPref().then(pref=>render(pref))
+    .catch(e=>{ body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+}
 
 /* ============================================================
    MEDICATION (records, type='medication')
