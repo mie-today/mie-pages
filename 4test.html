@@ -2549,7 +2549,7 @@ function submitAdd2(type){
     var start=(d&&d.value)?((s&&s.value)?d.value+'T'+s.value+':00':d.value):nd;
     var end=(d&&d.value&&e&&e.value)?d.value+'T'+e.value+':00':null;
     fetch(BACKEND+'/api/me/events/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t.value.trim(),start:start,end:end,location:loc?loc.value:'',description:notes?notes.value:'',attendees:add2Invitees,calendarId:(primaryCals.length?primaryCals[0].id:'primary')})})
-      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();}else{showAddSt('ev','❌ Failed.','var(--red)');}})
+      .then(function(r){checkReauthStatus(r.status);if(r.ok){showAddSt('ev','✅ Event added!','var(--teal)');t.value='';add2Invitees=[];renderInviteChips2();setTimeout(function(){loadEvents();},1000);}else{showAddSt('ev','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('ev','❌ Error.','var(--red)');});
   } else if(type==='tk'){
     var t=document.getElementById('at2-title');if(!t||!t.value.trim()){showAddSt('tk','Title required.','var(--red)');return;}
@@ -2641,7 +2641,7 @@ function submitAdd2(type){
     var n=document.getElementById('apr-name');if(!n||!n.value.trim()){showAddSt('pr','Name required.','var(--red)');return;}
     var due=document.getElementById('apr-due');var status=document.getElementById('apr-status');
     fetch(BACKEND+'/api/me/projects/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),due:due?due.value:'',status:status?status.value:'Planning'})})
-      .then(function(r){if(r.ok){showAddSt('pr','✅ Project created!','var(--teal)');n.value='';}else{showAddSt('pr','❌ Failed.','var(--red)');}})
+      .then(function(r){if(r.ok){showAddSt('pr','✅ Project created!','var(--teal)');n.value='';setTimeout(function(){loadProjects();},1000);}else{showAddSt('pr','❌ Failed.','var(--red)');}})
       .catch(function(){showAddSt('pr','❌ Error.','var(--red)');});
   }
 }
