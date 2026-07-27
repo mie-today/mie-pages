@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Settings · KLAIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   Root tokens — copied verbatim from 4test(1).html so Settings
+   feels like the same app, not a re-skin.
+   ============================================================ */
+:root{
+  --bg:#FFFFFF;--bg2:#FAFAF8;--bg3:#F2F1EE;
+  --txt:#111111;--txt2:#5F5E5A;--txt3:#999896;--txtdark:#4f4d46;
+  --blue:#1C7ED6;--teal:#1D9E75;
+  --b1:rgba(0,0,0,0.07);--b2:rgba(0,0,0,0.12);
+  --red:#E24B4A;--purple:#534AB7;--cblue:#378ADD;--amber:#EF9F27;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--txt);font-size:13px;}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* Topbar — same shape as 4test's .topbar */
+.topbar{flex-shrink:0;height:52px;background:var(--bg);border-bottom:.5px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;}
+.tb-left{display:flex;align-items:center;gap:14px;}
+.logo{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;letter-spacing:8px;text-transform:uppercase;user-select:none;color:var(--blue);}
+.tb-div{width:.5px;height:28px;background:var(--b2);}
+.tb-back{font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:4px;padding:0;}
+.tb-back:hover{text-decoration:underline;}
+.tb-title{font-size:13px;font-weight:600;color:var(--txt);}
+
+/* Body layout: left rail (Settings categories) + content */
+.body{flex:1;display:flex;min-height:0;overflow:hidden;}
+.rail{width:230px;flex-shrink:0;border-right:.5px solid var(--b1);background:var(--bg);padding:14px 10px;overflow-y:auto;}
+.rail-sec{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;padding:12px 10px 4px;}
+.rail-sec:first-child{padding-top:2px;}
+.rail-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:8px;border:none;background:none;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;text-align:left;}
+.rail-item:hover{background:var(--bg2);}
+.rail-item.active{background:var(--bg3);color:var(--txt);}
+.rail-item svg{flex-shrink:0;width:15px;height:15px;}
+.rail-sub{padding-left:26px;}
+.rail-sub .rail-item{font-size:12px;padding:6px 10px;}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px 60px;}
+.content-inner{max-width:760px;margin:0 auto;}
+
+.panel-title{font-size:17px;font-weight:700;margin-bottom:2px;}
+.panel-sub{font-size:12px;color:var(--txt3);margin-bottom:18px;}
+
+/* Card — same visual language as 4test .card */
+.card{background:var(--bg);border:.5px solid var(--b1);border-radius:var(--r);margin-bottom:16px;overflow:hidden;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:.5px solid var(--b1);}
+.card-hd-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.card-body{padding:16px;}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+.field-grid .full{grid-column:1 / -1;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:10.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.03em;}
+.finput,select.finput,textarea.finput{border:1px solid var(--b2);border-radius:7px;padding:7px 10px;font-size:12.5px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg2);outline:none;}
+.finput:focus{border-color:var(--blue);background:var(--bg);}
+textarea.finput{resize:vertical;min-height:64px;}
+.unit-pills{display:inline-flex;gap:2px;margin-left:8px;}
+.unit-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:12px;border:1px solid var(--b2);background:var(--bg2);color:var(--txt2);cursor:pointer;font-family:'Inter',sans-serif;}
+.unit-pill.active{background:rgba(28,126,214,0.08);color:var(--blue);border-color:var(--blue);}
+.input-with-unit{display:flex;align-items:center;}
+
+.btn{border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:#1a6fc2;}
+.btn-secondary{background:var(--bg3);color:var(--txt2);}
+.btn-secondary:hover{background:var(--b2);}
+.btn-ghost{background:none;color:var(--blue);padding:6px 8px;}
+.btn-danger-ghost{background:none;color:var(--red);padding:6px 8px;}
+.btn-sm{font-size:11px;padding:5px 10px;}
+.btn:disabled{opacity:.55;cursor:default;}
+
+.status-msg{font-size:11px;margin-top:8px;min-height:14px;}
+.status-msg.ok{color:var(--teal);}
+.status-msg.err{color:var(--red);}
+
+.list-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:.5px solid var(--b1);}
+.list-row:last-child{border-bottom:none;}
+.list-icon{width:30px;height:30px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.list-main{flex:1;min-width:0;}
+.list-name{font-size:13px;font-weight:600;}
+.list-meta{font-size:11px;color:var(--txt3);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;}
+.list-notes{font-size:11.5px;color:var(--txt2);margin-top:4px;white-space:pre-wrap;}
+.list-actions{display:flex;gap:2px;flex-shrink:0;}
+.empty-state{text-align:center;padding:26px 10px;color:var(--txt3);font-size:12px;}
+.empty-state .icon{font-size:24px;margin-bottom:6px;}
+
+.badge{font-size:10px;font-weight:600;border-radius:10px;padding:2px 8px;background:var(--bg3);color:var(--txt2);}
+
+hr.div{border:none;border-top:.5px solid var(--b1);margin:16px 0;}
+.section-title{font-size:10.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
+
+/* ---- Finance / Budget Settings block — ported to match finance_index_28.html ---- */
+.bp-sec-label{font-size:9px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;padding:12px 0 6px;border-top:.5px solid var(--b1);margin-top:4px;}
+.bp-sec-label:first-child{border-top:none;margin-top:0;padding-top:4px;}
+.bp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.bp-label{flex:0 0 190px;font-size:11.5px;color:var(--txt);}
+.bp-input{width:90px;border:1px solid var(--b2);border-radius:5px;padding:4px 8px;font-size:12px;font-family:'Inter',sans-serif;color:var(--txt);background:var(--bg);outline:none;}
+.bp-input:focus{border-color:var(--blue);}
+.bp-input.changed{border-color:var(--amber);}
+.bp-cur{font-size:10px;color:var(--txt3);flex:1;}
+.hybrid-toggle{display:inline-flex;gap:2px;margin-left:4px;vertical-align:middle;}
+.htg-btn{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;border:1px solid var(--b2);background:var(--bg2);cursor:pointer;color:var(--txt2);font-family:'Inter',sans-serif;}
+.htg-btn.active-n{background:rgba(29,158,117,0.08);color:var(--teal);border-color:var(--teal);}
+.htg-btn.active-w{background:rgba(226,75,74,0.08);color:var(--red);border-color:var(--red);}
+.htg-btn:disabled{opacity:.5;cursor:default;}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--txt);color:#fff;font-size:12px;padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:all .2s;z-index:999;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="tb-back" onclick="window.location.href='/'">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="10,2 4,8 10,14"/></svg>
+        Overview
+      </button>
+      <div class="tb-div"></div>
+      <span class="logo">KLAIVE</span>
+      <span class="tb-title">Settings</span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail" id="rail">
+      <div class="rail-sec">Health</div>
+      <button class="rail-item" data-panel="health-medication" onclick="goPanel('health-medication')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1.5"/><line x1="5" y1="5" x2="11" y2="5" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke-linecap="round"/><line x1="5" y1="11" x2="8" y2="11" stroke-linecap="round"/></svg>
+        Medication
+      </button>
+      <button class="rail-item" data-panel="health-insurance" onclick="goPanel('health-insurance')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l6 2.2v4.3c0 4-2.6 6.7-6 7.5-3.4-.8-6-3.5-6-7.5V3.2L8 1z"/></svg>
+        Insurance
+      </button>
+      <button class="rail-item" data-panel="health-history" onclick="goPanel('health-history')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="1.5" width="12" height="13" rx="1.2"/><line x1="4.5" y1="5" x2="11.5" y2="5"/><line x1="4.5" y1="7.7" x2="11.5" y2="7.7"/><line x1="4.5" y1="10.4" x2="9" y2="10.4"/></svg>
+        Medical History
+      </button>
+      <button class="rail-item" data-panel="health-myinfo" onclick="goPanel('health-myinfo')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5.3" r="2.6"/><path d="M2.7 13.3c0-2.6 2.4-4.7 5.3-4.7s5.3 2.1 5.3 4.7"/></svg>
+        My Info
+      </button>
+      <button class="rail-item" data-panel="health-goals" onclick="goPanel('health-goals')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.3"/><circle cx="8" cy="8" r="3.6"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/></svg>
+        Goals
+      </button>
+
+      <div class="rail-sec">Finance</div>
+      <button class="rail-item" data-panel="finance-budget" onclick="goPanel('finance-budget')">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke-linecap="round"/></svg>
+        Budget Settings
+      </button>
+    </div>
+
+    <div class="content">
+      <div class="content-inner" id="panel-root">
+        <div class="empty-state">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Shared config / helpers
+   ============================================================ */
+const API_BASE = 'https://api.mie.today';
+const FETCH_OPTS = { credentials: 'include' };
+
+function esc(str){
+  return String(str==null?'':str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function fmt(n){ return '$'+(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtS(n){ return '$'+(+n||0).toLocaleString('en-US',{maximumFractionDigits:0}); }
+let toastTmr=null;
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  setTimeout(()=>t.classList.add('show'),10);
+  if(toastTmr) clearTimeout(toastTmr);
+  toastTmr=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* Global unit preference — SAME localStorage key as 4test(1).html's
+   getUnitPref()/setUnitPref(). This file is a separate page (full
+   navigation via /settings), so the functions themselves can't be
+   "reused" by reference — this is a byte-for-byte copy of the same
+   logic pointed at the same key, per your decision to not spin up a
+   second, independent unit toggle. */
+const UNIT_PREF_KEY='klaive_unit_pref';
+function getUnitPref(){ try{ return localStorage.getItem(UNIT_PREF_KEY)||'metric'; }catch(e){ return 'metric'; } }
+function setUnitPref(v){ try{ localStorage.setItem(UNIT_PREF_KEY, v==='us'?'us':'metric'); }catch(e){} }
+
+/* ============================================================
+   Generic /api/me/health/records CRUD (shared by Medication,
+   Insurance, Medical History)
+   ============================================================ */
+async function recFetch(type){
+  const r = await fetch(`${API_BASE}/api/me/health/records?type=${encodeURIComponent(type)}`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const data = await r.json();
+  return Array.isArray(data) ? data : (data.records || []);
+}
+async function recCreate(type,data){
+  const r = await fetch(`${API_BASE}/api/me/health/records`, {
+    ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ record_type: type, data })
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const body = await r.json();
+  return { id: body.record_id, data: body.data };
+}
+async function recUpdate(id,data){
+  const r = await fetch(`${API_BASE}/api/me/health/records/${id}`, {
+    ...FETCH_OPTS, method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ data })
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+async function recDelete(id){
+  const r = await fetch(`${API_BASE}/api/me/health/records/${id}`, { ...FETCH_OPTS, method:'DELETE' });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+/* ============================================================
+   Nav / routing
+   ============================================================ */
+const PANEL_RENDERERS = {
+  'health-medication': renderMedicationPanel,
+  'health-insurance':  renderInsurancePanel,
+  'health-history':    renderHistoryPanel,
+  'health-myinfo':     renderMyInfoPanel,
+  'health-goals':      renderGoalsPanel,
+  'finance-budget':    renderBudgetSettingsPanel,
+};
+
+function goPanel(key){
+  document.querySelectorAll('.rail-item').forEach(b=>b.classList.toggle('active', b.dataset.panel===key));
+  try{ localStorage.setItem('klaive_settings_last_panel', key); }catch(e){}
+  const root = document.getElementById('panel-root');
+  root.innerHTML = '<div class="empty-state">Loading…</div>';
+  const fn = PANEL_RENDERERS[key];
+  if(fn) fn(root);
+}
+
+(function init(){
+  let start = 'health-medication';
+  try{
+    const saved = localStorage.getItem('klaive_settings_last_panel');
+    if(saved && PANEL_RENDERERS[saved]) start = saved;
+  }catch(e){}
+  goPanel(start);
+})();
+
+/* ============================================================
+   MEDICATION (records, type='medication')
+   Note: this is the MASTER medication list (name/dosage/doctor).
+   Per your decision, the day-to-day "did I take it" checklist
+   stays in Overview's tracker and is intentionally NOT wired to
+   this list in this session — adding a med here will not appear
+   in the tracker's "Today's Doses" automatically.
+   ============================================================ */
+function renderMedicationPanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Medication</div>
+    <div class="panel-sub">Your medication list (name, dosage, prescribing doctor). Daily dose check-offs live in Overview.</div>
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-hd-title">💊 Medications</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="status-msg" id="med-status" style="margin:0;"></span>
+          <button class="btn btn-primary btn-sm" id="med-add-btn">+ Add Medication</button>
+        </div>
+      </div>
+      <div class="card-body" id="med-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+
+  let meds = [];
+  let showForm = false;
+  let editingId = null;
+
+  function setStatus(msg,type){
+    const el = document.getElementById('med-status');
+    if(el){ el.textContent = msg; el.className = 'status-msg '+(type||''); }
+  }
+
+  function fieldsHtml(d){
+    d = d || {};
+    return `
+      <div class="field-grid" style="margin-top:10px;">
+        <div class="field full">
+          <label>Medication Name *</label>
+          <input class="finput" id="med-f-name" type="text" value="${esc(d.name||'')}" placeholder="e.g. Metformin">
+        </div>
+        <div class="field">
+          <label>Dosage</label>
+          <input class="finput" id="med-f-dosage" type="text" value="${esc(d.dosage||'')}" placeholder="e.g. 500mg">
+        </div>
+        <div class="field">
+          <label>Prescribing Doctor</label>
+          <input class="finput" id="med-f-doctor" type="text" value="${esc(d.doctor||'')}" placeholder="Dr. Name">
+        </div>
+        <div class="field">
+          <label>Start Date</label>
+          <input class="finput" id="med-f-date" type="date" value="${esc(d.start_date||'')}">
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea class="finput" id="med-f-notes" placeholder="Any additional notes…">${esc(d.notes||'')}</textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="med-form-save">${editingId?'Update':'Add'}</button>
+        <button class="btn btn-secondary btn-sm" id="med-form-cancel">Cancel</button>
+      </div>`;
+  }
+
+  function render(){
+    const body = document.getElementById('med-body');
+    const active = meds.filter(m=>!m._deleted);
+    let html = '';
+    if(active.length){
+      active.forEach(m=>{
+        const d = m.data||{};
+        html += `<div class="list-row" id="med-row-${m.id}">
+          <div class="list-icon">💊</div>
+          <div class="list-main">
+            <div class="list-name">${esc(d.name||'Unnamed')}</div>
+            <div class="list-meta">
+              ${d.dosage?('<span>'+esc(d.dosage)+'</span>'):''}
+              ${d.doctor?('<span>Dr. '+esc(d.doctor)+'</span>'):''}
+              ${d.start_date?('<span>Since '+esc(d.start_date)+'</span>'):''}
+            </div>
+            ${d.notes?('<div class="list-notes">'+esc(d.notes)+'</div>'):''}
+          </div>
+          <div class="list-actions">
+            <button class="btn btn-ghost btn-sm med-edit" data-id="${m.id}">Edit</button>
+            <button class="btn btn-danger-ghost btn-sm med-del" data-id="${m.id}">Delete</button>
+          </div>
+        </div>`;
+      });
+    } else {
+      html = '<div class="empty-state"><div class="icon">💊</div>No medications added yet.</div>';
+    }
+    if(showForm){
+      const editing = editingId ? meds.find(m=>m.id===editingId) : null;
+      html += fieldsHtml(editing ? editing.data : {});
+    }
+    body.innerHTML = html;
+
+    document.getElementById('med-add-btn').onclick = ()=>{ showForm=true; editingId=null; render(); document.getElementById('med-f-name')?.focus(); };
+    body.querySelectorAll('.med-edit').forEach(b=>b.onclick=()=>{ showForm=true; editingId=b.dataset.id; render(); });
+    body.querySelectorAll('.med-del').forEach(b=>b.onclick=()=>doDelete(b.dataset.id));
+    if(showForm){
+      document.getElementById('med-form-save').onclick = doSave;
+      document.getElementById('med-form-cancel').onclick = ()=>{ showForm=false; editingId=null; render(); };
+    }
+  }
+
+  async function doSave(){
+    const name = document.getElementById('med-f-name').value.trim();
+    if(!name){ document.getElementById('med-f-name').focus(); return; }
+    const d = {
+      name,
+      dosage: document.getElementById('med-f-dosage').value.trim(),
+      doctor: document.getElementById('med-f-doctor').value.trim(),
+      start_date: document.getElementById('med-f-date').value,
+      notes: document.getElementById('med-f-notes').value.trim(),
+    };
+    const saveBtn = document.getElementById('med-form-save');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+    try{
+      if(editingId){
+        await recUpdate(editingId, d);
+        const idx = meds.findIndex(m=>m.id===editingId);
+        if(idx!==-1) meds[idx].data = d;
+      } else {
+        const res = await recCreate('medication', d);
+        meds.push(res);
+      }
+      setStatus('✓ Saved','ok');
+      showForm=false; editingId=null; render();
+    }catch(e){
+      setStatus('❌ '+e.message,'err');
+      saveBtn.disabled=false; saveBtn.textContent = editingId?'Update':'Add';
+    }
+  }
+
+  function doDelete(id){
+    if(!confirm('Remove this medication?')) return;
+    recDelete(id).then(()=>{
+      meds = meds.filter(m=>m.id!==id);
+      render();
+      toast('Medication removed');
+    }).catch(e=>toast('Delete failed: '+e.message,'err'));
+  }
+
+  recFetch('medication').then(items=>{ meds=items; render(); })
+    .catch(e=>{ document.getElementById('med-body').innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+}
+
+/* ============================================================
+   INSURANCE (records, type='insurance') — single record
+   ============================================================ */
+const INS_FIELDS = [
+  { key:'provider',       label:'Provider' },
+  { key:'plan_name',      label:'Plan Name' },
+  { key:'member_id',      label:'Member ID' },
+  { key:'group_number',   label:'Group Number' },
+  { key:'phone',          label:'Phone' },
+  { key:'effective_date', label:'Effective Date' },
+];
+
+function renderInsurancePanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Insurance</div>
+    <div class="panel-sub">Your health insurance details.</div>
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-hd-title">🏥 Insurance Info</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="status-msg" id="ins-status" style="margin:0;"></span>
+          <button class="btn btn-secondary btn-sm" id="ins-edit-btn">Edit</button>
+        </div>
+      </div>
+      <div class="card-body" id="ins-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+
+  let record = null;
+  let editMode = false;
+
+  function setStatus(msg,type){
+    const el = document.getElementById('ins-status');
+    if(el){ el.textContent = msg; el.className = 'status-msg '+(type||''); }
+  }
+
+  function customFieldRow(i,key,value){
+    return `<div class="ins-cf-row" data-idx="${i}" style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
+      <input class="finput ins-cf-key" type="text" placeholder="Field name" value="${esc(key)}" style="flex:1;">
+      <input class="finput ins-cf-val" type="text" placeholder="Value" value="${esc(value)}" style="flex:1;">
+      <button class="btn btn-danger-ghost btn-sm ins-cf-remove" title="Remove" type="button">✕</button>
+    </div>`;
+  }
+
+  function bindCustomFieldRows(){
+    document.querySelectorAll('.ins-cf-remove').forEach(btn=>{
+      btn.onclick = ()=> btn.closest('.ins-cf-row').remove();
+    });
+  }
+
+  function render(data){
+    data = data || {};
+    const body = document.getElementById('ins-body');
+    document.getElementById('ins-edit-btn').textContent = editMode ? 'Cancel' : 'Edit';
+    const customFields = data.custom_fields || [];
+
+    let fieldsHtml = '<div class="field-grid">';
+    INS_FIELDS.forEach(f=>{
+      const val = data[f.key] || '';
+      const inputEl = editMode
+        ? `<input class="finput" id="ins-${f.key}" type="${f.key==='effective_date'?'date':'text'}" value="${esc(val)}" placeholder="${esc(f.label)}">`
+        : `<div class="finput" style="background:var(--bg2);color:${val?'var(--txt)':'var(--txt3)'};">${val?esc(val):'—'}</div>`;
+      fieldsHtml += `<div class="field"><label>${f.label}</label>${inputEl}</div>`;
+    });
+    fieldsHtml += '</div>';
+
+    // Custom fields (arbitrary key/value pairs the user adds themselves —
+    // e.g. Rx BIN/PCN, secondary insurance, etc. Ported back in per your request.)
+    let customHtml = '';
+    if(editMode){
+      customHtml = '<hr class="div"><div class="section-title">Custom Fields</div><div id="ins-cf-list">';
+      customFields.forEach((cf,i)=>{ customHtml += customFieldRow(i, cf.key, cf.value); });
+      customHtml += '</div><button class="btn btn-ghost btn-sm" id="ins-cf-add" type="button">+ Add field</button>';
+    } else if(customFields.length){
+      customHtml = '<hr class="div"><div class="section-title">Additional Info</div>';
+      customFields.forEach(cf=>{
+        customHtml += `<div class="list-row" style="padding:6px 0;"><div class="list-main" style="display:flex;justify-content:space-between;">
+          <span style="color:var(--txt3);font-size:11.5px;">${esc(cf.key)}</span>
+          <span style="font-size:12px;">${esc(cf.value)}</span>
+        </div></div>`;
+      });
+    }
+
+    const notes = data.notes || '';
+    const notesHtml = editMode
+      ? `<textarea class="finput" id="ins-notes" placeholder="Add any notes about your insurance…">${esc(notes)}</textarea>`
+      : `<div class="finput" style="background:var(--bg2);color:${notes?'var(--txt)':'var(--txt3)'};white-space:pre-wrap;">${notes?esc(notes):'No notes added.'}</div>`;
+
+    body.innerHTML = fieldsHtml + customHtml +
+      '<hr class="div"><div class="section-title">Notes</div>' + notesHtml +
+      (editMode ? '<div style="margin-top:12px;"><button class="btn btn-primary btn-sm" id="ins-save-btn">Save</button></div>' : '');
+
+    if(editMode){
+      document.getElementById('ins-save-btn').onclick = doSave;
+      const addBtn = document.getElementById('ins-cf-add');
+      if(addBtn) addBtn.onclick = ()=>{
+        const list = document.getElementById('ins-cf-list');
+        const idx = list.children.length;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = customFieldRow(idx, '', '');
+        list.appendChild(wrap.firstElementChild);
+        bindCustomFieldRows();
+      };
+      bindCustomFieldRows();
+    }
+  }
+
+  function gather(){
+    const data = {};
+    INS_FIELDS.forEach(f=>{ const el=document.getElementById('ins-'+f.key); data[f.key]= el?el.value.trim():''; });
+    data.custom_fields = [];
+    document.querySelectorAll('.ins-cf-row').forEach(row=>{
+      const k = row.querySelector('.ins-cf-key')?.value.trim();
+      const v = row.querySelector('.ins-cf-val')?.value.trim();
+      if(k) data.custom_fields.push({ key:k, value: v||'' });
+    });
+    const notesEl = document.getElementById('ins-notes');
+    data.notes = notesEl ? notesEl.value.trim() : '';
+    return data;
+  }
+
+  async function doSave(){
+    const data = gather();
+    const btn = document.getElementById('ins-save-btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      if(record && record.id){ await recUpdate(record.id, data); }
+      else { record = await recCreate('insurance', data); }
+      setStatus('✓ Saved','ok');
+      editMode = false;
+      render(data);
+    }catch(e){
+      setStatus('❌ '+e.message,'err');
+      btn.disabled=false; btn.textContent='Save';
+    }
+  }
+
+  document.getElementById('ins-edit-btn').onclick = ()=>{
+    editMode = !editMode;
+    render(editMode ? (record?record.data:{}) : (record?record.data:{}));
+  };
+
+  recFetch('insurance').then(items=>{
+    if(items.length){ record = items[0]; }
+    render(record ? record.data : {});
+  }).catch(e=>{
+    document.getElementById('ins-body').innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>';
+  });
+}
+
+/* ============================================================
+   MEDICAL HISTORY (records, type='history')
+   A list of dated events + one free-text notes record
+   (distinguished by having a `content` field, per the original
+   panel-records.html convention).
+   ============================================================ */
+const EVENT_TYPES = ['Diagnosis','Surgery','Hospitalization','Allergy','Vaccination','Other'];
+
+function renderHistoryPanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Medical History</div>
+    <div class="panel-sub">Diagnoses, surgeries, allergies, vaccinations — plus general notes.</div>
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-hd-title">📋 Events</span>
+        <button class="btn btn-ghost btn-sm" id="hist-add-btn">+ Add Event</button>
+      </div>
+      <div class="card-body" id="hist-body"><div class="empty-state">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">Notes</span></div>
+      <div class="card-body">
+        <textarea class="finput" id="hist-notes" style="min-height:100px;" placeholder="Add general health notes, family history, allergies, etc."></textarea>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-primary btn-sm" id="hist-notes-save">Save Notes</button>
+          <span class="status-msg" id="hist-notes-status"></span>
+        </div>
+      </div>
+    </div>`;
+
+  let events = [];
+  let notes = '';
+  let notesRecordId = null;
+  let showForm = false;
+  let editingId = null;
+
+  function eventsBody(){
+    const body = document.getElementById('hist-body');
+    const active = events.filter(e=>!e._deleted).sort((a,b)=>{
+      const da=(a.data&&a.data.date)||'', db=(b.data&&b.data.date)||'';
+      return db.localeCompare(da);
+    });
+    let html = '';
+    if(active.length){
+      active.forEach(e=>{
+        const d = e.data||{};
+        html += `<div class="list-row" id="hist-row-${e.id}">
+          <div class="list-icon">🗓</div>
+          <div class="list-main">
+            <div class="list-name">${esc(d.title||'')} <span class="badge">${esc(d.event_type||'Other')}</span></div>
+            <div class="list-meta"><span>${esc(d.date||'—')}</span></div>
+            ${d.description?('<div class="list-notes">'+esc(d.description)+'</div>'):''}
+          </div>
+          <div class="list-actions">
+            <button class="btn btn-ghost btn-sm hist-edit" data-id="${e.id}">Edit</button>
+            <button class="btn btn-danger-ghost btn-sm hist-del" data-id="${e.id}">Delete</button>
+          </div>
+        </div>`;
+      });
+    } else {
+      html = '<div class="empty-state"><div class="icon">📋</div>No medical events recorded yet.</div>';
+    }
+    if(showForm){
+      const editing = editingId ? events.find(e=>e.id===editingId) : null;
+      const d = editing ? (editing.data||{}) : {};
+      const opts = EVENT_TYPES.map(t=>`<option value="${t}" ${d.event_type===t?'selected':''}>${t}</option>`).join('');
+      html += `
+        <div class="field-grid" style="margin-top:12px;">
+          <div class="field"><label>Date</label><input class="finput" id="hist-f-date" type="date" value="${esc(d.date||'')}"></div>
+          <div class="field"><label>Type</label><select class="finput" id="hist-f-type">${opts}</select></div>
+          <div class="field full"><label>Title *</label><input class="finput" id="hist-f-title" type="text" value="${esc(d.title||'')}" placeholder="Brief description"></div>
+          <div class="field full"><label>Description</label><textarea class="finput" id="hist-f-desc" placeholder="Additional details…">${esc(d.description||'')}</textarea></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary btn-sm" id="hist-form-save">${editingId?'Update':'Add'}</button>
+          <button class="btn btn-secondary btn-sm" id="hist-form-cancel">Cancel</button>
+          <span class="status-msg" id="hist-form-status"></span>
+        </div>`;
+    }
+    body.innerHTML = html;
+
+    body.querySelectorAll('.hist-edit').forEach(b=>b.onclick=()=>{ showForm=true; editingId=b.dataset.id; eventsBody(); });
+    body.querySelectorAll('.hist-del').forEach(b=>b.onclick=()=>doDeleteEvent(b.dataset.id));
+    if(showForm){
+      document.getElementById('hist-form-save').onclick = doSaveEvent;
+      document.getElementById('hist-form-cancel').onclick = ()=>{ showForm=false; editingId=null; eventsBody(); };
+    }
+  }
+
+  async function doSaveEvent(){
+    const title = document.getElementById('hist-f-title').value.trim();
+    if(!title){ document.getElementById('hist-f-title').focus(); return; }
+    const d = {
+      date: document.getElementById('hist-f-date').value,
+      event_type: document.getElementById('hist-f-type').value,
+      title,
+      description: document.getElementById('hist-f-desc').value.trim(),
+    };
+    const st = document.getElementById('hist-form-status');
+    const btn = document.getElementById('hist-form-save');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      if(editingId){
+        await recUpdate(editingId, d);
+        const idx = events.findIndex(e=>e.id===editingId);
+        if(idx!==-1) events[idx].data = d;
+      } else {
+        const res = await recCreate('history', d);
+        events.push(res);
+      }
+      showForm=false; editingId=null; eventsBody();
+      toast('Event saved');
+    }catch(e){
+      if(st){ st.textContent='❌ '+e.message; st.className='status-msg err'; }
+      btn.disabled=false; btn.textContent = editingId?'Update':'Add';
+    }
+  }
+
+  function doDeleteEvent(id){
+    if(!confirm('Remove this event?')) return;
+    recDelete(id).then(()=>{
+      events = events.filter(e=>e.id!==id);
+      eventsBody();
+      toast('Event removed');
+    }).catch(e=>toast('Delete failed: '+e.message,'err'));
+  }
+
+  document.getElementById('hist-add-btn').onclick = ()=>{ showForm=true; editingId=null; eventsBody(); };
+
+  document.getElementById('hist-notes-save').onclick = async ()=>{
+    const val = document.getElementById('hist-notes').value.trim();
+    const st = document.getElementById('hist-notes-status');
+    const btn = document.getElementById('hist-notes-save');
+    btn.disabled = true;
+    try{
+      if(notesRecordId){ await recUpdate(notesRecordId, { content: val }); }
+      else { const res = await recCreate('history', { content: val }); notesRecordId = res.id; }
+      st.textContent = '✓ Saved'; st.className='status-msg ok';
+    }catch(e){
+      st.textContent = '❌ '+e.message; st.className='status-msg err';
+    }finally{ btn.disabled=false; }
+  };
+
+  recFetch('history').then(items=>{
+    events = items.filter(r=>r.data && r.data.content===undefined);
+    const notesRec = items.find(r=>r.data && r.data.content!==undefined);
+    if(notesRec){ notes = notesRec.data.content||''; notesRecordId = notesRec.id; }
+    document.getElementById('hist-notes').value = notes;
+    eventsBody();
+  }).catch(e=>{
+    document.getElementById('hist-body').innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>';
+  });
+}
+
+/* ============================================================
+   MYINFO + GOALS — /api/me/health/profile (type: baseline | goal)
+
+   Unit handling: the original panel-infogoal.html has its OWN
+   independent unit toggle (localStorage key mie_health_profile.
+   _heightUnit/_weightUnit), separate from klaive_unit_pref. Per
+   your decision, that's removed here — height/weight/water
+   display units follow the shared klaive_unit_pref instead. The
+   values actually sent to the server are always metric
+   (height_cm / weight_kg), matching what /api/me/health/profile
+   expects.
+   ============================================================ */
+function cmToFtIn(cm){ const totalIn = cm/2.54; const ft=Math.floor(totalIn/12); const inch=Math.round(totalIn-ft*12); return {ft,inch}; }
+function ftInToCm(ft,inch){ return ((ft||0)*12 + (inch||0)) * 2.54; }
+function kgToLb(kg){ return kg*2.20462; }
+function lbToKg(lb){ return lb/2.20462; }
+function mlToFloz(ml){ return ml/29.5735; }
+function flozToMl(floz){ return floz*29.5735; }
+
+async function fetchHealthProfile(){
+  const r = await fetch(`${API_BASE}/api/me/health/profile`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json(); // { baseline, goal }
+}
+async function saveHealthProfile(type,data){
+  const r = await fetch(`${API_BASE}/api/me/health/profile`, {
+    ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ type, data })
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+function renderMyInfoPanel(root){
+  const unit = getUnitPref(); // 'metric' | 'us'
+  root.innerHTML = `
+    <div class="panel-title">My Info</div>
+    <div class="panel-sub">Baseline profile used for BMR/TDEE calculations. Units follow your global Metric/US setting (change it from the Overview Health card).</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">🧑 Profile</span></div>
+      <div class="card-body" id="myinfo-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+
+  const body = document.getElementById('myinfo-body');
+
+  function render(baseline){
+    baseline = baseline || {};
+    const heightCm = baseline.height_cm || '';
+    const weightKg = baseline.weight_kg || '';
+    const heightField = unit==='us'
+      ? (()=>{ const fi = heightCm ? cmToFtIn(heightCm) : {ft:'',inch:''};
+          return `<div style="display:flex;gap:6px;align-items:center;">
+            <input class="finput" id="pig-height-ft" type="number" min="1" max="9" placeholder="ft" value="${fi.ft}" style="width:64px;">
+            <span style="font-size:11px;color:var(--txt3);">ft</span>
+            <input class="finput" id="pig-height-in" type="number" min="0" max="11" placeholder="in" value="${fi.inch}" style="width:64px;">
+            <span style="font-size:11px;color:var(--txt3);">in</span>
+          </div>`; })()
+      : `<input class="finput" id="pig-height-cm" type="number" min="50" max="300" placeholder="cm" value="${heightCm}">`;
+    const weightField = unit==='us'
+      ? `<input class="finput" id="pig-weight" type="number" step="0.1" placeholder="lb" value="${weightKg?(+kgToLb(weightKg)).toFixed(1):''}">`
+      : `<input class="finput" id="pig-weight" type="number" step="0.1" placeholder="kg" value="${weightKg||''}">`;
+
+    body.innerHTML = `
+      <div class="field-grid">
+        <div class="field"><label>Date of Birth</label><input class="finput" id="pig-dob" type="date" value="${esc(baseline.dob||'')}"></div>
+        <div class="field"><label>Age</label><input class="finput" id="pig-age" type="text" value="${baseline.age||''}" readonly style="background:var(--bg2);color:var(--txt3);"></div>
+        <div class="field"><label>Height (${unit==='us'?'ft/in':'cm'})</label>${heightField}</div>
+        <div class="field"><label>Weight (${unit==='us'?'lb':'kg'})</label>${weightField}</div>
+        <div class="field">
+          <label>Sex</label>
+          <select class="finput" id="pig-sex">
+            <option value="">Select…</option>
+            <option value="female" ${baseline.sex==='female'?'selected':''}>Female</option>
+            <option value="male" ${baseline.sex==='male'?'selected':''}>Male</option>
+            <option value="other" ${baseline.sex==='other'?'selected':''}>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Blood Type</label>
+          <select class="finput" id="pig-blood-type">
+            <option value="">Select…</option>
+            ${['A+','A−','B+','B−','AB+','AB−','O+','O−'].map(b=>`<option ${baseline.blood_type===b?'selected':''}>${b}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Allergies</label><input class="finput" id="pig-allergies" type="text" value="${esc(baseline.allergies||'')}" placeholder="e.g. Peanuts, Shellfish"></div>
+        <div class="field">
+          <label>Activity Level</label>
+          <select class="finput" id="pig-activity">
+            <option value="">Select…</option>
+            <option value="1.2" ${baseline.activity_level=='1.2'?'selected':''}>Sedentary</option>
+            <option value="1.375" ${baseline.activity_level=='1.375'?'selected':''}>Light (1–3 days/wk)</option>
+            <option value="1.55" ${baseline.activity_level=='1.55'?'selected':''}>Moderate (3–5 days/wk)</option>
+            <option value="1.725" ${baseline.activity_level=='1.725'?'selected':''}>Active (6–7 days/wk)</option>
+            <option value="1.9" ${baseline.activity_level=='1.9'?'selected':''}>Very Active (2×/day)</option>
+          </select>
+        </div>
+        <div class="field"><label>BMR (kcal/day)</label><input class="finput" id="pig-bmr" type="text" value="${baseline.bmr_kcal||''}" readonly style="background:var(--bg2);color:var(--txt3);"></div>
+        <div class="field"><label>TDEE (kcal/day)</label><input class="finput" id="pig-tdee" type="text" value="${baseline.tdee_kcal||''}" readonly style="background:var(--bg2);color:var(--txt3);"></div>
+        <div class="field full"><label>Emergency Contact</label><input class="finput" id="pig-emergency" type="text" value="${esc(baseline.emergency_contact||'')}" placeholder="Name · Phone"></div>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
+        <button class="btn btn-primary btn-sm" id="pig-save-info">Save</button>
+        <span class="status-msg" id="pig-status-info"></span>
+      </div>`;
+
+    document.getElementById('pig-dob').onchange = calcAge;
+    ['pig-height-cm','pig-height-ft','pig-height-in','pig-weight','pig-sex','pig-activity'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('input', calcBMR);
+    });
+    document.getElementById('pig-save-info').onclick = doSaveInfo;
+    calcAge(); calcBMR();
+  }
+
+  function calcAge(){
+    const dobEl = document.getElementById('pig-dob');
+    const ageEl = document.getElementById('pig-age');
+    if(!dobEl || !dobEl.value){ if(ageEl) ageEl.value=''; return; }
+    const dob = new Date(dobEl.value);
+    const now = new Date();
+    let age = now.getFullYear()-dob.getFullYear();
+    const m = now.getMonth()-dob.getMonth();
+    if(m<0 || (m===0 && now.getDate()<dob.getDate())) age--;
+    if(ageEl) ageEl.value = age;
+  }
+
+  function currentHeightCm(){
+    if(unit==='us'){
+      const ft = parseFloat(document.getElementById('pig-height-ft')?.value)||0;
+      const inch = parseFloat(document.getElementById('pig-height-in')?.value)||0;
+      return (ft||inch) ? ftInToCm(ft,inch) : null;
+    }
+    const v = parseFloat(document.getElementById('pig-height-cm')?.value);
+    return v || null;
+  }
+  function currentWeightKg(){
+    const v = parseFloat(document.getElementById('pig-weight')?.value);
+    if(!v) return null;
+    return unit==='us' ? lbToKg(v) : v;
+  }
+
+  function calcBMR(){
+    const hCm = currentHeightCm();
+    const wKg = currentWeightKg();
+    const ageEl = document.getElementById('pig-age');
+    const age = ageEl ? parseFloat(ageEl.value) : null;
+    const sex = document.getElementById('pig-sex')?.value;
+    const activity = parseFloat(document.getElementById('pig-activity')?.value)||1.55;
+    const bmrEl = document.getElementById('pig-bmr');
+    const tdeeEl = document.getElementById('pig-tdee');
+    if(hCm && wKg && age && sex){
+      const bmr = sex==='male'
+        ? 10*wKg + 6.25*hCm - 5*age + 5
+        : 10*wKg + 6.25*hCm - 5*age - 161;
+      if(bmrEl) bmrEl.value = Math.round(bmr);
+      if(tdeeEl) tdeeEl.value = Math.round(bmr*activity);
+    } else {
+      if(bmrEl) bmrEl.value='';
+      if(tdeeEl) tdeeEl.value='';
+    }
+  }
+
+  async function doSaveInfo(){
+    const hCm = currentHeightCm();
+    const wKg = currentWeightKg();
+    const st = document.getElementById('pig-status-info');
+    const btn = document.getElementById('pig-save-info');
+    if(!hCm || !wKg || !document.getElementById('pig-sex').value || !document.getElementById('pig-activity').value){
+      st.textContent = 'Height, weight, sex, and activity level are required.';
+      st.className = 'status-msg err';
+      return;
+    }
+    const data = {
+      dob: document.getElementById('pig-dob').value,
+      age: parseFloat(document.getElementById('pig-age').value)||null,
+      height_cm: hCm,
+      weight_kg: wKg,
+      sex: document.getElementById('pig-sex').value,
+      blood_type: document.getElementById('pig-blood-type').value,
+      allergies: document.getElementById('pig-allergies').value.trim(),
+      activity_level: document.getElementById('pig-activity').value,
+      emergency_contact: document.getElementById('pig-emergency').value.trim(),
+    };
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      const res = await saveHealthProfile('baseline', data);
+      st.textContent = '✓ Saved'; st.className='status-msg ok';
+      render(res.data);
+      toast('Profile saved');
+    }catch(e){
+      st.textContent = '❌ '+e.message; st.className='status-msg err';
+    }finally{
+      btn.disabled=false; btn.textContent='Save';
+    }
+  }
+
+  fetchHealthProfile().then(res=>render(res.baseline||{}))
+    .catch(e=>{ body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+}
+
+function renderGoalsPanel(root){
+  const unit = getUnitPref();
+  root.innerHTML = `
+    <div class="panel-title">Goals</div>
+    <div class="panel-sub">Weight goal, calorie targets, water and sleep goals.</div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">🎯 Goals</span></div>
+      <div class="card-body" id="goals-body"><div class="empty-state">Loading…</div></div>
+    </div>`;
+  const body = document.getElementById('goals-body');
+
+  function render(goal){
+    goal = goal || {};
+    const twKg = goal.target_weight_kg || '';
+    const weightField = unit==='us'
+      ? `<input class="finput" id="pig-target-weight" type="number" step="0.1" placeholder="lb" value="${twKg?(+kgToLb(twKg)).toFixed(1):''}">`
+      : `<input class="finput" id="pig-target-weight" type="number" step="0.1" placeholder="kg" value="${twKg||''}">`;
+    const waterMl = goal.water_goal_ml || '';
+    const waterField = unit==='us'
+      ? `<input class="finput" id="pig-water" type="number" min="0" placeholder="fl oz" value="${waterMl?Math.round(mlToFloz(waterMl)):''}">`
+      : `<input class="finput" id="pig-water" type="number" min="0" placeholder="ml" value="${waterMl||''}">`;
+
+    body.innerHTML = `
+      <div class="field-grid">
+        <div class="field">
+          <label>Goal Type</label>
+          <select class="finput" id="pig-goal-type">
+            <option value="">Select…</option>
+            <option value="lose" ${goal.goal_type==='lose'?'selected':''}>Lose Weight</option>
+            <option value="maintain" ${goal.goal_type==='maintain'?'selected':''}>Maintain</option>
+            <option value="gain" ${goal.goal_type==='gain'?'selected':''}>Gain Weight</option>
+          </select>
+        </div>
+        <div class="field"><label>Target Weight (${unit==='us'?'lb':'kg'})</label>${weightField}</div>
+        <div class="field"><label>Duration (months)</label><input class="finput" id="pig-duration" type="number" min="1" max="36" value="${goal.duration_months||''}"></div>
+        <div class="field"><label>Daily Cal Intake (kcal)</label><input class="finput" id="pig-daily-cal" type="number" min="0" value="${goal.daily_cal_intake||''}"></div>
+        <div class="field"><label>Daily Exercise Cal (kcal)</label><input class="finput" id="pig-exercise-cal" type="number" min="0" value="${goal.daily_exercise_cal||''}"></div>
+        <div class="field"><label>Water Goal (${unit==='us'?'fl oz':'ml'})</label>${waterField}</div>
+        <div class="field"><label>Sleep Goal (h)</label><input class="finput" id="pig-sleep" type="number" min="1" max="24" step="0.5" value="${goal.sleep_goal_h||''}"></div>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;">
+        <button class="btn btn-primary btn-sm" id="pig-save-goals">Save</button>
+        <span class="status-msg" id="pig-status-goals"></span>
+      </div>`;
+
+    document.getElementById('pig-save-goals').onclick = doSaveGoals;
+  }
+
+  async function doSaveGoals(){
+    const twInput = parseFloat(document.getElementById('pig-target-weight').value);
+    const targetWeightKg = twInput ? (unit==='us' ? lbToKg(twInput) : twInput) : null;
+    const waterInput = parseFloat(document.getElementById('pig-water').value);
+    const waterMl = waterInput ? (unit==='us' ? flozToMl(waterInput) : waterInput) : null;
+    const st = document.getElementById('pig-status-goals');
+    const btn = document.getElementById('pig-save-goals');
+    if(!document.getElementById('pig-goal-type').value || !targetWeightKg || !document.getElementById('pig-duration').value){
+      st.textContent = 'Goal type, target weight, and duration are required.';
+      st.className = 'status-msg err';
+      return;
+    }
+    const data = {
+      goal_type: document.getElementById('pig-goal-type').value,
+      target_weight_kg: targetWeightKg,
+      duration_months: parseFloat(document.getElementById('pig-duration').value)||null,
+      daily_cal_intake: parseFloat(document.getElementById('pig-daily-cal').value)||null,
+      daily_exercise_cal: parseFloat(document.getElementById('pig-exercise-cal').value)||null,
+      water_goal_ml: waterMl,
+      sleep_goal_h: parseFloat(document.getElementById('pig-sleep').value)||null,
+    };
+    btn.disabled = true; btn.textContent='Saving…';
+    try{
+      const res = await saveHealthProfile('goal', data);
+      st.textContent = '✓ Saved'; st.className='status-msg ok';
+      render(res.data);
+      toast('Goals saved');
+    }catch(e){
+      st.textContent = '❌ '+e.message; st.className='status-msg err';
+    }finally{
+      btn.disabled=false; btn.textContent='Save';
+    }
+  }
+
+  fetchHealthProfile().then(res=>render(res.goal||{}))
+    .catch(e=>{ body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+}
+
+/* ============================================================
+   FINANCE — BUDGET SETTINGS
+   Ported to match finance_index_28.html's renderBudgetPanel /
+   saveBudget exactly (same endpoints, same category-driven
+   annual math). The ONE deliberate change: the N/W hybrid
+   toggle is wired to GET/POST /api/me/finance/hybrid-overrides
+   instead of the original's localStorage-only implementation
+   (mie_hybrid_overrides) — see note below.
+   ============================================================ */
+const HYBRID_CATS = ['Shopping - Clothing', 'Gym / Fitness'];
+const NEEDS_DEFAULT = ['Rent / Mortgage','Groceries','Household Essentials',"Renter's / Home Insurance",'Gas & Electricity','Water / Sewer','Internet','Cell Phone','Health Insurance','Car Payment','Car Insurance','Tax','Credit Card Payment','Transportation - Public Transit','Transportation - Gas / EV','Transportation - Parking','Medical / Co-payment','Pharmacy','Education','Other - Needs'];
+
+let hybridOverrides = {};      // populated from the API, not localStorage
+let _budgetCategories = [];
+let budgetChanges = {};
+
+function isNeedsCategory(cat){
+  if(NEEDS_DEFAULT.indexOf(cat)!==-1) return true;
+  if(HYBRID_CATS.indexOf(cat)!==-1) return hybridOverrides[cat]==='N';
+  return false;
+}
+
+async function loadHybridOverrides(){
+  try{
+    const r = await fetch(`${API_BASE}/api/me/finance/hybrid-overrides`, FETCH_OPTS);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    hybridOverrides = data.overrides || {};
+  }catch(e){
+    console.warn('hybrid-overrides load failed, defaulting all hybrid cats to W:', e);
+    hybridOverrides = {};
+  }
+}
+
+async function setHybrid(category, nw, btn){
+  // Optimistic UI update first
+  hybridOverrides[category] = nw;
+  const wrap = btn.parentElement, btns = wrap.querySelectorAll('.htg-btn');
+  btns[0].className = 'htg-btn'+(nw==='N'?' active-n':'');
+  btns[1].className = 'htg-btn'+(nw==='W'?' active-w':'');
+  btns.forEach(b=>b.disabled = true);
+  try{
+    const r = await fetch(`${API_BASE}/api/me/finance/hybrid-overrides`, {
+      ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ category, value: nw })
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    toast(category+' → '+(nw==='N'?'Needs':'Wants'));
+  }catch(e){
+    toast('Could not save toggle: '+e.message, 'err');
+  }finally{
+    btns.forEach(b=>b.disabled = false);
+  }
+}
+
+async function fetchFinance(){
+  const r = await fetch(`${API_BASE}/api/me/finance`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+function renderBudgetPanel(baseline, container){
+  if(!baseline || !baseline.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:24px;">No baseline data found.</div>';
+    return;
+  }
+  _budgetCategories = [];
+  budgetChanges = {};
+  const sections = { INCOME:[], EXPENSES:[], SAVINGS:[] };
+  baseline.forEach(b=>{ if(sections[b.section]) sections[b.section].push(b); });
+  const sectionDefs = [
+    { key:'INCOME', label:'💵 Income', color:'var(--teal)' },
+    { key:'EXPENSES', label:'💸 Expenses', color:'var(--red)' },
+    { key:'SAVINGS', label:'🏦 Savings', color:'var(--blue)' },
+  ];
+  let html = '';
+  sectionDefs.forEach(sec=>{
+    const rows = sections[sec.key];
+    if(!rows.length) return;
+    html += `<div class="bp-sec-label" style="color:${sec.color};">${sec.label}</div>`;
+    rows.forEach(b=>{
+      const idx = _budgetCategories.length;
+      _budgetCategories.push(b.category);
+      const isHybrid = HYBRID_CATS.indexOf(b.category)!==-1;
+      const currentN = isHybrid ? (hybridOverrides[b.category]==='N') : isNeedsCategory(b.category);
+      let nwTag = '';
+      if(sec.key==='EXPENSES'){
+        if(isHybrid){
+          const catEsc = b.category.replace(/'/g,"\\'").replace(/&/g,'\\u0026');
+          nwTag = `<span class="hybrid-toggle">
+            <button class="htg-btn${currentN?' active-n':''}" onclick="setHybrid('${catEsc}','N',this)">N</button>
+            <button class="htg-btn${!currentN?' active-w':''}" onclick="setHybrid('${catEsc}','W',this)">W</button>
+          </span>`;
+        } else {
+          nwTag = `<span style="font-size:9px;color:var(--txt3);margin-left:6px;">${isNeedsCategory(b.category)?'Needs':'Wants'}</span>`;
+        }
+      }
+      html += `<div class="bp-row">
+        <div class="bp-label">${esc(b.category)}${nwTag}</div>
+        <input class="bp-input" type="number" min="0" step="1" value="${b.monthly_budget}" data-original="${b.monthly_budget}" data-idx="${idx}" onchange="markBudgetChanged(this)"/>
+        <span class="bp-cur">/ mo &nbsp;&nbsp; annual: ${fmtS(b.monthly_budget*12)}</span>
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+function markBudgetChanged(input){
+  const orig = parseFloat(input.getAttribute('data-original'))||0;
+  const cur = parseFloat(input.value)||0;
+  const idx = parseInt(input.getAttribute('data-idx'));
+  const cat = _budgetCategories[idx];
+  if(!cat) return;
+  if(cur!==orig){ input.classList.add('changed'); budgetChanges[cat]=cur; }
+  else { input.classList.remove('changed'); delete budgetChanges[cat]; }
+  const annualEl = input.nextElementSibling;
+  if(annualEl) annualEl.textContent = '/ mo   annual: '+fmtS(cur*12);
+}
+
+function saveBudget(){
+  const effDate = document.getElementById('b-eff-date').value;
+  const changed = Object.keys(budgetChanges);
+  const st = document.getElementById('s-status');
+  if(!effDate){ st.style.color='var(--red)'; st.textContent='Set effective from date.'; return; }
+  if(!changed.length){ st.style.color='var(--txt3)'; st.textContent='No changes to save.'; return; }
+  const items = changed.map(category=>({ category, monthly_budget: budgetChanges[category] }));
+  const saveBtn = document.getElementById('b-save-btn');
+  saveBtn.disabled = true;
+  st.style.color='var(--txt2)'; st.textContent = 'Saving '+items.length+' budget(s)…';
+  fetch(`${API_BASE}/api/me/finance/baseline/bulk`, {
+    ...FETCH_OPTS, method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ effective_from: effDate, items })
+  }).then(r=>{
+    if(!r.ok) return r.text().then(t=>{ try{ const j=JSON.parse(t); throw new Error(j.message||j.error||t); }catch(e2){ throw new Error(t.substring(0,120)); } });
+    return r.json();
+  }).then(data=>{
+    changed.forEach(category=>{
+      const idx = _budgetCategories.indexOf(category);
+      if(idx>=0){
+        const inp = document.querySelector('.bp-input[data-idx="'+idx+'"]');
+        if(inp){ inp.classList.remove('changed'); inp.setAttribute('data-original', inp.value); }
+      }
+      delete budgetChanges[category];
+    });
+    st.style.color='var(--teal)'; st.textContent = '✅ Saved '+data.saved+' budget(s).';
+    toast('Budget saved','ok');
+    setTimeout(()=>{ st.textContent=''; }, 3000);
+  }).catch(err=>{
+    st.style.color='var(--red)'; st.textContent = '❌ '+err.message;
+  }).finally(()=>{
+    saveBtn.disabled = false;
+  });
+}
+
+function renderBudgetSettingsPanel(root){
+  root.innerHTML = `
+    <div class="panel-title">Budget Settings</div>
+    <div class="panel-sub">Monthly baseline budgets by category. <span class="badge">Baseline</span></div>
+    <div class="card">
+      <div class="card-body">
+        <div id="budget-panel-body"><div class="empty-state">Loading budget settings…</div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:.5px solid var(--b1);">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Effective From</div>
+            <input class="finput" type="date" id="b-eff-date" style="max-width:180px;">
+          </div>
+          <button class="btn btn-primary" id="b-save-btn" onclick="saveBudget()" style="align-self:flex-end;min-width:120px;">Save Budget</button>
+        </div>
+        <div class="status-msg" id="s-status" style="text-align:left;margin-top:6px;"></div>
+      </div>
+    </div>`;
+
+  const effInput = document.getElementById('b-eff-date');
+  const t = new Date();
+  effInput.value = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+
+  Promise.all([ loadHybridOverrides(), fetchFinance() ]).then(([_, data])=>{
+    renderBudgetPanel(data.baseline||[], document.getElementById('budget-panel-body'));
+  }).catch(e=>{
+    document.getElementById('budget-panel-body').innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>';
+  });
+}
+</script>
+</body>
+</html>
