@@ -388,11 +388,10 @@ function renderAccountPanel(root){
    GET/POST /api/me/dashboard-prefs, stored in UserInfo!AC
    ("Overview Type") in the Master Sheet.
    ============================================================ */
-const DASHBOARD_LAYOUT_OPTIONS = [
-  { value:'simple',  label:'Simple',       desc:'Calendar, day view, and input only. Automatically adds Finance/Health if you have data for them this month.' },
-  { value:'finance', label:'With Finance', desc:'Always shows the Finance mini-card.' },
-  { value:'health',  label:'With Health',  desc:'Always shows the Health mini-card.' },
-  { value:'all',     label:'All',          desc:'Always shows both Finance and Health mini-cards.' },
+const DISPLAY_3WAY_OPTIONS = [
+  { value:'off',  label:'Off' },
+  { value:'auto', label:'Auto' },
+  { value:'on',   label:'Always' },
 ];
 
 const HEALTH_MINI_ITEM_OPTIONS = [
@@ -400,88 +399,133 @@ const HEALTH_MINI_ITEM_OPTIONS = [
   { key:'activecal', label:'Active Cal' }, { key:'water', label:'Water' }, { key:'weight', label:'Weight' },
   { key:'bp', label:'Blood Pressure' }, { key:'hr', label:'Heart Rate' }, { key:'spo2', label:'SpO2' },
   { key:'glucose', label:'Glucose' }, { key:'sleep', label:'Sleep' }, { key:'mood', label:'Mood' },
+  { key:'womens', label:"Women's" },
+];
+
+const WOMENS_MODE_OPTIONS = [
+  { value:'auto',      label:'Auto',            desc:"Figures out from your data whether to show cycle countdown or pregnancy week." },
+  { value:'pregnancy', label:'Always Pregnancy', desc:'Always shows pregnancy week.' },
+  { value:'period',    label:'Always Period',    desc:'Always shows days until next period (D-day).' },
 ];
 
 async function fetchDashboardPref(){
   const r = await fetch(`${API_BASE}/api/me/dashboard-prefs`, FETCH_OPTS);
   if(!r.ok) throw new Error('HTTP '+r.status);
-  const data = await r.json();
-  return data.dashboard_pref || 'simple';
+  return await r.json(); // { finance:'off'|'on'|'auto', health:'off'|'on'|'auto' }
 }
 
 async function fetchHealthDisplayItems(){
   const r = await fetch(`${API_BASE}/api/me/health/display-items`, FETCH_OPTS);
   if(!r.ok) throw new Error('HTTP '+r.status);
   const data = await r.json();
-  return Array.isArray(data.items) ? data.items : [];
+  return {
+    items: Array.isArray(data.items) ? data.items : [],
+    auto_items: !!data.auto_items,
+    womens_mode: ['auto','pregnancy','period'].includes(data.womens_mode) ? data.womens_mode : 'auto',
+  };
 }
 
 function renderDashboardLayoutPanel(root){
   root.innerHTML = `
     <div class="panel-title">Dashboard Layout</div>
-    <div class="panel-sub">Choose what the Overview dashboard shows. Default is Simple — Finance/Health cards appear on their own once you have data for them this month.</div>
+    <div class="panel-sub">Choose what the Overview dashboard shows. Finance and Health are controlled independently.</div>
     <div class="card">
-      <div class="card-hd"><span class="card-hd-title">🖥️ Overview Type</span><span class="status-msg" id="dash-status" style="margin:0;"></span></div>
+      <div class="card-hd"><span class="card-hd-title">🖥️ Finance / Health Cards</span><span class="status-msg" id="dash-status" style="margin:0;"></span></div>
       <div class="card-body" id="dashboard-body"><div class="empty-state">Loading…</div></div>
     </div>
     <div class="card">
       <div class="card-hd"><span class="card-hd-title">💪 Health Mini-Card Items</span><span class="status-msg" id="health-items-status" style="margin:0;"></span></div>
       <div class="card-body">
-        <div class="panel-sub" style="margin-bottom:10px;">By default, the Health card shows all 12 items whenever it's visible. Pick specific items below to show only those instead — clear your selection to go back to showing all 12.</div>
         <div id="health-items-body"><div class="empty-state">Loading…</div></div>
       </div>
     </div>`;
-  const body = document.getElementById('dashboard-body');
 
-  function render(current){
-    body.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">` +
-      DASHBOARD_LAYOUT_OPTIONS.map(o=>{
-        const active = o.value===current;
-        return `<button class="btn btn-sm" data-value="${o.value}" onclick="setDashboardLayout('${o.value}')"
-          style="background:${active?'var(--blue)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};min-width:110px;">${o.label}</button>`;
-      }).join('') + `</div>
-      <div id="dash-desc" style="font-size:11.5px;color:var(--txt3);margin-top:10px;">
-        ${esc((DASHBOARD_LAYOUT_OPTIONS.find(o=>o.value===current)||{}).desc||'')}
-      </div>`;
+  // ── Finance / Health 3-way (독립) ──
+  const body = document.getElementById('dashboard-body');
+  let displayState = { finance:'auto', health:'auto' };
+
+  function threeWayRow(category, label){
+    const cur = displayState[category];
+    return `<div class="bp-row" style="align-items:flex-start;">
+      <div class="bp-label" style="flex:0 0 90px;">${label}</div>
+      <div style="display:flex;gap:6px;">
+        ${DISPLAY_3WAY_OPTIONS.map(o=>{
+          const active = o.value===cur;
+          return `<button class="btn btn-sm" data-cat="${category}" data-value="${o.value}" onclick="setDisplayValue('${category}','${o.value}')"
+            style="background:${active?'var(--blue)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};min-width:70px;">${o.label}</button>`;
+        }).join('')}
+      </div>
+    </div>`;
   }
 
-  window.setDashboardLayout = function(value){
+  function renderDisplay(){
+    body.innerHTML = threeWayRow('finance','Finance') + threeWayRow('health','Health')
+      + `<div style="font-size:11px;color:var(--txt3);margin-top:10px;">
+          <strong>Off</strong> = never shown. <strong>Auto</strong> = shown only when you have data for it this month.
+          <strong>Always</strong> = always shown regardless of data.
+        </div>`;
+  }
+
+  window.setDisplayValue = function(category, value){
+    displayState[category] = value;
+    renderDisplay(); // optimistic
     const st = document.getElementById('dash-status');
-    render(value); // optimistic
     st.textContent = 'Saving…'; st.className = 'status-msg';
     fetch(`${API_BASE}/api/me/dashboard-prefs`, {
       ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ dashboard_pref: value })
+      body: JSON.stringify(displayState)
     }).then(r=>{
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }).then(()=>{
       st.textContent = '✓ Saved'; st.className = 'status-msg ok';
-      toast('Dashboard layout: '+(DASHBOARD_LAYOUT_OPTIONS.find(o=>o.value===value)||{}).label);
+      toast(category+': '+(DISPLAY_3WAY_OPTIONS.find(o=>o.value===value)||{}).label);
       setTimeout(()=>{ st.textContent=''; }, 2000);
     }).catch(e=>{
       st.textContent = '❌ '+e.message; st.className = 'status-msg err';
     });
   };
 
-  fetchDashboardPref().then(pref=>render(pref))
+  fetchDashboardPref().then(data=>{ displayState={finance:data.finance||'auto',health:data.health||'auto'}; renderDisplay(); })
     .catch(e=>{ body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
 
-  // ── Health mini-card item picker ──
+  // ── Health mini-card item picker + 항목별 자동감지 + Women's 서브모드 ──
   const itemsBody = document.getElementById('health-items-body');
   let selectedItems = [];
+  let autoItems = false;
+  let womensMode = 'auto';
 
   function renderItems(){
-    const allMode = selectedItems.length===0;
-    itemsBody.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">` +
-      HEALTH_MINI_ITEM_OPTIONS.map(o=>{
-        const active = selectedItems.includes(o.key);
-        return `<button class="btn btn-sm" data-item="${o.key}" onclick="toggleHealthMiniItem('${o.key}')"
-          style="background:${active?'var(--teal)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};">${o.label}</button>`;
-      }).join('') + `</div>
-      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--txt3);">${allMode?'Showing all 12 (no selection).':selectedItems.length+' item(s) selected — only these will show.'}</span>
-        ${allMode?'':'<button class="btn btn-ghost btn-sm" id="health-items-clear" onclick="clearHealthMiniItems()">Show all 12 instead</button>'}
+    const manualMode = selectedItems.length>0;
+    itemsBody.innerHTML = `
+      <div class="section-title">Which items to show</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">` +
+        HEALTH_MINI_ITEM_OPTIONS.map(o=>{
+          const active = selectedItems.includes(o.key);
+          return `<button class="btn btn-sm" data-item="${o.key}" onclick="toggleHealthMiniItem('${o.key}')"
+            style="background:${active?'var(--teal)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};">${o.label}</button>`;
+        }).join('') + `</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--txt3);">${manualMode?selectedItems.length+' item(s) selected — only these will show.':'No manual selection.'}</span>
+        ${manualMode?'<button class="btn btn-ghost btn-sm" onclick="clearHealthMiniItems()">Clear selection</button>':''}
+      </div>
+      <hr class="div">
+      <div class="section-title">When nothing is manually selected</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;${manualMode?'opacity:.45;pointer-events:none;':''}">
+        <input type="checkbox" id="auto-items-checkbox" ${autoItems?'checked':''} onchange="setAutoItems(this.checked)">
+        Auto-detect items — show only the ones with data this month (instead of showing all 12)
+      </label>
+      <hr class="div">
+      <div class="section-title">Women's slot</div>
+      <div class="panel-sub" style="margin-bottom:8px;">This only controls what shows <em>inside</em> the Women's slot. Whether the slot appears at all is controlled by the item picker above.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">` +
+        WOMENS_MODE_OPTIONS.map(o=>{
+          const active = o.value===womensMode;
+          return `<button class="btn btn-sm" data-wmode="${o.value}" onclick="setWomensMode('${o.value}')"
+            style="background:${active?'var(--purple)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};">${o.label}</button>`;
+        }).join('') + `</div>
+      <div style="font-size:11px;color:var(--txt3);margin-top:8px;">
+        ${esc((WOMENS_MODE_OPTIONS.find(o=>o.value===womensMode)||{}).desc||'')}
       </div>`;
   }
 
@@ -489,19 +533,29 @@ function renderDashboardLayoutPanel(root){
     const idx = selectedItems.indexOf(key);
     if(idx===-1) selectedItems.push(key); else selectedItems.splice(idx,1);
     renderItems();
-    saveHealthMiniItems();
+    saveHealthConfig();
   };
   window.clearHealthMiniItems = function(){
     selectedItems = [];
     renderItems();
-    saveHealthMiniItems();
+    saveHealthConfig();
   };
-  function saveHealthMiniItems(){
+  window.setAutoItems = function(checked){
+    autoItems = checked;
+    renderItems();
+    saveHealthConfig();
+  };
+  window.setWomensMode = function(value){
+    womensMode = value;
+    renderItems();
+    saveHealthConfig();
+  };
+  function saveHealthConfig(){
     const st = document.getElementById('health-items-status');
     st.textContent = 'Saving…'; st.className = 'status-msg';
     fetch(`${API_BASE}/api/me/health/display-items`, {
       ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ items: selectedItems })
+      body: JSON.stringify({ items: selectedItems, auto_items: autoItems, womens_mode: womensMode })
     }).then(r=>{
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
@@ -513,8 +567,10 @@ function renderDashboardLayoutPanel(root){
     });
   }
 
-  fetchHealthDisplayItems().then(items=>{ selectedItems=items; renderItems(); })
-    .catch(e=>{ itemsBody.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+  fetchHealthDisplayItems().then(cfg=>{
+    selectedItems = cfg.items; autoItems = cfg.auto_items; womensMode = cfg.womens_mode;
+    renderItems();
+  }).catch(e=>{ itemsBody.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
 }
 
 /* ============================================================
