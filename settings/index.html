@@ -389,10 +389,17 @@ function renderAccountPanel(root){
    ("Overview Type") in the Master Sheet.
    ============================================================ */
 const DASHBOARD_LAYOUT_OPTIONS = [
-  { value:'simple',  label:'Simple',       desc:'Calendar, day view, and input only — no Finance or Health cards.' },
-  { value:'finance', label:'With Finance', desc:'Adds the Finance mini-card.' },
-  { value:'health',  label:'With Health',  desc:'Adds the Health mini-card.' },
-  { value:'all',     label:'All',          desc:'Both Finance and Health mini-cards.' },
+  { value:'simple',  label:'Simple',       desc:'Calendar, day view, and input only. Automatically adds Finance/Health if you have data for them this month.' },
+  { value:'finance', label:'With Finance', desc:'Always shows the Finance mini-card.' },
+  { value:'health',  label:'With Health',  desc:'Always shows the Health mini-card.' },
+  { value:'all',     label:'All',          desc:'Always shows both Finance and Health mini-cards.' },
+];
+
+const HEALTH_MINI_ITEM_OPTIONS = [
+  { key:'cals', label:'Cals' }, { key:'steps', label:'Steps' }, { key:'dist', label:'km/mi' },
+  { key:'activecal', label:'Active Cal' }, { key:'water', label:'Water' }, { key:'weight', label:'Weight' },
+  { key:'bp', label:'Blood Pressure' }, { key:'hr', label:'Heart Rate' }, { key:'spo2', label:'SpO2' },
+  { key:'glucose', label:'Glucose' }, { key:'sleep', label:'Sleep' }, { key:'mood', label:'Mood' },
 ];
 
 async function fetchDashboardPref(){
@@ -402,13 +409,27 @@ async function fetchDashboardPref(){
   return data.dashboard_pref || 'simple';
 }
 
+async function fetchHealthDisplayItems(){
+  const r = await fetch(`${API_BASE}/api/me/health/display-items`, FETCH_OPTS);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const data = await r.json();
+  return Array.isArray(data.items) ? data.items : [];
+}
+
 function renderDashboardLayoutPanel(root){
   root.innerHTML = `
     <div class="panel-title">Dashboard Layout</div>
-    <div class="panel-sub">Choose what the Overview dashboard shows. Default is Simple.</div>
+    <div class="panel-sub">Choose what the Overview dashboard shows. Default is Simple — Finance/Health cards appear on their own once you have data for them this month.</div>
     <div class="card">
       <div class="card-hd"><span class="card-hd-title">🖥️ Overview Type</span><span class="status-msg" id="dash-status" style="margin:0;"></span></div>
       <div class="card-body" id="dashboard-body"><div class="empty-state">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-hd-title">💪 Health Mini-Card Items</span><span class="status-msg" id="health-items-status" style="margin:0;"></span></div>
+      <div class="card-body">
+        <div class="panel-sub" style="margin-bottom:10px;">By default, the Health card shows all 12 items whenever it's visible. Pick specific items below to show only those instead — clear your selection to go back to showing all 12.</div>
+        <div id="health-items-body"><div class="empty-state">Loading…</div></div>
+      </div>
     </div>`;
   const body = document.getElementById('dashboard-body');
 
@@ -445,6 +466,55 @@ function renderDashboardLayoutPanel(root){
 
   fetchDashboardPref().then(pref=>render(pref))
     .catch(e=>{ body.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
+
+  // ── Health mini-card item picker ──
+  const itemsBody = document.getElementById('health-items-body');
+  let selectedItems = [];
+
+  function renderItems(){
+    const allMode = selectedItems.length===0;
+    itemsBody.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap;">` +
+      HEALTH_MINI_ITEM_OPTIONS.map(o=>{
+        const active = selectedItems.includes(o.key);
+        return `<button class="btn btn-sm" data-item="${o.key}" onclick="toggleHealthMiniItem('${o.key}')"
+          style="background:${active?'var(--teal)':'var(--bg3)'};color:${active?'#fff':'var(--txt2)'};">${o.label}</button>`;
+      }).join('') + `</div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--txt3);">${allMode?'Showing all 12 (no selection).':selectedItems.length+' item(s) selected — only these will show.'}</span>
+        ${allMode?'':'<button class="btn btn-ghost btn-sm" id="health-items-clear" onclick="clearHealthMiniItems()">Show all 12 instead</button>'}
+      </div>`;
+  }
+
+  window.toggleHealthMiniItem = function(key){
+    const idx = selectedItems.indexOf(key);
+    if(idx===-1) selectedItems.push(key); else selectedItems.splice(idx,1);
+    renderItems();
+    saveHealthMiniItems();
+  };
+  window.clearHealthMiniItems = function(){
+    selectedItems = [];
+    renderItems();
+    saveHealthMiniItems();
+  };
+  function saveHealthMiniItems(){
+    const st = document.getElementById('health-items-status');
+    st.textContent = 'Saving…'; st.className = 'status-msg';
+    fetch(`${API_BASE}/api/me/health/display-items`, {
+      ...FETCH_OPTS, method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ items: selectedItems })
+    }).then(r=>{
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(()=>{
+      st.textContent = '✓ Saved'; st.className = 'status-msg ok';
+      setTimeout(()=>{ st.textContent=''; }, 2000);
+    }).catch(e=>{
+      st.textContent = '❌ '+e.message; st.className = 'status-msg err';
+    });
+  }
+
+  fetchHealthDisplayItems().then(items=>{ selectedItems=items; renderItems(); })
+    .catch(e=>{ itemsBody.innerHTML = '<div class="empty-state">Failed to load: '+esc(e.message)+'</div>'; });
 }
 
 /* ============================================================
