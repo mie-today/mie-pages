@@ -245,7 +245,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 #finance-mini-card{flex:0 0 auto;}
 #finance-mini-card .card-body{flex:0 0 auto;overflow-y:visible;}
 #health-mini-card{flex:35;}
-/* [신규] DASHBOARD_PREF가 finance/health(단독 표시)일 때 남은 카드 하나가 col-right의
+/* [신규] FINANCE_DISPLAY/HEALTH_DISPLAY가 각각 단독으로 표시될 때 남은 카드 하나가 col-right의
    빈 공간을 채우도록. applyInputBodyState()가 인라인 style.flex를 리셋하는 것과
    충돌하지 않도록 인라인 스타일이 아니라 클래스 기반 규칙(ID+class 결합, 특이도 우선)으로 둠. */
 #finance-mini-card.mini-solo,#health-mini-card.mini-solo{flex:35;}
@@ -565,28 +565,30 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 'use strict';
 var BACKEND='https://api.mie.today';
 
-/* [신규] General Settings > Dashboard Layout — Simple(둘 다 숨김, 기본값) / Finance만 /
-   Health만 / All(둘 다). 첫 렌더는 기본값 'simple'로 즉시 그리고(네트워크 대기로 첫
-   화면을 늦추지 않음), 저장된 값이 다르면 받아온 뒤 col-right만 다시 그린다. 이 fetch가
-   실패해도 'simple'로 남을 뿐 — 이 기능이 죽어도 대시보드 자체는 안 깨진다. */
-var DASHBOARD_PREF='simple'; // 'simple' | 'finance' | 'health' | 'all' — Settings > General > Dashboard Layout, default 'simple'
+/* [재구조화] Finance/Health를 독립된 2개 값으로 — 각각 'off'(항상 숨김) / 'on'(항상 표시) /
+   'auto'(이번 달 데이터 있을 때만). 첫 렌더는 둘 다 기본값 'auto'로 즉시 그리고(네트워크
+   대기로 첫 화면을 늦추지 않음), 저장된 값이 다르면 받아온 뒤 col-right만 다시 그린다.
+   fetch 실패해도 'auto'로 남을 뿐 — 이 기능이 죽어도 대시보드 자체는 안 깨진다. */
+var FINANCE_DISPLAY='auto'; // 'off' | 'on' | 'auto'
+var HEALTH_DISPLAY='auto';  // 'off' | 'on' | 'auto'
 function loadDashboardPref(){
   fetch(BACKEND+'/api/me/dashboard-prefs',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      if(data&&data.dashboard_pref&&data.dashboard_pref!==DASHBOARD_PREF){
-        DASHBOARD_PREF=data.dashboard_pref;
-        renderGrid();
-      }
+      if(!data)return;
+      var changed=false;
+      if(data.finance&&data.finance!==FINANCE_DISPLAY){FINANCE_DISPLAY=data.finance;changed=true;}
+      if(data.health&&data.health!==HEALTH_DISPLAY){HEALTH_DISPLAY=data.health;changed=true;}
+      if(changed)renderGrid();
     })
-    .catch(function(){ /* keep default 'simple' — fail open */ });
+    .catch(function(){ /* keep default 'auto' — fail open */ });
 }
 
-/* [신규] "이번 달 자동 감지" — Overview Type이 'simple'일 때만 적용된다(명시적으로
-   finance/health/all을 고른 사람의 선택은 절대 안 건드림). 이번 달에 Finance/Health
-   데이터가 하나라도 있으면 그 카드를 자동으로 보여준다. loadFinance()/loadHealth()가
-   비동기라 첫 렌더 시점엔 아직 데이터가 없으므로, 그 두 함수가 끝날 때마다
-   checkAutoDashboardUpdate()를 불러 필요하면 renderGrid()를 다시 돌린다. */
+/* [신규] "이번 달 자동 감지" — Finance/Health 각각 'auto'일 때만 적용된다('off'/'on'으로
+   명시적으로 고정한 건 절대 안 건드림). 이번 달에 데이터가 하나라도 있으면 그 카드를
+   자동으로 보여준다. loadFinance()/loadHealth()가 비동기라 첫 렌더 시점엔 아직 데이터가
+   없으므로, 그 두 함수가 끝날 때마다 checkAutoDashboardUpdate()를 불러 필요하면
+   renderGrid()를 다시 돌린다. */
 function hasFinanceDataThisMonth(){
   var d=_financeMonthData;
   if(!d)return false;
@@ -597,39 +599,137 @@ function hasHealthDataThisMonth(){
   return dicts.some(function(d){return d&&Object.keys(d).length>0;});
 }
 function checkAutoDashboardUpdate(){
-  if(DASHBOARD_PREF!=='simple')return; // 자동 감지는 simple에서만 작동
-  var wantFinance=hasFinanceDataThisMonth();
-  var wantHealth=hasHealthDataThisMonth();
+  var wantFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
+  var wantHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
   var curFinance=!!document.getElementById('finance-mini-card');
   var curHealth=!!document.getElementById('health-mini-card');
   if(wantFinance!==curFinance||wantHealth!==curHealth)renderGrid();
 }
 
-/* [신규] Health 미니카드 12개 항목 중 사용자가 직접 고른 것만 보여주기(Settings에서
-   설정). 비어있으면(null/[]) 자동 — 위 이번 달 자동 감지로 카드를 켰을 때 12개 전부
-   보여준다. 값이 있으면 자동 감지보다 우선해서 그 항목들만 렌더링한다. */
-var HEALTH_MINI_ITEMS=null; // null 또는 [] = 전체 12개, 배열이 있으면 그 키만
+/* [확장] Health 미니카드에 뭘 보여줄지 — 우선순위: 수동 선택(items) > 항목별 자동감지
+   (auto_items) > 기본(전체 다 표시). Women's 슬롯 자체가 보이는지는 이 items/auto_items
+   로만 결정되고, womens_mode는 "Women's 슬롯 안에서 무엇을(D-day냐 임신주차냐) 보여줄지"만
+   결정한다 — 슬롯을 숨기는 방법은 여기 하나뿐이라 헷갈릴 여지가 없다. */
+var HEALTH_ITEMS=[];           // 수동으로 고른 항목 키 목록. 비어있으면 아래 AUTO_ITEMS/기본으로.
+var HEALTH_AUTO_ITEMS=false;   // true면 items가 비었을 때 "이번 달 데이터 있는 항목만" 자동 표시
+var WOMENS_MODE='auto';        // 'auto' | 'pregnancy' | 'period' — Women's 슬롯 내부 표시 모드
 function loadHealthDisplayItems(){
   fetch(BACKEND+'/api/me/health/display-items',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
-      var items=(data&&Array.isArray(data.items))?data.items:[];
-      HEALTH_MINI_ITEMS=items.length?items:null;
-      // renderHealthMini()는 이미 그려진 12칸의 값만 다시 채우는 함수라 칸 자체는
-      // 못 줄인다 — 항목 필터링이 실제로 반영되려면 카드 마크업을 다시 만들어야
-      // 하므로 renderGrid()를 다시 부른다(showFinance/showHealth 자체는 그대로,
-      // healthMiniHTML()이 이번엔 HEALTH_MINI_ITEMS를 반영해서 다시 그려짐).
+      if(!data)return;
+      HEALTH_ITEMS=Array.isArray(data.items)?data.items:[];
+      HEALTH_AUTO_ITEMS=!!data.auto_items;
+      WOMENS_MODE=(data.womens_mode==='pregnancy'||data.womens_mode==='period')?data.womens_mode:'auto';
+      // renderHealthMini()는 이미 그려진 칸의 값만 다시 채우는 함수라 칸 자체(개수)는
+      // 못 줄인다 — 항목 필터링이 실제로 반영되려면 카드 마크업을 다시 만들어야 하므로
+      // renderGrid()를 다시 부른다.
       renderGrid();
       if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
     })
-    .catch(function(){ /* keep null — fail open to "show all 12" */ });
+    .catch(function(){ /* keep defaults — fail open to "show all" */ });
 }
+
+/* 항목별 자동감지에 쓰는 "이번 달에 이 항목 데이터가 있나" 판별. _healthByDate/_activityByDate
+   등은 이미 loadHealth()가 채워둔 배열이라 새 fetch 없이 바로 씀. 필드명은 index.js의
+   parseHealthRows_(tabName==='health'/'activity'/...)가 실제로 만드는 이름과 대조 확인함. */
+function _anyRowThisMonthHasField(dict,fieldNames){
+  var dates=Object.keys(dict||{});
+  for(var i=0;i<dates.length;i++){
+    var rows=dict[dates[i]]||[];
+    for(var j=0;j<rows.length;j++){
+      for(var k=0;k<fieldNames.length;k++){
+        var v=rows[j][fieldNames[k]];
+        if(v!==null&&v!==undefined&&v!=='')return true;
+      }
+    }
+  }
+  return false;
+}
+function hasDataForHealthItem(key){
+  switch(key){
+    case 'cals': case 'steps': case 'dist': case 'activecal':
+      return Object.keys(_activityByDate||{}).length>0;
+    case 'water':    return Object.keys(_waterByDate||{}).length>0;
+    case 'weight':   return _anyRowThisMonthHasField(_healthByDate,['weight_kg','weight_lb']);
+    case 'bp':       return _anyRowThisMonthHasField(_healthByDate,['blood_pressure_sys','blood_pressure_dia']);
+    case 'hr':       return _anyRowThisMonthHasField(_healthByDate,['heart_rate_bpm']);
+    case 'spo2':     return _anyRowThisMonthHasField(_healthByDate,['spo2_pct']);
+    case 'glucose':  return _anyRowThisMonthHasField(_healthByDate,['glucose_mgdl','glucose_mmol']);
+    case 'sleep':    return Object.keys(_sleepByDate||{}).length>0;
+    case 'mood':     return Object.keys(_moodByDate||{}).length>0;
+    case 'womens':   return Object.keys(_womensByDate||{}).length>0;
+    default: return false;
+  }
+}
+
+/* ── Women's 주기/임신 계산 — panel-logs-womens(4).html의 로직을 실제 백엔드 데이터
+   (_womensByDate, index.js parseHealthRows_(tabName==='womens')가 만드는 필드명과
+   대조 확인 완료: period_start/period_end/mode/preg_test_result 등 flat 구조)에 맞게
+   이식. localStorage 대신 이미 로드된 _womensByDate를 직접 읽는다. ── */
+function _toBoolField(v){return v===true||v==='TRUE'||v==='true';}
+function _isoToday(){var n=new Date();return isoD(n.getFullYear(),n.getMonth(),n.getDate());}
+function _daysBetweenIso(a,b){
+  var da=new Date(a+'T00:00:00'),db=new Date(b+'T00:00:00');
+  return Math.round((db-da)/86400000);
+}
+function _addDaysIso(a,n){
+  var d=new Date(a+'T00:00:00');d.setDate(d.getDate()+n);
+  return isoD(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function _womensDatesSorted(){return Object.keys(_womensByDate||{}).sort();}
+function _womensDayHasPeriodStart(ds){
+  return (_womensByDate[ds]||[]).some(function(e){return _toBoolField(e.period_start);});
+}
+function findLastPeriodStartDate(beforeDate){
+  var before=beforeDate||_isoToday();
+  var dates=_womensDatesSorted().filter(function(d){return d<=before;});
+  for(var i=dates.length-1;i>=0;i--){if(_womensDayHasPeriodStart(dates[i]))return dates[i];}
+  return null;
+}
+function getUserCycleLengthDays(){
+  var starts=_womensDatesSorted().filter(_womensDayHasPeriodStart);
+  if(starts.length<2)return 28;
+  var diffs=[];
+  for(var i=1;i<starts.length;i++)diffs.push(_daysBetweenIso(starts[i-1],starts[i]));
+  var sum=diffs.reduce(function(a,b){return a+b;},0);
+  return Math.round(sum/diffs.length);
+}
+/* 데이터로 임신 여부 자동 판단: 가장 최근 womens 행부터 거슬러 올라가며 preg_test_result나
+   mode를 본다 — 'Positive'/'pregnancy'를 만나면 임신, 'period'를 만나면 생리로 확정. */
+function isCurrentlyPregnantFromData(){
+  var dates=_womensDatesSorted();
+  for(var i=dates.length-1;i>=0;i--){
+    var rows=_womensByDate[dates[i]]||[];
+    for(var j=rows.length-1;j>=0;j--){
+      var e=rows[j];
+      if(e.preg_test_result==='Positive')return true;
+      if(e.mode==='pregnancy')return true;
+      if(e.mode==='period')return false;
+    }
+  }
+  return false;
+}
+function computeWomensDisplay(){
+  var mode=WOMENS_MODE==='auto' ? (isCurrentlyPregnantFromData()?'pregnancy':'period') : WOMENS_MODE;
+  var lps=findLastPeriodStartDate();
+  if(!lps)return {mode:mode,label:'—',sub:mode==='pregnancy'?'wk pregnant':'to period'};
+  if(mode==='pregnancy'){
+    var weeks=Math.floor(_daysBetweenIso(lps,_isoToday())/7);
+    return {mode:'pregnancy',label:weeks+'w',sub:'wk pregnant'};
+  }
+  var cyc=getUserCycleLengthDays();
+  var nextStart=_addDaysIso(lps,cyc);
+  var dtp=_daysBetweenIso(_isoToday(),nextStart);
+  return {mode:'period',label:'D-'+(dtp>0?dtp:0),sub:'to period'};
+}
+
 // [버그 수정] 위 loadDashboardPref()는 페이지 로드 시 딱 한 번만 실행됐다. Settings는
 // 별도 탭/페이지라, 이미 열려있는 Overview 탭은 사용자가 Settings에서 값을 바꿔도
 // 새로고침 전까진 그걸 알 방법이 없었다 — "Finance/Health로 바꿔도 안 보인다"는 증상의
 // 원인. 이 탭이 다시 보일 때(다른 탭 갔다가 돌아오는 것 포함)마다 재조회하도록 고침.
 document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState==='visible') loadDashboardPref();
+  if(document.visibilityState==='visible'){ loadDashboardPref(); loadHealthDisplayItems(); }
 });
 
 /* ── Reauth (Google 재연결) 감지 ── */
@@ -811,13 +911,32 @@ var HM_ITEM_DEFS=[
   {key:'sleep',     html:'<div class="hm-item" onclick="openHealthDetail(\'sleep\')"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'},
   {key:'mood',      html:'<div class="hm-item" onclick="openHealthDetail(\'mood\')"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'},
 ];
+/* Women's 아이콘 — 첨부해주신 스톡 이미지(Dreamstime 워터마크 있음, 저작권 있는 소스)는
+   그대로 못 써서, 같은 컨셉(핑크 꽃+물방울 = 생리, 노란 사람 실루엣 = 임신)으로 직접 그린
+   커스텀 SVG. 배타적 표시(생리 D-day 또는 임신 주차 중 하나만)라 아이콘도 모드에 따라
+   둘 중 하나로 바뀐다. */
+var HM_WOMENS_ICON_PERIOD='<svg viewBox="0 0 24 24" width="15" height="15"><g fill="#EC7FA9"><circle cx="12" cy="5" r="4"/><circle cx="12" cy="19" r="4"/><circle cx="5" cy="12" r="4"/><circle cx="19" cy="12" r="4"/><circle cx="7" cy="7" r="3.6"/><circle cx="17" cy="7" r="3.6"/><circle cx="7" cy="17" r="3.6"/><circle cx="17" cy="17" r="3.6"/></g><path d="M12 8c-2.6 3-2.6 5.6 0 6.6 2.6-1 2.6-3.6 0-6.6z" fill="#fff"/></svg>';
+var HM_WOMENS_ICON_PREGNANCY='<svg viewBox="0 0 24 24" width="15" height="15"><circle cx="10" cy="5" r="3" fill="#F0C24B"/><path d="M6.5 9c-1 1.2-1.4 3.4-.8 5.6.3 1.4.9 2.4.9 2.4h7.4c0-2.2.5-4.4-1-6.6-1.3-1.9-3.9-2.8-6.5-1.4z" fill="#F0C24B"/></svg>';
 function healthMiniHTML(){
   var uPref=getUnitPref();
-  // [신규] HEALTH_MINI_ITEMS가 있으면(Settings에서 수동 선택) 그 항목만, 없으면(자동/기본) 12개 전부.
-  var visibleDefs=(HEALTH_MINI_ITEMS&&HEALTH_MINI_ITEMS.length)
-    ? HM_ITEM_DEFS.filter(function(d){return HEALTH_MINI_ITEMS.indexOf(d.key)!==-1;})
-    : HM_ITEM_DEFS;
-  var gridHtml=visibleDefs.map(function(d){return d.html;}).join('');
+  // [확장] 우선순위: 수동 선택(HEALTH_ITEMS) > 항목별 자동감지(HEALTH_AUTO_ITEMS) > 기본(전체).
+  var visibleKeys;
+  if(HEALTH_ITEMS&&HEALTH_ITEMS.length){
+    visibleKeys=HEALTH_ITEMS;
+  }else if(HEALTH_AUTO_ITEMS){
+    visibleKeys=HM_ITEM_DEFS.map(function(d){return d.key;}).filter(hasDataForHealthItem);
+  }else{
+    visibleKeys=HM_ITEM_DEFS.map(function(d){return d.key;});
+  }
+  var gridHtml=HM_ITEM_DEFS.filter(function(d){return visibleKeys.indexOf(d.key)!==-1;})
+    .map(function(d){return d.html;}).join('');
+  // Women's 슬롯 — HM_ITEM_DEFS엔 없이 별도 처리(아이콘이 모드에 따라 동적으로 바뀌어서
+  // 고정 html 문자열로 못 둠). visibleKeys에 'womens'가 있을 때만 추가.
+  if(visibleKeys.indexOf('womens')!==-1){
+    var wd=computeWomensDisplay();
+    var wIcon=wd.mode==='pregnancy'?HM_WOMENS_ICON_PREGNANCY:HM_WOMENS_ICON_PERIOD;
+    gridHtml+='<div class="hm-item"><div class="hm-ic">'+wIcon+'</div><div class="hm-val" id="hm-womens">'+wd.label+'</div><div class="hm-lbl">'+wd.sub+'</div></div>';
+  }
   return '<div class="card mini-card" id="health-mini-card">'
     +'<div class="card-hd">'
       +'<span class="card-hd-title">💪 Health</span>'
@@ -1018,15 +1137,9 @@ function renderGrid(){
   var M=document.createElement('div');M.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';M.innerHTML=todayCardHTML();
   var R=document.createElement('div');R.id='col-right';R.style.cssText='display:flex;flex-direction:column;min-height:0;height:100%;overflow:hidden;';
   // 순서: Input(top) → Finance → Health. 접혔을 때 남는 공간은 그냥 빈 배경으로 둔다(재확장은 상단 ⌄ 화살표로).
-  // [신규] DASHBOARD_PREF에 따라 Finance/Health 미니카드를 조건부로 넣는다. 3-컬럼 그리드
-  // 자체(4fr 3fr 3fr)는 안 바뀐다 — Finance/Health는 원래도 col-right 안에서 세로로
-  // 쌓여있던 것들이라, 하나를 빼도 "빈 컬럼"이 아니라 "col-right 안의 빈 아래쪽 공간"만
-  // 생긴다. 하나만 남을 때는 그 카드가 col-right-inner의 남는 공간을 다 쓰도록 flex를
-  // 조정한다(안 그러면 Finance만 남았을 때 카드가 원래 높이로만 있고 아래가 텅 빈다).
-  var showFinance = DASHBOARD_PREF==='finance' || DASHBOARD_PREF==='all' ||
-                     (DASHBOARD_PREF==='simple' && hasFinanceDataThisMonth());
-  var showHealth  = (DASHBOARD_PREF==='health' || DASHBOARD_PREF==='all' ||
-                     (DASHBOARD_PREF==='simple' && hasHealthDataThisMonth()));
+  // [재구조화] DASHBOARD_PREF 단일값 대신 Finance/Health 독립 off/on/auto 값으로 판단
+  var showFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
+  var showHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
   R.innerHTML='<div class="col-right-inner">'
       +'<div class="input-col-wrap">'+inputCardHTML()+'</div>'
       +(showFinance?financeMiniHTML():'')
