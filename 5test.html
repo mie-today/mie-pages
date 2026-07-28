@@ -579,7 +579,11 @@ function loadDashboardPref(){
       var changed=false;
       if(data.finance&&data.finance!==FINANCE_DISPLAY){FINANCE_DISPLAY=data.finance;changed=true;}
       if(data.health&&data.health!==HEALTH_DISPLAY){HEALTH_DISPLAY=data.health;changed=true;}
-      if(changed)renderGrid();
+      // [버그 수정] renderGrid()는 calCardHTML()로 빈 캘린더 껍데기만 다시 만든다 —
+      // 날짜 숫자/이벤트 마커는 buildCalGrid()(+내부에서 buildCalGridFromEvents() 호출)와
+      // buildCalLegend()가 따로 채워야 한다. 이걸 안 부르면 캘린더가 완전히 빈 채로 남는다
+      // (실제로 겪은 버그: Simple 자동감지 등으로 renderGrid()가 재실행될 때마다 발생).
+      if(changed){renderGrid();buildCalGrid();buildCalLegend();}
     })
     .catch(function(){ /* keep default 'auto' — fail open */ });
 }
@@ -603,7 +607,7 @@ function checkAutoDashboardUpdate(){
   var wantHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
   var curFinance=!!document.getElementById('finance-mini-card');
   var curHealth=!!document.getElementById('health-mini-card');
-  if(wantFinance!==curFinance||wantHealth!==curHealth)renderGrid();
+  if(wantFinance!==curFinance||wantHealth!==curHealth){renderGrid();buildCalGrid();buildCalLegend();}
 }
 
 /* [확장] Health 미니카드에 뭘 보여줄지 — 우선순위: 수동 선택(items) > 항목별 자동감지
@@ -625,6 +629,7 @@ function loadHealthDisplayItems(){
       // 못 줄인다 — 항목 필터링이 실제로 반영되려면 카드 마크업을 다시 만들어야 하므로
       // renderGrid()를 다시 부른다.
       renderGrid();
+      buildCalGrid();buildCalLegend(); // [버그 수정] renderGrid()는 캘린더 껍데기만 다시 만들어서 필요
       if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
     })
     .catch(function(){ /* keep defaults — fail open to "show all" */ });
