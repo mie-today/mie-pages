@@ -581,6 +581,49 @@ function loadDashboardPref(){
     })
     .catch(function(){ /* keep default 'simple' — fail open */ });
 }
+
+/* [신규] "이번 달 자동 감지" — Overview Type이 'simple'일 때만 적용된다(명시적으로
+   finance/health/all을 고른 사람의 선택은 절대 안 건드림). 이번 달에 Finance/Health
+   데이터가 하나라도 있으면 그 카드를 자동으로 보여준다. loadFinance()/loadHealth()가
+   비동기라 첫 렌더 시점엔 아직 데이터가 없으므로, 그 두 함수가 끝날 때마다
+   checkAutoDashboardUpdate()를 불러 필요하면 renderGrid()를 다시 돌린다. */
+function hasFinanceDataThisMonth(){
+  var d=_financeMonthData;
+  if(!d)return false;
+  return (d.income&&d.income.length>0)||(d.expenses&&d.expenses.length>0)||(d.savings&&d.savings.length>0);
+}
+function hasHealthDataThisMonth(){
+  var dicts=[_healthByDate,_activityByDate,_waterByDate,_sleepByDate,_moodByDate,_womensByDate];
+  return dicts.some(function(d){return d&&Object.keys(d).length>0;});
+}
+function checkAutoDashboardUpdate(){
+  if(DASHBOARD_PREF!=='simple')return; // 자동 감지는 simple에서만 작동
+  var wantFinance=hasFinanceDataThisMonth();
+  var wantHealth=hasHealthDataThisMonth();
+  var curFinance=!!document.getElementById('finance-mini-card');
+  var curHealth=!!document.getElementById('health-mini-card');
+  if(wantFinance!==curFinance||wantHealth!==curHealth)renderGrid();
+}
+
+/* [신규] Health 미니카드 12개 항목 중 사용자가 직접 고른 것만 보여주기(Settings에서
+   설정). 비어있으면(null/[]) 자동 — 위 이번 달 자동 감지로 카드를 켰을 때 12개 전부
+   보여준다. 값이 있으면 자동 감지보다 우선해서 그 항목들만 렌더링한다. */
+var HEALTH_MINI_ITEMS=null; // null 또는 [] = 전체 12개, 배열이 있으면 그 키만
+function loadHealthDisplayItems(){
+  fetch(BACKEND+'/api/me/health/display-items',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(data){
+      var items=(data&&Array.isArray(data.items))?data.items:[];
+      HEALTH_MINI_ITEMS=items.length?items:null;
+      // renderHealthMini()는 이미 그려진 12칸의 값만 다시 채우는 함수라 칸 자체는
+      // 못 줄인다 — 항목 필터링이 실제로 반영되려면 카드 마크업을 다시 만들어야
+      // 하므로 renderGrid()를 다시 부른다(showFinance/showHealth 자체는 그대로,
+      // healthMiniHTML()이 이번엔 HEALTH_MINI_ITEMS를 반영해서 다시 그려짐).
+      renderGrid();
+      if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
+    })
+    .catch(function(){ /* keep null — fail open to "show all 12" */ });
+}
 // [버그 수정] 위 loadDashboardPref()는 페이지 로드 시 딱 한 번만 실행됐다. Settings는
 // 별도 탭/페이지라, 이미 열려있는 Overview 탭은 사용자가 Settings에서 값을 바꿔도
 // 새로고침 전까진 그걸 알 방법이 없었다 — "Finance/Health로 바꿔도 안 보인다"는 증상의
@@ -754,8 +797,27 @@ function financeMiniHTML(){
    이 대시보드가 이미 날짜별로 모아둔 _activityByDate/_healthByDate/_waterByDate/
    _sleepByDate/_moodByDate를 그대로 재사용한다 — 별도 API 호출 없음.
    달력에서 날짜를 클릭(selectedDateStr)하면 그 날짜 기준으로 갱신된다(renderHealthMini 참고). */
+var HM_ITEM_DEFS=[
+  {key:'cals',      html:'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'},
+  {key:'steps',     html:'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'},
+  {key:'dist',      html:'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'},
+  {key:'activecal', html:'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'},
+  {key:'water',     html:'<div class="hm-item" onclick="openHealthDetail(\'water\')"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'},
+  {key:'weight',    html:'<div class="hm-item" onclick="openHealthDetail(\'weight\')"><div class="hm-ic">⚖️</div><div class="hm-val" id="hm-weight">—</div><div class="hm-lbl">Weight</div></div>'},
+  {key:'bp',        html:'<div class="hm-item" onclick="openHealthDetail(\'bp\')"><div class="hm-ic">🩺</div><div class="hm-val" id="hm-bp">—</div><div class="hm-lbl">Blood Pressure</div></div>'},
+  {key:'hr',        html:'<div class="hm-item" onclick="openHealthDetail(\'hr\')"><div class="hm-ic">❤️</div><div class="hm-val" id="hm-hr">—</div><div class="hm-lbl">Heart Rate</div></div>'},
+  {key:'spo2',      html:'<div class="hm-item" onclick="openHealthDetail(\'spo2\')"><div class="hm-ic">🫁</div><div class="hm-val" id="hm-spo2">—</div><div class="hm-lbl">SpO2</div></div>'},
+  {key:'glucose',   html:'<div class="hm-item" onclick="openHealthDetail(\'glucose\')"><div class="hm-ic">🩸</div><div class="hm-val" id="hm-glucose">—</div><div class="hm-lbl">Glucose</div></div>'},
+  {key:'sleep',     html:'<div class="hm-item" onclick="openHealthDetail(\'sleep\')"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'},
+  {key:'mood',      html:'<div class="hm-item" onclick="openHealthDetail(\'mood\')"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'},
+];
 function healthMiniHTML(){
   var uPref=getUnitPref();
+  // [신규] HEALTH_MINI_ITEMS가 있으면(Settings에서 수동 선택) 그 항목만, 없으면(자동/기본) 12개 전부.
+  var visibleDefs=(HEALTH_MINI_ITEMS&&HEALTH_MINI_ITEMS.length)
+    ? HM_ITEM_DEFS.filter(function(d){return HEALTH_MINI_ITEMS.indexOf(d.key)!==-1;})
+    : HM_ITEM_DEFS;
+  var gridHtml=visibleDefs.map(function(d){return d.html;}).join('');
   return '<div class="card mini-card" id="health-mini-card">'
     +'<div class="card-hd">'
       +'<span class="card-hd-title">💪 Health</span>'
@@ -773,18 +835,7 @@ function healthMiniHTML(){
     +'</div>'
     +'<div class="card-body">'
       +'<div class="hm-grid">'
-        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🔥</div><div class="hm-val" id="hm-cals">—</div><div class="hm-lbl">Cals</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">👟</div><div class="hm-val" id="hm-steps">—</div><div class="hm-lbl">Steps</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">📍</div><div class="hm-val" id="hm-dist">—</div><div class="hm-lbl" id="hm-dist-lbl">km</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'activity\')"><div class="hm-ic">🏆</div><div class="hm-val" id="hm-activecal">—</div><div class="hm-lbl">Active Cal</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'water\')"><div class="hm-ic">💧</div><div class="hm-val" id="hm-water">—</div><div class="hm-lbl" id="hm-water-lbl">ml</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'weight\')"><div class="hm-ic">⚖️</div><div class="hm-val" id="hm-weight">—</div><div class="hm-lbl">Weight</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'bp\')"><div class="hm-ic">🩺</div><div class="hm-val" id="hm-bp">—</div><div class="hm-lbl">Blood Pressure</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'hr\')"><div class="hm-ic">❤️</div><div class="hm-val" id="hm-hr">—</div><div class="hm-lbl">Heart Rate</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'spo2\')"><div class="hm-ic">🫁</div><div class="hm-val" id="hm-spo2">—</div><div class="hm-lbl">SpO2</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'glucose\')"><div class="hm-ic">🩸</div><div class="hm-val" id="hm-glucose">—</div><div class="hm-lbl">Glucose</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'sleep\')"><div class="hm-ic">😴</div><div class="hm-val" id="hm-sleep">—</div><div class="hm-lbl">Sleep</div></div>'
-        +'<div class="hm-item" onclick="openHealthDetail(\'mood\')"><div class="hm-ic">😊</div><div class="hm-val" id="hm-mood">—</div><div class="hm-lbl">Mood</div></div>'
+        +gridHtml
       +'</div>'
     +'</div>'
   +'</div>';
@@ -972,8 +1023,10 @@ function renderGrid(){
   // 쌓여있던 것들이라, 하나를 빼도 "빈 컬럼"이 아니라 "col-right 안의 빈 아래쪽 공간"만
   // 생긴다. 하나만 남을 때는 그 카드가 col-right-inner의 남는 공간을 다 쓰도록 flex를
   // 조정한다(안 그러면 Finance만 남았을 때 카드가 원래 높이로만 있고 아래가 텅 빈다).
-  var showFinance = DASHBOARD_PREF==='finance' || DASHBOARD_PREF==='all';
-  var showHealth  = DASHBOARD_PREF==='health'  || DASHBOARD_PREF==='all';
+  var showFinance = DASHBOARD_PREF==='finance' || DASHBOARD_PREF==='all' ||
+                     (DASHBOARD_PREF==='simple' && hasFinanceDataThisMonth());
+  var showHealth  = (DASHBOARD_PREF==='health' || DASHBOARD_PREF==='all' ||
+                     (DASHBOARD_PREF==='simple' && hasHealthDataThisMonth()));
   R.innerHTML='<div class="col-right-inner">'
       +'<div class="input-col-wrap">'+inputCardHTML()+'</div>'
       +(showFinance?financeMiniHTML():'')
@@ -2255,7 +2308,7 @@ function loadFinance(){
       _finByDate={};
       _financeMonthData=(data&&data.summary)?data:null;
       renderFinanceMini();
-      if(!data||!data.summary){renderTodayEvents(selectedDateStr);refreshFinDetailAfterLoad();return;}
+      if(!data||!data.summary){renderTodayEvents(selectedDateStr);refreshFinDetailAfterLoad();checkAutoDashboardUpdate();return;}
       // Finance 거래 날짜 추출 → _finDateSet + _finByDate 갱신
       function _addFinRow(type,r){
         if(!r.date)return;
@@ -2270,8 +2323,9 @@ function loadFinance(){
       buildCalGridFromEvents();
       renderTodayEvents(selectedDateStr);
       refreshFinDetailAfterLoad();
+      checkAutoDashboardUpdate(); // [신규] 이번 달 Finance 데이터 유무로 Simple 자동 감지 재평가
     })
-    .catch(function(){_financeMonthData=null;renderFinanceMini();renderTodayEvents(selectedDateStr);refreshFinDetailAfterLoad();});
+    .catch(function(){_financeMonthData=null;renderFinanceMini();renderTodayEvents(selectedDateStr);refreshFinDetailAfterLoad();checkAutoDashboardUpdate();});
 }
 
 /* ── Finance mini 카드 렌더링 ──
@@ -2466,7 +2520,7 @@ function loadHealth(){
     .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
     .then(function(data){
       _healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};
-      if(!data){renderTodayEvents(selectedDateStr);return;}
+      if(!data){renderTodayEvents(selectedDateStr);checkAutoDashboardUpdate();return;}
       function _byDate(arr,store){
         (Array.isArray(arr)?arr:[]).forEach(function(rec){
           var ds=(rec.stamp_date||'').slice(0,10);if(!ds)return;
@@ -2482,8 +2536,9 @@ function loadHealth(){
       buildCalGridFromEvents(); // [v2.4] Health 마커 반영을 위해 재빌드 — Finance와 동일 패턴
       renderTodayEvents(selectedDateStr);
       renderHealthMini(_healthMiniDate());
+      checkAutoDashboardUpdate(); // [신규] 이번 달 Health 데이터 유무로 Simple 자동 감지 재평가
     })
-    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};buildCalGridFromEvents();renderTodayEvents(selectedDateStr);renderHealthMini(_healthMiniDate());});
+    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};buildCalGridFromEvents();renderTodayEvents(selectedDateStr);renderHealthMini(_healthMiniDate());checkAutoDashboardUpdate();});
 }
 
 /* ── Health mini 카드 렌더링 (health_index_28_.html의 renderOverviewCards()를 축소 이식) ──
@@ -3074,6 +3129,7 @@ function init(){
   loadHealth();
   loadProjects();
   loadHybridOverrides(); // hybrid N/W override 값(사용자 설정) — 페이지 로드 시 1회만
+  loadHealthDisplayItems(); // Health 미니카드 수동 선택 항목 — 페이지 로드 시 1회만
 }
 // 인증 가드: 콘텐츠를 그리기 전에 로그인 여부부터 확인. 이 사이트는 정적 호스팅이라
 // 서버가 리다이렉트를 못 해주므로, 클라이언트에서 직접 체크하고 안 되어 있으면 /login으로 보낸다.
