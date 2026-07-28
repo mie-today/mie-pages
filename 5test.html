@@ -940,7 +940,7 @@ function healthMiniHTML(){
   if(visibleKeys.indexOf('womens')!==-1){
     var wd=computeWomensDisplay();
     var wIcon=wd.mode==='pregnancy'?HM_WOMENS_ICON_PREGNANCY:HM_WOMENS_ICON_PERIOD;
-    gridHtml+='<div class="hm-item"><div class="hm-ic">'+wIcon+'</div><div class="hm-val" id="hm-womens">'+wd.label+'</div><div class="hm-lbl">'+wd.sub+'</div></div>';
+    gridHtml+='<div class="hm-item" onclick="openHealthDetail(\'womens\')"><div class="hm-ic">'+wIcon+'</div><div class="hm-val" id="hm-womens">'+wd.label+'</div><div class="hm-lbl">'+wd.sub+'</div></div>';
   }
   return '<div class="card mini-card" id="health-mini-card">'
     +'<div class="card-hd">'
@@ -2812,7 +2812,11 @@ var HD_TYPES={
   spo2:    {tab:'health',  title:'SpO2',         hasChart:true,arrKey:'health',field:'spo2_pct'},
   glucose: {tab:'health',  title:'Glucose',      hasChart:true,arrKey:'health',field:'glucose_mgdl'},
   sleep:   {tab:'sleep',   title:'Sleep',        hasChart:true,arrKey:'sleep'},
-  water:   {tab:'water',   title:'Water',        hasChart:true,arrKey:'water'}
+  water:   {tab:'water',   title:'Water',        hasChart:true,arrKey:'water'},
+  // [신규] Women's — 리스트 전용(차트 없음). women-sync.js의 describeWomensRawEntry()를
+  // 그대로 재사용해서 각 행을 사람이 읽을 텍스트로 변환한다. 편집 폼은 아직 없어서
+  // (openHealthEdit엔 'womens' 분기가 없음) 이 목록은 읽기 전용으로만 만든다.
+  womens:  {tab:'womens',  title:"Women's History", hasChart:false,arrKey:'womens'}
 };
 var MOOD_EMOJI_MAP={Amazing:'🤩',Happy:'😊',Calm:'😌',Neutral:'😐',Tired:'😴',Anxious:'😰',Sad:'😢',Angry:'😠',Stressed:'😫',Grateful:'🙏'};
 var hdOpen=false, hdType='weight', hdPeriod='daily', hdDate=null, hdRows=[];
@@ -2896,7 +2900,8 @@ var HD_COLUMNS={
   spo2:['Date','SpO2'],
   glucose:['Date','Glucose'],
   sleep:['Date','Duration','Quality'],
-  water:['Date','Amount','Type']
+  water:['Date','Amount','Type'],
+  womens:['Date','Details']
 };
 function hdCellsFor(type,r){
   var unit=getUnitPref?getUnitPref():'metric';
@@ -2912,6 +2917,11 @@ function hdCellsFor(type,r){
   if(type==='glucose')return [ r.glucose_mgdl+' mg/dL' ];
   if(type==='sleep')return [ (r.duration_min?(r.duration_min/60).toFixed(1)+' hr':'—'), (r.quality_1to5?r.quality_1to5+'/5':'—') ];
   if(type==='water'){var ml=r.amount_ml||0;return [ unit==='us'?Math.round(ml/29.5735)+' fl oz':Math.round(ml)+' ml', (r.drink_type||'water') ];}
+  if(type==='womens'){
+    // women-sync.js가 이미 만들어둔 "행 하나 → 사람이 읽을 텍스트" 변환기를 그대로 재사용.
+    var desc=(typeof describeWomensRawEntry==='function')?describeWomensRawEntry(r):'—';
+    return [ desc ];
+  }
   return [];
 }
 function renderHealthDetailTable(type,rows){
@@ -2924,6 +2934,12 @@ function renderHealthDetailTable(type,rows){
     var cells=hdCellsFor(type,r);
     var tr=document.createElement('tr');
     tr.innerHTML='<td>'+escH((r.stamp_date||'').slice(0,10))+'</td>'+cells.map(function(c){return '<td>'+escH(String(c))+'</td>';}).join('');
+    if(type==='womens'){
+      // [읽기 전용] openHealthEdit엔 아직 'womens' 편집 분기가 없다 — 잘못 열면
+      // 깨진 폼이 뜨거나 에러가 나므로, 이 타입만 클릭 편집을 안 붙인다.
+      tbody.appendChild(tr);
+      return;
+    }
     tr.addEventListener('click',function(){
       document.getElementById('health-detail-modal').classList.add('h'); // list→edit 겹침 방지: Finance와 동일 패턴(닫지만 hdOpen은 유지)
       openHealthEdit(type,r);
