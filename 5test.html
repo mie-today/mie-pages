@@ -508,9 +508,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="mhd"><div class="mt" id="hd-title">Health detail</div><button class="mx" id="hd-close">×</button></div>
     <div class="hd-toolbar">
       <div class="hd-periods" id="hd-periods">
-        <button class="hd-pbtn" data-p="daily">Daily</button>
-        <button class="hd-pbtn" data-p="weekly">Weekly</button>
+        <button class="hd-pbtn hd-p-dw" data-p="daily">Daily</button>
+        <button class="hd-pbtn hd-p-dw" data-p="weekly">Weekly</button>
         <button class="hd-pbtn" data-p="monthly">Monthly</button>
+        <button class="hd-pbtn hd-p-yr" data-p="yearly" style="display:none;">Yearly</button>
         <button class="hd-pbtn" data-p="all">All</button>
       </div>
       <div class="hd-nav">
@@ -2822,12 +2823,18 @@ var MOOD_EMOJI_MAP={Amazing:'🤩',Happy:'😊',Calm:'😌',Neutral:'😐',Tired
 var hdOpen=false, hdType='weight', hdPeriod='daily', hdDate=null, hdRows=[];
 
 function _hdToday(){var n=new Date();return isoD(n.getFullYear(),n.getMonth(),n.getDate());}
-function hdApiPeriod(p){return p==='ytd'||p==='all'?'all':p;}
+function hdApiPeriod(p){return p==='ytd'?'all':p;} // yearly는 그대로 백엔드에 전달(신규 지원됨)
 
 function openHealthDetail(type){
   hdType=type;hdOpen=true;
   hdDate=selectedDateStr||_hdToday();
-  hdPeriod='daily';
+  // [신규] Women's History는 Daily/Weekly가 의미 없어서(하루/일주일 단위로 볼 게 아니라
+  // 이번 달/올해/전체 이력을 보는 용도) Monthly/Yearly/All만 보여준다. 나머지 지표는
+  // 기존 그대로 Daily/Weekly/Monthly/All.
+  var isWomens=(type==='womens');
+  document.querySelectorAll('#hd-periods .hd-p-dw').forEach(function(b){b.style.display=isWomens?'none':'';});
+  document.querySelectorAll('#hd-periods .hd-p-yr').forEach(function(b){b.style.display=isWomens?'':'none';});
+  hdPeriod=isWomens?'monthly':'daily';
   document.getElementById('hd-title').textContent=(HD_TYPES[type]||{}).title||type;
   document.querySelectorAll('#hd-periods .hd-pbtn').forEach(function(b){b.classList.toggle('active',b.dataset.p===hdPeriod);});
   document.getElementById('hd-chart-area').style.display=HD_TYPES[type].hasChart?'':'none';
@@ -2853,6 +2860,7 @@ function hdShiftDate(dir){
   if(hdPeriod==='daily')d.setDate(d.getDate()+dir);
   else if(hdPeriod==='weekly')d.setDate(d.getDate()+dir*7);
   else if(hdPeriod==='monthly')d.setMonth(d.getMonth()+dir);
+  else if(hdPeriod==='yearly')d.setFullYear(d.getFullYear()+dir);
   else return; // All 기간은 날짜 이동 없음
   hdDate=isoD(d.getFullYear(),d.getMonth(),d.getDate());
   loadHealthDetailData();
@@ -2863,6 +2871,7 @@ document.getElementById('hd-next').addEventListener('click',function(){hdShiftDa
 function hdDateLabel(){
   if(hdPeriod==='all')return'All time';
   var d=new Date(hdDate+'T12:00:00');
+  if(hdPeriod==='yearly')return String(d.getFullYear());
   if(hdPeriod==='monthly')return monthLabelFor(d.getFullYear(),d.getMonth());
   if(hdPeriod==='weekly')return'7 days ending '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
