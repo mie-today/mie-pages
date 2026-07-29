@@ -584,7 +584,7 @@ function loadDashboardPref(){
       // 날짜 숫자/이벤트 마커는 buildCalGrid()(+내부에서 buildCalGridFromEvents() 호출)와
       // buildCalLegend()가 따로 채워야 한다. 이걸 안 부르면 캘린더가 완전히 빈 채로 남는다
       // (실제로 겪은 버그: Simple 자동감지 등으로 renderGrid()가 재실행될 때마다 발생).
-      if(changed){renderGrid();buildCalGrid();buildCalLegend();}
+      if(changed){renderGrid();restoreAfterRegrid();}
     })
     .catch(function(){ /* keep default 'auto' — fail open */ });
 }
@@ -603,12 +603,25 @@ function hasHealthDataThisMonth(){
   var dicts=[_healthByDate,_activityByDate,_waterByDate,_sleepByDate,_moodByDate,_womensByDate];
   return dicts.some(function(d){return d&&Object.keys(d).length>0;});
 }
+/* [버그 수정 — 공용 헬퍼] renderGrid()는 calCardHTML()/todayCardHTML()/financeMiniHTML()/
+   healthMiniHTML()로 "빈 껍데기"만 다시 만든다 — 캘린더 날짜, Day View의 EVENTS/TASKS,
+   Finance/Health 카드 안의 실제 숫자는 전부 별도 함수가 따로 채워 넣는 구조다. 지난번엔
+   이 중 캘린더(buildCalGrid/buildCalLegend)만 복원하고 나머지(Day View, Finance/Health
+   숫자)는 빼먹어서 "처음엔 다 보이다가 나중엔 일부만 보인다"는 증상이 재발했다 — 자동감지
+   등으로 renderGrid()가 다시 불릴 때마다 이 함수 하나만 부르면 전부 복원되도록 통일한다. */
+function restoreAfterRegrid(){
+  buildCalGrid();buildCalLegend();
+  renderTodayEvents(selectedDateStr);
+  renderTasks();
+  if(document.getElementById('finance-mini-card'))renderFinanceMini();
+  if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
+}
 function checkAutoDashboardUpdate(){
   var wantFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
   var wantHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
   var curFinance=!!document.getElementById('finance-mini-card');
   var curHealth=!!document.getElementById('health-mini-card');
-  if(wantFinance!==curFinance||wantHealth!==curHealth){renderGrid();buildCalGrid();buildCalLegend();}
+  if(wantFinance!==curFinance||wantHealth!==curHealth){renderGrid();restoreAfterRegrid();}
 }
 
 /* [확장] Health 미니카드에 뭘 보여줄지 — 우선순위: 수동 선택(items) > 항목별 자동감지
@@ -630,8 +643,7 @@ function loadHealthDisplayItems(){
       // 못 줄인다 — 항목 필터링이 실제로 반영되려면 카드 마크업을 다시 만들어야 하므로
       // renderGrid()를 다시 부른다.
       renderGrid();
-      buildCalGrid();buildCalLegend(); // [버그 수정] renderGrid()는 캘린더 껍데기만 다시 만들어서 필요
-      if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
+      restoreAfterRegrid(); // [버그 수정] renderGrid()는 껍데기만 다시 만들어서 전체 복원 필요
     })
     .catch(function(){ /* keep defaults — fail open to "show all" */ });
 }
@@ -2321,10 +2333,7 @@ function navClick(btn){
   var name=lbl?lbl.textContent.trim():'';
   if(name==='Overview'){
     renderGrid();
-    buildCalGrid();
-    buildCalLegend();
-    renderTodayEvents();
-    renderTasks();
+    restoreAfterRegrid(); // [버그 수정] Finance/Health 카드 숫자도 같이 복원(기존엔 캘린더+DayView만 복원했음)
   } else if(name==='Calendar'){
     showEmptyState('Calendar');
   } else {
