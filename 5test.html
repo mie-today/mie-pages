@@ -614,7 +614,7 @@ function restoreAfterRegrid(){
   renderTodayEvents(selectedDateStr);
   renderTasks();
   if(document.getElementById('finance-mini-card'))renderFinanceMini();
-  if(document.getElementById('health-mini-card'))renderHealthMini(_healthMiniDate());
+  if(document.getElementById('health-mini-card')){renderHealthMini(_healthMiniDate());updateWomensMiniValue();}
 }
 function checkAutoDashboardUpdate(){
   var wantFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
@@ -740,6 +740,23 @@ function computeWomensDisplay(){
   var nextStart=_addDaysIso(lps,cyc);
   var dtp=_daysBetweenIso(_isoToday(),nextStart);
   return {mode:'period',label:'D-'+(dtp>0?dtp:0),sub:'to period'};
+}
+
+/* [버그 수정] Women's 값은 healthMiniHTML()이 카드를 처음 만들 때 딱 한 번만 계산됐고,
+   다른 12개 지표처럼 renderHealthMini()로 다시 채워지는 경로가 없었다 — 그래서 페이지
+   로드 직후(_womensByDate가 아직 안 왔을 때) 만들어진 "—" 값이, 완전히 무관한 다른
+   기능(loadHealthDisplayItems 등)이 우연히 카드를 통째로 다시 그릴 때까지 안 바뀌는
+   불안정한 상태였다. Women's 데이터가 실제로 도착하는 시점(loadHealth 완료 직후)에
+   이 함수로 그 값 하나만 확실하게 갱신한다. */
+function updateWomensMiniValue(){
+  var el=document.getElementById('hm-womens');
+  if(!el)return; // Women's 슬롯 자체가 안 보이는 설정이면(수동 선택 등) 아무것도 안 함
+  var wd=computeWomensDisplay();
+  el.textContent=wd.label;
+  var lbl=el.nextElementSibling;
+  if(lbl)lbl.textContent=wd.sub;
+  var ic=el.previousElementSibling;
+  if(ic)ic.innerHTML=(wd.mode==='pregnancy')?HM_WOMENS_ICON_PREGNANCY:HM_WOMENS_ICON_PERIOD;
 }
 
 // [버그 수정] 위 loadDashboardPref()는 페이지 로드 시 딱 한 번만 실행됐다. Settings는
@@ -2664,9 +2681,10 @@ function loadHealth(){
       buildCalGridFromEvents(); // [v2.4] Health 마커 반영을 위해 재빌드 — Finance와 동일 패턴
       renderTodayEvents(selectedDateStr);
       renderHealthMini(_healthMiniDate());
+      updateWomensMiniValue(); // [버그 수정] Women's 데이터가 실제로 도착한 이 시점에 확실히 갱신
       checkAutoDashboardUpdate(); // [신규] 이번 달 Health 데이터 유무로 Simple 자동 감지 재평가
     })
-    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};buildCalGridFromEvents();renderTodayEvents(selectedDateStr);renderHealthMini(_healthMiniDate());checkAutoDashboardUpdate();});
+    .catch(function(){_healthByDate={};_activityByDate={};_waterByDate={};_sleepByDate={};_moodByDate={};_womensByDate={};buildCalGridFromEvents();renderTodayEvents(selectedDateStr);renderHealthMini(_healthMiniDate());updateWomensMiniValue();checkAutoDashboardUpdate();});
 }
 
 /* ── Health mini 카드 렌더링 (health_index_28_.html의 renderOverviewCards()를 축소 이식) ──
