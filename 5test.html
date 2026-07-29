@@ -1968,14 +1968,12 @@ function closeEvView(){document.getElementById('ev-modal').classList.add('h');cu
 document.getElementById('ev-close-btn').addEventListener('click',closeEvView);
 document.getElementById('ev-modal').addEventListener('click',function(e){if(e.target===this)closeEvView();});
 document.getElementById('ev-edit-btn').addEventListener('click',function(){if(!curViewEv)return;var ev=curViewEv;closeEvView();openEditModal(ev);});
-document.getElementById('ev-del-btn').addEventListener('click',function(){document.getElementById('ev-dc').style.display='block';});
-document.getElementById('ev-dc-cancel').addEventListener('click',function(){document.getElementById('ev-dc').style.display='none';});
-document.getElementById('ev-dc-ok').addEventListener('click',function(){
-  if(!curViewEv)return;var btn=this,st=document.getElementById('ev-dc-st');
-  btn.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
+document.getElementById('ev-del-btn').addEventListener('click',function(){
+  if(!curViewEv)return;var btn=this;
+  btn.disabled=true;
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();}else{st.style.color='var(--red)';st.textContent='❌ Failed.';btn.disabled=false;}})
-    .catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';btn.disabled=false;});
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderDayView(selectedDateStr||todayStr);}btn.disabled=false;})
+    .catch(function(){btn.disabled=false;});
 });
 
 /* ── Edit modal ── */
@@ -2105,7 +2103,7 @@ document.getElementById('fined-save').addEventListener('click',function(){
   }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';self.disabled=false;});
 });
 document.getElementById('fined-delete').addEventListener('click',function(){
-  if(!curEditFin||!confirm('Delete this transaction?'))return;
+  if(!curEditFin)return;
   var st=document.getElementById('fined-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
   var self=this;
   var tabName=FIN_TABNAME_MAP[curEditFin.type]||curEditFin.type;
@@ -2277,7 +2275,7 @@ document.getElementById('healthed-save').addEventListener('click',function(){
     }).catch(function(){st.style.color='var(--red)';st.textContent='❌ Error.';}).finally(function(){self.disabled=false;});
 });
 document.getElementById('healthed-delete').addEventListener('click',function(){
-  if(!curEditHealth||!confirm('Delete this record?'))return;
+  if(!curEditHealth)return;
   var st=document.getElementById('healthed-st');this.disabled=true;st.style.color='var(--txt3)';st.textContent='Deleting…';
   var self=this;
   fetch(BACKEND+'/api/me/health/log/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({tab:curEditHealth.tab,sheet_row:curEditHealth.row._sheet_row})})
