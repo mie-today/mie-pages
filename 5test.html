@@ -83,7 +83,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-day{border-right:.5px solid var(--b1);border-bottom:.5px solid var(--b1);padding:3px 4px 4px;cursor:pointer;display:flex;flex-direction:column;transition:background .1s;}
 .cal-day:hover{background:var(--bg2);}
 .cal-day:nth-child(7n){border-right:none;}
-.cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;}
+.cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;border-radius:0;}
 .cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
 .cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
 .cal-day.selected-day{background:transparent;}
@@ -623,12 +623,21 @@ function restoreAfterRegrid(){
   if(document.getElementById('finance-mini-card'))renderFinanceMini();
   if(document.getElementById('health-mini-card')){renderHealthMini(_healthMiniDate());updateWomensMiniValue();}
 }
+var _autoDashboardTimer=null;
 function checkAutoDashboardUpdate(){
-  var wantFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
-  var wantHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
-  var curFinance=!!document.getElementById('finance-mini-card');
-  var curHealth=!!document.getElementById('health-mini-card');
-  if(wantFinance!==curFinance||wantHealth!==curHealth){renderGrid();restoreAfterRegrid();}
+  // [버그 수정] loadFinance()/loadHealth()는 서로 독립적인 비동기 호출이라, 응답 시점이
+  // 조금씩 어긋나면 이 함수가 짧은 시간 안에 두 번 불려 renderGrid()가 연속 재실행된다.
+  // 그러면 방금 클릭으로 표시된 선택 원(selected-day)이 한 번 사라졌다가 다시 나타나는
+  // 깜빡임/지연으로 보인다. 아주 짧게 묶어서(디바운스) 한 번만 재평가하도록 고침.
+  if(_autoDashboardTimer)clearTimeout(_autoDashboardTimer);
+  _autoDashboardTimer=setTimeout(function(){
+    _autoDashboardTimer=null;
+    var wantFinance = FINANCE_DISPLAY==='on' || (FINANCE_DISPLAY==='auto' && hasFinanceDataThisMonth());
+    var wantHealth  = HEALTH_DISPLAY==='on'  || (HEALTH_DISPLAY==='auto'  && hasHealthDataThisMonth());
+    var curFinance=!!document.getElementById('finance-mini-card');
+    var curHealth=!!document.getElementById('health-mini-card');
+    if(wantFinance!==curFinance||wantHealth!==curHealth){renderGrid();restoreAfterRegrid();}
+  },50);
 }
 
 /* [확장] Health 미니카드에 뭘 보여줄지 — 우선순위: 수동 선택(items) > 항목별 자동감지
