@@ -86,8 +86,9 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .cal-day.other-mo .cal-dn{color:var(--txt3);opacity:.4;}
 .cal-dn{font-size:11px;color:var(--txt2);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;}
 .cal-day.today .cal-dn{background:var(--teal);color:#fff;font-weight:600;}
-.cal-day.selected-day{background:rgba(28,126,214,0.04);}
-.cal-day.selected-day .cal-dn{outline:1.5px solid var(--blue);border-radius:50%;}
+.cal-day.selected-day{background:transparent;}
+.cal-day.selected-day .cal-dn{outline:1.5px solid var(--teal);border-radius:50%;background:transparent;color:var(--txt);}
+.cal-day.selected-day.today .cal-dn{outline:1.5px solid var(--teal);background:var(--teal);color:#fff;}
 .cal-mks{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
 .cal-mk{height:2px;border-radius:1px;width:100%;}
 .cal-foot{flex-shrink:0;padding:7px 14px;border-top:.5px solid var(--b1);display:flex;align-items:center;gap:8px;position:relative;}
@@ -393,7 +394,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="tb-left">
     <span class="logo">MIARVO</span>
     <div class="tb-div"></div>
-    <div class="tb-userline" id="tb-userline">Welcome, Mie <span id="tb-email-span">(mie@gmail.com)</span></div>
+    <div class="tb-userline" id="tb-userline">Loading…</div>
   </div>
   <div class="tb-right">
     <div class="tb-meta">
@@ -611,6 +612,12 @@ function hasHealthDataThisMonth(){
    등으로 renderGrid()가 다시 불릴 때마다 이 함수 하나만 부르면 전부 복원되도록 통일한다. */
 function restoreAfterRegrid(){
   buildCalGrid();buildCalLegend();
+  // [버그 수정] buildCalGrid()는 셀을 전부 새로 만들기 때문에 이전에 클릭해서 붙였던
+  // .selected-day 클래스가 사라진다. selectedDateStr이 있으면 해당 셀을 찾아 다시 표시.
+  if(selectedDateStr){
+    var selCell=document.querySelector('.cal-day[data-date="'+selectedDateStr+'"]');
+    if(selCell)selCell.classList.add('selected-day');
+  }
   renderTodayEvents(selectedDateStr);
   renderTasks();
   if(document.getElementById('finance-mini-card'))renderFinanceMini();
@@ -801,9 +808,21 @@ var _waterByDate={}; var _sleepByDate={}; var _moodByDate={};
 // 날짜(date) 필드 포함 배열로 반환한다는 전제로 아래 loadHealth()를 작성함.
 // 실제 백엔드 응답 포맷이 다르면 loadHealth()의 그룹핑 로직만 수정하면 됨.
 
+// [버그 수정 — 안전장치] 탭이 백그라운드에 있는 동안 브라우저가 메모리 절약을 위해
+// 탭을 강제로 재시작(discard)시키면, 이 페이지의 JS 전역 상태는 전부 초기화되고
+// 화면은 "오늘" 날짜로 되돌아간다. sessionStorage(같은 탭이 열려 있는 동안만 유지되고,
+// 탭을 완전히 닫으면 사라짐)에 마지막으로 보던 날짜를 저장해뒀다가 로드 시 복원해서
+// 이 경우에도 사용자가 보고 있던 날짜로 돌아오도록 한다. 새 탭에서 처음 여는 경우에는
+// sessionStorage가 비어 있으므로 기존과 동일하게 오늘 날짜로 시작한다.
+var SELECTED_DATE_KEY='mie_selected_date';
 var selectedDateStr=null; // 달력에서 클릭된 날짜
+try{ selectedDateStr=sessionStorage.getItem(SELECTED_DATE_KEY)||null; }catch(e){}
 var _initD=new Date();
 var calYear=_initD.getFullYear(), calMonth=_initD.getMonth();
+if(selectedDateStr){
+  var _rd=new Date(selectedDateStr+'T12:00:00');
+  if(!isNaN(_rd.getTime())){ calYear=_rd.getFullYear(); calMonth=_rd.getMonth(); }
+}
 var curViewEv=null, curEditEv=null, selFile=null;
 
 var DEMO_CAL=[
@@ -890,7 +909,13 @@ function calCardHTML(){
 }
 
 function todayCardHTML(){
-  var d=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  // [버그 수정] 이 함수는 renderGrid() 재실행 때마다 카드 껍데기를 새로 만드는데,
+  // 예전엔 항상 "오늘" 날짜로 헤더를 박아넣어서 사용자가 다른 날짜를 보고 있어도
+  // Day View 헤더만 오늘로 돌아가 버렸다. selectedDateStr을 우선 사용하도록 수정.
+  var _n=new Date();
+  var _todayStr=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');
+  var _ds=selectedDateStr||_todayStr;
+  var d=new Date(_ds+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   return '<div class="card today-card">'
     +'<div class="today-hd"><span class="today-title">Day View</span><span class="today-date" id="dayview-date">'+d+'</span></div>'
     +'<div class="today-inner">'
@@ -1236,7 +1261,13 @@ function initApp(){
   loadDashboardPref();
   buildCalGrid();
   buildCalLegend();
-  renderTodayEvents();
+  if(selectedDateStr){
+    var _selCell=document.querySelector('.cal-day[data-date="'+selectedDateStr+'"]');
+    if(_selCell)_selCell.classList.add('selected-day');
+  }
+  // [버그 수정] selectedDateStr이 sessionStorage에서 복원된 경우, 첫 렌더부터 그 날짜를
+  // 반영해야 한다 — 인자 없이 호출하면 내부적으로 오늘로 폴백해버린다.
+  renderTodayEvents(selectedDateStr);
   renderTasks();
   renderDraftList();
   // [v1.7] 페이지 로드 시 한 번, Women 시트 전체 이력을 백엔드에서 받아와 localStorage 캐시에 반영.
@@ -1297,7 +1328,7 @@ function bindAll(){
   // Calendar
   var prev=document.getElementById('cal-prev'); if(prev)prev.addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
   var next=document.getElementById('cal-next'); if(next)next.addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}buildCalGrid();loadEvents();loadFinance();loadHealth();});
-  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();buildCalGrid();loadEvents();loadFinance();loadHealth();});
+  var today=document.getElementById('cal-today'); if(today)today.addEventListener('click',function(){var n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();selectedDateStr=null;try{ sessionStorage.removeItem(SELECTED_DATE_KEY); }catch(e){}buildCalGrid();loadEvents();loadFinance();loadHealth();});
   // Month/Year picker
   initMoPicker();
   // Calendars popup
@@ -1564,6 +1595,7 @@ function buildCalGrid(){
     var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
     (function(dstr,isOther){cell.addEventListener('click',function(){
       selectedDateStr=dstr;
+      try{ sessionStorage.setItem(SELECTED_DATE_KEY,dstr); }catch(e){}
       // selected-day 하이라이트 이동
       document.querySelectorAll('.cal-day.selected-day').forEach(function(c){c.classList.remove('selected-day');});
       cell.classList.add('selected-day');
@@ -2360,7 +2392,7 @@ function navClick(btn){
 function loadUserInfo(){
   fetch(BACKEND+'/api/me/status',{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){if(!d||!d.connected)return;var u=d.user||{};var name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'Mie';var email=u.email||'';var ul=document.getElementById('tb-userline');if(ul){ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');}var av=document.getElementById('tb-av');if(av)av.textContent=name.charAt(0).toUpperCase();})
+    .then(function(d){if(!d||!d.connected)return;var u=d.user||{};var name=u.given_name||u.givenName||(u.name?u.name.split(' ')[0]:'')||'there';var email=u.email||'';var ul=document.getElementById('tb-userline');if(ul){ul.innerHTML='Welcome, '+name+(email?' <span>('+email+')</span>':'');}var av=document.getElementById('tb-av');if(av)av.textContent=name.charAt(0).toUpperCase();})
     .catch(function(){});
 }
 function loadCalendarList(){
