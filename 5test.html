@@ -1972,7 +1972,7 @@ document.getElementById('ev-del-btn').addEventListener('click',function(){
   if(!curViewEv)return;var btn=this;
   btn.disabled=true;
   fetch(BACKEND+'/api/me/events/delete',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:curViewEv.id,calendarId:curViewEv.calId||'primary'})})
-    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();renderDayView(selectedDateStr||todayStr);}btn.disabled=false;})
+    .then(function(r){checkReauthStatus(r.status);if(r.ok){allEvents=allEvents.filter(function(e){return e.id!==curViewEv.id;});Object.keys(eventsByDate).forEach(function(k){eventsByDate[k]=eventsByDate[k].filter(function(e){return e.id!==curViewEv.id;});});closeEvView();var _n=new Date();var _todayStr=_n.getFullYear()+'-'+String(_n.getMonth()+1).padStart(2,'0')+'-'+String(_n.getDate()).padStart(2,'0');renderDayView(selectedDateStr||_todayStr);}btn.disabled=false;})
     .catch(function(){btn.disabled=false;});
 });
 
