@@ -513,12 +513,12 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
      승인(approve) + 무시(dismiss) 버튼. 승인 시 select에서 고른 tab으로 Finance에 반영. -->
 <div class="modal-bg h" id="needs-review-modal">
   <div class="mb" style="max-width:640px;">
-    <div class="mhd"><div class="mt">확인이 필요한 거래 (NEEDS_REVIEW)</div><button class="mx" id="nr-close">×</button></div>
+    <div class="mhd"><div class="mt">Review Needed</div><button class="mx" id="nr-close">×</button></div>
     <div id="nr-loading" style="display:none;" class="findet-empty">Loading…</div>
-    <div id="nr-empty" style="display:none;" class="findet-empty">확인이 필요한 항목이 없습니다.</div>
+    <div id="nr-empty" style="display:none;" class="findet-empty">No items need review.</div>
     <div class="findet-table-wrap" id="nr-table-wrap">
       <table class="findet-table">
-        <thead><tr><th>날짜</th><th>원본 제목</th><th>금액</th><th>분류</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Description</th><th>Cost</th><th>Category</th><th></th></tr></thead>
         <tbody id="nr-tbody"></tbody>
       </table>
     </div>
@@ -957,7 +957,7 @@ function financeMiniHTML(){
         +'<span class="fm-title" id="fm-title">Overview — —</span>'
         // [NEEDS_REVIEW 뱃지 — 2026-07-30 신규] 자동분류 실패로 확인이 필요한 항목이 있을 때만 표시.
         // loadNeedsReview()가 개수를 채우고, 0이면 fm-nr-hidden으로 숨김.
-        +'<span class="fm-nr-badge fm-nr-hidden" id="fm-nr-badge" onclick="openNeedsReviewPanel()" title="확인이 필요한 거래">⚠️ <span id="fm-nr-count">0</span></span>'
+        +'<span class="fm-nr-badge fm-nr-hidden" id="fm-nr-badge" onclick="openNeedsReviewPanel()" title="Review Needed">⚠️ <span id="fm-nr-count">0</span></span>'
       +'</div>'
     +'</div>'
     +'<div class="card-body">'
@@ -1718,7 +1718,7 @@ function renderTodayEvents(dateStr){
     if(nrMatch){
       var nrBadge=document.createElement('span');
       nrBadge.textContent=' ⚠️';
-      nrBadge.title='Finance 확인 필요 (NEEDS_REVIEW)';
+      nrBadge.title='Review Needed (NEEDS_REVIEW)';
       nrBadge.style.cssText='cursor:pointer;';
       nm.appendChild(nrBadge);
     }
@@ -2688,8 +2688,8 @@ function renderNeedsReviewTable(){
       +'<td>'+fmtS(item.amount)+'</td>'
       +'<td><select class="fi nr-tab-sel" id="nr-tab-'+idx+'" style="font-size:11px;padding:2px 4px;">'+tabOpts+'</select>'
         +'<input class="fi nr-cat-input" id="nr-cat-'+idx+'" type="text" placeholder="Category" value="'+escHtmlAttr(item.category||'')+'" style="font-size:11px;padding:2px 4px;margin-top:3px;width:100%;"/></td>'
-      +'<td><button class="bs nr-approve-btn" onclick="approveNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">승인</button> '
-        +'<button class="bc nr-dismiss-btn" onclick="dismissNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">무시</button></td>'
+      +'<td><button class="bs nr-approve-btn" onclick="approveNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">Approve</button> '
+        +'<button class="bc nr-dismiss-btn" onclick="dismissNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">Deny</button></td>'
     +'</tr>';
   }).join('');
 }
@@ -2700,20 +2700,20 @@ function approveNeedsReview(idx){
   var tabSel=document.getElementById('nr-tab-'+idx),catInput=document.getElementById('nr-cat-'+idx);
   var tabName=tabSel?tabSel.value:'expenses';
   var category=catInput?catInput.value.trim():(item.category||'');
-  if(!category){alert('카테고리를 입력해주세요.');return;}
+  if(!category){alert('Please enter a category.');return;}
   fetch(BACKEND+'/api/me/finance/needs-review/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({rowNumber:item.rowNumber,tabName:tabName,amount:item.amount,category:category,sublabel:'',notes:item.rawTitle,date:item.timestamp?item.timestamp.substring(0,10):''})})
     .then(function(r){checkReauthStatus(r.status);return r.ok;})
-    .then(function(ok){if(ok){loadNeedsReview();loadFinance();}else{alert('승인 처리에 실패했습니다.');}})
-    .catch(function(){alert('승인 처리 중 오류가 발생했습니다.');});
+    .then(function(ok){if(ok){loadNeedsReview();loadFinance();}else{alert('Approve failed.');}})
+    .catch(function(){alert('An error occurred while approving.');});
 }
 function dismissNeedsReview(idx){
   var item=_needsReviewItems[idx];if(!item)return;
   fetch(BACKEND+'/api/me/finance/needs-review/dismiss',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({rowNumber:item.rowNumber})})
     .then(function(r){checkReauthStatus(r.status);return r.ok;})
-    .then(function(ok){if(ok){loadNeedsReview();}else{alert('무시 처리에 실패했습니다.');}})
-    .catch(function(){alert('무시 처리 중 오류가 발생했습니다.');});
+    .then(function(ok){if(ok){loadNeedsReview();}else{alert('Deny failed.');}})
+    .catch(function(){alert('An error occurred while denying.');});
 }
 
 /* ── Finance 상세 팝업 (Income/Needs/Wants/Savings) ──
