@@ -2670,6 +2670,22 @@ document.getElementById('needs-review-modal').addEventListener('click',function(
 // 실제 시트 tab(Income/Expenses/Savings) 기준. Needs/Wants는 시트상 둘 다 Expenses라 이 화면에서는
 // 합쳐서 "Expenses" 하나로만 고르면 되고, 세부 Needs/Wants 분류는 category 값(FIN_NEEDS_SET 등)이 처리한다.
 var NR_TAB_OPTIONS=[{v:'income',l:'Income'},{v:'expenses',l:'Expenses'},{v:'savings',l:'Savings'}];
+// [Category dropdown — 2026-07-30 신규] 기존엔 자유 입력 텍스트 필드였다. tab(Income/
+// Expenses/Savings)에 따라 유효한 카테고리 목록이 다르므로, 이미 존재하던 FIN_*_SET을
+// 재사용해 tab 선택에 맞는 카테고리만 드롭다운으로 보여준다. Expenses는 Needs+Wants를 합침.
+function nrCategoryOptionsFor(tabName,selected){
+  var list;
+  if(tabName==='income')list=FIN_INCOME_SET;
+  else if(tabName==='savings')list=FIN_SAVINGS_SET;
+  else list=FIN_NEEDS_SET.concat(FIN_WANTS_SET);
+  return list.map(function(c){return '<option value="'+escHtmlAttr(c)+'"'+(c===selected?' selected':'')+'>'+escHtmlAttr(c)+'</option>';}).join('');
+}
+function onNrTabChange(rowNumber){
+  var tabSel=document.getElementById('nr-tab-'+rowNumber),catSel=document.getElementById('nr-cat-'+rowNumber);
+  if(!tabSel||!catSel)return;
+  var prevSelected=catSel.value;
+  catSel.innerHTML=nrCategoryOptionsFor(tabSel.value,prevSelected);
+}
 function renderNeedsReviewTable(){
   var loading=document.getElementById('nr-loading'),empty=document.getElementById('nr-empty'),wrap=document.getElementById('nr-table-wrap'),tbody=document.getElementById('nr-tbody');
   if(!_needsReviewItems.length){
@@ -2682,38 +2698,58 @@ function renderNeedsReviewTable(){
   if(wrap)wrap.style.display='block';
   tbody.innerHTML=_needsReviewItems.map(function(item,idx){
     var tabOpts=NR_TAB_OPTIONS.map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>';}).join('');
+    // [버그 수정 — 2026-07-30] onclick에 idx(배열 인덱스) 대신 item.rowNumber(시트상 고유 행 번호)를
+    // 직접 넘긴다. idx는 _needsReviewItems가 재조회될 때마다 순서가 바뀌는 불안정한 값이라,
+    // 승인 처리 도중 목록이 갱신되면 클릭한 버튼이 가리키는 항목이 달라져 의도치 않은
+    // 다른 행이 처리되는 문제가 있었다. rowNumber는 시트상 실제 위치라 항상 같은 항목을 가리킨다.
     return '<tr>'
       +'<td>'+(item.timestamp?item.timestamp.substring(0,10):'—')+'</td>'
       +'<td class="nr-title-cell" title="'+escHtmlAttr(item.rawTitle)+'">'+escHtmlAttr(item.rawTitle)+'</td>'
       +'<td>'+fmtS(item.amount)+'</td>'
-      +'<td><select class="fi nr-tab-sel" id="nr-tab-'+idx+'" style="font-size:11px;padding:2px 4px;">'+tabOpts+'</select>'
-        +'<input class="fi nr-cat-input" id="nr-cat-'+idx+'" type="text" placeholder="Category" value="'+escHtmlAttr(item.category||'')+'" style="font-size:11px;padding:2px 4px;margin-top:3px;width:100%;"/></td>'
-      +'<td><button class="bs nr-approve-btn" onclick="approveNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">Approve</button> '
-        +'<button class="bc nr-dismiss-btn" onclick="dismissNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">Deny</button></td>'
+      +'<td><select class="fi nr-tab-sel" id="nr-tab-'+item.rowNumber+'" onchange="onNrTabChange('+item.rowNumber+')" style="font-size:11px;padding:2px 4px;">'+tabOpts+'</select>'
+        +'<select class="fi nr-cat-input" id="nr-cat-'+item.rowNumber+'" style="font-size:11px;padding:2px 4px;margin-top:3px;width:100%;">'+nrCategoryOptionsFor('income',item.category)+'</select></td>'
+      +'<td><button class="bs nr-approve-btn" id="nr-approve-btn-'+item.rowNumber+'" onclick="approveNeedsReview('+item.rowNumber+')" style="font-size:10px;padding:3px 6px;">Approve</button> '
+        +'<button class="bc nr-dismiss-btn" id="nr-dismiss-btn-'+item.rowNumber+'" onclick="dismissNeedsReview('+item.rowNumber+')" style="font-size:10px;padding:3px 6px;">Deny</button></td>'
     +'</tr>';
   }).join('');
 }
 function escHtmlAttr(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function approveNeedsReview(idx){
-  var item=_needsReviewItems[idx];if(!item)return;
-  var tabSel=document.getElementById('nr-tab-'+idx),catInput=document.getElementById('nr-cat-'+idx);
+function approveNeedsReview(rowNumber){
+  var item=_needsReviewItems.find(function(it){return it.rowNumber===rowNumber;});
+  if(!item)return;
+  var tabSel=document.getElementById('nr-tab-'+rowNumber),catInput=document.getElementById('nr-cat-'+rowNumber);
   var tabName=tabSel?tabSel.value:'expenses';
   var category=catInput?catInput.value.trim():(item.category||'');
   if(!category){alert('Please enter a category.');return;}
+  // [버그 수정 — 2026-07-30] 클릭 즉시 두 버튼을 비활성화해 중복 클릭(더블클릭, 느린 네트워크 중
+  // 재클릭)으로 같은 요청이 중복 전송되는 것을 막는다.
+  var approveBtn=document.getElementById('nr-approve-btn-'+rowNumber),dismissBtn=document.getElementById('nr-dismiss-btn-'+rowNumber);
+  if(approveBtn)approveBtn.disabled=true;
+  if(dismissBtn)dismissBtn.disabled=true;
   fetch(BACKEND+'/api/me/finance/needs-review/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({rowNumber:item.rowNumber,tabName:tabName,amount:item.amount,category:category,sublabel:'',notes:item.rawTitle,date:item.timestamp?item.timestamp.substring(0,10):''})})
     .then(function(r){checkReauthStatus(r.status);return r.ok;})
-    .then(function(ok){if(ok){loadNeedsReview();loadFinance();}else{alert('Approve failed.');}})
-    .catch(function(){alert('An error occurred while approving.');});
+    .then(function(ok){
+      if(ok){loadNeedsReview();loadFinance();}
+      else{alert('Approve failed.');if(approveBtn)approveBtn.disabled=false;if(dismissBtn)dismissBtn.disabled=false;}
+    })
+    .catch(function(){alert('An error occurred while approving.');if(approveBtn)approveBtn.disabled=false;if(dismissBtn)dismissBtn.disabled=false;});
 }
-function dismissNeedsReview(idx){
-  var item=_needsReviewItems[idx];if(!item)return;
+function dismissNeedsReview(rowNumber){
+  var item=_needsReviewItems.find(function(it){return it.rowNumber===rowNumber;});
+  if(!item)return;
+  var approveBtn=document.getElementById('nr-approve-btn-'+rowNumber),dismissBtn=document.getElementById('nr-dismiss-btn-'+rowNumber);
+  if(approveBtn)approveBtn.disabled=true;
+  if(dismissBtn)dismissBtn.disabled=true;
   fetch(BACKEND+'/api/me/finance/needs-review/dismiss',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({rowNumber:item.rowNumber})})
     .then(function(r){checkReauthStatus(r.status);return r.ok;})
-    .then(function(ok){if(ok){loadNeedsReview();}else{alert('Deny failed.');}})
-    .catch(function(){alert('An error occurred while denying.');});
+    .then(function(ok){
+      if(ok){loadNeedsReview();}
+      else{alert('Deny failed.');if(approveBtn)approveBtn.disabled=false;if(dismissBtn)dismissBtn.disabled=false;}
+    })
+    .catch(function(){alert('An error occurred while denying.');if(approveBtn)approveBtn.disabled=false;if(dismissBtn)dismissBtn.disabled=false;});
 }
 
 /* ── Finance 상세 팝업 (Income/Needs/Wants/Savings) ──
