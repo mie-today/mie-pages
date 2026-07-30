@@ -1697,6 +1697,12 @@ function renderTodayEvents(dateStr){
   }
 
   // Calendar 이벤트 렌더링
+  // [NEEDS_REVIEW 매칭 — 2026-07-30 신규] _needsReviewItems(NEEDS_REVIEW 패널이 이미 로드해둔
+  // 목록)에서 eventId가 있는 항목만 골라 Set으로 만들어, 이 날짜의 캘린더 이벤트 중
+  // NEEDS_REVIEW 상태인 것에 ⚠️ 뱃지를 붙인다. eventId가 없는(과거 배포 이전) 행은
+  // 여기서 매칭 대상이 될 수 없다 — 배포 이후 새로 쌓이는 항목부터 정상 매칭된다.
+  var _nrEventIdSet={};
+  (_needsReviewItems||[]).forEach(function(item){ if(item.eventId) _nrEventIdSet[item.eventId]=item; });
   evs.forEach(function(ev){
     var color=ev.calColor||PRIMARY_CAL_COLORS['Default'];
     var item=document.createElement('div');item.className='ev-item';
@@ -1707,9 +1713,22 @@ function renderTodayEvents(dateStr){
     var bd=document.createElement('div');bd.className='ev-body';
     var nm=document.createElement('div');nm.className='ev-name';
     if(ev.isLink){var a=document.createElement('a');a.href='#';a.onclick=function(e){e.preventDefault();};a.textContent=ev.title;nm.appendChild(a);}else nm.textContent=ev.title;
+    // NEEDS_REVIEW 매칭 시 ⚠️ 뱃지 — 클릭하면 이벤트 상세 대신 NEEDS_REVIEW 패널이 열림
+    var nrMatch=ev.id?_nrEventIdSet[ev.id]:null;
+    if(nrMatch){
+      var nrBadge=document.createElement('span');
+      nrBadge.textContent=' ⚠️';
+      nrBadge.title='Finance 확인 필요 (NEEDS_REVIEW)';
+      nrBadge.style.cssText='cursor:pointer;';
+      nm.appendChild(nrBadge);
+    }
     if(ev.loc){var sub=document.createElement('div');sub.className='ev-sub';sub.textContent='📍 '+ev.loc;nm.appendChild(sub);}
     bd.appendChild(nm);item.appendChild(bar);item.appendChild(td);item.appendChild(bd);
-    item.addEventListener('click',function(){openEvView(ev);});
+    if(nrMatch){
+      item.addEventListener('click',function(){openNeedsReviewPanel();});
+    }else{
+      item.addEventListener('click',function(){openEvView(ev);});
+    }
     c.appendChild(item);
   });
 
@@ -2630,6 +2649,10 @@ function loadNeedsReview(){
       if(cnt)cnt.textContent=_needsReviewItems.length;
       if(badge){if(_needsReviewItems.length>0)badge.classList.remove('fm-nr-hidden');else badge.classList.add('fm-nr-hidden');}
       if(needsReviewOpen)renderNeedsReviewTable();
+      // [Day View ⚠️ 뱃지 갱신 — 2026-07-30] renderTodayEvents가 이 함수 완료 전에 먼저
+      // 그려졌을 수 있으므로, NEEDS_REVIEW 목록이 도착한 시점에 Day View를 다시 그려
+      // 이벤트별 ⚠️ 표시가 최신 상태를 반영하도록 한다.
+      renderTodayEvents(selectedDateStr);
     })
     .catch(function(){_needsReviewItems=[];});
 }
