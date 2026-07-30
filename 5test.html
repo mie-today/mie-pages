@@ -269,6 +269,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 /* Finance mini card */
 .fm-title{font-size:11px;font-weight:700;color:var(--blue);}
+.fm-hd-right{display:flex;align-items:center;gap:8px;}
+.fm-nr-badge{font-size:10px;font-weight:600;color:var(--red);background:rgba(220,38,38,.1);border-radius:10px;padding:2px 8px;cursor:pointer;white-space:nowrap;}
+.fm-nr-badge:hover{background:rgba(220,38,38,.18);}
+.fm-nr-hidden{display:none;}
 .fm-rem-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;}
 .fm-rem-lbl{font-size:10px;color:var(--txt2);}
 .fm-rem-val{font-size:17px;font-weight:600;}
@@ -499,6 +503,23 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <table class="findet-table">
         <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Notes</th><th>Source</th></tr></thead>
         <tbody id="findet-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- [NEEDS_REVIEW 패널 — 2026-07-30 신규] Sync Log의 NEEDS_REVIEW 상태 항목 목록.
+     fin-detail-modal과 동일한 modal-bg/mb/mhd 뼈대 재사용. 행마다 tab 선택(select) +
+     승인(approve) + 무시(dismiss) 버튼. 승인 시 select에서 고른 tab으로 Finance에 반영. -->
+<div class="modal-bg h" id="needs-review-modal">
+  <div class="mb" style="max-width:640px;">
+    <div class="mhd"><div class="mt">확인이 필요한 거래 (NEEDS_REVIEW)</div><button class="mx" id="nr-close">×</button></div>
+    <div id="nr-loading" style="display:none;" class="findet-empty">Loading…</div>
+    <div id="nr-empty" style="display:none;" class="findet-empty">확인이 필요한 항목이 없습니다.</div>
+    <div class="findet-table-wrap" id="nr-table-wrap">
+      <table class="findet-table">
+        <thead><tr><th>날짜</th><th>원본 제목</th><th>금액</th><th>분류</th><th></th></tr></thead>
+        <tbody id="nr-tbody"></tbody>
       </table>
     </div>
   </div>
@@ -931,7 +952,14 @@ function todayCardHTML(){
    월 단위 — Finance는 원본에서도 월 요약이라 이 편이 자연스럽다는 가정으로 설계). */
 function financeMiniHTML(){
   return '<div class="card mini-card" id="finance-mini-card">'
-    +'<div class="card-hd"><span class="card-hd-title">💰 Finance</span><span class="fm-title" id="fm-title">Overview — —</span></div>'
+    +'<div class="card-hd"><span class="card-hd-title">💰 Finance</span>'
+      +'<div class="fm-hd-right">'
+        +'<span class="fm-title" id="fm-title">Overview — —</span>'
+        // [NEEDS_REVIEW 뱃지 — 2026-07-30 신규] 자동분류 실패로 확인이 필요한 항목이 있을 때만 표시.
+        // loadNeedsReview()가 개수를 채우고, 0이면 fm-nr-hidden으로 숨김.
+        +'<span class="fm-nr-badge fm-nr-hidden" id="fm-nr-badge" onclick="openNeedsReviewPanel()" title="확인이 필요한 거래">⚠️ <span id="fm-nr-count">0</span></span>'
+      +'</div>'
+    +'</div>'
     +'<div class="card-body">'
       +'<div class="fm-rem-row"><span class="fm-rem-lbl">Remaining</span><span class="fm-rem-val" id="fm-remaining">$—</span></div>'
       +'<div class="fm-bigbar"><div id="fm-bar-needs" style="background:var(--red);width:0%;"></div><div id="fm-bar-wants" style="background:var(--purple);width:0%;"></div><div id="fm-bar-sav" style="background:var(--blue);width:0%;"></div></div>'
@@ -2470,6 +2498,7 @@ function loadTasks(){
 var _financeMonthData=null; // 최근 loadFinance() 응답 전체(요약/베이스라인 포함) — Finance mini 카드가 재사용
 function loadFinance(){
   var ym=calYear+'-'+String(calMonth+1).padStart(2,'0');
+  loadNeedsReview(); // [2026-07-30 신규] Finance 데이터와 별개로 항상 최신 NEEDS_REVIEW 개수 갱신
   fetch(BACKEND+'/api/me/finance?month='+ym,{credentials:'include'})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(data){
@@ -2586,6 +2615,84 @@ function renderFinanceMini(){
   var wantsDiff=wantsActual-wantsBudget,wantsNote=document.getElementById('fm-wants-note');
   if(wantsNote){if(wantsDiff>0){wantsNote.className='fm-cell-note over';wantsNote.textContent='▲ '+fmtS(wantsDiff)+' over budget';}else{wantsNote.className='fm-cell-note ok';wantsNote.textContent='✓ '+fmtS(Math.abs(wantsDiff))+' remaining';}}
 }
+
+/* ── NEEDS_REVIEW 패널 (2026-07-30 신규) ──
+   loadFinance()가 호출될 때마다 같이 갱신된다(월 이동과 무관하게 Sync Log 전체를 봄 —
+   NEEDS_REVIEW 항목은 월별로 나눌 이유가 없어서 /api/me/finance처럼 month 파라미터를
+   쓰지 않음). 뱃지 카운트는 항상 최신 상태를 반영하도록 이 함수가 fm-nr-badge도 갱신한다. */
+var _needsReviewItems=[];
+function loadNeedsReview(){
+  fetch(BACKEND+'/api/me/finance/needs-review',{credentials:'include'})
+    .then(function(r){checkReauthStatus(r.status);return r.ok?r.json():null;})
+    .then(function(data){
+      _needsReviewItems=(data&&data.items)?data.items:[];
+      var badge=document.getElementById('fm-nr-badge'),cnt=document.getElementById('fm-nr-count');
+      if(cnt)cnt.textContent=_needsReviewItems.length;
+      if(badge){if(_needsReviewItems.length>0)badge.classList.remove('fm-nr-hidden');else badge.classList.add('fm-nr-hidden');}
+      if(needsReviewOpen)renderNeedsReviewTable();
+    })
+    .catch(function(){_needsReviewItems=[];});
+}
+var needsReviewOpen=false;
+function openNeedsReviewPanel(){
+  needsReviewOpen=true;
+  document.getElementById('needs-review-modal').classList.remove('h');
+  renderNeedsReviewTable();
+}
+function closeNeedsReviewPanel(){needsReviewOpen=false;document.getElementById('needs-review-modal').classList.add('h');}
+document.getElementById('nr-close').addEventListener('click',closeNeedsReviewPanel);
+document.getElementById('needs-review-modal').addEventListener('click',function(e){if(e.target===this)closeNeedsReviewPanel();});
+
+// 승인 시 고를 수 있는 tab — 기존 Finance 상세 팝업의 income/needs/wants/savings 구분과 달리
+// 실제 시트 tab(Income/Expenses/Savings) 기준. Needs/Wants는 시트상 둘 다 Expenses라 이 화면에서는
+// 합쳐서 "Expenses" 하나로만 고르면 되고, 세부 Needs/Wants 분류는 category 값(FIN_NEEDS_SET 등)이 처리한다.
+var NR_TAB_OPTIONS=[{v:'income',l:'Income'},{v:'expenses',l:'Expenses'},{v:'savings',l:'Savings'}];
+function renderNeedsReviewTable(){
+  var loading=document.getElementById('nr-loading'),empty=document.getElementById('nr-empty'),wrap=document.getElementById('nr-table-wrap'),tbody=document.getElementById('nr-tbody');
+  if(!_needsReviewItems.length){
+    if(loading)loading.style.display='none';
+    if(empty)empty.style.display='block';
+    if(wrap)wrap.style.display='none';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  if(wrap)wrap.style.display='block';
+  tbody.innerHTML=_needsReviewItems.map(function(item,idx){
+    var tabOpts=NR_TAB_OPTIONS.map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>';}).join('');
+    return '<tr>'
+      +'<td>'+(item.timestamp?item.timestamp.substring(0,10):'—')+'</td>'
+      +'<td class="nr-title-cell" title="'+escHtmlAttr(item.rawTitle)+'">'+escHtmlAttr(item.rawTitle)+'</td>'
+      +'<td>'+fmtS(item.amount)+'</td>'
+      +'<td><select class="fi nr-tab-sel" id="nr-tab-'+idx+'" style="font-size:11px;padding:2px 4px;">'+tabOpts+'</select>'
+        +'<input class="fi nr-cat-input" id="nr-cat-'+idx+'" type="text" placeholder="Category" value="'+escHtmlAttr(item.category||'')+'" style="font-size:11px;padding:2px 4px;margin-top:3px;width:100%;"/></td>'
+      +'<td><button class="bs nr-approve-btn" onclick="approveNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">승인</button> '
+        +'<button class="bc nr-dismiss-btn" onclick="dismissNeedsReview('+idx+')" style="font-size:10px;padding:3px 6px;">무시</button></td>'
+    +'</tr>';
+  }).join('');
+}
+function escHtmlAttr(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function approveNeedsReview(idx){
+  var item=_needsReviewItems[idx];if(!item)return;
+  var tabSel=document.getElementById('nr-tab-'+idx),catInput=document.getElementById('nr-cat-'+idx);
+  var tabName=tabSel?tabSel.value:'expenses';
+  var category=catInput?catInput.value.trim():(item.category||'');
+  if(!category){alert('카테고리를 입력해주세요.');return;}
+  fetch(BACKEND+'/api/me/finance/needs-review/resolve',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rowNumber:item.rowNumber,tabName:tabName,amount:item.amount,category:category,sublabel:'',notes:item.rawTitle,date:item.timestamp?item.timestamp.substring(0,10):''})})
+    .then(function(r){checkReauthStatus(r.status);return r.ok;})
+    .then(function(ok){if(ok){loadNeedsReview();loadFinance();}else{alert('승인 처리에 실패했습니다.');}})
+    .catch(function(){alert('승인 처리 중 오류가 발생했습니다.');});
+}
+function dismissNeedsReview(idx){
+  var item=_needsReviewItems[idx];if(!item)return;
+  fetch(BACKEND+'/api/me/finance/needs-review/dismiss',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({rowNumber:item.rowNumber})})
+    .then(function(r){checkReauthStatus(r.status);return r.ok;})
+    .then(function(ok){if(ok){loadNeedsReview();}else{alert('무시 처리에 실패했습니다.');}})
+    .catch(function(){alert('무시 처리 중 오류가 발생했습니다.');});
+}
+
 /* ── Finance 상세 팝업 (Income/Needs/Wants/Savings) ──
    fm-cell 클릭으로 열린다. 데이터는 이미 loadFinance()가 채워둔 _financeMonthData를
    그대로 재사용 — 별도 fetch 없음. 월 이동은 메인 캘린더(calMonth/calYear)와 100%
