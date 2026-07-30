@@ -1588,13 +1588,13 @@ function buildCalGrid(){
     // data-date 속성 저장 (마커 재빌드에 사용)
     cell.setAttribute('data-date',ds);
     var num=document.createElement('div');num.className='cal-dn';num.textContent=dn;cell.appendChild(num);
-    (function(dstr,isOther){cell.addEventListener('click',function(){
+    (function(dstr,isOther,cellEl){cellEl.addEventListener('click',function(){
       selectedDateStr=dstr;
       // selected-day 하이라이트 이동
       document.querySelectorAll('.cal-day.selected-day').forEach(function(c){c.classList.remove('selected-day');});
-      cell.classList.add('selected-day');
+      cellEl.classList.add('selected-day');
       renderDayView(dstr);
-    });;})(ds,other);
+    });;})(ds,other,cell);
     g.appendChild(cell);
   }
   // 이벤트 데이터로 마커 빌드
