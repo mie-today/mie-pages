@@ -2579,6 +2579,10 @@ function isNeedsCategoryMini(cat){
   return false;
 }
 function fmtS(v){var n=Math.round(v||0);return (n<0?'-$':'$')+Math.abs(n).toLocaleString();}
+// [버그 수정 — 2026-07-30] fmtS는 Finance mini card의 요약 숫자(Remaining 등)용으로 만들어져
+// Math.round로 반올림한다. NEEDS_REVIEW 테이블의 개별 거래 금액(예: $14.50)에 그대로 쓰면
+// $15로 뭉개져 원본 금액과 달라 보이는 문제가 있었다. 소수점을 그대로 보존하는 별도 함수.
+function fmtCost(v){var n=v||0;var s=Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});return (n<0?'-$':'$')+s;}
 function pctMini(part,whole){if(!whole)return 0;return Math.round(part/whole*100);}
 
 function renderFinanceMini(){
@@ -2705,7 +2709,7 @@ function renderNeedsReviewTable(){
     return '<tr>'
       +'<td>'+(item.timestamp?item.timestamp.substring(0,10):'—')+'</td>'
       +'<td class="nr-title-cell" title="'+escHtmlAttr(item.rawTitle)+'">'+escHtmlAttr(item.rawTitle)+'</td>'
-      +'<td>'+fmtS(item.amount)+'</td>'
+      +'<td>'+fmtCost(item.amount)+'</td>'
       +'<td><select class="fi nr-tab-sel" id="nr-tab-'+item.rowNumber+'" onchange="onNrTabChange('+item.rowNumber+')" style="font-size:11px;padding:2px 4px;">'+tabOpts+'</select>'
         +'<select class="fi nr-cat-input" id="nr-cat-'+item.rowNumber+'" style="font-size:11px;padding:2px 4px;margin-top:3px;width:100%;">'+nrCategoryOptionsFor('income',item.category)+'</select></td>'
       +'<td><button class="bs nr-approve-btn" id="nr-approve-btn-'+item.rowNumber+'" onclick="approveNeedsReview('+item.rowNumber+')" style="font-size:10px;padding:3px 6px;">Approve</button> '
@@ -2827,7 +2831,7 @@ function renderFinDetailTable(){
     var tr=document.createElement('tr');
     tr.innerHTML=
       '<td>'+escH(r.date||'')+'</td>'
-      +'<td class="findet-amt">'+fmtS(r.amount)+'</td>'
+      +'<td class="findet-amt">'+fmtCost(r.amount)+'</td>'
       +'<td>'+escH(r.category||'')+(r.sublabel?'<div class="findet-cat-sub">'+escH(r.sublabel)+'</div>':'')+'</td>'
       +'<td>'+escH(r.notes||'')+'</td>'
       +'<td>'+findetSourceIcon(rowObj)+'</td>';
